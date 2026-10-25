@@ -13,6 +13,10 @@ export function installRecordSearch(){
  if(!document.getElementById('dashboard'))return;
  const launch=document.createElement('button');launch.id='openRecordSearch';launch.type='button';launch.className='btn-secondary finance-search-launch';launch.setAttribute('aria-label','Search records');launch.title='Search records';
  const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');const circle=document.createElementNS(icon.namespaceURI,'circle');circle.setAttribute('cx','10.5');circle.setAttribute('cy','10.5');circle.setAttribute('r','6.5');const path=document.createElementNS(icon.namespaceURI,'path');path.setAttribute('d','m16 16 5 5');icon.append(circle,path);const caption=document.createElement('span');caption.textContent='Search';launch.append(icon,caption);document.body.append(launch);
+ const atPageBottom=()=>window.scrollY+window.innerHeight>=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight)-24;
+ const updateBottomVisibility=()=>launch.classList.toggle('at-page-bottom',atPageBottom());
+ window.addEventListener('scroll',updateBottomVisibility,{passive:true});window.addEventListener('resize',updateBottomVisibility,{passive:true});
+ const pageObserver=new ResizeObserver(updateBottomVisibility);pageObserver.observe(document.body);pageObserver.observe(document.documentElement);updateBottomVisibility();
  const dialog=document.createElement('dialog');dialog.id='recordSearchDialog';dialog.className='finance-workbench-dialog finance-search-dialog';dialog.setAttribute('aria-labelledby','recordSearchTitle');
  const add=(parent,tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;parent.append(e);return e;};
  const header=add(dialog,'div');header.className='finance-search-heading';const title=add(header,'h2','Find a record');title.id='recordSearchTitle';const close=add(header,'button','Close');close.type='button';close.className='btn-small';close.onclick=()=>dialog.close();
@@ -36,6 +40,6 @@ export function installRecordSearch(){
  }
  launch.onclick=()=>{if(dataOperationBusy||dialog.open)return;input.value='';filter.value='all';render();dialog.showModal();input.focus();};
  input.oninput=()=>{clearTimeout(timer);timer=setTimeout(render,120);};filter.onchange=render;dialog.addEventListener('close',()=>{clearTimeout(timer);input.value='';results.replaceChildren();});
- const reset=window.financeBridge.reset;window.financeBridge.reset=function(){clearTimeout(timer);if(dialog.open)dialog.close();dialog.remove();launch.remove();return reset.apply(this,arguments);};
+ const reset=window.financeBridge.reset;window.financeBridge.reset=function(){clearTimeout(timer);window.removeEventListener('scroll',updateBottomVisibility);window.removeEventListener('resize',updateBottomVisibility);pageObserver.disconnect();if(dialog.open)dialog.close();dialog.remove();launch.remove();return reset.apply(this,arguments);};
  window.financeRecordSearch={open:()=>launch.click()};
 }
