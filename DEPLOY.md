@@ -1,21 +1,22 @@
-# Deploy v2026.10.24.5 from this new folder
+# Deployment — 2026.10.25.14
 
-1. Export a JSON backup from the currently working v.7 under Settings → Data & backup.
-2. Extract this ZIP and open Terminal in its Project folder, the folder containing firebase.json. Do not run from the folder above it or from dist.
-3. If Firebase login is needed, run:
+Pushes to `main` run the repository's test-and-deploy workflow. This release includes new rules for shared review metadata, so it requires a rules deployment before Hosting. No Functions deployment is needed.
 
-```bash
-npx firebase-tools login
-```
+CI uses Node 22, Java 17, the committed npm lockfile, deterministic application build checks, browser regressions, installed-PWA offline/update checks, unit suites and Firestore emulator security/concurrency checks. It then deploys Firestore rules and finally Hosting.
 
-4. Since v.7 is already live, deploy hosting only:
+The existing `FIREBASE_SERVICE_ACCOUNT_FINANCE_TRACKER_BC7C9` secret must identify a service account authorized to deploy both Firebase Hosting and Firestore rules. A failed rules deployment blocks Hosting.
+
+For manual deployment from the repository root:
 
 ```bash
-npx firebase-tools deploy --only hosting --project finance-tracker-bc7c9
+npm ci --ignore-scripts
+npm run build
+npm test
+npm run test:rules
+npm run test:emerald
+npm run test:pwa
+npx firebase deploy --only firestore:rules --project finance-tracker-bc7c9
+npx firebase deploy --only hosting --project finance-tracker-bc7c9
 ```
 
-Wait for Deploy complete. This complete project contains its own dist, firebase.json, .firebaserc, firestore.rules and Functions source. No old project folder is required. Rules and Functions have not changed, so do not run a plain deploy that deploys everything.
-
-5. Open the app. If Settings → App & updates says an update is ready, apply it. Verify installed version 2026.10.24.5. Check sign-in, refresh on a different page, records and profile placement. You can delete the earlier extracted project folder after verifying this version; retain your JSON backup and working v.7 ZIP for rollback.
-
-Do not clear browser storage or import a backup as part of this update. Existing Firebase records remain in the same project. The app still waits for Google identity, family access verification and cloud loading; slower real network responses may still delay refresh.
+Apply the update notice in the browser or installed app and confirm version **2026.10.25.14** under Settings → App & updates. The worker cache is release 83. Verify the shared review state on a second signed-in device. See REVIEW_SYNC.md for migration, offline conflict handling and payment verification semantics.

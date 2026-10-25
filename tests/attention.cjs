@@ -6,3 +6,7 @@ const record={id:'a',current:100};const view={pf:[record]},meta={valuations:{'pf
 const row={id:'r',accountId:'a',investmentType:'pf',date:'2026-10-01',amount:10,automatic:true};const d={...empty,retirementContributions:[row]};assert(c.items(d,view,{},today).some(x=>x.key==='automatic'));assert(!c.items(d,{pf:[]},{},today).some(x=>x.key==='automatic'));assert(!c.items(d,view,{confirmedEntries:{[c.check(row)]:true}},today).some(x=>x.key==='automatic'));
 assert.equal(c.items(empty,{}, {},today,{pending:true}).length,0);assert.equal(c.items(empty,{}, {},today,{blocked:true})[0].key,'sync');
 console.log('PASS empty state, current versus past month, valuation changes/invalid dates, profile filtering, statement checks and sync deduplication');
+
+const paid={status:'paid',amount:10,epsAmount:2};row.epsAmount=2;const paidMeta={paymentStatus:{[c.check(row)]:paid}};assert(!c.items(d,view,paidMeta,today).some(x=>x.key==='automatic'));row.epsAmount=3;assert(c.items(d,view,paidMeta,today).some(x=>x.key==='automatic'));
+
+assert.equal(c.items(empty,{}, {},today,{reviewProblem:true})[0].key,'reviews');

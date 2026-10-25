@@ -1,6 +1,8 @@
 import {initializeApp} from './vendor/firebase-app.js';
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
-import {getFirestore,doc,getDocFromServer,writeBatch,runTransaction,onSnapshot} from './vendor/firebase-firestore.js';
+import {getFirestore,doc,getDocFromServer,writeBatch,runTransaction,onSnapshot,serverTimestamp} from './vendor/firebase-firestore.js';
+import {installReviewSync} from './review-sync.js?v=83';
+import {reviewValues,applyReviewPatch} from './review-model.js?v=83';
 import {installRecordSearch} from './record-search.js?v=82';
 import {installAttention} from './attention.js?v=81';
 import {installFinanceWorkbench} from './finance-workbench.js?v=79';
@@ -92,8 +94,32 @@ onAuthStateChanged(auth,async user=>{
   document.getElementById('cloudSaveRetry').addEventListener('click',()=>window.financeBridge?.retry());
   document.getElementById('cloudRefresh').addEventListener('click',()=>window.financeBridge?.refreshRemote().catch(error=>alert(friendly(error))));
   window.financeCloud.inspectVersion=async()=>{assertAccess();const reader=createCloudStore(api,family.ownerUid,user.uid);const envelope=await reader.load();return {envelope,revision:reader.revision};};
+  const reviewRef=doc(db,'users/'+family.ownerUid+'/reviews/current');
+  const decodeReviews=snapshot=>{const data=snapshot.exists()?snapshot.data():null;return {values:reviewValues(data?JSON.parse(data.payload):{}),revision:data?.revision||0,epoch:data?.epoch||'initial',fromCache:snapshot.metadata?.fromCache===true};};
+  async function saveReviews(patch){
+    let observed=-1;
+    for(let attempt=0;attempt<4;attempt++){
+      try{return await runTransaction(db,async transaction=>{
+        assertAccess();if(!family.canEdit)throw Error('Viewer access cannot change reviews.');
+        const current=decodeReviews(await transaction.get(reviewRef));observed=current.revision;
+        if(patch.some(p=>p.epoch!==current.epoch))throw Object.assign(Error('Shared reviews were reset. Export pending changes, then reload reviews.'),{code:'tracker/review-conflict'});
+        const values=applyReviewPatch(current.values,patch),revision=current.revision+1;
+        transaction.set(reviewRef,{format:1,revision,epoch:current.epoch,payload:JSON.stringify(values),updatedBy:user.uid,updatedAt:serverTimestamp()});return {values,revision,epoch:current.epoch};
+      });}catch(error){
+        if(!/permission-denied|aborted/.test(error.code||'')||attempt===3)throw error;
+        assertAccess();const latest=decodeReviews(await getDocFromServer(reviewRef));if(!family.canEdit||latest.revision<=observed)throw error;
+      }
+    }
+  }
+  async function resetReviews(marker){
+    let observed=-1;for(let attempt=0;attempt<4;attempt++){
+      try{return await runTransaction(db,async transaction=>{assertAccess();if(!family.canManage)throw Error('Only the owner can clear shared reviews.');const current=decodeReviews(await transaction.get(reviewRef));observed=current.revision;if(current.epoch===marker)return current;const revision=current.revision+1;transaction.set(reviewRef,{format:1,revision,epoch:marker,payload:'{}',updatedBy:user.uid,updatedAt:serverTimestamp()});return {values:{},revision,epoch:marker};});}
+      catch(error){if(!/permission-denied|aborted/.test(error.code||'')||attempt===3)throw error;assertAccess();const latest=decodeReviews(await getDocFromServer(reviewRef));if(!family.canManage||latest.revision<=observed)throw error;}
+    }
+  }
+  const reviewApi={subscribe:(next,error)=>onSnapshot(reviewRef,{includeMetadataChanges:true},snapshot=>{try{next(decodeReviews(snapshot));}catch(e){error(e);}},error),load:async()=>decodeReviews(await getDocFromServer(reviewRef)),save:saveReviews,reset:resetReviews};
   window.financeCloudResolve();
-  Promise.resolve(window.trackerReady).then(()=>{const css=document.createElement('link');css.rel='stylesheet';css.href='./workbench.css?v=79';document.head.append(css);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();}).catch(error=>console.warn('Workbench unavailable',error));
+  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);const css=document.createElement('link');css.rel='stylesheet';css.href='./workbench.css?v=79';document.head.append(css);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();}).catch(error=>console.warn('Workbench unavailable',error));
   Promise.resolve(window.trackerReady).then(installRecordRecovery).catch(error=>console.warn('Record recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(installWorkProtection).catch(error=>console.warn('Draft recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>installCloudNotice((next,error)=>onSnapshot(doc(db,'users/'+family.ownerUid+'/tracker/current'),snapshot=>next(snapshot.exists()?snapshot.data():null),error))).catch(error=>console.warn('Live cloud notice unavailable',error));

@@ -1,9 +1,9 @@
 {
-  "version": "2026.10.25.13",
+  "version": "2026.10.25.14",
   "released": "2026-10-25",
   "releaseNotes": [
-    "Added on-device record search across income, expenses, investments, debts and retirement accounts.",
-    "Search by name, category, date or amount, filter by type and open the relevant page or historical month.",
-    "Search respects selected family profiles; household expenses remain shared."
+    "Review marks and goal planning now sync across devices with offline recovery and conflict checks.",
+    "Edit automatically posted contribution amounts before marking payments as statement-confirmed; confirmation never posts twice.",
+    "Successful direct form saves clear only their completed drafts and preserve unrelated or newly typed work."
   ]
 }

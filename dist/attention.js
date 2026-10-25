@@ -3,6 +3,7 @@ export function attentionItems(data,visible,meta,today,sync={}){
  const items=[],current=today.slice(0,7),totals=cashflowIndex(data),balanceMonths=new Set((data.monthlyBalances||[]).map(r=>r.month));const active=m=>{const r=totals.get(m);return balanceMonths.has(m)||r&&(r.income!==0||r.expenses!==0||r.stallion!==0);};
  if(sync.blocked)items.push({key:'sync',label:'Cloud sync needs review',action:'syncDetails'});
  else if(sync.dirty)items.push({key:'sync',label:'Device save needs attention',action:'syncDetails'});
+ if(sync.reviewProblem)items.push({key:'reviews',label:'Shared review sync needs attention',action:'syncDetails'});
  // Pending uploads and temporary offline state already have a sync indicator; do not duplicate them here.
  const months=[...totals.keys()].filter(m=>m<=current&&active(m)).sort().reverse();
  const incomplete=months.filter(m=>{const r=monthClose(data,m,totals);return m===current?r.opening===null:!r.complete;});
@@ -12,7 +13,7 @@ export function attentionItems(data,visible,meta,today,sync={}){
  if(missing)items.push({key:'valuations',label:missing+' valuation'+(missing===1?' needs':'s need')+' confirmation',action:'valuations'});
  const ids=new Set(Object.values(visible).flat().map(r=>r.id));
  const automatic=[...(data.retirementContributions||[]),...(data.investmentContributions||[]),...(data.stallionContributions||[])].filter(r=>r.automatic===true&&r.date?.slice(0,7)===current&&ids.has(r.accountId||r.investmentId||r.stallionId));
- const unchecked=automatic.filter(r=>!meta.confirmedEntries?.[automaticCheckKey(r)]).length;
+ const unchecked=automatic.filter(r=>{const key=automaticCheckKey(r),paid=meta.paymentStatus?.[key];return paid?paid.status!=='paid'||paid.amount!==r.amount||(paid.epsAmount||0)!==(r.epsAmount||0):!meta.confirmedEntries?.[key];}).length;
  if(unchecked)items.push({key:'automatic',label:unchecked+' automatic entr'+(unchecked===1?'y needs':'ies need')+' a statement check',action:'monthly',month:current});
  return items;
 }
@@ -23,7 +24,7 @@ export function installAttention(){
  function render(){
   if(!host.classList.contains('active'))return;
   const visible=Object.fromEntries(['investments','pf','ppf','nps'].map(kind=>[kind,profileRows(state[kind]||[])]));
-  const items=attentionItems(state,visible,{valuations:read('valuations'),confirmedEntries:read('confirmedEntries')},localDateKey(),{blocked:cloudSaveBlocked,dirty:persistenceDirty&&!pendingSaves});
+  const items=attentionItems(state,visible,{valuations:read('valuations'),confirmedEntries:read('confirmedEntries'),paymentStatus:read('paymentStatus')},localDateKey(),{blocked:cloudSaveBlocked,dirty:persistenceDirty&&!pendingSaves,reviewProblem:window.financeReviews?.problem()});
   box.hidden=items.length===0;summary.textContent='Needs attention · '+items.length;list.replaceChildren();
   for(const item of items){const row=document.createElement('div');row.className='finance-attention-row';const label=document.createElement('span');label.textContent=item.label;const button=document.createElement('button');button.type='button';button.className='btn-small';button.textContent='Review';button.setAttribute('aria-label','Review: '+item.label);button.onclick=()=>window.financeWorkbench?.[item.action]?.(item.month);row.append(label,button);list.append(row);}
  }
