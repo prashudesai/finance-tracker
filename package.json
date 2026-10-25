@@ -1,0 +1,8 @@
+{
+  "name": "personal-finance-tracker",
+  "version": "2026.10.24-5",
+  "private": true,
+  "scripts": {
+    "test": "node tests/first-emi.cjs && node tests/recurring.cjs && node tests/loan-ledger.cjs && node tests/state-loans.cjs && node tests/cloud-store.cjs && node tests/family-policy.cjs && node tests/pwa-worker.cjs && node tests/pwa-client.cjs && node tests/audit.cjs && node tests/recurring-performance.cjs && node tests/app-info-startup.cjs && node tests/startup-render.cjs"
+  }
+}

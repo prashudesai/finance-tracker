@@ -1,0 +1,28 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),path=require('path');
+const code=fs.readFileSync(path.join(__dirname,'../dist/pwa-client.js'),'utf8');
+const tick=()=>new Promise(r=>setImmediate(r));
+function harness(opts={}){
+ const ids=Object.fromEntries(['pwaStatus','pwaCheckUpdate','pwaApplyUpdate'].map(id=>[id,{textContent:'',hidden:id==='pwaApplyUpdate',disabled:false,handlers:{},addEventListener(t,f){this.handlers[t]=f;}}]));
+ const events={},swEvents={},regEvents={};let reloads=0,confirmations=0,messages=0,updates=0;
+ const waiting={postMessage(){messages++;}};
+ const registration={waiting:opts.waiting?waiting:null,installing:null,async update(){updates++;if(opts.updateFail)throw Error('offline');},addEventListener:(n,f)=>regEvents[n]=f};
+ const serviceWorker={register:async()=>{if(opts.registerFail)throw Error('bad');return registration;},ready:opts.ready||Promise.resolve(registration),addEventListener:(n,f)=>swEvents[n]=f};
+ const context={document:{getElementById:id=>ids[id]},navigator:{serviceWorker,onLine:true},window:{matchMedia:()=>({matches:false,addEventListener(){}}),isSecureContext:opts.secure!==false,addEventListener:(n,f)=>events[n]=f},location:{reload:()=>reloads++},confirm:()=>{confirmations++;return opts.confirm!==false;},saveQueue:opts.saveQueue||Promise.resolve(true),persistenceDirty:false,pendingSaves:0,storageLoadFailed:false,dataOperationBusy:false};
+ vm.runInNewContext(code,context);
+ return{ids,context,registration,events,swEvents,regEvents,waiting,click:id=>ids[id].handlers.click(),get reloads(){return reloads;},get confirmations(){return confirmations;},get messages(){return messages;},get updates(){return updates;}};
+}
+const results=[];async function test(name,fn){try{await fn();results.push({name,status:'PASS'});}catch(e){results.push({name,status:'FAIL',error:e.message});}}
+(async()=>{
+ await test('Offline-ready status follows worker readiness',async()=>{let resolve;const h=harness({ready:new Promise(r=>resolve=r)});await tick();assert.match(h.ids.pwaStatus.textContent,/Preparing/);resolve();await tick();assert.match(h.ids.pwaStatus.textContent,/App ready/);});
+ await test('Network state updates status',async()=>{const h=harness();await tick();h.context.navigator.onLine=false;h.events.offline();assert.match(h.ids.pwaStatus.textContent,/^Offline ·/);h.context.navigator.onLine=true;h.events.online();assert.match(h.ids.pwaStatus.textContent,/App ready/);});
+ await test('Insecure context explains setup limitation',async()=>{const h=harness({secure:false});await tick();assert(h.ids.pwaCheckUpdate.disabled);assert.match(h.ids.pwaStatus.textContent,/HTTPS/);});
+ await test('Registration failure is visible',async()=>{const h=harness({registerFail:true});await tick();assert.match(h.ids.pwaStatus.textContent,/could not finish/);});
+ await test('Waiting update enables explicit apply button',async()=>{const h=harness({waiting:true});await tick();assert.equal(h.ids.pwaApplyUpdate.hidden,false);assert.match(h.ids.pwaStatus.textContent,/update is ready/);});
+ await test('Checking for updates succeeds and handles offline failure',async()=>{for(const updateFail of [false,true]){const h=harness({updateFail});await tick();await h.click('pwaCheckUpdate');assert.equal(h.updates,1);assert.equal(h.ids.pwaCheckUpdate.disabled,false);if(updateFail)assert.match(h.ids.pwaStatus.textContent,/Unable to check/);}});
+ for(const flag of ['persistenceDirty','pendingSaves','storageLoadFailed','dataOperationBusy'])await test('Update is blocked while '+flag,async()=>{const h=harness({waiting:true});await tick();h.context[flag]=true;await h.click('pwaApplyUpdate');assert.equal(h.messages,0);assert.equal(h.reloads,0);assert.match(h.ids.pwaStatus.textContent,/Finish saving/);});
+ await test('Cancel update preserves current page',async()=>{const h=harness({waiting:true,confirm:false});await tick();await h.click('pwaApplyUpdate');assert.equal(h.messages,0);h.swEvents.controllerchange();assert.equal(h.reloads,0);});
+ await test('Explicit update waits for pending save then requests one reload',async()=>{let resolve;const h=harness({waiting:true,saveQueue:new Promise(r=>resolve=r)});await tick();const task=h.click('pwaApplyUpdate');await tick();assert.equal(h.messages,0);resolve();await task;assert.equal(h.messages,1);h.swEvents.controllerchange();assert.equal(h.reloads,1);});
+ await test('Update in another window never forces this page to reload',async()=>{const h=harness();await tick();h.swEvents.controllerchange();assert.equal(h.reloads,0);});
+ await test('Rapid repeated update clicks request activation once',async()=>{let resolve;const h=harness({waiting:true,saveQueue:new Promise(r=>resolve=r)});await tick();const a=h.click('pwaApplyUpdate'),b=h.click('pwaApplyUpdate');resolve();await Promise.all([a,b]);assert.equal(h.messages,1);assert.equal(h.confirmations,1);});
+ const report={passed:results.filter(r=>r.status==='PASS').length,failed:results.filter(r=>r.status==='FAIL').length,results};console.log(JSON.stringify(report,null,2));if(report.failed)process.exitCode=1;
+})();

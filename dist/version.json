@@ -1,0 +1,14 @@
+{
+  "version": "2026.10.24.35",
+  "released": "2026-10-24",
+  "releaseNotes": [
+    "Refreshed the sign-in screen with a responsive forest-green and mint design; Google sign-in remains unchanged.",
+    "Updated the installed-app icon to the selected wallet with a rising chart and arrow.",
+    "Full-project audit: removed obsolete named-record deletion and old backup migration paths.",
+    "Daily-interest balances now record their calculation date, validate the saved snapshot, and advance correctly across month-end without duplicate capitalization.",
+    "Faster PMS synchronization and loan-payment split updates using indexed lookups.",
+    "New-loan interest input accepts 0.05 percentage-point increments.",
+    "Loan history keeps per-loan PDF, Excel-compatible CSV and print exports, newest-first viewing and oldest-first export order; paid-off balances print as zero.",
+    "Expanded calculation, backup, family access, offline/update, mobile/desktop, profile-photo and export regression tests."
+  ]
+}

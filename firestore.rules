@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function verified() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && !exists(/databases/$(database)/documents/deletedAccounts/$(request.auth.uid));
+    }
+    function owns(uid) { return verified() && request.auth.uid == uid; }
+    function member(uid) {
+      return get(/databases/$(database)/documents/familyInvites/$(uid + '~' + request.auth.token.email.lower())).data;
+    }
+    function canRead(uid) {
+      return !exists(/databases/$(database)/documents/deletedAccounts/$(uid)) && (owns(uid) || (verified() && member(uid).ownerUid == uid
+        && member(uid).email == request.auth.token.email.lower()
+        && member(uid).status == 'accepted'
+        && member(uid).role in ['viewer', 'editor']));
+    }
+    function canEdit(uid) {
+      return !exists(/databases/$(database)/documents/deletedAccounts/$(uid)) && (owns(uid) || (verified() && member(uid).ownerUid == uid
+        && member(uid).email == request.auth.token.email.lower()
+        && member(uid).status == 'accepted' && member(uid).role == 'editor'));
+    }
+    function validInvite(id, data) {
+      return data.keys().hasOnly(['ownerUid','ownerEmail','email','role','status'])
+        && data.ownerUid is string && data.ownerUid.matches('^[A-Za-z0-9_-]+$') && data.ownerEmail is string && data.email is string
+        && data.email.size() <= 254 && data.email == data.email.lower()
+        && data.email.matches('^[^ /@]+@[^ /@]+[.][^ /@]+$')
+        && id == data.ownerUid + '~' + data.email
+        && data.role in ['viewer','editor'] && data.status in ['pending','accepted'];
+    }
+    match /familyInvites/{id} {
+      allow get: if verified() && request.auth.uid.matches('^[A-Za-z0-9_-]+$') && id.matches('^' + request.auth.uid + '~.*$');
+      allow get, list: if verified() && (resource.data.ownerUid == request.auth.uid
+        || resource.data.email == request.auth.token.email.lower());
+      allow create: if verified() && validInvite(id, request.resource.data)
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerEmail == request.auth.token.email.lower()
+        && request.resource.data.email != request.auth.token.email.lower()
+        && request.resource.data.status == 'pending';
+      allow update: if verified() && validInvite(id, request.resource.data)
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.ownerEmail == resource.data.ownerEmail
+        && request.resource.data.email == resource.data.email
+        && ((resource.data.ownerUid == request.auth.uid
+          && request.resource.data.status == resource.data.status)
+          || (resource.data.email == request.auth.token.email.lower()
+          && resource.data.status == 'pending' && request.resource.data.status == 'accepted'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])));
+      allow delete: if owns(resource.data.ownerUid);
+    }
+    // Account photo belongs only to the signed-in person, including family viewers.
+    match /users/{uid}/profile/photo {
+      allow read: if owns(uid);
+      allow create, update: if owns(uid)
+        && request.resource.data.keys().hasOnly(['image'])
+        && request.resource.data.image is string
+        && request.resource.data.image.size() <= 120000
+        && (request.resource.data.image == '' || request.resource.data.image.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$'));
+      allow delete: if owns(uid);
+    }
+    match /users/{uid}/tracker/current {
+      allow read: if canRead(uid);
+      allow create: if canEdit(uid) && request.resource.data.format == 1
+        && request.resource.data.revision == 1;
+      allow update: if canEdit(uid) && request.resource.data.format == 1
+        && request.resource.data.revision == resource.data.revision + 1
+        && (owns(uid) || (request.resource.data.previous.generation == resource.data.generation
+          && request.resource.data.previous.count == resource.data.count));
+    }
+    match /users/{uid}/snapshots/{snapshot}/chunks/{chunk} {
+      allow read: if canRead(uid);
+      allow delete: if owns(uid);
+      allow create: if canEdit(uid)
+        && request.resource.data.keys().hasOnly(['payload'])
+        && request.resource.data.payload is string
+        && request.resource.data.payload.size() <= 250000;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

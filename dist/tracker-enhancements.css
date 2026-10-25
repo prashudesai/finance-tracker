@@ -1,0 +1,30 @@
+.tracker-review-dialog{box-sizing:border-box;width:min(760px,calc(100% - 24px));max-height:90dvh;padding:0;border:1px solid var(--border);border-radius:16px;background:var(--card-bg);color:var(--text);box-shadow:0 20px 80px #0006;overflow:auto;}
+.tracker-review-dialog::backdrop{background:#020617b8;backdrop-filter:blur(3px);}
+.tracker-review-dialog>header{position:sticky;top:0;z-index:1;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;background:var(--card-bg);border-bottom:1px solid var(--border);}
+.tracker-review-dialog h2{font-size:20px;margin:0;}.tracker-review-dialog header button{font-size:25px;min-width:44px;min-height:44px;padding:4px 10px;}
+.tracker-review-content{padding:16px 20px;overflow-wrap:anywhere;}.tracker-review-content>p{line-height:1.6;}.tracker-review-content details{padding:10px 0;border-bottom:1px solid var(--border);}.tracker-review-content summary{cursor:pointer;line-height:1.5;}
+.tracker-review-content pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto;}.tracker-review-content>button{display:block;min-height:48px;width:100%;margin:10px 0;}
+.tracker-review-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}.tracker-review-dialog>footer{padding:16px 20px;border-top:1px solid var(--border);background:var(--card-bg);}.tracker-review-actions button{min-height:44px;}
+.tracker-review-table{max-width:100%;overflow-x:auto;}.tracker-review-table table{width:100%;min-width:450px;margin:10px 0;}.tracker-review-table th,.tracker-review-table td{font-size:13px;padding:10px 8px;text-align:right;}.tracker-review-table th:first-child,.tracker-review-table td:first-child{text-align:left;}
+.tracker-review-warning{border-left:3px solid var(--warning);padding:10px 12px;background:var(--bg);}.tracker-review-confirm{display:flex;align-items:center;gap:12px;padding:16px 0;line-height:1.6;}.tracker-review-confirm input{flex:0 0 22px;width:22px;height:22px;}
+.tracker-money-list{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;}.tracker-money-list dt{overflow-wrap:anywhere;}.tracker-money-list dd{margin:0;font-weight:650;font-variant-numeric:tabular-nums;}
+.tracker-quick-add{display:none;margin:0 0 16px auto;min-height:44px;}
+@media(max-width:700px){.tracker-quick-add{display:block;}}
+@media(max-width:600px){.tracker-review-dialog{max-height:92dvh;}.tracker-review-dialog>header,.tracker-review-dialog>footer,.tracker-review-content{padding:14px;}.tracker-review-dialog h2{font-size:18px;}.tracker-money-list{gap:10px;font-size:13px;}.tracker-review-actions{flex-direction:column;align-items:stretch;}.tracker-review-dialog>footer button{width:100%;}}
+
+#appInfoCalculations{padding:14px 0;border-bottom:1px solid var(--border);}#appInfoCalculations>summary{font-weight:650;cursor:pointer;line-height:1.6;}#appInfoCalculations .tracker-review-actions{margin:12px 0;}
+
+/* Navigation follows light mode; the existing dark navigation is unchanged. */
+html[data-theme="light"] body.advanced-layout .nav-tabs{background:var(--card-bg);border-color:var(--border);box-shadow:0 0 18px rgba(15,35,50,.08);}
+html[data-theme="light"] body.advanced-layout .nav-tab{color:var(--text-light);}
+html[data-theme="light"] body.advanced-layout .nav-tab:hover{color:var(--text);background:var(--primary-light);}
+html[data-theme="light"] body.advanced-layout .nav-tab.active{color:var(--primary-dark);background:var(--primary-light);box-shadow:inset 3px 0 0 var(--primary);}
+html[data-theme="light"] body.advanced-layout .family-profile-sidebar-brand{border-color:var(--border);}
+html[data-theme="light"] body.advanced-layout .family-profile-sidebar-title{color:var(--text);}
+html[data-theme="light"] body.advanced-layout .family-profile-sidebar-label{color:var(--primary-dark);background:var(--primary-light);border-color:color-mix(in srgb,var(--primary) 25%,var(--border));}
+html[data-theme="light"] body.advanced-layout .family-profile-sidebar-label::before{background:var(--primary);}
+html[data-theme="light"] body.advanced-layout .nav-tabs::after{color:var(--text-light);border-color:var(--border);}
+html[data-theme="light"] body.advanced-layout .mobile-nav-page{color:var(--text-light);}
+html[data-theme="light"] body.advanced-layout .mobile-nav-page:active:not(:disabled){color:var(--primary-dark);background:var(--primary-light);}
+html[data-theme="light"] body.advanced-layout .mobile-nav-page:focus-visible{outline-color:var(--primary);}
+html[data-theme="light"] body.advanced-layout .mobile-nav-reveal{color:var(--text);background:var(--card-bg);border-color:var(--border);box-shadow:0 2px 9px rgba(15,35,50,.12);}
