@@ -1,8 +1,8 @@
 // Only app files belong in this cache. Finance records stay in IndexedDB.
-const CACHE_NAME = 'personal-finance-tracker-shell-cloud-v78';
+const CACHE_NAME = 'personal-finance-tracker-shell-cloud-v79';
 const SCOPE = new URL('./', self.location.href);
 const SHELL = new URL('index.html', SCOPE).href;
-const APP_SHELL = ['record-recovery.js?v=77', 'work-protection.js?v=76', 'cloud-notice.js?v=75', 'recurring.js?v=66', 'recurring-ui.js?v=66', 'account-photo.js?v=66', 'index.html', 'app-style.css?v=66', 'app-style.js?v=66', 'app-info.js?v=66', 'loan-ledger.js?v=66', 'vendor/jspdf.umd.min.js', 'firebase-client.js?v=66', 'firebase-store.js?v=66', 'family-access.js?v=66', 'vendor/firebase-app.js', 'vendor/firebase-auth.js', 'vendor/firebase-firestore.js', 'pwa-client.js?v=66', 'tracker-enhancements.js?v=66', 'tracker-enhancements.css?v=66', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'images/signin-light-desktop.webp', 'images/signin-light-mobile.webp'].map(path => new URL(path, SCOPE).href);
+const APP_SHELL = ['finance-model.js?v=79', 'finance-workbench.js?v=79', 'experience.js?v=79', 'workbench.css?v=79', 'record-recovery.js?v=77', 'work-protection.js?v=76', 'cloud-notice.js?v=75', 'recurring.js?v=66', 'recurring-ui.js?v=66', 'account-photo.js?v=66', 'index.html', 'app-style.css?v=66', 'app-style.js?v=66', 'app-info.js?v=66', 'loan-ledger.js?v=66', 'vendor/jspdf.umd.min.js', 'firebase-client.js?v=66', 'firebase-store.js?v=66', 'family-access.js?v=66', 'vendor/firebase-app.js', 'vendor/firebase-auth.js', 'vendor/firebase-firestore.js', 'pwa-client.js?v=66', 'tracker-enhancements.js?v=66', 'tracker-enhancements.css?v=66', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'images/signin-light-desktop.webp', 'images/signin-light-mobile.webp'].map(path => new URL(path, SCOPE).href);
 const STATIC_URLS = new Set(APP_SHELL);
 const NAVIGATION_TIMEOUT_MS = 3000;
 self.addEventListener('install', event => {

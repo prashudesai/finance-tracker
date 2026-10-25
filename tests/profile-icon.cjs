@@ -1,0 +1,10 @@
+const fs=require('fs'),vm=require('vm'),A=require('assert/strict');
+const source=fs.readFileSync(__dirname+'/../dist/account-photo.js','utf8');
+const fn=source.slice(source.indexOf('  function render(){'),source.indexOf("  window.addEventListener('pft-profile-view-change'"));
+const classes=new Set(['has-account-photo']);const button={dataset:{familyProfileView:'combined',householdIcon:'GROUP'},innerHTML:'PHOTO',classList:{remove:x=>classes.delete(x),toggle:(x,on)=>on?classes.add(x):classes.delete(x)},replaceChildren(x){this.innerHTML=x}};
+const ctx={originals:new Map([[button,'PERSON']]),source:'SAVED_PHOTO',image:()=> 'PHOTO',avatar:{replaceChildren(){}},choose:{},remove:{},busy:false};vm.createContext(ctx);vm.runInContext(fn+'render()',ctx);
+A.equal(button.innerHTML,'GROUP');A(!classes.has('has-account-photo'));
+button.dataset.familyProfileView='personal';vm.runInContext('render()',ctx);A.equal(button.innerHTML,'PHOTO');A(classes.has('has-account-photo'));
+button.dataset.familyProfileView='combined';vm.runInContext('render()',ctx);A.equal(button.innerHTML,'GROUP');
+ctx.source='';button.dataset.familyProfileView='personal';vm.runInContext('render()',ctx);A.equal(button.innerHTML,'PERSON');
+console.log('PASS Combined group icon, personal photo restoration and no-photo fallback');

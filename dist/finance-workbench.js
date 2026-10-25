@@ -1,0 +1,57 @@
+import {cashflowIndex,monthClose,realValue,valuationStatus} from './finance-model.js?v=79';
+export function installFinanceWorkbench(){
+ // Use one shared model for monthly helpers and recalculated house expense.
+ monthTotals=month=>({...cashflowIndex(state).get(month)||{income:0,expenses:0,stallion:0},retirement:retirementOutflow(month)});
+ buildMonthlyTotalsIndex=()=>{const index=cashflowIndex(state);for(const [m,row]of index)row.retirement=retirementOutflow(m);return index;};
+ recalculateHouseExpenses=()=>{const index=cashflowIndex(state);state.monthlyBalances.sort((a,b)=>b.month.localeCompare(a.month));for(const b of state.monthlyBalances){const r=monthClose(state,b.month,index);b.houseExpense=r.house;b.houseExpenseNextMonth=r.complete?nextMonthKey(b.month):null;}return index;};
+ function nextMonthKey(m){const[y,n]=m.split('-').map(Number);return `${n===12?y+1:y}-${String(n===12?1:n+1).padStart(2,'0')}`;}
+ const read=key=>{try{const value=JSON.parse(trackerStorage.getItem('workbench:'+key)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch(_){return {};}};
+ const write=(key,data)=>trackerStorage.setItem('workbench:'+key,JSON.stringify(data));
+ const add=(parent,tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;parent.append(e);return e;};
+ const button=(parent,text,fn)=>{const b=add(parent,'button',text);b.type='button';b.className='btn-small';b.onclick=()=>Promise.resolve().then(fn).catch(error=>{const msg=add(parent,'p',error.message);msg.setAttribute('role','alert');});return b;};
+ const dialog=document.createElement('dialog');dialog.id='financeWorkbenchDialog';dialog.className='finance-workbench-dialog';document.body.append(dialog);
+ function open(title){if(dialog.open||dataOperationBusy)return false;dialog.replaceChildren();const heading=add(dialog,'h2',title);heading.id='workbenchHeading';dialog.setAttribute('aria-labelledby',heading.id);button(dialog,'Close',()=>dialog.close());dialog.showModal();return true;}
+ function table(parent,rows){const dl=add(parent,'dl');dl.className='finance-workbench-values';for(const [key,value]of rows){add(dl,'dt',key);add(dl,'dd',value);}return dl;}
+ function field(parent,label,type,value){const wrap=add(parent,'label',label),e=add(wrap,'input');e.type=type;e.value=value;e.setAttribute('aria-label',label);return e;}
+ function monthly(){if(!open('Monthly close'))return;const input=field(dialog,'Month','month',currentMonthKey()),body=add(dialog,'section');
+  const render=()=>{body.replaceChildren();const r=monthClose(state,input.value);const money=n=>n===null?'Missing':formatCurrency(n);
+   table(body,[['Opening balance',money(r.opening)],['Recorded income',money(r.income)],['Recorded expenses (including EMIs)',money(r.expenses)],['PMS contributions',money(r.stallion)],['Available before unrecorded house spending',money(r.available)],['Closing balance (next month opening)',money(r.closing)],['Residual house expense',money(r.house)]]);
+   const status=add(body,'p',r.complete?'Opening and closing balances are present.':'Add the missing month opening balance in Surplus History before closing.');status.setAttribute('role','status');
+   const signature=JSON.stringify(r),saved=read('closedMonths')[r.month];if(saved)add(body,'p',saved.signature===signature?'Reviewed on this device: '+new Date(saved.at).toLocaleString():'Records changed since your last review.');
+   const mark=button(body,'Mark reviewed on this device',()=>{const data=read('closedMonths');data[r.month]={signature,at:new Date().toISOString()};write('closedMonths',data);render();});mark.disabled=!r.complete;
+   const scheduled=[...(state.retirementContributions||[]),...(state.investmentContributions||[]),...(state.stallionContributions||[])].filter(x=>x.automatic===true&&x.date?.startsWith(r.month));
+   if(scheduled.length){const detail=add(body,'details');add(detail,'summary',scheduled.length+' automatic entries to review');for(const row of scheduled){const box=add(detail,'div'),key=JSON.stringify([row.investmentType||'',row.accountId||row.investmentId||row.stallionId||'',row.id,row.date,row.amount]),confirmed=read('confirmedEntries');add(box,'span',`${row.investmentType||'Investment'} · ${row.date} · ${formatCurrency(row.amount)} · ${confirmed[key]?'Checked on this device':'Scheduled / not checked'}`);button(box,'Confirm against statement',()=>{const data=read('confirmedEntries');data[key]=true;write('confirmedEntries',data);render();});}}
+  };input.onchange=render;render();
+ }
+ function valuations(){if(!open('Valuation freshness'))return;add(dialog,'p','Confirmation dates are stored on this device; changing a balance requires confirmation again.');const stamps=read('valuations');
+  for(const kind of ['investments','pf','ppf','nps'])for(const row of profileRows(state[kind]||[])){const card=add(dialog,'section');const key=kind+':'+row.id;add(card,'h3',row.name||row.account||row.scheme||row.type||kind.toUpperCase());add(card,'p',formatCurrency(row.current));const status=add(card,'p',valuationStatus(row,stamps[key],localDateKey()));const returns=add(card,'details');add(returns,'summary','Return basis');const gain=Number(row.current)-Number(row.invested??row.current);table(returns,[['Gain / loss',formatCurrency(gain)]]);if(kind==='nps'||kind==='investments'){const xirr=kind==='nps'?npsXirr(row):row.type==='Stallion PMS'?stallionXirr(row):investmentXirr(row);add(returns,'p',xirr===null?'XIRR unavailable: check dated contributions and the opening investment balance.':'XIRR from dated cash flows: '+(xirr*100).toFixed(2)+'%');add(returns,'p','CAGR compares opening and closing amounts; XIRR accounts for dated contributions. Neither is a forecast.');}const input=field(card,'Valuation date','date',stamps[key]?.date||localDateKey());button(card,'Confirm value as of date',()=>{if(!validCalendarDate(input.value)||input.value>localDateKey())throw Error('Choose a valid date through today.');stamps[key]={date:input.value,value:row.current};write('valuations',stamps);status.textContent=valuationStatus(row,stamps[key],localDateKey());});}
+ }
+ function planning(){if(!open('Portfolio goal planner'))return;const saved=read('planning');
+  const years=field(dialog,'Years to goal','number',saved.years||5);years.min='1';years.max='40';
+  const inflation=field(dialog,'Annual inflation assumption (%)','number',saved.inflation??6);inflation.min='0';inflation.max='30';inflation.step='0.1';
+  const target=field(dialog,'Portfolio goal in today’s rupees','number',saved.target||'');target.min='0';
+  const body=add(dialog,'section');body.setAttribute('aria-live','polite');
+  button(dialog,'Calculate scenarios',()=>{const y=Number(years.value),i=Number(inflation.value),t=Number(target.value);if(!years.value||!inflation.value||!Number.isInteger(y)||y<1||y>40||!Number.isFinite(t)||t<0)throw Error('Enter valid years, inflation and a nonnegative target.');realValue(0,i,y);
+   const assets=growthProjectionAssets(),results=['stress','base','optimistic'].map(s=>{const nominal=runGrowthProjection(assets,y,s).ending;return {scenario:s,nominal,real:realValue(nominal,i,y)};});body.replaceChildren();
+   add(body,'p','Selected profile: '+(isCombinedFamilyProfile()?'Combined family':activeFamilyProfile)+'. Portfolio only; debt and gratuity excluded. Uses your existing projection assumptions.');
+   for(const r of results)table(body,[[r.scenario+' · projected portfolio',formatCurrency(r.nominal)],['In today’s rupees',formatCurrency(r.real)],...(t>0?[['Gap to goal in today’s rupees',formatCurrency(Math.max(0,t-r.real))]]:[])]);
+   write('planning',{years:y,inflation:i,target:t});
+  });
+ }
+ function commitments(){if(!open('Upcoming recorded commitments'))return;const today=localDateKey(),end=new Date(today+'T12:00:00');end.setDate(end.getDate()+60);const until=end.toISOString().slice(0,10);const rules=new Map((state.recurringRules||[]).map(r=>[r.id,r]));const due=PFT_RECURRING.pending(state,until);if(!due.length)add(dialog,'p','No pending recurring items in the next 60 days.');for(const row of due){const rule=rules.get(row.ruleId);table(dialog,[[rule?.name||row.ruleId,row.date],['Type',rule?.kind||''],['Amount',Number.isFinite(row.amount)?formatCurrency(row.amount):'From loan schedule'],['Status',row.existing?'Recorded match; review in recurring entries':row.date<today?'Overdue / not recorded':'Scheduled / not recorded']]);}}
+ function syncDetails(){if(!open('Sync details'))return;const pending=Boolean(syncRecord?.pending||pendingSaves||persistenceDirty);table(dialog,[['Device save',persistenceDirty?'Needs attention':pendingSaves?'Saving':'Saved'],['Cloud',cloudSaveBlocked?'Review conflict or access':pending?'Pending':navigator.onLine?'Synced':'Offline'],['Last cloud sync',syncRecord?.lastCloudUpdated?new Date(syncRecord.lastCloudUpdated).toLocaleString():'Not recorded']]);button(dialog,'Retry sync',async()=>{await window.financeBridge.retry();dialog.close();syncDetails();});button(dialog,'Export device backup',()=>window.financeBridge.exportUnsaved());if(cloudSaveBlocked)button(dialog,'Review conflict',()=>{dialog.close();window.resolveTrackerConflict?.();});}
+ function audit(){if(!open('Check financial totals'))return;const issues=[],index=buildMonthlyTotalsIndex();for(const month of cashflowIndex(state).keys()){
+   const r=monthClose(state,month),t=monthTotals(month),indexed=monthTotalsFromIndex(index,month);for(const k of ['income','expenses','stallion'])if(Math.abs(r[k]-t[k])>.005||Math.abs(r[k]-indexed[k])>.005)issues.push(month+' '+k);
+   const balance=state.monthlyBalances.find(b=>b.month===month);if(balance&&r.house!==null&&Math.abs(r.house-balance.houseExpense)>.005)issues.push(month+' house expense');
+  }
+  const d=window.PFT_DASHBOARD_INSIGHTS;if(d&&d.currentMonthStr===currentMonthKey()){const r=monthClose(state,currentMonthKey());if(Math.abs(r.available-d.surplusBalance)>.005)issues.push('Dashboard available balance');if(Math.abs(d.totalAssets-d.totalDebts-d.netWorth)>.005)issues.push('Dashboard net worth');}
+  add(dialog,'p',issues.length?'Review: '+issues.join(', '):'Monthly cash-flow helpers, house-expense balances and available dashboard totals reconcile.');button(dialog,'Run full record health checks',()=>{dialog.close();runDataHealth();});
+ }
+ function tools(host,title,actions){if(!host)return;const details=add(host,'details');details.className='finance-workbench-tools';add(details,'summary',title);for(const [label,fn]of actions)button(details,label,fn);}
+ tools(document.getElementById('income-expenses'),'Month review',[['Review month',monthly],['Upcoming commitments',commitments]]);
+ tools(document.getElementById('investments'),'Record freshness',[['Review valuation dates',valuations]]);
+ tools(document.getElementById('growth-projection'),'Goal planning',[['Portfolio goal planner',planning]]);
+ tools(document.getElementById('settingsRecordsPanel'),'Calculation checks',[['Check financial totals',audit],['Sync details',syncDetails]]);
+ window.financeWorkbench={monthly,valuations,planning,audit,commitments,syncDetails};
+ const reset=window.financeBridge.reset;window.financeBridge.reset=function(){if(dialog.open)dialog.close();dialog.remove();return reset.apply(this,arguments);};
+}

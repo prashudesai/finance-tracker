@@ -1,0 +1,18 @@
+const A=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const source=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
+const start=source.indexOf('    function syncNewLoanFirstEmiExtraInterest(');
+const end=source.indexOf('\n    document.getElementById(\'debtDailyInterestBasis\')',start);
+A(start>=0&&end>start,'new loan daily toggle exists');
+const elements={debtDailyInterestBasis:{checked:false},debtFirstEmiExtraInterestGroup:{hidden:true},debtFirstEmiExtraInterest:{dataset:{},value:''},debtDate:{value:'2026-03-01'},debtFirstEmiDate:{value:'2026-04-05'},debtEmiDueDay:{value:''},debtAmount:{value:'1000000'},debtRate:{value:'12'}};
+const ctx={document:{getElementById:id=>elements[id]},PFT_LOAN_LEDGER:require('../dist/loan-ledger.js')};vm.createContext(ctx);
+vm.runInContext(source.slice(start,end)+'\nsyncNewLoanDailyInterestFields();',ctx);
+A.equal(elements.debtFirstEmiExtraInterestGroup.hidden,false);A.equal(elements.debtFirstEmiExtraInterest.value,'1315.07');
+elements.debtDailyInterestBasis.checked=true;vm.runInContext('syncNewLoanDailyInterestFields()',ctx);A.equal(elements.debtFirstEmiExtraInterestGroup.hidden,true);
+elements.debtDailyInterestBasis.checked=false;vm.runInContext('syncNewLoanDailyInterestFields()',ctx);A.equal(elements.debtFirstEmiExtraInterestGroup.hidden,false);
+A(!source.includes('id="debtFirstEmiInterestMethod"'),'redundant first EMI method selector removed');
+const editStart=source.indexOf('    async function editDebt(id) {'),editEnd=source.indexOf('    function deleteDebt(id) {',editStart),edit=source.slice(editStart,editEnd);
+A(edit.includes("autoCalc:'first-emi-extra'")&&edit.includes("hideWhen:{key:'dailyInterestBasis',value:'yes'}"),'editable estimate is conditional in edit form');
+A(source.includes('id="debtFirstEmiExtraRecalculate"'),'add form offers a recalculate action');
+A(source.includes("!['Extra days’ interest with first EMI'].includes(label)"),'daily loan details omit monthly-only extra interest');
+A(source.includes('first EMI is earlier than one month, the full short period is already prorated'),'under-month calculation is explained');
+console.log('PASS extra first-EMI days are estimated, manually editable, recalculable, and hidden for daily-basis loans');

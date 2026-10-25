@@ -1,8 +1,9 @@
 {
-  "version": "2026.10.25.9",
+  "version": "2026.10.25.10",
   "released": "2026-10-25",
   "releaseNotes": [
-    "Added bounded dated device restore points with change previews.",
-    "Added explicit per-record device/cloud choices with full validation and revision conflict protection."
+    "Added shared household cash-flow calculations with reconciliation checks and guided monthly review.",
+    "Added device-only valuation dates, automatic-entry review and an inflation-adjusted portfolio goal planner.",
+    "Added pending recurring commitment review, sync details, remembered filters and mobile accessibility improvements."
   ]
 }

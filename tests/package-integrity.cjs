@@ -1,0 +1,8 @@
+const fs=require('fs'),path=require('path'),vm=require('vm'),A=require('assert/strict'),{spawnSync}=require('child_process');const root=path.resolve(__dirname,'..'),dist=path.join(root,'dist'),html=fs.readFileSync(path.join(dist,'index.html'),'utf8');
+for(const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)){if(!match[1].includes('src=')&&!match[1].includes('type="module"'))new vm.Script(match[2]);}
+const visit=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?visit(path.join(dir,e.name)):[path.join(dir,e.name)]);
+for(const file of [...visit(dist),...visit(path.join(root,'functions'))].filter(f=>f.endsWith('.js'))){const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});A.equal(result.status,0,result.stderr);}
+const info={window:{}};vm.createContext(info);vm.runInContext(fs.readFileSync(path.join(dist,'app-info.js'),'utf8'),info);A.equal(info.window.PFT_APP_INFO.version,require('../package.json').version);A.equal(require('../dist/version.json').version,require('../package.json').version);
+const worker=fs.readFileSync(path.join(dist,'service-worker.js'),'utf8'),shell=worker.match(/const APP_SHELL = (\[[^\n]+\])/)[1];for(const asset of vm.runInNewContext(shell)){A(fs.existsSync(path.join(dist,asset.split('?')[0])),asset+' missing');}
+for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){const asset=match[1];if(!/^(https?:|data:|mailto:)/.test(asset))A(fs.existsSync(path.join(dist,asset.split('?')[0])),asset+' missing');}
+A.equal(require('../firebase.json').hosting.public,'dist');console.log('PASS inline/module syntax, app metadata agreement, Hosting root and local shell asset completeness');

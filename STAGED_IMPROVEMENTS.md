@@ -1,12 +1,11 @@
-# Staged improvement work
+# Improvement delivery record
 
-Existing production baseline: 2026.10.25.7.
+- 2026.10.25.8: recoverable device form drafts and browser deployment gate.
+- 2026.10.25.9: bounded dated device restore points and explicit validated device/cloud record selection. Automatic merging is not enabled.
+- 2026.10.25.10: shared cash-flow module, monthly close review, statement-check annotations for automatic entries, valuation dates and return-basis details, recorded recurring commitments, inflation-adjusted portfolio goal scenarios, financial parity checks, sync details, remembered navigation/filter context and accessible mobile dialogs.
 
-1. Work protection — device/account-scoped draft recovery in implementation. Must test refresh, discard, account switching, offline and quota failures before release.
-2. Foundation — automate the complete unit and browser checks in CI and extract shared calculation modules without changing results.
-3. Sync/recovery — durable dated restore points; record-level three-way conflict review. Never merge competing edits without a choice.
-4. Experience — consistent compact status, focus/keyboard/safe area checks, remembered page context across layouts.
-5. Financial workflow — reconciliation parity, scheduled/confirmed contributions, valuation dates, guided monthly close.
-6. Planning — inflation-adjusted projections and recorded-data-driven retirement/commitment insights.
+The .10 unit suite includes original financial regression tests, 4,800 month comparisons against the previous calculations and model edge cases. The deployment gate runs the expanded unit suite and responsive browser checks. Database format and cloud access rules are preserved.
 
-Do not mark a stage complete based only on new UI or helper tests. Verify the persisted state, reload behaviour, account isolation and financial totals in browser scenarios. Production deployment is the final action after validation. Existing records require migration fixtures if schema changes.
+Device-only review metadata is explicitly labelled and does not alter financial balances. It is not synchronised or included in financial JSON backups. Legacy automatic contribution behaviour remains unchanged. A confirmed statement check is distinct from posting a contribution.
+
+This is an incremental modularisation. The legacy main HTML and theme overrides remain; a complete framework rewrite and removal of all legacy renderers are not claimed. Native iPhone keyboard and screen-reader testing remains a manual-device validation item. See WORKBENCH_RELEASE.md for scope and limits.

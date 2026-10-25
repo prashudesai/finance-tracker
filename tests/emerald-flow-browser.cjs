@@ -103,5 +103,23 @@ const server=http.createServer(async(req,res)=>{try{
   const selects=d.locator('select');assert.equal(await selects.count()>0,true);{await d.getByRole('button',{name:'Validate and apply choices',exact:true}).click();assert.match(await d.textContent(),/Choose a version for every/);}
   await d.getByRole('button',{name:'Close',exact:true}).click();await page.evaluate(()=>{state=window.__beforeConflict;});
  });
+ await check('Monthly review requires both balances and never changes financial records',async()=>{
+  await page.waitForFunction(()=>!dataOperationBusy);await page.evaluate(()=>{window.__workbenchBefore=JSON.parse(JSON.stringify(state));state.monthlyBalances=state.monthlyBalances.filter(r=>!['2030-12','2031-01'].includes(r.month));return financeWorkbench.monthly();});
+  const d=page.locator('#financeWorkbenchDialog');await d.getByLabel('Month',{exact:true}).fill('2030-12');await d.getByLabel('Month',{exact:true}).dispatchEvent('change');assert.equal(await d.getByRole('button',{name:'Mark reviewed on this device'}).isDisabled(),true);
+  await page.evaluate(()=>{state.monthlyBalances.push({month:'2030-12',startBalance:99000},{month:'2031-01',startBalance:80000});});await d.getByLabel('Month',{exact:true}).dispatchEvent('change');
+  assert.equal(await d.getByRole('button',{name:'Mark reviewed on this device'}).isDisabled(),false);
+  const before=await page.evaluate(()=>JSON.stringify(state));await d.getByRole('button',{name:'Mark reviewed on this device'}).click();assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);assert.match(await d.textContent(),/Reviewed on this device/);await d.getByRole('button',{name:'Close',exact:true}).click();await page.evaluate(()=>state=window.__workbenchBefore);
+ });
+ await check('Planner reuses projection results and rejects invalid assumptions',async()=>{
+  await page.evaluate(()=>financeWorkbench.planning());const d=page.locator('#financeWorkbenchDialog');await d.getByLabel('Annual inflation assumption (%)',{exact:true}).fill('0');await d.getByLabel('Years to goal',{exact:true}).fill('5');await d.getByRole('button',{name:'Calculate scenarios'}).click();const expected=await page.evaluate(()=>formatCurrency(runGrowthProjection(growthProjectionAssets(),5,'base').ending));assert.equal((await d.textContent()).includes(expected),true);assert.match(await d.textContent(),/debt and gratuity excluded/);
+  await d.getByLabel('Annual inflation assumption (%)',{exact:true}).fill('31');await d.getByRole('button',{name:'Calculate scenarios'}).click();assert.match(await d.textContent(),/Check the amount/);await d.getByRole('button',{name:'Close',exact:true}).click();
+ });
+ await check('Valuation confirmation becomes unverified after a balance changes',async()=>{
+  await page.evaluate(()=>financeWorkbench.valuations());const d=page.locator('#financeWorkbenchDialog');await d.getByRole('button',{name:'Confirm value as of date'}).first().click();assert.match(await d.textContent(),/0 days ago/);await d.getByRole('button',{name:'Close',exact:true}).click();
+  await page.evaluate(()=>{window.__valuationBefore=JSON.parse(JSON.stringify(state));profileRows(state.investments)[0].current+=1;return financeWorkbench.valuations();});assert.match(await d.locator('section').first().textContent(),/Unverified/);await d.getByRole('button',{name:'Close',exact:true}).click();await page.evaluate(()=>state=window.__valuationBefore);
+ });
+ await check('Workbench dialogs fit mobile and expose accessible names',async()=>{
+  await page.setViewportSize({width:390,height:844});for(const tool of ['monthly','planning','valuations','audit','commitments','syncDetails']){await page.evaluate(t=>financeWorkbench[t](),tool);const d=page.locator('#financeWorkbenchDialog');assert.equal(await d.isVisible(),true);assert.equal(await d.getAttribute('aria-labelledby'),'workbenchHeading');const box=await d.boundingBox();assert.equal(box.width<=390,true);await d.getByRole('button',{name:'Close',exact:true}).click();}await page.setViewportSize({width:1440,height:1050});
+ });
  await check('No browser runtime errors',()=>assert.deepEqual(errors,[]));await browser.close();server.close();console.log(JSON.stringify({passed:results.length,failed:0}));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});
