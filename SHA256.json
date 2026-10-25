@@ -65,7 +65,7 @@
   "tests/startup.cjs": "2932933bcba378bd91a7eb9ed8a744008e2fa7ae10cfe5ac1c750fcb5c10063e",
   "STAGED_IMPROVEMENTS.md": "0651a0b84f0b1da705fa0f77e12ff4f691cf469c494e72d0022b40d105552230",
   ".github/workflows/deploy-firebase-hosting.yml": "92d7d1661e3c06746a2b7aab62bf195dcd0ba2fa628968245aea72bffaffcdd8",
-  "dist/record-recovery.js": "aa95dffa02dd9bea9ab6ac6bf8ed6c267bc8c1da692d5cd1df994970cb030547",
+  "dist/record-recovery.js": "c2b02f629019807f5b5c934841845e0f332e1cd1465f91d78049d9c52152adc9",
   "tests/record-recovery.cjs": "198c88718977d43ddb4fc1d7913b65ec7a57d65ad5f3db02d2242b2ba974b3c8",
   "RECORD_RECOVERY.md": "465740f4529a1aa7dfb0fa86e8373a65ce2e8411322a03f2a34907f91ca86589"
 }

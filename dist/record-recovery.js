@@ -56,7 +56,7 @@ export function installRecordRecovery(){
   if(cloudVersion!==undefined)syncRecord={...syncRecord,baseRevision:cloudVersion};
   state=validated;
   const ok=await saveData(action);
-  if(!ok){state=before;syncRecord=oldSync;cloudSaveBlocked=oldBlocked;throw Error('Replacement could not be saved. Current records were kept.');}
+  if(!ok){state=before;lastAccepted=JSON.parse(JSON.stringify(before));syncRecord=oldSync;cloudSaveBlocked=oldBlocked;throw Error('Replacement could not be saved. Current records were kept.');}
   if(cloudVersion!==undefined)cloudSaveBlocked=false;
   refreshAllPageViews();dialog.close();syncCloud();
  }
