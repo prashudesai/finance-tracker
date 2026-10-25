@@ -23,7 +23,7 @@
       if(debt.emiDueDay!==undefined){const [y,m]=debt.firstEmiDate.split('-').map(Number),expected=Math.min(debt.emiDueDay,new Date(Date.UTC(y,m,0)).getUTCDate());if(Number(debt.firstEmiDate.slice(-2))!==expected)throw Error('First EMI date must match the monthly EMI day (clamped in shorter months).');}
     }
     if(debt.firstEmiExtraInterest!==undefined&&(!number(debt.firstEmiExtraInterest)||debt.firstEmiExtraInterest<0||debt.firstEmiExtraInterest>1e12))throw Error('First EMI extra interest must be a valid non-negative amount.');
-    if(debt.firstEmiExtraInterest>0&&!debt.firstEmiDate&&!debt.emiDueDay)throw Error('Enter the first EMI date or monthly due day for extra interest.');
+    if(debt.firstEmiExtraInterest>0&&!debt.firstEmiDate)throw Error('Enter the first EMI date when extra interest is added.');
     if(debt.loanChanges===undefined)return;
     if(!Array.isArray(debt.loanChanges)||debt.loanChanges.length>500)throw Error('Loan change history must contain at most 500 entries.');
     if(!number(debt.openingRate)||debt.openingRate<0||!number(debt.openingEmi)||debt.openingEmi<0)throw Error('Loan change history needs a valid opening rate and EMI.');
