@@ -222,3 +222,93 @@ html[data-layout-style="emerald-flow"] body.advanced-layout .btn-primary{min-hei
 html[data-layout-style="emerald-flow"] body.advanced-layout .btn-secondary,html[data-layout-style="emerald-flow"] body.advanced-layout input,html[data-layout-style="emerald-flow"] body.advanced-layout select{border-radius:10px}
 html[data-layout-style="emerald-flow"] body.advanced-layout :is(input,select,textarea):focus-visible{outline:3px solid color-mix(in srgb,var(--primary) 35%,transparent);outline-offset:1px}
 @media(max-width:700px){html[data-layout-style="emerald-flow"] body.advanced-layout>.container{padding-left:14px;padding-right:14px}html[data-layout-style="emerald-flow"] body.advanced-layout>.container>header{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px}html[data-layout-style="emerald-flow"] .pft-style-navigation{background:var(--card-bg);box-shadow:0 -4px 18px #10251a18}html[data-layout-style="emerald-flow"] .pft-style-navigation>button{min-height:52px;font-size:9px}}
+
+/* Emerald Flow has its own dashboard composition: at-a-glance metrics, charts, then the portfolio workspace. */
+html[data-layout-style="emerald-flow"] #dashboard{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);column-gap:20px;align-items:start}
+html[data-layout-style="emerald-flow"] #dashboard>.pft-style-hero{display:none}
+html[data-layout-style="emerald-flow"] #dashboard>.pft-dashboard-toolbar,html[data-layout-style="emerald-flow"] #dashboard>#dashboardUpdateNotice{grid-column:1/-1}
+html[data-layout-style="emerald-flow"] #dashboard>.dashboard{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-areas:"wealth wealth debts income balance savings" "expense expense expense average average average";gap:12px;margin:0 0 20px}
+html[data-layout-style="emerald-flow"] #dashboard .dashboard-net-worth{grid-area:wealth;grid-column:auto;grid-row:auto;min-height:160px;padding:20px}
+html[data-layout-style="emerald-flow"] #dashboard [data-layout-slot="debts"]{grid-area:debts}
+html[data-layout-style="emerald-flow"] #dashboard [data-layout-slot="income"]{grid-area:income}
+html[data-layout-style="emerald-flow"] #dashboard [data-layout-slot="balance"]{grid-area:balance}
+html[data-layout-style="emerald-flow"] #dashboard [data-layout-slot="savings"]{grid-area:savings}
+html[data-layout-style="emerald-flow"] #dashboard [data-layout-slot="expense"]{grid-area:expense;grid-column:auto;padding:18px}
+html[data-layout-style="emerald-flow"] #dashboard [data-layout-slot="average"]{grid-area:average;grid-column:auto;padding:18px}
+html[data-layout-style="emerald-flow"] #dashboard>.advanced-dashboard-insights:not([hidden]){grid-column:1/-1;grid-template-columns:minmax(0,1.65fr) minmax(300px,1fr);gap:16px;margin:0 0 20px}
+html[data-layout-style="emerald-flow"] #dashboard>.dashboard-portfolio-panel{grid-column:1/-1;margin:0 0 16px}
+html[data-layout-style="emerald-flow"] #dashboard>.debt-summary-panel{grid-column:1/-1;margin:0 0 20px}
+html[data-layout-style="emerald-flow"] #dashboard .dashboard-card{border-radius:14px}
+html[data-layout-style="emerald-flow"] #dashboard .dashboard-net-worth{background:linear-gradient(145deg,color-mix(in srgb,var(--primary) 12%,var(--card-bg)),var(--card-bg) 75%)}
+html[data-layout-style="emerald-flow"] #dashboard .dashboard-stat{min-height:122px;justify-content:flex-start;gap:12px}
+html[data-layout-style="emerald-flow"] #dashboard .dashboard-stat-value{margin-top:auto;font-size:clamp(16px,1.4vw,22px);white-space:normal;overflow-wrap:anywhere}
+html[data-layout-style="emerald-flow"] #dashboard .dashboard-average-values{gap:12px}
+html[data-layout-style="emerald-flow"] #dashboard .advanced-dashboard-chart-panel{padding:18px 19px;border-radius:16px}
+html[data-layout-style="emerald-flow"] #dashboard .advanced-dashboard-chart-panel:first-child svg{min-height:190px}
+html[data-layout-style="emerald-flow"] #dashboard .dashboard-portfolio-panel{padding:22px;border-radius:16px}
+html[data-layout-style="emerald-flow"] #dashboard .portfolio-category-list{max-height:none}
+@media(max-width:1050px){html[data-layout-style="emerald-flow"] #dashboard{grid-template-columns:1fr}html[data-layout-style="emerald-flow"] #dashboard>.dashboard,html[data-layout-style="emerald-flow"] #dashboard>.advanced-dashboard-insights:not([hidden]),html[data-layout-style="emerald-flow"] #dashboard>.dashboard-portfolio-panel,html[data-layout-style="emerald-flow"] #dashboard>.debt-summary-panel{grid-column:1}html[data-layout-style="emerald-flow"] #dashboard>.advanced-dashboard-insights:not([hidden]){grid-template-columns:minmax(0,1.4fr) minmax(250px,1fr)}}
+@media(max-width:700px){html[data-layout-style="emerald-flow"] #dashboard>.dashboard{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"wealth wealth" "income balance" "debts savings" "expense expense" "average average";gap:9px}html[data-layout-style="emerald-flow"] #dashboard .dashboard-net-worth{min-height:0}html[data-layout-style="emerald-flow"] #dashboard .dashboard-stat{min-height:105px;padding:14px 12px}html[data-layout-style="emerald-flow"] #dashboard>.advanced-dashboard-insights:not([hidden]){grid-template-columns:1fr;gap:10px}html[data-layout-style="emerald-flow"] #dashboard>.dashboard-portfolio-panel{padding:15px}html[data-layout-style="emerald-flow"] #dashboard .dashboard-average-values{grid-template-columns:1fr 1fr}}
+@media(max-width:380px){html[data-layout-style="emerald-flow"] #dashboard>.dashboard{grid-template-columns:1fr;grid-template-areas:"wealth" "income" "balance" "debts" "savings" "expense" "average"}html[data-layout-style="emerald-flow"] #dashboard .dashboard-stat{min-height:84px}}
+/* Emerald Flow full experience: desktop rail, focused workspace and responsive bottom navigation. */
+@media(min-width:701px){
+html[data-layout-style="emerald-flow"] body.advanced-layout>.container{width:auto;max-width:none;margin:0 0 0 238px;padding:0 28px 40px}
+html[data-layout-style="emerald-flow"] body.advanced-layout>.container>header{position:sticky;top:0;margin:0 -28px 22px;padding:0 28px;min-height:72px;gap:14px;background:color-mix(in srgb,var(--card-bg) 94%,transparent);box-shadow:0 5px 20px #163b250b;backdrop-filter:blur(12px)}
+html[data-layout-style="emerald-flow"] body.advanced-layout>.container>header>div:first-child{display:none}
+html[data-layout-style="emerald-flow"] .pft-style-brand,html[data-layout-style="emerald-flow"] .pft-style-navigation{display:none!important}
+html[data-layout-style="emerald-flow"] body.advanced-layout .nav-tabs{position:fixed;inset:0 auto 0 0;z-index:60;display:flex!important;width:220px;flex-direction:column;align-items:stretch;gap:5px;margin:0;padding:22px 13px 20px;overflow:auto;border:0;border-right:1px solid var(--border);background:var(--card-bg);box-shadow:5px 0 24px #152b1e0a}
+html[data-layout-style="emerald-flow"] body.advanced-layout .family-profile-sidebar-brand{display:flex;align-items:center;gap:10px;min-height:62px;margin:0 4px 18px;padding:0 4px 14px;border-bottom:1px solid var(--border)}
+html[data-layout-style="emerald-flow"] body.advanced-layout .family-profile-sidebar-title{color:var(--text);font-size:12px;letter-spacing:.04em}
+html[data-layout-style="emerald-flow"] body.advanced-layout .family-profile-sidebar-label{color:var(--primary-dark);background:var(--primary-light);border-color:var(--border)}
+html[data-layout-style="emerald-flow"] body.advanced-layout .nav-tab{min-height:44px;padding:9px 11px;border-radius:10px;color:var(--text-light);font-size:12px;font-weight:600}
+html[data-layout-style="emerald-flow"] body.advanced-layout .nav-tab:hover{color:var(--text);background:var(--bg)}
+html[data-layout-style="emerald-flow"] body.advanced-layout .nav-tab.active{color:var(--primary-dark);background:var(--primary-light);box-shadow:inset 3px 0 0 var(--primary)}
+html[data-layout-style="emerald-flow"] body.advanced-layout .nav-tabs::after{content:"Private family tracker";border-color:var(--border);background:var(--bg);color:var(--text-light)}
+html[data-layout-style="emerald-flow"] body.advanced-layout .mobile-nav-reveal{display:none!important}
+html[data-layout-style="emerald-flow"] body.advanced-layout .header-controls{margin-left:auto}
+}
+html[data-layout-style="emerald-flow"] body.advanced-layout .tab-content.active:not(#dashboard){animation:emeraldPageIn .2s ease-out}
+@keyframes emeraldPageIn{from{opacity:.7;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+html[data-layout-style="emerald-flow"] body.advanced-layout .tab-content.active:not(#dashboard)>:is(.transaction-intro,.investment-page-intro,.debt-page-intro,.growth-page-intro,.analytics-intro,.settings-intro){min-height:120px;padding:24px 26px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(112deg,color-mix(in srgb,var(--primary) 9%,var(--card-bg)),var(--card-bg) 68%);box-shadow:var(--card-shadow);margin:4px 0 18px}
+html[data-layout-style="emerald-flow"] body.advanced-layout .tab-content.active:not(#dashboard)>:is(.transaction-intro,.investment-page-intro,.debt-page-intro,.growth-page-intro,.analytics-intro,.settings-intro) h1{font-size:30px;letter-spacing:-.8px;font-weight:600}
+html[data-layout-style="emerald-flow"] body.advanced-layout .tab-content.active:not(#dashboard) .panel{padding:22px;border-radius:16px;background:var(--card-bg);box-shadow:var(--card-shadow)}
+html[data-layout-style="emerald-flow"] body.advanced-layout #income-expenses .transaction-overview{gap:12px;border:0;background:transparent;box-shadow:none}
+html[data-layout-style="emerald-flow"] body.advanced-layout #income-expenses .transaction-metric{min-height:112px;padding:17px;border:1px solid var(--border);border-radius:15px;background:var(--card-bg);box-shadow:var(--card-shadow)}
+html[data-layout-style="emerald-flow"] body.advanced-layout #income-expenses .transaction-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+html[data-layout-style="emerald-flow"] body.advanced-layout #income-expenses .transaction-panel{border:1px solid var(--border);border-radius:16px;box-shadow:var(--card-shadow)}
+html[data-layout-style="emerald-flow"] body.advanced-layout #investments .investment-overview-grid{gap:12px;border:0;background:transparent;box-shadow:none;overflow:visible}
+html[data-layout-style="emerald-flow"] body.advanced-layout #investments .investment-overview-card{border:1px solid var(--border);border-radius:15px;background:var(--card-bg);box-shadow:var(--card-shadow)}
+html[data-layout-style="emerald-flow"] body.advanced-layout #investments #stallionPmsPanel{border:1px solid color-mix(in srgb,var(--primary) 36%,var(--border));border-radius:18px;background:linear-gradient(120deg,color-mix(in srgb,var(--primary) 8%,var(--card-bg)),var(--card-bg) 72%);box-shadow:var(--card-shadow)}
+html[data-layout-style="emerald-flow"] body.advanced-layout #debts .debt-page-overview{gap:12px}
+html[data-layout-style="emerald-flow"] body.advanced-layout #debts .debt-page-stat{min-height:118px;border:1px solid var(--border);border-radius:16px;background:var(--card-bg);box-shadow:var(--card-shadow)}
+html[data-layout-style="emerald-flow"] body.advanced-layout #debts .advanced-debt-workspace{gap:16px}
+html[data-layout-style="emerald-flow"] body.advanced-layout #analytics .analytics-grid{gap:16px}
+html[data-layout-style="emerald-flow"] body.advanced-layout #analytics .analytics-card{border:1px solid var(--border);border-radius:16px;background:var(--card-bg);box-shadow:var(--card-shadow)}
+html[data-layout-style="emerald-flow"] body.advanced-layout #settingsQuickTiles{gap:14px}
+html[data-layout-style="emerald-flow"] body.advanced-layout #settingsQuickTiles .settings-quick-tile{min-height:125px;padding:18px;border:1px solid var(--border);border-radius:15px;background:var(--card-bg);box-shadow:var(--card-shadow)}
+html[data-layout-style="emerald-flow"] body.advanced-layout :is(.btn-primary,.btn-secondary,.btn-danger){min-height:46px;border-radius:10px}
+html[data-layout-style="emerald-flow"] body.advanced-layout :is(input,select,textarea):focus-visible{outline:3px solid color-mix(in srgb,var(--primary) 35%,transparent);outline-offset:1px}
+@media(max-width:700px){
+html[data-layout-style="emerald-flow"] body.advanced-layout>.container{max-width:none;margin:0;padding:0 14px calc(78px + env(safe-area-inset-bottom))}
+html[data-layout-style="emerald-flow"] body.advanced-layout>.container>header{margin:0 -14px 16px;padding:8px 14px;min-height:62px;background:var(--card-bg);box-shadow:0 4px 18px #142b1d10}
+html[data-layout-style="emerald-flow"] body.advanced-layout .nav-tabs{background:var(--card-bg);border-top:1px solid var(--border);box-shadow:0 -5px 18px #142b1d12}
+html[data-layout-style="emerald-flow"] body.advanced-layout .nav-tab{color:var(--text-light)}
+html[data-layout-style="emerald-flow"] body.advanced-layout .nav-tab.active{color:var(--primary-dark);background:var(--primary-light);box-shadow:inset 0 2px 0 var(--primary)}
+html[data-layout-style="emerald-flow"] body.advanced-layout .mobile-nav-page{color:var(--text-light)}
+html[data-layout-style="emerald-flow"] body.advanced-layout .mobile-nav-reveal{background:var(--card-bg);border-color:var(--border);color:var(--text)}
+html[data-layout-style="emerald-flow"] body.advanced-layout .tab-content.active:not(#dashboard)>:is(.transaction-intro,.investment-page-intro,.debt-page-intro,.growth-page-intro,.analytics-intro,.settings-intro){min-height:0;padding:18px;margin:0 0 14px;border-radius:15px}
+html[data-layout-style="emerald-flow"] body.advanced-layout .tab-content.active:not(#dashboard)>:is(.transaction-intro,.investment-page-intro,.debt-page-intro,.growth-page-intro,.analytics-intro,.settings-intro) h1{font-size:23px}
+html[data-layout-style="emerald-flow"] body.advanced-layout #income-expenses .transaction-grid{grid-template-columns:1fr;gap:12px}
+html[data-layout-style="emerald-flow"] body.advanced-layout #income-expenses .transaction-overview{gap:8px}
+html[data-layout-style="emerald-flow"] body.advanced-layout #income-expenses .transaction-metric{min-height:90px;padding:12px}
+html[data-layout-style="emerald-flow"] body.advanced-layout #investments .investment-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+html[data-layout-style="emerald-flow"] body.advanced-layout #debts .debt-page-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
+html[data-layout-style="emerald-flow"] body.advanced-layout .tab-content.active:not(#dashboard) .panel{padding:15px}
+}
+@media(max-width:380px){html[data-layout-style="emerald-flow"] body.advanced-layout #investments .investment-overview-grid,html[data-layout-style="emerald-flow"] body.advanced-layout #debts .debt-page-overview{grid-template-columns:1fr}}
+/* Soft ambient emerald lighting, tuned to stay visible behind solid readable panels. */
+html[data-layout-style="emerald-flow"] body.advanced-layout{position:relative;background:var(--bg)}
+html[data-layout-style="emerald-flow"] body.advanced-layout::before{content:"";position:fixed;inset:-12%;z-index:0;pointer-events:none;opacity:.92;filter:blur(26px);background:radial-gradient(ellipse 42% 26% at 10% 7%,rgba(34,180,119,.26),transparent 76%),radial-gradient(ellipse 46% 24% at 66% 2%,rgba(67,198,125,.21),transparent 75%),radial-gradient(ellipse 28% 38% at 98% 42%,rgba(29,148,92,.16),transparent 75%),radial-gradient(ellipse 24% 30% at 0% 82%,rgba(44,164,107,.13),transparent 74%)}
+html[data-layout-style="emerald-flow"] body.advanced-layout>.container{position:relative;z-index:1}
+html[data-layout-style="emerald-flow"] body.advanced-layout .nav-tabs{z-index:60}
+@media(max-width:700px){html[data-layout-style="emerald-flow"] body.advanced-layout::before{inset:-8%;opacity:.86;filter:blur(32px);background:radial-gradient(ellipse 78% 18% at 55% 1%,rgba(34,180,119,.25),transparent 78%),radial-gradient(ellipse 56% 30% at 100% 35%,rgba(53,170,106,.17),transparent 78%),radial-gradient(ellipse 52% 24% at 0% 68%,rgba(38,154,98,.13),transparent 78%)}}

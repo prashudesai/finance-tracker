@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.25.1",
+  "version": "2026.10.25.4",
   "released": "2026-10-25",
   "releaseNotes": [
-    "Added Emerald Flow as an optional page style in Appearance, with refreshed layout styling while preserving existing Modern and Classic styles.",
+    "Completed the Emerald Flow Appearance redesign with desktop and mobile navigation, cash-flow-first layouts, and a soft emerald glow effect on all screens.",
     "Refreshed the sign-in screen with a responsive forest-green and mint design; Google sign-in remains unchanged.",
     "Updated the installed-app icon to the selected wallet with a rising chart and arrow.",
     "Full-project audit: removed obsolete named-record deletion and old backup migration paths.",

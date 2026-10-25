@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.25.1",
+  "version": "2026.10.25.4",
   "released": "2026-10-25",
   "releaseNotes": [
-    "Added Emerald Flow as an optional page style in Appearance, with refreshed layout styling while preserving existing Modern and Classic styles.",
+    "Added Emerald Flow as an optional Appearance style with a new cash-flow-first dashboard composition, expanded charts and portfolio workspace.",
     "Refreshed the sign-in screen with a responsive forest-green and mint design; Google sign-in remains unchanged.",
     "Updated the installed-app icon to the selected wallet with a rising chart and arrow.",
     "Full-project audit: removed obsolete named-record deletion and old backup migration paths.",
