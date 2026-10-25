@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.25.5",
+  "version": "2026.10.25.6",
   "released": "2026-10-25",
   "releaseNotes": [
-    "Rebuilt Emerald Flow with separate page workspaces, preserving the existing Modern and Classic options.",
+    "Fixed Projection Settings overlap and forecast-card clipping by clearing legacy grid areas and rebuilding the responsive control layout.",
     "Added a live grouped cash-flow bar chart with keyboard and tap amount details, plus horizontal portfolio allocation bars.",
     "Introduced tabbed income/expense and investment workspaces, loan cards, grouped analytics, a report builder sidebar and compact Settings navigation.",
     "Verified actual browser navigation, record saves, reports, style switching and responsive layouts from 320px to 1440px."

@@ -12,9 +12,9 @@ The dashboard includes grouped income/expense bars with keyboard and tap details
 horizontal allocation bars, portfolio comparison, debt summary and monthly context.
 Income and expenses, investments, and analytics use focused workspace tabs.
 
-Validation for v2026.10.25.5: 36 unit suites and 62 browser checks passed locally.
+Validation for v2026.10.25.6: 36 unit suites and 115 browser checks passed locally.
 Browser checks cover navigation, form saves, loan history, investment forms, reports,
-style switching, light mode, and widths of 320, 390, 768, 1024 and 1440 pixels.
+style switching, light mode, and ten widths from 320 to 1598 pixels, including empty accounts, large balances, workspace tabs, settings dialogs and assumption dialogs.
 The browser tests use synthetic records and local Firebase stubs.
 
 To run the redesign browser checks:
