@@ -39,6 +39,17 @@
   });
   updateInstall();
   let registration, offlineReady = false, applying = false;
+  let lastAutomaticCheck = 0, checkingAutomatically = false;
+  async function checkOnReturn() {
+    if (!registration || document.hidden || navigator.onLine === false || checkingAutomatically || Date.now()-lastAutomaticCheck < 5*60*1000) return;
+    checkingAutomatically = true; lastAutomaticCheck = Date.now();
+    try { await registration.update(); updateStatus(); }
+    catch (_) { /* Keep working offline; the next return can retry. */ }
+    finally { checkingAutomatically = false; }
+  }
+  document.addEventListener('visibilitychange', checkOnReturn);
+  window.addEventListener('focus', checkOnReturn);
+  window.addEventListener('online', checkOnReturn);
   const show = message => { if (status) status.textContent = message; if(dashboardStatus)dashboardStatus.textContent=message; };
   function updateStatus() {
     const updateReady = Boolean(registration?.waiting);
@@ -89,6 +100,7 @@
   async function register() {
     try {
       registration = await navigator.serviceWorker.register('./service-worker.js', {updateViaCache:'none'});
+      lastAutomaticCheck = Date.now();
       updateStatus();
       registration.addEventListener('updatefound', () => {
         const worker = registration.installing;

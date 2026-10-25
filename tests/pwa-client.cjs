@@ -2,14 +2,15 @@ const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),pat
 const code=fs.readFileSync(path.join(__dirname,'../dist/pwa-client.js'),'utf8');
 const tick=()=>new Promise(r=>setImmediate(r));
 function harness(opts={}){
- const ids=Object.fromEntries(['pwaStatus','pwaCheckUpdate','pwaApplyUpdate'].map(id=>[id,{textContent:'',hidden:id==='pwaApplyUpdate',disabled:false,handlers:{},addEventListener(t,f){this.handlers[t]=f;}}]));
+ const ids=Object.fromEntries(['pwaStatus','pwaCheckUpdate','pwaApplyUpdate','dashboardUpdateNotice','dashboardApplyUpdate','dashboardUpdateStatus'].map(id=>[id,{textContent:'',hidden:id==='pwaApplyUpdate',disabled:false,handlers:{},addEventListener(t,f){this.handlers[t]=f;}}]));
  const events={},swEvents={},regEvents={};let reloads=0,confirmations=0,messages=0,updates=0;
  const waiting={postMessage(){messages++;}};
  const registration={waiting:opts.waiting?waiting:null,installing:null,async update(){updates++;if(opts.updateFail)throw Error('offline');},addEventListener:(n,f)=>regEvents[n]=f};
  const serviceWorker={register:async()=>{if(opts.registerFail)throw Error('bad');return registration;},ready:opts.ready||Promise.resolve(registration),addEventListener:(n,f)=>swEvents[n]=f};
- const context={document:{getElementById:id=>ids[id]},navigator:{serviceWorker,onLine:true},window:{matchMedia:()=>({matches:false,addEventListener(){}}),isSecureContext:opts.secure!==false,addEventListener:(n,f)=>events[n]=f},location:{reload:()=>reloads++},confirm:()=>{confirmations++;return opts.confirm!==false;},saveQueue:opts.saveQueue||Promise.resolve(true),persistenceDirty:false,pendingSaves:0,storageLoadFailed:false,dataOperationBusy:false};
+ let now=Date.now();
+ const context={Date:{now:()=>now},document:{getElementById:id=>ids[id],addEventListener:(n,f)=>events[n]=f},navigator:{serviceWorker,onLine:true},window:{matchMedia:()=>({matches:false,addEventListener(){}}),isSecureContext:opts.secure!==false,addEventListener:(n,f)=>events[n]=f},location:{reload:()=>reloads++},confirm:()=>{confirmations++;return opts.confirm!==false;},saveQueue:opts.saveQueue||Promise.resolve(true),persistenceDirty:false,pendingSaves:0,storageLoadFailed:false,dataOperationBusy:false};
  vm.runInNewContext(code,context);
- return{ids,context,registration,events,swEvents,regEvents,waiting,click:id=>ids[id].handlers.click(),get reloads(){return reloads;},get confirmations(){return confirmations;},get messages(){return messages;},get updates(){return updates;}};
+ return{advance:ms=>now+=ms,ids,context,registration,events,swEvents,regEvents,waiting,click:id=>ids[id].handlers.click(),get reloads(){return reloads;},get confirmations(){return confirmations;},get messages(){return messages;},get updates(){return updates;}};
 }
 const results=[];async function test(name,fn){try{await fn();results.push({name,status:'PASS'});}catch(e){results.push({name,status:'FAIL',error:e.message});}}
 (async()=>{
@@ -24,5 +25,9 @@ const results=[];async function test(name,fn){try{await fn();results.push({name,
  await test('Explicit update waits for pending save then requests one reload',async()=>{let resolve;const h=harness({waiting:true,saveQueue:new Promise(r=>resolve=r)});await tick();const task=h.click('pwaApplyUpdate');await tick();assert.equal(h.messages,0);resolve();await task;assert.equal(h.messages,1);h.swEvents.controllerchange();assert.equal(h.reloads,1);});
  await test('Update in another window never forces this page to reload',async()=>{const h=harness();await tick();h.swEvents.controllerchange();assert.equal(h.reloads,0);});
  await test('Rapid repeated update clicks request activation once',async()=>{let resolve;const h=harness({waiting:true,saveQueue:new Promise(r=>resolve=r)});await tick();const a=h.click('pwaApplyUpdate'),b=h.click('pwaApplyUpdate');resolve();await Promise.all([a,b]);assert.equal(h.messages,1);assert.equal(h.confirmations,1);});
+ await test('Dashboard notice appears only when worker update is ready',async()=>{for(const waiting of [false,true]){const h=harness({waiting});await tick();assert.equal(h.ids.dashboardUpdateNotice.hidden,!waiting);}});
+ await test('Dashboard update uses save guard and explains blocked update',async()=>{const h=harness({waiting:true});await tick();h.context.persistenceDirty=true;await h.click('dashboardApplyUpdate');assert.equal(h.messages,0);assert.match(h.ids.dashboardUpdateStatus.textContent,/Finish saving/);});
+ await test('Dashboard update cancel does not reload; accept activates once',async()=>{for(const confirm of [false,true]){const h=harness({waiting:true,confirm});await tick();await h.click('dashboardApplyUpdate');assert.equal(h.messages,confirm?1:0);h.swEvents.controllerchange();assert.equal(h.reloads,confirm?1:0);}});
+ await test('Return checks are throttled and never reload',async()=>{const h=harness();await tick();await h.events.focus();assert.equal(h.updates,0);h.advance(300001);await h.events.focus();assert.equal(h.updates,1);await h.events.focus();assert.equal(h.updates,1);h.context.document.hidden=true;h.advance(300001);await h.events.visibilitychange();assert.equal(h.updates,1);h.context.document.hidden=false;await h.events.visibilitychange();assert.equal(h.updates,2);assert.equal(h.reloads,0);});
  const report={passed:results.filter(r=>r.status==='PASS').length,failed:results.filter(r=>r.status==='FAIL').length,results};console.log(JSON.stringify(report,null,2));if(report.failed)process.exitCode=1;
 })();
