@@ -1,0 +1,40 @@
+const names={income:'Income',expenses:'Expense',investments:'Investment',debts:'Debt',pf:'PF',ppf:'PPF',nps:'NPS'};
+const normalize=value=>String(value??'').normalize('NFKC').toLowerCase().replace(/[₹,]/g,'').trim();
+export function findRecords(groups,query,kind='all',limit=40){
+ const tokens=normalize(query).split(/\s+/).filter(Boolean);if(normalize(query).length<2)return {total:0,rows:[]};
+ const result=[];
+ for(const [type,rows]of Object.entries(groups)){if(kind!=='all'&&kind!==type)continue;
+  for(const row of rows){const fields=[names[type],row.member,row.source,row.category,row.subcategory,row.name,row.type,row.account,row.scheme,row.notes,row.date,...['amount','current','invested','principal','remaining','emi'].map(k=>Number.isFinite(row[k])?row[k]:'')];const text=normalize(fields.join(' '));if(tokens.every(t=>text.includes(t)))result.push({type,row});}
+ }
+ result.sort((a,b)=>String(b.row.date||'').localeCompare(String(a.row.date||''))||String(a.row.id).localeCompare(String(b.row.id)));
+ return {total:result.length,rows:result.slice(0,Math.max(0,Math.min(100,limit)))};
+}
+export function installRecordSearch(){
+ const host=document.getElementById('dashboard');if(!host)return;
+ const launch=document.createElement('button');launch.id='openRecordSearch';launch.type='button';launch.className='btn-secondary finance-search-launch';launch.textContent='Search records';host.prepend(launch);
+ const dialog=document.createElement('dialog');dialog.id='recordSearchDialog';dialog.className='finance-workbench-dialog finance-search-dialog';dialog.setAttribute('aria-labelledby','recordSearchTitle');
+ const add=(parent,tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;parent.append(e);return e;};
+ const header=add(dialog,'div');header.className='finance-search-heading';const title=add(header,'h2','Find a record');title.id='recordSearchTitle';const close=add(header,'button','Close');close.type='button';close.className='btn-small';close.onclick=()=>dialog.close();
+ const label=add(dialog,'label','Search by name, category, date or amount');const input=add(label,'input');input.type='search';input.id='recordSearchQuery';input.placeholder='Try salary, groceries or 25,000';input.autocomplete='off';input.maxLength=120;
+ const filterLabel=add(dialog,'label','Record type');const filter=add(filterLabel,'select');filter.id='recordSearchType';for(const [value,text]of Object.entries({all:'All records',...names})){const option=add(filter,'option',text);option.value=value;}
+ const scope=add(dialog,'p');scope.className='text-muted';const status=add(dialog,'p');status.setAttribute('role','status');const results=add(dialog,'div');results.id='recordSearchResults';document.body.append(dialog);
+ let timer;
+ const groups=()=>Object.fromEntries(Object.keys(names).map(kind=>[kind,kind==='expenses'?state.expenses:profileRows(state[kind]||[])]));
+ function openPage(hit){
+  const page=['income','expenses'].includes(hit.type)?'income-expenses':hit.type==='debts'?'debts':'investments';
+  dialog.close();document.querySelector('.nav-tab[data-tab="'+page+'"]').click();
+  const pane=page==='income-expenses'?(hit.type==='income'?'Income':'Expenses'):page==='investments'?(['pf','ppf','nps'].includes(hit.type)?'Retirement':hit.row.type==='Stallion PMS'?'Stallion PMS':'Portfolio'):null;
+  if(pane)for(const button of document.querySelectorAll('#'+page+' .flow-tabs [role=tab]'))if(button.textContent===pane)button.click();
+  if(page==='income-expenses'&&hit.row.date){const prefix=hit.type==='income'?'income':'expense',month=hit.row.date.slice(0,7);document.getElementById(prefix+'HistoryFinancialYear').dataset.preferredYear=String(financialYearStartYearForMonthKey(month));document.getElementById(prefix+'HistoryMonth').dataset.preferredMonth=month;const records=sortTransactionHistoryRecords((hit.type==='income'?profileRows(state.income):state.expenses).filter(r=>r.date.slice(0,7)===month).sort((a,b)=>b.date.localeCompare(a.date)),prefix);transactionHistoryPages[prefix]=Math.max(1,Math.floor(records.findIndex(r=>r.id===hit.row.id)/TRANSACTION_HISTORY_PAGE_SIZE)+1);(hit.type==='income'?renderIncome:renderExpenses)();}
+ }
+ function render(){
+  results.replaceChildren();scope.textContent=(isCombinedFamilyProfile()?'Combined family':activeFamilyProfile)+' · Expenses are household-wide';
+  if(input.value.trim().length<2){status.textContent='Enter at least 2 characters.';return;}
+  const found=findRecords(groups(),input.value,filter.value);status.textContent=found.total?found.total+' matching record'+(found.total===1?'':'s')+(found.total>found.rows.length?' · showing the first '+found.rows.length:''):'No matching records.';
+  for(const hit of found.rows){const card=add(results,'article');card.className='finance-search-result';const copy=add(card,'div');add(copy,'span',names[hit.type]).className='finance-search-kind';add(copy,'h3',hit.row.source||hit.row.name||hit.row.type||hit.row.category||hit.row.scheme||names[hit.type]);add(copy,'p',[hit.row.member,hit.row.date].filter(Boolean).join(' · '));if(hit.row.notes)add(copy,'p',hit.row.notes).className='text-muted';const action=add(card,'div');action.className='finance-search-action';add(action,'strong',formatCurrency(hit.row.amount??hit.row.current??hit.row.remaining??0));const button=add(action,'button','Open page');button.type='button';button.className='btn-small';button.onclick=()=>openPage(hit);}
+ }
+ launch.onclick=()=>{if(dataOperationBusy||dialog.open)return;input.value='';filter.value='all';render();dialog.showModal();input.focus();};
+ input.oninput=()=>{clearTimeout(timer);timer=setTimeout(render,120);};filter.onchange=render;dialog.addEventListener('close',()=>{clearTimeout(timer);input.value='';results.replaceChildren();});
+ const reset=window.financeBridge.reset;window.financeBridge.reset=function(){clearTimeout(timer);if(dialog.open)dialog.close();dialog.remove();launch.remove();return reset.apply(this,arguments);};
+ window.financeRecordSearch={open:()=>launch.click()};
+}

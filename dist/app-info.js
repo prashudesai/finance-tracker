@@ -1,9 +1,10 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.25.12",
+  "version": "2026.10.25.13",
   "released": "2026-10-25",
   "releaseNotes": [
-  "Added a compact dashboard attention view linking missing balances, valuation confirmations and automatic-entry checks to their review tools.",
-  "Attention items update from actual records and device review marks, remain collapsed and hide when clear."
+  "Added on-device record search across income, expenses, investments, debts and retirement accounts.",
+  "Search by name, category, date or amount, filter by type and open the relevant page or historical month.",
+  "Search respects selected family profiles; household expenses remain shared."
 ],
   "sections": [
     [
