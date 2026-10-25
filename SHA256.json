@@ -1,6 +1,6 @@
 {
   "README.md": "5d84b64d4e1f31923de42ed9d9a1f06406c35aff109fd5f0b326209d6bded2b2",
-  "package.json": "09de5265fab50bd5310c7774a5d2b6dfcf41bbc3893f0145add027d94b9339b3",
+  "package.json": "1c1a6fd5040486a2cc8d41eac48543cc13659af59f148e654eddd8bd176cf9fd",
   "RELEASE_CHECKS.json": "9bfeb9c642fe43593276e965c0fc34473e01f844bcfe4ebb4048d128bcddd22f",
   "firestore.rules": "8a995b27257127d45eaf5ff377e9f9b3136ca38b734649f561fd30240588907c",
   "firebase.json": "8c363a3e0d0ebed0f38c08fe2416091a56e48052c7a42bfd11cb37291f9a3977",
@@ -29,16 +29,16 @@
   "dist/firebase-client.js": "3878fd745c91907fde659f3113c086ea27bed0c89660b910d4c250c18783b7e0",
   "dist/loan-ledger.js": "b05226c56c99fa021ac6c85d2c51e5853d5d929109d08af90459833614b2b742",
   "dist/tracker-enhancements.js": "1dbc302bf21a52bd21c01a3b5c8c8e4372e0f0aa33553cd694b9dbde53403609",
-  "dist/version.json": "1319161ec0a44a13103b0cf4b6a696e35599d200c7ee3ae8e440987dc609b322",
+  "dist/version.json": "817a43383d6157e0431c7879eb38b321c332b4acf892ebe27c40b30d0779b7f0",
   "dist/pwa-client.js": "3a4878127ef0d114d9b419b70478d29be92742d27bc9285ab4753811dccfc6b7",
   "dist/index.html": "11ab5402adc98a197ae0946a173f79a2a3db1ccc5e7276e0d0a7cfd15ff723e0",
-  "dist/app-info.js": "2c55f8ff0745355c4706b44d9434913a8918b2072dbdf704d34a194b236d135e",
+  "dist/app-info.js": "458a930e9fde178421adf2b345c2c78d0ded216440e63eabfb7839111e1fd65c",
   "dist/recurring-ui.js": "798410bcdfd7a87f0c838a164df2b841f5ac4673a12bc21be405089d569f1809",
-  "dist/service-worker.js": "8cc84c302c75312234db4477fabcd317eb2e602813041b7923c56f08f29a4a46",
+  "dist/service-worker.js": "d420da49b7a88460885be95ef6ed3c1db5abf83f0907fff2d172488b18360f81",
   "dist/tracker-enhancements.css": "9212aa91926e951af580911d3fcde80cd26614eeb9f79976e9a65fcdb197deb9",
-  "dist/app-style.js": "c678fcd149a82bccb295c92a7a209c6f371ed11e2af1f9e2e07f81b5279cc93c",
+  "dist/app-style.js": "43d65be9d3ae9ef9951153030a013ecc82dc1a78186a2b6a3baed4e38d3abc77",
   "dist/manifest.webmanifest": "86a875d553a50576db7d510620619a7b6b28487dd2d606640675436dd9475355",
-  "dist/app-style.css": "925b074df84b4cda06375ad05cf56b2d345b1ca85b42e63f794ed7b0042b59a9",
+  "dist/app-style.css": "c7414c56e81906460ca26780e19d2190a71573f3ac224418d206181618861831",
   "dist/account-photo.js": "58383b90b5eeba03b6d4aff81b232730093dc54d0d9b268ce4c0399a0a6b50b1",
   "dist/firebase-store.js": "f28d2892b6283afb733d59dade8d5b88da076ed7a6d20a733ee28a185aaf5059",
   "dist/recurring.js": "a568cd5f68151182229c49765d41255abf707bc69284d881070ebe90e070886f",
@@ -54,5 +54,7 @@
   "dist/vendor/firebase-auth.js": "4efb4436232a15e04a2f876628b872140a837f7167af8660fbf94d5247f480d1",
   "dist/vendor/firebase-app.js": "31144da41d5d92127eb9d46c514c2da16117a50ec4d016b986973c1af4d459cf",
   "dist/icons/icon-192.png": "d3efe239d71f35b7af7f3809543bfee092053b9ee9052e9f45700bce058580f0",
-  "dist/icons/icon-512.png": "e49cda8038422d2ac12fa304412f9d327b2fa667b92632f977128e81440bafd3"
+  "dist/icons/icon-512.png": "e49cda8038422d2ac12fa304412f9d327b2fa667b92632f977128e81440bafd3",
+  "tests/emerald-flow-browser.cjs": "a2bbadbda306e06098266d136cd769f24f3e06993493ff55cc6e6cf67b673d09",
+  "EMERALD_FLOW.md": "a86e1922eb4880d1eeabfe5fcaa1c916c01bf7df45dc704f32be4d3c3c61eda8"
 }

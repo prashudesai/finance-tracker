@@ -1,17 +1,12 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.25.4",
+  "version": "2026.10.25.5",
   "released": "2026-10-25",
   "releaseNotes": [
-    "Added Emerald Flow as an optional Appearance style with a new cash-flow-first dashboard composition, expanded charts and portfolio workspace.",
-    "Refreshed the sign-in screen with a responsive forest-green and mint design; Google sign-in remains unchanged.",
-    "Updated the installed-app icon to the selected wallet with a rising chart and arrow.",
-    "Full-project audit: removed obsolete named-record deletion and old backup migration paths.",
-    "Daily-interest balances now record their calculation date, validate the saved snapshot, and advance correctly across month-end without duplicate capitalization.",
-    "Faster PMS synchronization and loan-payment split updates using indexed lookups.",
-    "New-loan interest input accepts 0.05 percentage-point increments.",
-    "Loan history keeps per-loan PDF, Excel-compatible CSV and print exports, newest-first viewing and oldest-first export order; paid-off balances print as zero.",
-    "Expanded calculation, backup, family access, offline/update, mobile/desktop, profile-photo and export regression tests."
-],
+    "Rebuilt Emerald Flow with separate page workspaces, preserving the existing Modern and Classic options.",
+    "Added a live grouped cash-flow bar chart with keyboard and tap amount details, plus horizontal portfolio allocation bars.",
+    "Introduced tabbed income/expense and investment workspaces, loan cards, grouped analytics, a report builder sidebar and compact Settings navigation.",
+    "Verified actual browser navigation, record saves, reports, style switching and responsive layouts from 320px to 1440px."
+  ],
   "sections": [
     [
       "Short first EMI interest",
