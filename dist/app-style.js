@@ -19,11 +19,14 @@
   }
   function openPage(page){document.querySelector('.nav-tab[data-tab="'+page+'"]')?.click();updateSelection();}
   function applyStyle(value,persist=true){
-    const style=value==='classic'?'classic':'modern';
-    root.dataset.appStyle=style;
+    const style=['classic','modern','emerald-flow'].includes(value)?value:'modern';
+    const layoutStyle=style==='classic'?'classic':'modern';
+    root.dataset.appStyle=layoutStyle;
+    root.dataset.layoutStyle=style;
     if(persist){try{window.trackerStorage.setItem(key,style);}catch(_){/* The layout still applies to this session. */}}
     controls?.querySelectorAll('[data-app-style-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.appStyleChoice===style)));
-    const status=document.getElementById('appStyleStatus');if(status)status.textContent=(style==='modern'?'Style 1 · Modern':'Style 2 · Classic')+' selected. This preference is saved for this account on this device.';
+    const labels={modern:'Style 1 · Modern',classic:'Style 2 · Classic','emerald-flow':'Style 3 · Emerald Flow'};
+    const status=document.getElementById('appStyleStatus');if(status)status.textContent=labels[style]+' selected. This preference is saved for this account on this device.';
     const familyMenu=document.getElementById('familyProfileMenu');if(familyMenu)familyMenu.hidden=true;window.syncFamilyProfileButtons?.();
     window.setMobileNavHidden?.(false);
     requestAnimationFrame(()=>{window.dispatchEvent(new Event('resize'));if(window.Chart?.instances)Object.values(window.Chart.instances).forEach(chart=>chart.resize?.());});
@@ -60,7 +63,7 @@
     }
     const panel=document.getElementById('settingsAppearancePanel')||document.querySelector('.settings-appearance-panel');
     controls=document.createElement('section');controls.id='appStyleChoices';controls.className='pft-style-choices';controls.setAttribute('aria-labelledby','appStyleChoicesTitle');
-    controls.innerHTML='<h3 id="appStyleChoicesTitle">Page style</h3><p>Choose the page design and navigation you prefer. Both styles use the same tracker records.</p><div class="pft-style-choice-grid"><button type="button" data-app-style-choice="modern" aria-pressed="false"><span class="pft-style-swatch modern" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 1 · Modern <small>Default</small></strong><span>Teal & mint, top navigation and compact mobile pages.</span></button><button type="button" data-app-style-choice="classic" aria-pressed="false"><span class="pft-style-swatch classic" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 2 · Classic</strong><span>The earlier design with its familiar sidebar and page layouts.</span></button></div><p id="appStyleStatus" role="status"></p>';
+    controls.innerHTML='<h3 id="appStyleChoicesTitle">Page style</h3><p>Choose the page design and navigation you prefer. All styles use the same tracker records.</p><div class="pft-style-choice-grid"><button type="button" data-app-style-choice="modern" aria-pressed="false"><span class="pft-style-swatch modern" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 1 · Modern <small>Default</small></strong><span>Teal & mint, top navigation and compact mobile pages.</span></button><button type="button" data-app-style-choice="classic" aria-pressed="false"><span class="pft-style-swatch classic" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 2 · Classic</strong><span>The earlier design with its familiar sidebar and page layouts.</span></button><button type="button" data-app-style-choice="emerald-flow" aria-pressed="false"><span class="pft-style-swatch emerald-flow" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 3 · Emerald Flow</strong><span>Fresh light layout, cash-flow overview and portfolio-first dashboard.</span></button></div><p id="appStyleStatus" role="status"></p>';
     controls.querySelectorAll('[data-app-style-choice]').forEach(b=>b.addEventListener('click',()=>applyStyle(b.dataset.appStyleChoice)));
     panel?.prepend(controls);
     const oldNav=document.querySelector('.nav-tabs');if(oldNav)new MutationObserver(updateSelection).observe(oldNav,{attributes:true,subtree:true,attributeFilter:['class']});
