@@ -224,7 +224,7 @@ html[data-layout-style="emerald-flow"] body.advanced-layout :is(input,select,tex
 @media(max-width:700px){html[data-layout-style="emerald-flow"] body.advanced-layout>.container{padding-left:14px;padding-right:14px}html[data-layout-style="emerald-flow"] body.advanced-layout>.container>header{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px}html[data-layout-style="emerald-flow"] .pft-style-navigation{background:var(--card-bg);box-shadow:0 -4px 18px #10251a18}html[data-layout-style="emerald-flow"] .pft-style-navigation>button{min-height:52px;font-size:9px}}
 
 /* Emerald Flow has its own dashboard composition: at-a-glance metrics, charts, then the portfolio workspace. */
-html[data-layout-style="emerald-flow"] #dashboard{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);column-gap:20px;align-items:start}
+html[data-layout-style="emerald-flow"] #dashboard.active{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);column-gap:20px;align-items:start}
 html[data-layout-style="emerald-flow"] #dashboard>.pft-style-hero{display:none}
 html[data-layout-style="emerald-flow"] #dashboard>.pft-dashboard-toolbar,html[data-layout-style="emerald-flow"] #dashboard>#dashboardUpdateNotice{grid-column:1/-1}
 html[data-layout-style="emerald-flow"] #dashboard>.dashboard{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-areas:"wealth wealth debts income balance savings" "expense expense expense average average average";gap:12px;margin:0 0 20px}
@@ -312,3 +312,8 @@ html[data-layout-style="emerald-flow"] body.advanced-layout::before{content:"";p
 html[data-layout-style="emerald-flow"] body.advanced-layout>.container{position:relative;z-index:1}
 html[data-layout-style="emerald-flow"] body.advanced-layout .nav-tabs{z-index:60}
 @media(max-width:700px){html[data-layout-style="emerald-flow"] body.advanced-layout::before{inset:-8%;opacity:.86;filter:blur(32px);background:radial-gradient(ellipse 78% 18% at 55% 1%,rgba(34,180,119,.25),transparent 78%),radial-gradient(ellipse 56% 30% at 100% 35%,rgba(53,170,106,.17),transparent 78%),radial-gradient(ellipse 52% 24% at 0% 68%,rgba(38,154,98,.13),transparent 78%)}}
+
+html[data-layout-style="emerald-flow"] body.advanced-layout #dashboard:not(.active){display:none!important}
+html[data-layout-style="emerald-flow"] body.advanced-layout #dashboard .dashboard-net-worth{grid-area:wealth}
+html[data-layout-style="emerald-flow"] body.advanced-layout #dashboard [data-layout-slot="expense"]{grid-area:expense}
+html[data-layout-style="emerald-flow"] body.advanced-layout #dashboard [data-layout-slot="average"]{grid-area:average}
