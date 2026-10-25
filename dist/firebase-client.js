@@ -1,6 +1,7 @@
 import {initializeApp} from './vendor/firebase-app.js';
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
 import {getFirestore,doc,getDocFromServer,writeBatch,runTransaction,onSnapshot} from './vendor/firebase-firestore.js';
+import {installRecordRecovery} from './record-recovery.js?v=77';
 import {installWorkProtection} from './work-protection.js?v=76';
 import {installCloudNotice} from './cloud-notice.js?v=75';
 import {initializeFamilyAccess} from './family-access.js?v=66';
@@ -86,7 +87,9 @@ onAuthStateChanged(auth,async user=>{
   document.getElementById('cloudSignOut').addEventListener('click',()=>window.financeCloud.logout().catch(error=>alert(friendly(error))));
   document.getElementById('cloudSaveRetry').addEventListener('click',()=>window.financeBridge?.retry());
   document.getElementById('cloudRefresh').addEventListener('click',()=>window.financeBridge?.refreshRemote().catch(error=>alert(friendly(error))));
+  window.financeCloud.inspectVersion=async()=>{assertAccess();const reader=createCloudStore(api,family.ownerUid,user.uid);const envelope=await reader.load();return {envelope,revision:reader.revision};};
   window.financeCloudResolve();
+  Promise.resolve(window.trackerReady).then(installRecordRecovery).catch(error=>console.warn('Record recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(installWorkProtection).catch(error=>console.warn('Draft recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>installCloudNotice((next,error)=>onSnapshot(doc(db,'users/'+family.ownerUid+'/tracker/current'),snapshot=>next(snapshot.exists()?snapshot.data():null),error))).catch(error=>console.warn('Live cloud notice unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>initializeAccountPhoto({

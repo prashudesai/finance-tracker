@@ -86,5 +86,22 @@ const server=http.createServer(async(req,res)=>{try{
  const empty=await browser.newPage({viewport:{width:1280,height:1050},serviceWorkers:'block'});empty.on('pageerror',e=>errors.push(e.message));await empty.goto(url+'/?user=flowempty&email=empty@example.test&name=Tester');await empty.locator('#cloudLogin').click();await empty.waitForFunction(()=>window.financeCloud&&document.getElementById('cloudGate').hidden);if(await empty.locator('#firstNameSetup').isVisible())await empty.locator('#firstNameContinue').click();await empty.evaluate(()=>window.trackerReady);await empty.waitForFunction(()=>Boolean(window.PFT_STYLE));await empty.evaluate(()=>PFT_STYLE.apply('emerald-flow'));for(const width of [1280,390]){await empty.setViewportSize({width,height:1050});for(const id of pages){await empty.locator('.nav-tab[data-tab="'+id+'"]').evaluate(e=>e.click());await empty.waitForTimeout(40);await internalGeometry(id,width+' empty',empty);if(id==='growth-projection')await check('Empty projection controls do not overlap at '+width+'px',()=>projectionGeometry(empty));} }await empty.close();
  await page.setViewportSize({width:1440,height:1050});await page.locator('#themeToggle button').click();await page.waitForTimeout(100);await check('Light mode displays the redesigned dashboard',async()=>{assert.equal(await page.locator('html').getAttribute('data-theme'),'light');assert(await page.locator('.flow-home').isVisible());});await page.screenshot({path:artifacts+'/pft-flow-light-1440.png',fullPage:false});
  await check('All page internals are free of hidden clipping and control overlap',()=>{fs.writeFileSync(path.join(artifacts,'layout-issues.json'),JSON.stringify(auditIssues,null,2));if(auditIssues.length)console.log(JSON.stringify(auditIssues));assert.equal(auditIssues.length,0,'See test-results/emerald-flow/layout-issues.json');});
+ await check('Deleted records can be previewed and restored from dated device snapshots',async()=>{
+  await page.evaluate(async()=>{state.income.push({id:'recovery-test',source:'Other',amount:1234,date:new Date().toISOString().slice(0,10)});await saveData('Recovery fixture added');state.income=state.income.filter(r=>r.id!=='recovery-test');await saveData('Recovery fixture deleted');});
+  await page.evaluate(()=>window.openRestorePoints());
+  const dialog=page.locator('#recordRecoveryDialog');await dialog.getByRole('button',{name:'Preview',exact:true}).first().click();
+  assert.match(await dialog.textContent(),/recovery-test/);
+  await page.context().setOffline(true);
+  await dialog.getByRole('button',{name:'Restore this version',exact:true}).click();
+  await page.waitForFunction(()=>state.income.some(r=>r.id==='recovery-test'));
+  await page.waitForFunction(()=>!document.getElementById('recordRecoveryDialog').open);
+  assert.equal(await page.evaluate(()=>state.income.find(r=>r.id==='recovery-test').amount),1234);
+  await page.context().setOffline(false);await page.evaluate(()=>syncCloud());
+ });
+ await check('Conflict choices are explicit and validated before applying',async()=>{
+  await page.evaluate(()=>{window.__beforeConflict=JSON.parse(JSON.stringify(state));state.income.push({id:'unsaved-conflict-test',source:'Other',amount:9876,date:new Date().toISOString().slice(0,10)});return window.resolveTrackerConflict();});const d=page.locator('#recordRecoveryDialog');await page.waitForTimeout(500);
+  const selects=d.locator('select');assert.equal(await selects.count()>0,true);{await d.getByRole('button',{name:'Validate and apply choices',exact:true}).click();assert.match(await d.textContent(),/Choose a version for every/);}
+  await d.getByRole('button',{name:'Close',exact:true}).click();await page.evaluate(()=>{state=window.__beforeConflict;});
+ });
  await check('No browser runtime errors',()=>assert.deepEqual(errors,[]));await browser.close();server.close();console.log(JSON.stringify({passed:results.length,failed:0}));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});

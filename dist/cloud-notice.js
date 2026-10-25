@@ -36,7 +36,7 @@ export function installCloudNotice(subscribe) {
     banner.hidden=!latest;banner.style.display=latest?'flex':'none';
     const pending=Boolean(syncRecord?.pending||cloudSaveBlocked||persistenceDirty||pendingSaves);
     message.textContent=latest?.error||(pending?'New cloud records found. This device also has changes. Review both versions before replacing anything.':'New records are available from another device. Finish your form before loading them.');
-    load.disabled=busy||pending||Boolean(latest?.error);review.hidden=!pending;backup.hidden=!pending;
+    load.disabled=busy||pending||Boolean(latest?.error);review.hidden=!pending;backup.hidden=!pending;resolve.hidden=!pending||window.financeCloud?.canManage===false;
   }
   const load=button('Load latest',async()=>{
     if(busy)return;busy=true;paint();
@@ -51,6 +51,7 @@ export function installCloudNotice(subscribe) {
     finally{busy=false;paint();}
   });
   const review=button('Review differences',()=>window.openTrackerConflictReview?.());
+  const resolve=button('Resolve choices',()=>window.resolveTrackerConflict?.());
   const backup=button('Export device backup',()=>window.financeBridge.exportUnsaved());
   const watcher=watchCloudChanges({subscribe,baseline:()=>syncRecord?.baseRevision||0,
     ownMutation:id=>Boolean(id&&id===syncRecord?.token),
