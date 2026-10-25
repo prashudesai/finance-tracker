@@ -1,9 +1,8 @@
 {
-  "version": "2026.10.25.11",
+  "version": "2026.10.25.12",
   "released": "2026-10-25",
   "releaseNotes": [
-    "Split the large HTML into a small shell and cached scripts/styles with feature-organised source.",
-    "Reduced scheduled save refreshes to the visible page and moved hidden-page rendering to navigation.",
-    "Added installed-PWA-style offline benchmarks, lazy-render checks and deterministic build validation."
+    "Added a compact dashboard attention view linking missing balances, valuation confirmations and automatic-entry checks to their review tools.",
+    "Attention items update from actual records and device review marks, remain collapsed and hide when clear."
   ]
 }

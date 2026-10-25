@@ -19,3 +19,4 @@ export function valuationStatus(record,stamp,today){
  const days=Math.floor((Date.parse(today+'T00:00:00Z')-Date.parse(stamp.date+'T00:00:00Z'))/86400000);
  if(days<0)return 'Invalid future date';return `${stamp.date} · ${days} days ago`;
 }
+export function automaticCheckKey(row){return JSON.stringify([row.investmentType||'',row.accountId||row.investmentId||row.stallionId||'',row.id,row.date,row.amount]);}

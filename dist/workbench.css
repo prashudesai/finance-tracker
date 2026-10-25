@@ -2,3 +2,6 @@
 @media(max-width:600px){.tab-content input:not([type=checkbox]):not([type=radio]):not([type=range]),.tab-content select,.tab-content textarea{font-size:16px;min-height:44px;box-sizing:border-box}}
 @media(prefers-reduced-motion:reduce){html *,html *::before,html *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
 .finance-workbench-dialog,#recordRecoveryDialog{box-sizing:border-box}#recordRecoveryDialog{background:var(--card-bg,#fff)!important;color:var(--text,#17313a)!important}
+
+.finance-attention-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}.finance-attention-row span{min-width:0;overflow-wrap:anywhere}.finance-attention-row button{flex-shrink:0;min-height:44px}
+html[data-layout-style="emerald-flow"] #dashboard>#financeAttention:not([hidden]){display:block!important}

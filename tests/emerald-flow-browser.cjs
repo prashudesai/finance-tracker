@@ -121,5 +121,12 @@ const server=http.createServer(async(req,res)=>{try{
  await check('Workbench dialogs fit mobile and expose accessible names',async()=>{
   await page.setViewportSize({width:390,height:844});for(const tool of ['monthly','planning','valuations','audit','commitments','syncDetails']){await page.evaluate(t=>financeWorkbench[t](),tool);const d=page.locator('#financeWorkbenchDialog');assert.equal(await d.isVisible(),true);assert.equal(await d.getAttribute('aria-labelledby'),'workbenchHeading');const box=await d.boundingBox();assert.equal(box.width<=390,true);await d.getByRole('button',{name:'Close',exact:true}).click();}await page.setViewportSize({width:1440,height:1050});
  });
+ await check('Attention items stay compact, open the right review and do not change records',async()=>{
+  await page.evaluate(()=>{document.querySelector('.nav-tab[data-tab="dashboard"]').click();financeAttention.refresh();});
+  const box=page.locator('#financeAttention');assert.equal(await box.isVisible(),true);assert.equal(await box.evaluate(e=>e.open),false);
+  await box.locator('summary').click();const before=await page.evaluate(()=>JSON.stringify(state));
+  await box.getByRole('button',{name:/Review: .*valuation/}).click();assert.equal(await page.locator('#financeWorkbenchDialog').isVisible(),true);assert.match(await page.locator('#financeWorkbenchDialog').textContent(),/Valuation freshness/);await page.locator('#financeWorkbenchDialog').getByRole('button',{name:'Close',exact:true}).click();assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
+  await page.setViewportSize({width:390,height:844});const bounds=await box.boundingBox();assert.equal(bounds.x>=0&&bounds.x+bounds.width<=391,true);await page.setViewportSize({width:1440,height:1050});
+ });
  await check('No browser runtime errors',()=>assert.deepEqual(errors,[]));await browser.close();server.close();console.log(JSON.stringify({passed:results.length,failed:0}));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});

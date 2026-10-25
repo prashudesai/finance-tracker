@@ -1,4 +1,4 @@
-import {cashflowIndex,monthClose,realValue,valuationStatus} from './finance-model.js?v=79';
+import {cashflowIndex,monthClose,realValue,valuationStatus,automaticCheckKey} from './finance-model.js?v=79';
 export function installFinanceWorkbench(){
  // Use one shared model for monthly helpers and recalculated house expense.
  monthTotals=month=>({...cashflowIndex(state).get(month)||{income:0,expenses:0,stallion:0},retirement:retirementOutflow(month)});
@@ -6,21 +6,21 @@ export function installFinanceWorkbench(){
  recalculateHouseExpenses=()=>{const index=cashflowIndex(state);state.monthlyBalances.sort((a,b)=>b.month.localeCompare(a.month));for(const b of state.monthlyBalances){const r=monthClose(state,b.month,index);b.houseExpense=r.house;b.houseExpenseNextMonth=r.complete?nextMonthKey(b.month):null;}return index;};
  function nextMonthKey(m){const[y,n]=m.split('-').map(Number);return `${n===12?y+1:y}-${String(n===12?1:n+1).padStart(2,'0')}`;}
  const read=key=>{try{const value=JSON.parse(trackerStorage.getItem('workbench:'+key)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch(_){return {};}};
- const write=(key,data)=>trackerStorage.setItem('workbench:'+key,JSON.stringify(data));
+ const write=(key,data)=>{trackerStorage.setItem('workbench:'+key,JSON.stringify(data));document.dispatchEvent(new Event('finance-review-changed'));};
  const add=(parent,tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;parent.append(e);return e;};
  const button=(parent,text,fn)=>{const b=add(parent,'button',text);b.type='button';b.className='btn-small';b.onclick=()=>Promise.resolve().then(fn).catch(error=>{const msg=add(parent,'p',error.message);msg.setAttribute('role','alert');});return b;};
  const dialog=document.createElement('dialog');dialog.id='financeWorkbenchDialog';dialog.className='finance-workbench-dialog';document.body.append(dialog);
  function open(title){if(dialog.open||dataOperationBusy)return false;dialog.replaceChildren();const heading=add(dialog,'h2',title);heading.id='workbenchHeading';dialog.setAttribute('aria-labelledby',heading.id);button(dialog,'Close',()=>dialog.close());dialog.showModal();return true;}
  function table(parent,rows){const dl=add(parent,'dl');dl.className='finance-workbench-values';for(const [key,value]of rows){add(dl,'dt',key);add(dl,'dd',value);}return dl;}
  function field(parent,label,type,value){const wrap=add(parent,'label',label),e=add(wrap,'input');e.type=type;e.value=value;e.setAttribute('aria-label',label);return e;}
- function monthly(){if(!open('Monthly close'))return;const input=field(dialog,'Month','month',currentMonthKey()),body=add(dialog,'section');
+ function monthly(month=currentMonthKey()){if(!open('Monthly close'))return;const input=field(dialog,'Month','month',month),body=add(dialog,'section');
   const render=()=>{body.replaceChildren();const r=monthClose(state,input.value);const money=n=>n===null?'Missing':formatCurrency(n);
    table(body,[['Opening balance',money(r.opening)],['Recorded income',money(r.income)],['Recorded expenses (including EMIs)',money(r.expenses)],['PMS contributions',money(r.stallion)],['Available before unrecorded house spending',money(r.available)],['Closing balance (next month opening)',money(r.closing)],['Residual house expense',money(r.house)]]);
    const status=add(body,'p',r.complete?'Opening and closing balances are present.':'Add the missing month opening balance in Surplus History before closing.');status.setAttribute('role','status');
    const signature=JSON.stringify(r),saved=read('closedMonths')[r.month];if(saved)add(body,'p',saved.signature===signature?'Reviewed on this device: '+new Date(saved.at).toLocaleString():'Records changed since your last review.');
    const mark=button(body,'Mark reviewed on this device',()=>{const data=read('closedMonths');data[r.month]={signature,at:new Date().toISOString()};write('closedMonths',data);render();});mark.disabled=!r.complete;
    const scheduled=[...(state.retirementContributions||[]),...(state.investmentContributions||[]),...(state.stallionContributions||[])].filter(x=>x.automatic===true&&x.date?.startsWith(r.month));
-   if(scheduled.length){const detail=add(body,'details');add(detail,'summary',scheduled.length+' automatic entries to review');for(const row of scheduled){const box=add(detail,'div'),key=JSON.stringify([row.investmentType||'',row.accountId||row.investmentId||row.stallionId||'',row.id,row.date,row.amount]),confirmed=read('confirmedEntries');add(box,'span',`${row.investmentType||'Investment'} · ${row.date} · ${formatCurrency(row.amount)} · ${confirmed[key]?'Checked on this device':'Scheduled / not checked'}`);button(box,'Confirm against statement',()=>{const data=read('confirmedEntries');data[key]=true;write('confirmedEntries',data);render();});}}
+   if(scheduled.length){const detail=add(body,'details');add(detail,'summary',scheduled.length+' automatic entries to review');for(const row of scheduled){const box=add(detail,'div'),key=automaticCheckKey(row),confirmed=read('confirmedEntries');add(box,'span',`${row.investmentType||'Investment'} · ${row.date} · ${formatCurrency(row.amount)} · ${confirmed[key]?'Checked on this device':'Scheduled / not checked'}`);button(box,'Confirm against statement',()=>{const data=read('confirmedEntries');data[key]=true;write('confirmedEntries',data);render();});}}
   };input.onchange=render;render();
  }
  function valuations(){if(!open('Valuation freshness'))return;add(dialog,'p','Confirmation dates are stored on this device; changing a balance requires confirmation again.');const stamps=read('valuations');

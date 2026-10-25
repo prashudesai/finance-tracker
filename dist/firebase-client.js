@@ -1,6 +1,7 @@
 import {initializeApp} from './vendor/firebase-app.js';
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
 import {getFirestore,doc,getDocFromServer,writeBatch,runTransaction,onSnapshot} from './vendor/firebase-firestore.js';
+import {installAttention} from './attention.js?v=81';
 import {installFinanceWorkbench} from './finance-workbench.js?v=79';
 import {installExperience} from './experience.js?v=79';
 import {installRecordRecovery} from './record-recovery.js?v=77';
@@ -91,7 +92,7 @@ onAuthStateChanged(auth,async user=>{
   document.getElementById('cloudRefresh').addEventListener('click',()=>window.financeBridge?.refreshRemote().catch(error=>alert(friendly(error))));
   window.financeCloud.inspectVersion=async()=>{assertAccess();const reader=createCloudStore(api,family.ownerUid,user.uid);const envelope=await reader.load();return {envelope,revision:reader.revision};};
   window.financeCloudResolve();
-  Promise.resolve(window.trackerReady).then(()=>{const css=document.createElement('link');css.rel='stylesheet';css.href='./workbench.css?v=79';document.head.append(css);installFinanceWorkbench();installExperience();}).catch(error=>console.warn('Workbench unavailable',error));
+  Promise.resolve(window.trackerReady).then(()=>{const css=document.createElement('link');css.rel='stylesheet';css.href='./workbench.css?v=79';document.head.append(css);installFinanceWorkbench();installExperience();installAttention();}).catch(error=>console.warn('Workbench unavailable',error));
   Promise.resolve(window.trackerReady).then(installRecordRecovery).catch(error=>console.warn('Record recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(installWorkProtection).catch(error=>console.warn('Draft recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>installCloudNotice((next,error)=>onSnapshot(doc(db,'users/'+family.ownerUid+'/tracker/current'),snapshot=>next(snapshot.exists()?snapshot.data():null),error))).catch(error=>console.warn('Live cloud notice unavailable',error));
