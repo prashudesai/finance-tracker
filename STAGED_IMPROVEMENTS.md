@@ -13,3 +13,6 @@ This is an incremental modularisation. The legacy main HTML and theme overrides 
 - 2026.10.25.11: extracted HTML/CSS/runtime assets, feature-organised source fragments and deterministic build gate. Classic runtime and theme cascade preserved; no framework rewrite or visual redesign claimed.
 
 Installed-PWA-style benchmarks for .11 use a real service worker and offline cached reloads, two run orders and 18 samples per version. Rendering changes are validated by dirty-page/coalescing tests, the full browser suite and offline update tests. Physical-iPhone timing remains unmeasured.
+
+- 2026.10.25.12–14: compact attention view, on-device search, shared reviews/payment verification and selective draft clearing.
+- 2026.10.26.1: combined edit/confirm, complete backup/restore, bottom Search control, prelaunch compatibility removal and measured review-render optimization. Current details are in COMBINED_RELEASE.md and REVIEW_SYNC.md; historical device-only notes above describe earlier releases.

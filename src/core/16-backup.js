@@ -1,16 +1,19 @@
     // EXPORT/IMPORT
-    document.getElementById('exportBtn').addEventListener('click', async () => {
+    function backupIdentity(){return {exportedAt:new Date().toISOString(),appVersion:window.PFT_APP_INFO.version,ownerUid:window.financeCloud.ownerUid,ownerEmail:window.financeCloud.ownerEmail||window.financeCloud.email,exportedBy:window.financeCloud.email};}
+    function makeDeviceRecoveryBackup(){return {...state,backupFormat:'finance-tracker',backupVersion:1,backupKind:'device-recovery',reviewMetadata:window.financeReviews?{format:1,values:window.financeReviews.export()}:null,backupMetadata:backupIdentity()};}
+    async function buildTrackerBackup(){
       await saveQueue;
-      try { validateBackup(state); } catch (e) { alert('Cannot export invalid backup: ' + e.message); return; }
-      const exportData={...state,auditLog:await readChangeLog(Infinity,0),backupMetadata:{exportedAt:new Date().toISOString(),appVersion:window.PFT_APP_INFO.version,ownerUid:window.financeCloud.ownerUid,ownerEmail:window.financeCloud.ownerEmail||window.financeCloud.email,exportedBy:window.financeCloud.email}};
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `family-wealth-${localDateKey()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      recordBackupExport();
+      const revision=storageRevision,data=validateBackup(JSON.parse(JSON.stringify(state))),auditLog=await readChangeLog(Infinity,0);
+      if(!window.financeReviews)throw Error('Shared reviews are still opening. Try again in a moment.');
+      const reviewMetadata=await window.financeReviews.backup(),stored=await readStoredFinance();
+      if(storageRevision!==revision||(stored?.revision||0)!==revision||pendingSaves)throw Error('Records changed while preparing the backup. Try exporting again.');
+      return {...data,backupFormat:'finance-tracker',backupVersion:1,backupKind:'complete',auditLog,reviewMetadata,backupMetadata:backupIdentity()};
+    }
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+      try{
+        const exportData=await buildTrackerBackup(),blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+        a.href=url;a.download=`family-wealth-${localDateKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);recordBackupExport();
+      }catch(error){showImportStatus('Backup could not be exported: '+error.message,true);}
     });
 
     document.getElementById('openImportBtn').addEventListener('click', () => {
@@ -90,24 +93,30 @@
       if(dataOperationBusy)return;dataOperationBusy=true;document.querySelector('.container').inert=true;
       showImportStatus('Reading backup…');
       await saveQueue;
-      const original = JSON.parse(JSON.stringify(state));
+      const original=JSON.parse(JSON.stringify(state)),originalDirty=persistenceDirty,originalLoadFailed=storageLoadFailed;let imported=false;
       try {
         const text = await file.text();
-        const data = validateBackup(JSON.parse(text.replace(/^\uFEFF/, '')));
+        const parsed=JSON.parse(text.replace(/^\uFEFF/, ''));
+        if(parsed.backupFormat!=='finance-tracker'||parsed.backupVersion!==1||parsed.schemaVersion!==2||!['complete','device-recovery'].includes(parsed.backupKind)||!Object.hasOwn(parsed,'reviewMetadata')||(parsed.backupKind==='complete'&&parsed.reviewMetadata===null))throw Error('Use a current complete backup exported from this app.');
+        const data=validateBackup(parsed);
+        if(!window.financeReviews)throw Error('Shared review backup support is still opening. Try again.');
+        const reviews=parsed.backupKind==='device-recovery'&&parsed.reviewMetadata===null?null:window.financeReviews.parseBackup(parsed.reviewMetadata);
         if(typeof window.previewTrackerImport!=='function')throw new Error('Backup preview is unavailable. Reconnect and reload this version');
-        if(!await window.previewTrackerImport(data,file.name,JSON.parse(text.replace(/^\uFEFF/, '')).backupMetadata)){showImportStatus('Import cancelled. Current records were kept.');return;}
+        if(!await window.previewTrackerImport(data,file.name,parsed.backupMetadata,reviews)){showImportStatus('Import cancelled. Current records were kept.');return;}
+        const reviewRestore=reviews===null?false:await window.financeReviews.prepareRestore(reviews);
         state = data;
         
         try { refreshImportedData(); } catch (error) { state = original; refreshImportedData(); throw error; }
         storageLoadFailed = false;
-        const persisted = await saveData('Imported backup', JSON.parse(text.replace(/^\uFEFF/, '')).auditLog || null);
-        if(!persisted){state=original;lastAccepted=JSON.parse(JSON.stringify(original));refreshImportedData();throw new Error('Import was not saved');}
+        const persisted = await saveData('Imported backup',parsed.auditLog||null,reviewRestore);
+        if(!persisted){state=original;lastAccepted=JSON.parse(JSON.stringify(original));persistenceDirty=originalDirty;storageLoadFailed=originalLoadFailed;refreshImportedData();syncStatus();throw new Error('Import was not saved');}
+        imported=true;
         await renderRecovery();
-        showImportStatus(`Loaded ${file.name}: ${state.income.length} income records, ${state.expenses.length} expenses, ${state.investments.length} investments, ${state.debts.length} debts and ${state.monthlyBalances.length} monthly balances.${persisted ? ' Saved successfully.' : ' Loaded for this session, but browser storage is unavailable. Export a backup before closing.'}`);
+        showImportStatus(`Loaded ${file.name}: ${state.income.length} income records, ${state.expenses.length} expenses, ${state.investments.length} investments, ${state.debts.length} debts and ${state.monthlyBalances.length} monthly balances.${reviewRestore?' Shared reviews restored on this device; records and reviews will publish together when sync completes.':''}${persisted ? ' Saved successfully.' : ' Loaded for this session, but browser storage is unavailable. Export a backup before closing.'}`);
         openDashboardAfterImport();
       } catch (error) {
-        showImportStatus('Backup was not loaded: ' + error.message + '. Existing records were kept.', true);
-      } finally { e.target.value = '';dataOperationBusy=false;document.querySelector('.container').inert=false; }
+        showImportStatus(imported?'Backup records were saved, but the page could not finish updating: '+error.message+'. Reload to view the saved records.':'Backup was not loaded: '+error.message+'. Existing records were kept.',true);
+      } finally { window.financeReviews?.cancelRestore();e.target.value = '';dataOperationBusy=false;document.querySelector('.container').inert=false; }
     });
 
     function updateClearControls(){
@@ -329,7 +338,7 @@
       if(kind==='pf')return {title:'Edit PF account',fields:[['member','Family member','select',members],['account','Account number / UAN','text'],['autoMonthlyContribution','Include automatic monthly contribution','checkbox'],['employee','Employee contribution per month (₹)','number',0],['employer','Employer total per month (₹)','number',0],['epsMonthly','Employer portion to EPS per month (₹)','number',0],['epsCurrent','Current EPS balance (₹)','number',0],['invested','Invested amount (₹)','number',0],['current','Current balance (₹)','number',0],['rate','Interest rate (% p.a.)','number',0],['date','Last updated','date']]};
       if(kind==='investment'){
         const types=[...new Set(['Mutual Funds','Bonds','Fixed Deposits','Stallion PMS',...(state.customValues?.investmentTypes||[])])];
-        return {title:'Edit investment',fields:[['member','Family member','select',members],['type','Investment type','select',types],['name','Investment name','text'],['invested','Invested amount (₹)','number',0],['current','Current value (₹)','number',0],['autoMonthlyContribution','Include automatic monthly contribution','checkbox'],['monthly','Monthly contribution (₹)','number',0],['monthlyContributionDate','First monthly contribution date','date'],['date','Purchase date','date'],['rate','Interest Rate (% p.a.)','number',0],['roi','ROI (%)','number',0],['notes','Notes','text']]};
+        return {title:'Edit investment',fields:[['member','Family member','select',members],['type','Investment type','select',types],['name','Investment name','text'],['invested','Invested amount (₹)','number',0],['current','Current value (₹)','number',0],['autoMonthlyContribution','Include automatic monthly contribution','checkbox'],['monthly','Monthly contribution (₹)','number',0],['monthlyContributionDate','First monthly contribution date','date'],['date','Purchase date','date'],['rate','Interest Rate (% p.a.)','number',0],['notes','Notes','text']]};
       }
       if(kind==='stallionContribution')return {title:'Edit PMS contribution',fields:[['stallionId','Portfolio','stallionSelect'],['amount','Contribution amount (₹)','number',0.01],['date','Contribution date','date']]};
       return null;
@@ -339,7 +348,7 @@
       const modal=document.getElementById('investmentEditModal'),fields=document.getElementById('investmentEditFields');
       modal.dataset.kind=kind;modal.dataset.recordId=id;document.getElementById('investmentEditTitle').textContent=definition.title;fields.replaceChildren();
       definition.fields.forEach(([key,label,type,options])=>{
-        const group=document.createElement('div');group.className='form-group';group.dataset.editGroup=key;if(key==='rate'&&kind==='investment')group.hidden=!investmentUsesInterestRate(record.type);if(key==='roi')group.hidden=!investmentUsesRoi(record.type);const caption=document.createElement('label');caption.textContent=label;group.appendChild(caption);
+        const group=document.createElement('div');group.className='form-group';group.dataset.editGroup=key;if(key==='rate'&&kind==='investment')group.hidden=!investmentUsesInterestRate(record.type);const caption=document.createElement('label');caption.textContent=label;group.appendChild(caption);
         const input=document.createElement(type==='select'||type==='stallionSelect'?'select':'input');
         if(input.tagName==='SELECT'){
           const choices=type==='stallionSelect'?state.investments.filter(x=>x.type==='Stallion PMS').map(x=>({value:x.id,label:`${x.member} — ${x.name}`})):(options||[]).map(x=>({value:x,label:x}));
@@ -355,8 +364,8 @@
       modal.hidden=false;syncInvestmentOverlayBodyLock();modal.querySelector('input,select')?.focus();
     }
     function updateInvestmentEditVisibility(fields,type){
-      const growthType=investmentGrowthType(type),groupFor=key=>fields.querySelector(`[data-edit-group="${key}"]`),rate=groupFor('rate'),roi=groupFor('roi'),current=groupFor('current'),monthly=groupFor('monthly'),monthlyDate=groupFor('monthlyContributionDate'),automatic=groupFor('autoMonthlyContribution');
-      if(rate)rate.hidden=!investmentUsesInterestRate(type);if(roi)roi.hidden=!investmentUsesRoi(type);if(current)current.hidden=growthType==='no-return';
+      const growthType=investmentGrowthType(type),groupFor=key=>fields.querySelector(`[data-edit-group="${key}"]`),rate=groupFor('rate'),current=groupFor('current'),monthly=groupFor('monthly'),monthlyDate=groupFor('monthlyContributionDate'),automatic=groupFor('autoMonthlyContribution');
+      if(rate)rate.hidden=!investmentUsesInterestRate(type);if(current)current.hidden=growthType==='no-return';
       if(monthly)monthly.hidden=!fields.querySelector('[data-edit-key="autoMonthlyContribution"]')?.checked;
       if(monthlyDate)monthlyDate.hidden=!fields.querySelector('[data-edit-key="autoMonthlyContribution"]')?.checked;
       if(automatic)automatic.hidden=false;
@@ -377,7 +386,7 @@
       const modal=document.getElementById('investmentEditModal'),kind=modal.dataset.kind,id=modal.dataset.recordId,record=investmentRecordForEdit(kind,id);if(!record)return;
       const values={};
       for(const input of modal.querySelectorAll('[data-edit-key]')){
-        if(['rate','roi'].includes(input.dataset.editKey)&&input.parentElement.hidden)continue;
+        if(input.dataset.editKey==='rate'&&input.parentElement.hidden)continue;
         if(['current','monthly','employee','employer','epsMonthly','monthlyContributionDate','autoMonthlyContribution'].includes(input.dataset.editKey)&&input.parentElement.hidden)continue;
         const key=input.dataset.editKey;let value=input.value;
         if(kind==='investment'&&key==='rate'&&investmentUsesInterestRate(modal.querySelector('[data-edit-key="type"]')?.value)&&value.trim()===''){alert('Enter an annual interest rate.');input.focus();return;}
@@ -411,7 +420,6 @@
         if(datedContributions.some(r=>r.date<values.date)||datedContributions.reduce((sum,r)=>sum+r.amount,0)>values.invested+0.01){alert('The start date and invested amount must include all recorded contributions.');return;}
         values.monthlyContributionNextDate=nextContributionDate;
         if(!investmentUsesInterestRate(values.type))delete record.rate;
-        if(!investmentUsesRoi(values.type))delete record.roi;
         Object.assign(record,values);
         if(willBeStallion){let pms=state.stallionPms.find(x=>x.id===id);if(!pms){pms={id,member:record.member,name:record.name,invested:record.invested,profit:record.current-record.invested,createdDate:record.date};state.stallionPms.push(pms);}else Object.assign(pms,{member:record.member,name:record.name,invested:record.invested,profit:record.current-record.invested,createdDate:record.date});}
         else if(wasStallion)state.stallionPms=state.stallionPms.filter(x=>x.id!==id);
@@ -426,7 +434,9 @@
         if(kind==='pf'){if(Number(values.epsMonthly??record.epsMonthly??0)>Number(values.employer??record.employer)){alert('EPS portion cannot exceed employer total.');return;}recordPfEpsBalanceUpdate(record,Number(values.epsCurrent??record.epsCurrent??0));}
         Object.assign(record,values);
       }
-      closeInvestmentEditModal();saveData();renderInvestments();renderNps();renderPpf();renderPf();renderStallionContributions();populateStallionDropdowns();updateDashboard();
+      const finish=()=>{closeInvestmentEditModal();renderInvestments();renderNps();renderPpf();renderPf();renderStallionContributions();populateStallionDropdowns();updateDashboard();},saving=saveData();
+      if(typeof window!=='undefined'&&window.financeWorkbench?.isReviewEditing('stallion'))return window.financeWorkbench.saveAndReturn(saving,finish);
+      finish();
     }
     document.querySelectorAll('[data-close-edit]').forEach(button=>button.addEventListener('click',closeInvestmentEditModal));
     document.getElementById('saveInvestmentEdit').addEventListener('click',saveInvestmentEditModal);

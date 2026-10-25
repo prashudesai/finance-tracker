@@ -1,3 +1,13 @@
+# v2026.10.26.1
+
+- Save & return to review keeps retirement, fund and PMS corrections in one flow. Failed saves retain the editor; confirmation never posts twice.
+- Complete backups include shared reviews and payment confirmations. Imports commit a durable device journal and publish financial records/reviews in one Firestore transaction, with explicit conflict choices.
+- Current emergency recovery exports use an explicit versioned wrapper and preserve shared reviews when no review snapshot was available.
+- Search is now a compact bottom control available across workspaces, with mobile-navigation spacing and input/dialog hiding.
+- Prelaunch cleanup removes obsolete device-review migration, raw financial-only backup imports, unused P2P ROI controls/name guesses, unused zero-override repair and implicit daily-loan statement cutoffs. Current financial records and active themes remain supported.
+- Two benchmark orders (18 samples per version) show monthly review rendering 21.6% faster for the 100-entry fixture; other timings are mixed. See PERFORMANCE.md.
+- Physical phone validation is still manual. Automated coverage includes responsive layouts, calculation parity, offline PWA update/reload, atomic restore failures and multi-window guards.
+
 # v2026.10.25.14
 
 - Monthly review marks, valuations, planning and payment checks sync across devices with durable offline operations and explicit same-item conflicts.

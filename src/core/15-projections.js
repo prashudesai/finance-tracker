@@ -17,26 +17,10 @@
       const weight=valid.reduce((sum,row)=>sum+(Number(row.current)||0),0);
       return weight>0?valid.reduce((sum,row)=>sum+(Number(row.current)||0)*Number(row[rateField]),0)/weight:valid.reduce((sum,row)=>sum+Number(row[rateField]),0)/valid.length;
     }
-    function resetStaleZeroContributionOverrides() {
-      const saved=state.projectionSettings?.monthlyContributions;
-      if(!saved||typeof saved!=='object')return;
-      const automatic={
-        PF:state.pf.reduce((sum,row)=>sum+retirementMonthlyAmount(row,'pf'),0),
-        PPF:state.ppf.reduce((sum,row)=>sum+retirementMonthlyAmount(row,'ppf'),0),
-        NPS:state.nps.reduce((sum,row)=>sum+retirementMonthlyAmount(row,'nps'),0)
-      };
-      let changed=false;
-      for(const [name,amount] of Object.entries(automatic)) {
-        if(amount>0&&Object.prototype.hasOwnProperty.call(saved,name)&&Number(saved[name])===0){delete saved[name];changed=true;}
-      }
-      if(changed)saveData();
-    }
     function growthAssumptionGroup(asset) {
-      const name=String(asset?.name||'').toLowerCase().replace(/\s+/g,' ').trim();
       if(asset?.kind==='eps')return 'no-return';
       if(asset?.kind==='investment')return investmentGrowthType(asset.name);
-      if(asset?.kind==='pf'||asset?.kind==='ppf'||/\b(bonds?|fixed deposits?|p2p lending|p2p)\b/.test(name))return 'fixed';
-      if(/\bbhive\b|cattle/.test(name))return 'no-return';
+      if(asset?.kind==='pf'||asset?.kind==='ppf')return 'fixed';
       return 'market';
     }
     function growthProjectionAssets() {
@@ -58,9 +42,7 @@
         const group=otherGroups.get(name)||{rows:[],current:0,invested:0,monthly:0};group.rows.push({...row,current,rate:Number.isFinite(Number(row.rate))?Number(row.rate):row.rate});group.current+=current;group.invested+=invested;group.monthly+=investmentMonthlyAmount(row);otherGroups.set(name,group);
       });
       for(const [name,group] of otherGroups){
-        const rates=group.rows.some(row=>Number.isFinite(Number(row.rate))||Number.isFinite(Number(row.roi)))
-          ?projectionWeightedRate(group.rows.map(row=>({...row,rate:Number.isFinite(Number(row.rate))?Number(row.rate):Number(row.roi)||0})))
-          :0;
+        const rates=projectionWeightedRate(group.rows);
         add(name,group.current,group.monthly,{stress:rates,base:rates,optimistic:rates},'investment',group.invested);
       }
       const stallionRows=viewInvestments.filter(row=>row.type==='Stallion PMS');

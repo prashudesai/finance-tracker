@@ -1,218 +1,596 @@
 {
-  "environment": "Headless Chromium, 390x844 mobile viewport, real service worker, offline cached reloads; synthetic records. Not a physical iPhone.",
-  "method": "Two runs in opposite orders; 18 offline cached samples per version. Each reload restores the same synthetic fixture plus matched incremental test saves.",
+  "version": "2026.10.26.1",
+  "baselineCommit": "0e25514490e49f0bd7de8558bed985364870c75b",
+  "environment": "Headless Chromium 153, 390x844 mobile viewport, actual service worker, offline cached reloads, Firebase adapter, synthetic organic records plus 100 investment accounts/automatic entries and 100 valuation marks. Local browser contexts use separate processes. Not a physical phone or production network measurement.",
+  "method": "Two run orders: before-first and after-first, nine samples per version per order. Timings are indicative, not deployment performance guarantees.",
   "results": {
     "offlineOpen": {
       "before": {
-        "medianMs": 110.4,
-        "minMs": 97.2,
-        "maxMs": 146.9,
+        "medianMs": 114.0,
         "samples": [
-          100.9,
-          109.7,
-          143.4,
-          110.3,
-          103.1,
-          110.5,
-          118.1,
-          111.1,
-          97.2,
-          101.1,
-          105.5,
+          128.4,
+          119.6,
+          119.9,
+          132.7,
+          154.2,
+          113.5,
+          110,
+          114.5,
+          113.4,
+          93.8,
+          106.3,
+          126,
+          123.3,
           109.9,
-          112.6,
-          124,
-          128,
-          109.8,
-          133.5,
-          146.9
+          107.6,
+          115.6,
+          112.1,
+          100.3
         ]
       },
       "after": {
-        "medianMs": 94.45,
-        "minMs": 79.1,
-        "maxMs": 131.3,
+        "medianMs": 117.55,
         "samples": [
-          89.1,
-          79.1,
-          98.1,
-          89.8,
-          85.6,
-          86.6,
-          131.3,
-          86.5,
-          99.2,
-          96,
-          92.9,
-          89.7,
-          89,
-          107.4,
-          108.6,
-          97.8,
-          106.7,
-          111.8
+          146.8,
+          110.1,
+          123.3,
+          125.5,
+          101.7,
+          117.4,
+          148.3,
+          113.1,
+          106.2,
+          113.7,
+          125.7,
+          118.6,
+          112.7,
+          117.7,
+          127.9,
+          109.6,
+          112.4,
+          128.5
         ]
       },
-      "medianReductionPercent": 14.4
+      "changePercent": 3.1
     },
     "pageSwitch": {
       "before": {
-        "medianMs": 20.75,
-        "minMs": 15.8,
-        "maxMs": 33.4,
+        "medianMs": 99.55,
         "samples": [
-          20.4,
-          19.5,
-          15.8,
-          19.6,
-          22.1,
-          17.9,
-          19.7,
-          21.5,
-          21.1,
-          21.1,
-          22.8,
-          20.7,
-          20.3,
-          20.8,
-          15.8,
-          33.4,
-          21.5,
-          28.7
+          120.4,
+          93.5,
+          117.8,
+          103,
+          101.1,
+          96.9,
+          102.1,
+          91.6,
+          93,
+          93.6,
+          104.1,
+          93.2,
+          103.7,
+          98,
+          103.2,
+          84.1,
+          97.2,
+          104
         ]
       },
       "after": {
-        "medianMs": 22.45,
-        "minMs": 18.6,
-        "maxMs": 29.5,
+        "medianMs": 104.65,
         "samples": [
-          29.5,
-          24.3,
-          24.1,
-          18.6,
-          22.6,
-          22.3,
-          23.2,
-          22.3,
-          23.2,
-          28.2,
-          23.3,
-          21.3,
-          23.3,
-          20.3,
-          20.4,
-          22.2,
-          18.8,
-          19.6
+          118,
+          144.4,
+          90.4,
+          135.9,
+          104,
+          119.2,
+          105.3,
+          116.6,
+          122.1,
+          99.9,
+          108.8,
+          90.7,
+          102.4,
+          92.7,
+          111.9,
+          101.1,
+          93.3,
+          95.1
         ]
       },
-      "medianReductionPercent": -8.2
+      "changePercent": 5.1
     },
     "scheduledRefresh": {
       "before": {
-        "medianMs": 19.55,
-        "minMs": 17.4,
-        "maxMs": 33.4,
+        "medianMs": 6.9,
         "samples": [
-          20.3,
-          19.2,
-          18.9,
-          17.4,
-          17.6,
-          20.5,
-          20.1,
-          17.7,
-          19.1,
-          21.6,
-          22.9,
-          33.4,
-          18.4,
-          18.9,
-          19.6,
-          22.8,
-          19.5,
-          20.5
+          9.1,
+          6.5,
+          7.3,
+          6.3,
+          7.1,
+          7,
+          9.1,
+          7.5,
+          7.2,
+          6.8,
+          7,
+          6.5,
+          6.4,
+          6.3,
+          6.6,
+          5.9,
+          7.1,
+          6.6
         ]
       },
       "after": {
-        "medianMs": 6.0,
-        "minMs": 5.1,
-        "maxMs": 8.1,
+        "medianMs": 6.9,
         "samples": [
-          5.4,
-          5.4,
-          5.2,
-          5.1,
-          5.1,
-          5.3,
-          6,
-          6.5,
-          6.2,
-          6.1,
-          6.2,
-          6.5,
-          7.3,
-          6,
+          8.2,
+          7.7,
+          8.3,
+          6.8,
+          8.5,
           6.4,
-          5.9,
-          5.8,
-          8.1
+          6.9,
+          6.9,
+          6.5,
+          7,
+          6.8,
+          6.6,
+          6.1,
+          7.1,
+          8.8,
+          6.1,
+          6.6,
+          8
         ]
       },
-      "medianReductionPercent": 69.3
+      "changePercent": 0.0
     },
     "offlineSaveAndRefresh": {
       "before": {
-        "medianMs": 137.9,
-        "minMs": 96.5,
-        "maxMs": 256.1,
+        "medianMs": 145.35,
         "samples": [
-          127.2,
-          146,
-          96.5,
-          128.3,
-          104.1,
-          124.7,
-          180.3,
-          150.4,
-          131.5,
-          145.5,
-          126.4,
-          113.5,
-          256.1,
-          167.6,
-          108.9,
-          178.4,
-          144.3,
-          158.9
+          66.1,
+          223.3,
+          148.6,
+          189.4,
+          175.6,
+          159.8,
+          172.3,
+          143,
+          120,
+          71.2,
+          131.6,
+          106.1,
+          117,
+          105.5,
+          110.9,
+          147.7,
+          214.5,
+          159.8
         ]
       },
       "after": {
-        "medianMs": 91.1,
-        "minMs": 58.2,
-        "maxMs": 234.6,
+        "medianMs": 135.9,
         "samples": [
-          92.5,
-          72.6,
-          58.2,
-          58.2,
-          90.8,
-          77.5,
-          91.4,
-          116.9,
-          77,
-          84.4,
-          105.5,
-          91.9,
-          90,
-          64.9,
-          131,
-          106.7,
-          108.8,
-          234.6
+          72.2,
+          82,
+          109.6,
+          136.4,
+          184.8,
+          224.7,
+          116.5,
+          135.4,
+          139.6,
+          73.4,
+          109.5,
+          116.2,
+          155.6,
+          142.5,
+          154.9,
+          135.4,
+          180.5,
+          210.4
         ]
       },
-      "medianReductionPercent": 33.9
+      "changePercent": -6.5
+    },
+    "monthlyReview100Entries": {
+      "before": {
+        "medianMs": 34.95,
+        "samples": [
+          35,
+          34,
+          35.9,
+          44.2,
+          32.1,
+          36.5,
+          36.7,
+          34.9,
+          31.1,
+          32.4,
+          39,
+          48.6,
+          31.7,
+          30.4,
+          29.3,
+          40.8,
+          33.4,
+          37.1
+        ]
+      },
+      "after": {
+        "medianMs": 27.4,
+        "samples": [
+          30.8,
+          32.8,
+          26.9,
+          25.2,
+          28.3,
+          29,
+          28.6,
+          26.4,
+          25.3,
+          27.9,
+          35.5,
+          25.5,
+          28.8,
+          29,
+          26.7,
+          25.1,
+          24.9,
+          24.7
+        ]
+      },
+      "changePercent": -21.6
     }
-  }
+  },
+  "runs": [
+    {
+      "environment": "Headless Chromium, 390x844 mobile viewport, real service worker, offline cached reloads; synthetic records. Not a physical iPhone.",
+      "baseline": "0e25514490e49f0bd7de8558bed985364870c75b",
+      "results": {
+        "after": {
+          "offlineOpen": {
+            "medianMs": 117.4,
+            "minMs": 101.7,
+            "maxMs": 148.3,
+            "samples": [
+              146.8,
+              110.1,
+              123.3,
+              125.5,
+              101.7,
+              117.4,
+              148.3,
+              113.1,
+              106.2
+            ]
+          },
+          "pageSwitch": {
+            "medianMs": 118,
+            "minMs": 90.4,
+            "maxMs": 144.4,
+            "samples": [
+              118,
+              144.4,
+              90.4,
+              135.9,
+              104,
+              119.2,
+              105.3,
+              116.6,
+              122.1
+            ]
+          },
+          "scheduledRefresh": {
+            "medianMs": 6.9,
+            "minMs": 6.4,
+            "maxMs": 8.5,
+            "samples": [
+              8.2,
+              7.7,
+              8.3,
+              6.8,
+              8.5,
+              6.4,
+              6.9,
+              6.9,
+              6.5
+            ]
+          },
+          "offlineSaveAndRefresh": {
+            "medianMs": 135.4,
+            "minMs": 72.2,
+            "maxMs": 224.7,
+            "samples": [
+              72.2,
+              82,
+              109.6,
+              136.4,
+              184.8,
+              224.7,
+              116.5,
+              135.4,
+              139.6
+            ]
+          },
+          "monthlyReview100Entries": {
+            "medianMs": 28.3,
+            "minMs": 25.2,
+            "maxMs": 32.8,
+            "samples": [
+              30.8,
+              32.8,
+              26.9,
+              25.2,
+              28.3,
+              29,
+              28.6,
+              26.4,
+              25.3
+            ]
+          }
+        },
+        "before": {
+          "offlineOpen": {
+            "medianMs": 119.6,
+            "minMs": 110,
+            "maxMs": 154.2,
+            "samples": [
+              128.4,
+              119.6,
+              119.9,
+              132.7,
+              154.2,
+              113.5,
+              110,
+              114.5,
+              113.4
+            ]
+          },
+          "pageSwitch": {
+            "medianMs": 101.1,
+            "minMs": 91.6,
+            "maxMs": 120.4,
+            "samples": [
+              120.4,
+              93.5,
+              117.8,
+              103,
+              101.1,
+              96.9,
+              102.1,
+              91.6,
+              93
+            ]
+          },
+          "scheduledRefresh": {
+            "medianMs": 7.2,
+            "minMs": 6.3,
+            "maxMs": 9.1,
+            "samples": [
+              9.1,
+              6.5,
+              7.3,
+              6.3,
+              7.1,
+              7,
+              9.1,
+              7.5,
+              7.2
+            ]
+          },
+          "offlineSaveAndRefresh": {
+            "medianMs": 159.8,
+            "minMs": 66.1,
+            "maxMs": 223.3,
+            "samples": [
+              66.1,
+              223.3,
+              148.6,
+              189.4,
+              175.6,
+              159.8,
+              172.3,
+              143,
+              120
+            ]
+          },
+          "monthlyReview100Entries": {
+            "medianMs": 35,
+            "minMs": 31.1,
+            "maxMs": 44.2,
+            "samples": [
+              35,
+              34,
+              35.9,
+              44.2,
+              32.1,
+              36.5,
+              36.7,
+              34.9,
+              31.1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "environment": "Headless Chromium, 390x844 mobile viewport, real service worker, offline cached reloads; synthetic records. Not a physical iPhone.",
+      "baseline": "0e25514490e49f0bd7de8558bed985364870c75b",
+      "results": {
+        "before": {
+          "offlineOpen": {
+            "medianMs": 109.9,
+            "minMs": 93.8,
+            "maxMs": 126,
+            "samples": [
+              93.8,
+              106.3,
+              126,
+              123.3,
+              109.9,
+              107.6,
+              115.6,
+              112.1,
+              100.3
+            ]
+          },
+          "pageSwitch": {
+            "medianMs": 98,
+            "minMs": 84.1,
+            "maxMs": 104.1,
+            "samples": [
+              93.6,
+              104.1,
+              93.2,
+              103.7,
+              98,
+              103.2,
+              84.1,
+              97.2,
+              104
+            ]
+          },
+          "scheduledRefresh": {
+            "medianMs": 6.6,
+            "minMs": 5.9,
+            "maxMs": 7.1,
+            "samples": [
+              6.8,
+              7,
+              6.5,
+              6.4,
+              6.3,
+              6.6,
+              5.9,
+              7.1,
+              6.6
+            ]
+          },
+          "offlineSaveAndRefresh": {
+            "medianMs": 117,
+            "minMs": 71.2,
+            "maxMs": 214.5,
+            "samples": [
+              71.2,
+              131.6,
+              106.1,
+              117,
+              105.5,
+              110.9,
+              147.7,
+              214.5,
+              159.8
+            ]
+          },
+          "monthlyReview100Entries": {
+            "medianMs": 33.4,
+            "minMs": 29.3,
+            "maxMs": 48.6,
+            "samples": [
+              32.4,
+              39,
+              48.6,
+              31.7,
+              30.4,
+              29.3,
+              40.8,
+              33.4,
+              37.1
+            ]
+          }
+        },
+        "after": {
+          "offlineOpen": {
+            "medianMs": 117.7,
+            "minMs": 109.6,
+            "maxMs": 128.5,
+            "samples": [
+              113.7,
+              125.7,
+              118.6,
+              112.7,
+              117.7,
+              127.9,
+              109.6,
+              112.4,
+              128.5
+            ]
+          },
+          "pageSwitch": {
+            "medianMs": 99.9,
+            "minMs": 90.7,
+            "maxMs": 111.9,
+            "samples": [
+              99.9,
+              108.8,
+              90.7,
+              102.4,
+              92.7,
+              111.9,
+              101.1,
+              93.3,
+              95.1
+            ]
+          },
+          "scheduledRefresh": {
+            "medianMs": 6.8,
+            "minMs": 6.1,
+            "maxMs": 8.8,
+            "samples": [
+              7,
+              6.8,
+              6.6,
+              6.1,
+              7.1,
+              8.8,
+              6.1,
+              6.6,
+              8
+            ]
+          },
+          "offlineSaveAndRefresh": {
+            "medianMs": 142.5,
+            "minMs": 73.4,
+            "maxMs": 210.4,
+            "samples": [
+              73.4,
+              109.5,
+              116.2,
+              155.6,
+              142.5,
+              154.9,
+              135.4,
+              180.5,
+              210.4
+            ]
+          },
+          "monthlyReview100Entries": {
+            "medianMs": 26.7,
+            "minMs": 24.7,
+            "maxMs": 35.5,
+            "samples": [
+              27.9,
+              35.5,
+              25.5,
+              28.8,
+              29,
+              26.7,
+              25.1,
+              24.9,
+              24.7
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "interpretation": "Monthly review improves in both orders. Startup, navigation and save timings are mixed; no general application speedup is claimed."
 }

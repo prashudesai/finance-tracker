@@ -10,8 +10,9 @@ export function findRecords(groups,query,kind='all',limit=40){
  return {total:result.length,rows:result.slice(0,Math.max(0,Math.min(100,limit)))};
 }
 export function installRecordSearch(){
- const host=document.getElementById('dashboard');if(!host)return;
- const launch=document.createElement('button');launch.id='openRecordSearch';launch.type='button';launch.className='btn-secondary finance-search-launch';launch.textContent='Search records';host.prepend(launch);
+ if(!document.getElementById('dashboard'))return;
+ const launch=document.createElement('button');launch.id='openRecordSearch';launch.type='button';launch.className='btn-secondary finance-search-launch';launch.setAttribute('aria-label','Search records');launch.title='Search records';
+ const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');const circle=document.createElementNS(icon.namespaceURI,'circle');circle.setAttribute('cx','10.5');circle.setAttribute('cy','10.5');circle.setAttribute('r','6.5');const path=document.createElementNS(icon.namespaceURI,'path');path.setAttribute('d','m16 16 5 5');icon.append(circle,path);const caption=document.createElement('span');caption.textContent='Search';launch.append(icon,caption);document.body.append(launch);
  const dialog=document.createElement('dialog');dialog.id='recordSearchDialog';dialog.className='finance-workbench-dialog finance-search-dialog';dialog.setAttribute('aria-labelledby','recordSearchTitle');
  const add=(parent,tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;parent.append(e);return e;};
  const header=add(dialog,'div');header.className='finance-search-heading';const title=add(header,'h2','Find a record');title.id='recordSearchTitle';const close=add(header,'button','Close');close.type='button';close.className='btn-small';close.onclick=()=>dialog.close();

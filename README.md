@@ -1,7 +1,22 @@
-# Personal Finance Tracker v2026.10.24.5
+# Personal Finance Tracker — 2026.10.26.1
 
-Complete project built from the working v2026.10.23.7 baseline. Includes all v.6/v.7 functionality, refresh rendering improvements, robust App info startup and left profile placement in Modern desktop/mobile.
+Family income, household expenses, investments, retirement accounts and loan ledgers in a Google-authenticated web app and installable PWA. Owners, editors and viewers share the same tracker with role-specific access.
 
-Deploy from this Project folder; no earlier folder is needed. Read DEPLOY.md. Existing live v.7 requires hosting only. Firestore rules and Functions are unchanged. No data import, reset or deletion is required.
+The current release combines contribution amount editing with return-to-review, complete financial/review backup restore, explicit sync conflict choices, and compact bottom Search. See COMBINED_RELEASE.md, REVIEW_SYNC.md and RECORD_SEARCH.md.
 
-Run npm test for the included regression suites. See QA_REPORT.md and TEST_RESULTS.txt for coverage and limitations.
+Only current versioned backup files import. Complete exports include shared review marks and payment confirmations; explicitly marked current device-recovery files can preserve existing reviews if a review snapshot was unavailable. Obsolete raw financial-only files are rejected before records change. No existing tracker data is reset by deployment.
+
+Use Node 22 and Java 17 for development and emulator checks:
+
+```bash
+npm ci --ignore-scripts
+npm run build
+npm test
+npm run test:rules
+npm run test:emerald
+npm run test:pwa
+```
+
+Edit application source under src/core and src/index.html, or the independent feature modules in dist. Build-generated HTML/runtime assets must match their source. GitHub main runs validation and deploys Firebase rules before Hosting. See DEPLOY.md.
+
+PERFORMANCE.md and PERFORMANCE_RESULTS.json contain reproducible measurements and limitations. Actual phone timing, keyboard and assistive-technology validation requires physical devices.

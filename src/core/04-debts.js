@@ -255,7 +255,7 @@
         body.innerHTML=statement.error?'<tr><td colspan="6" class="text-muted">Statement unavailable. Review the loan and payment dates.</td></tr>':statement.rows.slice().reverse().map(row=>`<tr><td data-label="Date">${row.date?calendarDate(row.date).toLocaleDateString('en-IN'):'—'}</td><td data-label="Type">${analyticEscape(row.type)}</td><td data-label="Description">${analyticEscape(row.description)}</td><td class="text-right" data-label="Debit">${row.debit?formatCurrency(row.debit):'—'}</td><td class="text-right" data-label="Credit">${row.credit?formatCurrency(row.credit):'—'}</td><td class="text-right" data-label="Balance"><strong>${formatCurrency(row.balance)}</strong></td></tr>`).join('');
       }else{
         head.innerHTML='<tr><th>Payment date</th><th>Payment type</th><th class="text-right">EMI / payment paid</th><th class="text-right">Interest</th><th class="text-right">Principal repaid</th><th class="text-right">Outstanding after payment</th><th>Notes</th></tr>';
-        const balanceResult=PFT_LOAN_LEDGER.paymentBalances(debt,records),balances=balanceResult.balances||new Map();
+        const balanceResult=PFT_LOAN_LEDGER.paymentBalances(debt,records,localDateKey()),balances=balanceResult.balances||new Map();
       document.getElementById('debtEmiHistorySummary').textContent=records.length
         ? `${records.length} recorded ${records.length===1?'payment':'payments'} · Total paid ${formatCurrency(total)} · Interest ${formatCurrency(interest)} · Principal repaid ${formatCurrency(principal)} · Current outstanding ${formatCurrency(debt.remaining)}`
         : `No EMI payments have been recorded for this debt yet. Current outstanding ${formatCurrency(debt.remaining)}.`;
@@ -279,7 +279,7 @@
         const statement=PFT_LOAN_LEDGER.dailyStatement(debt,payments,localDateKey());if(statement.error)return[];
         statement.rows.forEach((entry,sequence)=>rows.push({date:entry.date||'',entry:entry.type||'Entry',amount:entry.debit||0,interest:0,principal:entry.credit||0,balance:entry.balance??'',notes:entry.description||'',sequence}));
       }else{
-        const result=PFT_LOAN_LEDGER.paymentBalances(debt,payments),balances=result.balances||new Map();
+        const result=PFT_LOAN_LEDGER.paymentBalances(debt,payments,localDateKey()),balances=result.balances||new Map();
         payments.forEach((payment,sequence)=>rows.push({date:payment.date||'',entry:payment.repaymentType==='part-payment'?'Part payment':'Monthly EMI',amount:Number(payment.amount)||0,interest:Number(payment.interestPaid)||0,principal:Number(payment.principalPaid??payment.amount)||0,balance:balances.get(payment.id)??'',notes:payment.notes||'',sequence}));
       }
       return rows;

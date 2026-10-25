@@ -76,7 +76,7 @@ export function createCloudStore(api, uid, actorUid=uid) {
       const expected=revision;
       assertUser();publishAttempted=true;
       const savedAt=new Date().toISOString();
-      const old=await api.publish(metaPath,expected,{format:1,mutationId:envelope.mutationId||generation,revision:expected+1,generation,count,digest:hash,resetHistory:options.clearHistory===true,updatedAt:savedAt});
+      const old=await api.publish(metaPath,expected,{format:1,mutationId:envelope.mutationId||generation,revision:expected+1,generation,count,digest:hash,resetHistory:options.clearHistory===true,updatedAt:savedAt,...(envelope.reviewRestore?{reviewRestore:envelope.reviewRestore}:{})});
       published=true;
       if(old?.acknowledged){revision=old.acknowledged.revision;updatedAt=old.acknowledged.updatedAt||null;try{await removeSnapshot({generation,count});}catch(_){}return revision;}
       revision=expected+1;updatedAt=savedAt;

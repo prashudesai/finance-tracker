@@ -307,7 +307,6 @@
       for(const [name,profile] of Object.entries(data.customInvestmentProfiles)){
         if(!name.trim()||name.length>60||!customInvestmentNames.has(name.toLocaleLowerCase())||!profile||typeof profile!=='object'||Array.isArray(profile))throw new Error('Invalid custom investment growth profile');
         if(!['market','fixed','no-return'].includes(profile.growthType))throw new Error('Custom investment growth behavior must be Market Linked, Fixed Return, or No Return');
-        if(profile.fixedRate!==undefined)delete profile.fixedRate; // rates belong to each holding
       }
       for(const name of data.customValues.investmentTypes)if(!data.customInvestmentProfiles[name])throw new Error(`Investment type “${name}” needs a Growth Projection mapping`);
     }
@@ -404,7 +403,6 @@
             if (typeof row.contributionsThrough!=='string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(row.contributionsThrough)) throw new Error(key+': invalid contribution month');
           }
           if (key==='investments' && row.rate!==undefined && (typeof row.rate!=='number' || !Number.isFinite(row.rate) || row.rate<0)) throw new Error('investments: invalid interest rate');
-          if (key==='investments' && row.roi!==undefined && (typeof row.roi!=='number' || !Number.isFinite(row.roi) || row.roi<0)) throw new Error('investments: invalid P2P ROI');
           if (key==='debts' && row.emiDueDay!==undefined && (!Number.isInteger(row.emiDueDay) || row.emiDueDay<1 || row.emiDueDay>31)) throw new Error('debts: monthly EMI due day must be a whole day from 1 to 31');
           if(key==='debts')PFT_LOAN_LEDGER.validate(row);
           if (key==='income') delete row.frequency;

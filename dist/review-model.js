@@ -16,3 +16,12 @@ export function applyReviewPatch(values,patch,check=true){
  if(p.after===null)delete group[p.key];else group[p.key]=p.after;result[p.group]=group;}
  return reviewValues(result);
 }
+export function reviewBackup(values){return {format:1,values:reviewValues(values)};}
+export function parseReviewBackup(input){
+ if(!input||input.format!==1||!Object.hasOwn(input,'values')||Object.keys(input).some(k=>!['format','values'].includes(k)))throw Error('Unsupported shared-review backup format.');
+ return reviewValues(input.values);
+}
+export function validateReviewRestore(input){
+ if(!input||!Object.hasOwn(input,'values')||typeof input.id!=='string'||!/^[-a-zA-Z0-9]{1,64}$/.test(input.id)||!Number.isInteger(input.baseRevision)||input.baseRevision<0||typeof input.epoch!=='string'||!input.epoch||input.epoch.length>100)throw Error('Invalid review restore request.');
+ return {...input,values:reviewValues(input.values)};
+}

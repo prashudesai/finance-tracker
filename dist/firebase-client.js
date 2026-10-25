@@ -2,7 +2,7 @@ import {initializeApp} from './vendor/firebase-app.js';
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
 import {getFirestore,doc,getDocFromServer,writeBatch,runTransaction,onSnapshot,serverTimestamp} from './vendor/firebase-firestore.js';
 import {installReviewSync} from './review-sync.js?v=83';
-import {reviewValues,applyReviewPatch} from './review-model.js?v=83';
+import {reviewValues,applyReviewPatch,validateReviewRestore} from './review-model.js?v=83';
 import {installRecordSearch} from './record-search.js?v=82';
 import {installAttention} from './attention.js?v=81';
 import {installFinanceWorkbench} from './finance-workbench.js?v=79';
@@ -72,7 +72,8 @@ onAuthStateChanged(auth,async user=>{
       const ref=doc(db,path),snapshot=await transaction.get(ref),old=snapshot.exists()?snapshot.data():null;
       if(next.mutationId&&old?.mutationId===next.mutationId){if(old.digest!==next.digest)throw Object.assign(new Error('A save identifier was reused for different records.'),{code:'tracker/conflict'});return {acknowledged:old};}
       if((old?.revision||0)!==expected)throw Object.assign(new Error('Another device saved newer records.'),{code:'tracker/conflict'});
-      const {resetHistory,...metadata}=next;transaction.set(ref,{...metadata,previous:!resetHistory&&old?{generation:old.generation,count:old.count}:null});return old;
+      if(next.reviewRestore)await applyBackupReviewRestore(transaction,next.reviewRestore);
+      const {resetHistory,reviewRestore,...metadata}=next;transaction.set(ref,{...metadata,previous:!resetHistory&&old?{generation:old.generation,count:old.count}:null});return old;
     })
   };
   const store=createCloudStore(api,family.ownerUid,user.uid);
@@ -96,6 +97,13 @@ onAuthStateChanged(auth,async user=>{
   window.financeCloud.inspectVersion=async()=>{assertAccess();const reader=createCloudStore(api,family.ownerUid,user.uid);const envelope=await reader.load();return {envelope,revision:reader.revision};};
   const reviewRef=doc(db,'users/'+family.ownerUid+'/reviews/current');
   const decodeReviews=snapshot=>{const data=snapshot.exists()?snapshot.data():null;return {values:reviewValues(data?JSON.parse(data.payload):{}),revision:data?.revision||0,epoch:data?.epoch||'initial',fromCache:snapshot.metadata?.fromCache===true};};
+  async function applyBackupReviewRestore(transaction,input){
+    assertAccess();if(!family.canManage)throw Error('Only the owner can restore shared reviews.');
+    const restore=validateReviewRestore(input),current=decodeReviews(await transaction.get(reviewRef)),marker='restore-'+restore.id;
+    if(current.epoch===marker)return;
+    if(current.revision!==restore.baseRevision||current.epoch!==restore.epoch)throw Object.assign(Error('Shared reviews changed after the backup import was prepared. Review the cloud conflict before replacing records.'),{code:'tracker/conflict'});
+    transaction.set(reviewRef,{format:1,revision:current.revision+1,epoch:marker,payload:JSON.stringify(restore.values),updatedBy:user.uid,updatedAt:serverTimestamp()});
+  }
   async function saveReviews(patch){
     let observed=-1;
     for(let attempt=0;attempt<4;attempt++){

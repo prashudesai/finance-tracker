@@ -1,20 +1,15 @@
-# Financial review and planning tools
+# Financial review tools — 2026.10.26.1
 
-This release introduces an independently tested shared cash-flow model and uses it for monthly totals, indexed totals and recalculated house expense. Existing month calculations are compared against 4,800 generated month fixtures. The projection engine is reused without changing investment growth assumptions.
+- Monthly close: household opening/closing balances, residual house expense, review marks and automatically posted contribution checks. Marking reviewed does not lock a month or change money.
+- Amount correction: retirement, fund and PMS editors return to the selected payment review after a successful save. Failed saves retain the editor, and payment confirmation never posts twice.
+- Valuation freshness: shared statement dates are tied to the recorded balance. A changed balance needs confirmation again.
+- Portfolio goal planner: stress/base/optimistic scenarios, editable inflation and a target in today's rupees. It uses the existing projection model and excludes debt and gratuity.
+- Sync details: financial and review status, exports, retries, financial conflict selection and explicit backup-review conflict choices.
+- Search: a compact bottom control available from every workspace. It sits above mobile navigation, hides during form input/dialogs and follows the selected family profile.
+- Backup: one current complete JSON file includes financial data and shared reviews; device drafts remain local. Restore coordinates local persistence and atomic cloud publication.
 
-## Controls
+Review reads are cached between changes; callers receive isolated group values. Month review reads payment markers once per render, and obsolete localStorage mirrors no longer serialize all reviews on every update. Ordinary financial saves avoid unnecessary restore-journal reads.
 
-- Income & Expenses → Month review: opening/closing balance checklist, residual house expense, automatic-entry statement review, and pending recurring items over the next 60 days. Marking reviewed does not lock the month or change money.
-- Investments → Record freshness: confirm a valuation date against the current balance, inspect gain and XIRR availability. Changing a balance invalidates its confirmation.
-- Growth Projection → Goal planning: compare stress/base/optimistic portfolio scenarios in nominal and today's rupees, with an editable inflation assumption and goal. Debt and gratuity are excluded; this is not a retirement-income withdrawal model.
-- Settings → Records → Calculation checks: reconcile shared monthly totals and available dashboard figures, inspect sync status, retry or export.
+Prelaunch cleanup removes device-review migration, financial-only backup import, obsolete P2P ROI controls and investment-name guesses, unused zero-override repair, and the implicit daily-loan statement cutoff. Daily-loan calculations receive an explicit as-of date from current callers. Active Classic, Modern and Emerald Flow themes use the same current financial records.
 
-Review marks, valuation dates, goal inputs, filter choices and scroll positions are account-scoped on this device/browser. They are not financial records and are not synced or included in JSON backups. Automatic entries are labelled separately from statement checks; legacy contribution posting behaviour is preserved.
-
-The UI adds collapsed tools rather than permanent informational cards. Native modal dialogs have accessible headings and mobile scrolling. Mobile controls avoid small-text zoom, and reduced-motion preferences are respected.
-
-Existing database schema, Firestore rules, Hosting and Functions stay compatible. The GitHub workflow runs browser checks and the expanded unit suite before deployment.
-
-## Remaining architectural work
-
-The legacy main HTML and theme CSS have not been fully replaced. This release extracts household cash-flow calculations and adds independent modules; it is not a complete application framework rewrite. Device-only review metadata would require a separately tested schema migration to sync across devices. Native iOS keyboard and assistive-technology behaviour still needs testing on actual devices.
+Automated coverage includes calculation parity, permission/transaction checks, offline installed-PWA reload/update, backups, editor failures and responsive layouts. Physical Android/iPhone keyboard, screen reader and timing checks still require actual devices.

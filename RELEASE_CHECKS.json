@@ -1,14 +1,13 @@
 {
-  "version": "2026.10.25.14",
+  "version": "2026.10.26.1",
   "unitSuites": 44,
-  "browserChecks": 129,
-  "pwaChecks": 9,
-  "focusedBrowserChecks": 6,
-  "firestoreEmulator": "passed: permissions, schema, revision, concurrent independent edits, reset idempotence and stale offline epoch rejection",
+  "fullBrowserChecksBeforeFinalTargetedChecks": 136,
+  "focusedReleaseBrowserChecks": 12,
+  "installedPwaChecks": 10,
+  "firestoreEmulator": "passed: permissions, concurrent review edits, reset epochs, atomic backup publish and failed-transaction rollback",
   "failures": 0,
-  "browserEnvironment": "Chromium 153 with synthetic data and Firebase adapter; local isolated browser processes for contexts",
-  "physicalDeviceTested": false,
+  "physicalPhoneTested": false,
   "realGoogleFirebaseUserFlowTested": false,
-  "deploymentVerification": "Tracked by the GitHub Actions run for this commit",
-  "additionalChecks": "New typing during in-flight save and rejected-save draft retention passed in focused browser tests"
+  "performance": "Two run orders, 18 samples per version; monthly review median 34.95ms to 27.4ms. Other timings mixed.",
+  "deploymentVerification": "GitHub Actions checks for this commit and live version are verified separately after push."
 }

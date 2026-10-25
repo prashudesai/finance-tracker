@@ -178,10 +178,12 @@
       const investment=state.investments.find(row=>row.id===modal.dataset.investmentId);if(!investment)return;
       if(!validCalendarDate(date)||date<investment.date||date>localDateKey()){alert('Choose a valid contribution date between the investment start date and today.');return;}
       const editingId=modal.dataset.editContributionId;
-      if(editingId){const row=state.investmentContributions.find(item=>item.id===editingId);if(!row)return;if(row.automatic===true&&state.investmentContributions.some(item=>item.id!==row.id&&item.investmentId===investment.id&&item.automatic===true&&item.date===date)){alert('An automatic contribution already exists for this holding and date.');return;}const difference=amount-row.amount;if(!validFundContributionChange(investment,difference))return;investment.invested+=difference;investment.current+=difference;row.amount=amount;row.date=date;delete modal.dataset.editContributionId;}
+      if(editingId){const row=state.investmentContributions.find(item=>item.id===editingId);if(!row)return;if(row.automatic===true&&state.investmentContributions.some(item=>item.id!==row.id&&item.investmentId===investment.id&&item.automatic===true&&item.date===date)){alert('An automatic contribution already exists for this holding and date.');return;}const difference=amount-row.amount;if(!validFundContributionChange(investment,difference))return;investment.invested+=difference;investment.current+=difference;row.amount=amount;row.date=date;}
       else {state.investmentContributions.push({id:generateId(),investmentId:investment.id,amount,date,automatic:false});investment.invested+=amount;investment.current+=amount;}
-      document.getElementById('investmentContributionDate').value=localDateKey();document.getElementById('investmentContributionAmount').value='';document.getElementById('saveInvestmentContribution').textContent='Add Contribution';
-      saveData();renderInvestments();openInvestmentContributionModal(investment.id);updateDashboard();
+      const saving=saveData();
+      if(typeof window!=='undefined'&&window.financeWorkbench?.isReviewEditing('investment'))return window.financeWorkbench.saveAndReturn(saving,()=>{closeInvestmentContributionModal();renderInvestments();updateDashboard();});
+      delete modal.dataset.editContributionId;document.getElementById('investmentContributionDate').value=localDateKey();document.getElementById('investmentContributionAmount').value='';document.getElementById('saveInvestmentContribution').textContent='Add Contribution';
+      renderInvestments();openInvestmentContributionModal(investment.id);updateDashboard();
     }
     function deleteInvestmentContribution(contributionId) {
       const row=(state.investmentContributions||[]).find(item=>item.id===contributionId);if(!row||!confirm('Delete this contribution?'))return;
@@ -342,9 +344,9 @@
         document.getElementById('retirementContributionHistoryFinancialYear').dataset.preferredYear=String(financialYearStartYearForMonthKey(month));
       } else if(mode==='nps-current') record.current=value;
       else return;
-      saveData();closeAccountUpdateModal();
-      if(kind==='pf')renderPf();else if(kind==='ppf'){renderInvestments();renderPpf();}else if(kind==='nps')renderNps();
-      updateDashboard();
+      const finish=()=>{closeAccountUpdateModal();if(kind==='pf')renderPf();else if(kind==='ppf'){renderInvestments();renderPpf();}else if(kind==='nps')renderNps();updateDashboard();},saving=saveData();
+      if(typeof window!=='undefined'&&window.financeWorkbench?.isReviewEditing('retirement'))return window.financeWorkbench.saveAndReturn(saving,finish);
+      finish();
     }
 
     function renderNps() {

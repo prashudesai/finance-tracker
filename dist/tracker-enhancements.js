@@ -45,13 +45,14 @@
     if(model.settings.length)fragment.append(el('p','Other settings differ: '+model.settings.join(', ')+'. These are replaced too.'));
     return fragment;
   }
-  window.previewTrackerImport=async(data,filename,metadata)=>{
+  window.previewTrackerImport=async(data,filename,metadata,reviews)=>{
     const node=dialog('importPreviewDialog','Review backup before import'),content=node.querySelector('.tracker-review-content'),footer=node.querySelector('footer');content.replaceChildren();footer.replaceChildren();
     const model=compareRecords(state,data),removed=model.groups.reduce((n,g)=>n+g.removed.length,0);
     content.append(el('p',filename),el('p','Import replaces this tracker’s current records. It does not combine the two files. A recovery snapshot is kept by the existing import process.'));
+    content.append(el('p',reviews===null?'This current device-recovery file has no shared-review snapshot. Your current shared reviews will be kept.':'Shared review marks, valuation dates, planner inputs and payment confirmations will also be replaced. Records and reviews publish together after syncing.'));
     const currentOwner=window.financeCloud?.ownerUid;
     if(metadata?.ownerUid&&metadata.ownerUid!==currentOwner)content.append(el('p','This backup identifies a different tracker owner. Check carefully before replacing this family’s records.','tracker-review-warning'));
-    content.append(el('p',metadata?.exportedAt&&Number.isFinite(Date.parse(metadata.exportedAt))?'Backup exported: '+new Date(metadata.exportedAt).toLocaleString():'Export date and tracker identity are unavailable for this older backup.'));
+    content.append(el('p',metadata?.exportedAt&&Number.isFinite(Date.parse(metadata.exportedAt))?'Backup exported: '+new Date(metadata.exportedAt).toLocaleString():'Export date and tracker identity are unavailable for this backup.'));
     if(data.lastUpdate)content.append(el('p','Recorded last change: '+String(data.lastUpdate)));
     if(removed)content.append(el('p',removed+' current record(s) are absent from this backup and will be removed.','tracker-review-warning'));
     content.append(summaryTable(model),diffDetails(model));
@@ -100,7 +101,7 @@
   window.renderReadableChangeLog=async()=>{
     const target=document.getElementById('changeLogList');if(!target)return;
     try{const page=auditPage,rows=await readChangeLog(9,page*8);if(page!==auditPage)return;target.replaceChildren(el('p','History saved on this device. Actor details identify the signed-in session; imported entries may come from another device.'));
-      for(const row of rows.slice(0,8)){const details=el('details');details.append(el('summary',new Date(row.at).toLocaleString()+' · '+row.action+' · '+row.changes.length+' change(s)'));details.append(el('p','Recorded by: '+(row.actor?.email||'Not recorded in this older entry')+(row.actor?.role?' · '+row.actor.role:'')));
+      for(const row of rows.slice(0,8)){const details=el('details');details.append(el('summary',new Date(row.at).toLocaleString()+' · '+row.action+' · '+row.changes.length+' change(s)'));details.append(el('p','Recorded by: '+(row.actor?.email||'Not recorded')+(row.actor?.role?' · '+row.actor.role:'')));
         for(const change of row.changes.slice(0,50)){const entry=el('details');entry.append(el('summary',(labels[change.collection]||change.collection)+' · '+change.action+' · '+(recordName(change.after||change.before)||change.id||'')));const before=change.before,after=change.after;
           if(before&&after&&typeof before==='object'&&typeof after==='object'&&!Array.isArray(before)&&!Array.isArray(after)){for(const field of new Set([...Object.keys(before),...Object.keys(after)]))if(comparable(before[field])!==comparable(after[field]))entry.append(el('p',field+': '+String(before[field]??'—')+' → '+String(after[field]??'—')));}
           else entry.append(el('pre',JSON.stringify({before:before??null,after:after??null},null,2)));details.append(entry);

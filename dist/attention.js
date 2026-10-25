@@ -13,18 +13,18 @@ export function attentionItems(data,visible,meta,today,sync={}){
  if(missing)items.push({key:'valuations',label:missing+' valuation'+(missing===1?' needs':'s need')+' confirmation',action:'valuations'});
  const ids=new Set(Object.values(visible).flat().map(r=>r.id));
  const automatic=[...(data.retirementContributions||[]),...(data.investmentContributions||[]),...(data.stallionContributions||[])].filter(r=>r.automatic===true&&r.date?.slice(0,7)===current&&ids.has(r.accountId||r.investmentId||r.stallionId));
- const unchecked=automatic.filter(r=>{const key=automaticCheckKey(r),paid=meta.paymentStatus?.[key];return paid?paid.status!=='paid'||paid.amount!==r.amount||(paid.epsAmount||0)!==(r.epsAmount||0):!meta.confirmedEntries?.[key];}).length;
+ const unchecked=automatic.filter(r=>{const key=automaticCheckKey(r),paid=meta.paymentStatus?.[key];return paid?paid.status!=='paid'||paid.amount!==r.amount||(paid.epsAmount||0)!==(r.epsAmount||0):true;}).length;
  if(unchecked)items.push({key:'automatic',label:unchecked+' automatic entr'+(unchecked===1?'y needs':'ies need')+' a statement check',action:'monthly',month:current});
  return items;
 }
 export function installAttention(){
  const host=document.getElementById('dashboard');if(!host)return;
  const box=document.createElement('details');box.id='financeAttention';box.className='finance-workbench-tools';box.hidden=true;const summary=document.createElement('summary');const list=document.createElement('div');box.append(summary,list);host.prepend(box);
- const read=key=>{try{const value=JSON.parse(trackerStorage.getItem('workbench:'+key)||'{}');return value&&typeof value==='object'?value:{};}catch(_){return {};}};
+ const read=key=>window.financeReviews?.get(key)||{};
  function render(){
   if(!host.classList.contains('active'))return;
   const visible=Object.fromEntries(['investments','pf','ppf','nps'].map(kind=>[kind,profileRows(state[kind]||[])]));
-  const items=attentionItems(state,visible,{valuations:read('valuations'),confirmedEntries:read('confirmedEntries'),paymentStatus:read('paymentStatus')},localDateKey(),{blocked:cloudSaveBlocked,dirty:persistenceDirty&&!pendingSaves,reviewProblem:window.financeReviews?.problem()});
+  const items=attentionItems(state,visible,{valuations:read('valuations'),paymentStatus:read('paymentStatus')},localDateKey(),{blocked:cloudSaveBlocked,dirty:persistenceDirty&&!pendingSaves,reviewProblem:window.financeReviews?.problem()});
   box.hidden=items.length===0;summary.textContent='Needs attention · '+items.length;list.replaceChildren();
   for(const item of items){const row=document.createElement('div');row.className='finance-attention-row';const label=document.createElement('span');label.textContent=item.label;const button=document.createElement('button');button.type='button';button.className='btn-small';button.textContent='Review';button.setAttribute('aria-label','Review: '+item.label);button.onclick=()=>window.financeWorkbench?.[item.action]?.(item.month);row.append(label,button);list.append(row);}
  }

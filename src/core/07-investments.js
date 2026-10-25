@@ -6,13 +6,9 @@
       if(name==='Bonds'||name==='Fixed Deposits'||name==='PF'||name==='PPF')return 'fixed';
       const profile=customInvestmentProfile(name);
       if(profile?.growthType)return profile.growthType;
-      // Retain sensible behavior for older saved records whose type is no longer offered.
-      if(/\bbhive\b|cattle/i.test(name))return 'no-return';
-      if(/\bbonds?\b|fixed deposits?|p2p lending|\bp2p\b/i.test(name))return 'fixed';
       return 'market';
     }
     function investmentUsesInterestRate(type) { return type==='Bonds'||type==='Fixed Deposits'||customInvestmentProfile(type)?.growthType==='fixed'; }
-    function investmentUsesRoi(type) { return false; }
     function investmentUsesReturnMetrics(type) { return investmentGrowthType(type)==='market'&&type!=='Stallion PMS'; }
     function investmentMonthlyAmount(row){
       const profile=customInvestmentProfile(row?.type);
@@ -40,10 +36,9 @@
       const toggle=document.getElementById(id);toggle?.addEventListener('change',()=>syncRetirementMonthlyForm(kind));syncRetirementMonthlyForm(kind);
     });
     function updateInvestmentRateField() {
-      const type=document.getElementById('investType')?.value,profile=customInvestmentProfile(type),group=document.getElementById('investRateGroup'),roiGroup=document.getElementById('investRoiGroup'),currentGroup=document.getElementById('investCurrentGroup'),monthlyGroup=document.getElementById('investMonthlyGroup'),autoGroup=document.getElementById('investAutomaticMonthlyGroup'),autoToggle=document.getElementById('investAutomaticMonthly'),monthlyInput=document.getElementById('investMonthly'),rateInput=document.getElementById('investRate');
+      const type=document.getElementById('investType')?.value,profile=customInvestmentProfile(type),group=document.getElementById('investRateGroup'),currentGroup=document.getElementById('investCurrentGroup'),monthlyGroup=document.getElementById('investMonthlyGroup'),autoGroup=document.getElementById('investAutomaticMonthlyGroup'),autoToggle=document.getElementById('investAutomaticMonthly'),monthlyInput=document.getElementById('investMonthly'),rateInput=document.getElementById('investRate');
       const noReturn=investmentGrowthType(type)==='no-return',monthlyDateGroup=document.getElementById('investMonthlyDateGroup');
       if(group)group.hidden=!investmentUsesInterestRate(type);
-      if(roiGroup)roiGroup.hidden=!investmentUsesRoi(type);
       if(currentGroup)currentGroup.hidden=Boolean(noReturn);
       if(autoGroup)autoGroup.hidden=false;
       if(monthlyGroup)monthlyGroup.hidden=!autoToggle?.checked;
@@ -203,7 +198,6 @@
       const rateInputValue=document.getElementById('investRate').value.trim();
       const rate=Number(rateInputValue);
       if(!member){alert('Add a family member in Settings before recording an investment.');return;}
-      const roi = Number(document.getElementById('investRoi').value);
 
       if (!Number.isFinite(invested) || invested <= 0 || (growthType!=='no-return'&&(!Number.isFinite(current)||current<0)) || !Number.isFinite(monthly) || monthly < 0 || (automaticMonthly&&monthly<=0)) {
         alert('Enter valid amounts');
@@ -217,7 +211,6 @@
       }
       if((state.customValues?.investmentTypes||[]).includes(type)&&!profile){alert('Choose a growth calculation when adding this investment type.');return;}
       if (investmentUsesInterestRate(type) && (!Number.isFinite(rate) || rate<0 || rateInputValue==='')) { alert('Enter a valid annual interest rate.'); return; }
-      if (investmentUsesRoi(type) && (!Number.isFinite(roi) || roi<0)) { alert('Enter a valid P2P ROI.'); return; }
 
       const investId = generateId();
       state.investments.push({
@@ -235,7 +228,6 @@
         notes: notes
       });
       if(investmentUsesInterestRate(type))state.investments[state.investments.length-1].rate=rate;
-      if(investmentUsesRoi(type))state.investments[state.investments.length-1].roi=roi;
 
       // Also add to Stallion PMS tracking if type is Stallion PMS
       if (type === 'Stallion PMS') {
@@ -261,7 +253,6 @@
       document.getElementById('investDate').value = '';
       document.getElementById('investNotes').value = '';
       document.getElementById('investRate').value = '';
-      document.getElementById('investRoi').value = '';
       document.getElementById('investAutomaticMonthly').checked=false;
       updateInvestmentRateField();
 
@@ -378,15 +369,14 @@
         const investedTotal = items.reduce((sum,inv)=>sum+(Number(inv.invested)||0),0);
         const monthlyTotal = items.reduce((sum,inv)=>sum+investmentMonthlyAmount(inv),0);
         const gainTotal = currentTotal-investedTotal;
-        const hasReturnMetrics=investmentUsesReturnMetrics(category),hasRate=investmentUsesInterestRate(category),hasRoi=investmentUsesRoi(category);
+        const hasReturnMetrics=investmentUsesReturnMetrics(category),hasRate=investmentUsesInterestRate(category);
         const hasMonthlyContribution=items.some(inv=>investmentMonthlyAmount(inv)>0);
         const categoryXirr=hasReturnMetrics?investmentCategoryXirr(items,investmentContributionsById,valuationDate):null;
         const absoluteReturn=investedTotal>0?(currentTotal-investedTotal)/investedTotal:null;
         const interestSummary=hasRate?investmentCategoryRateSummary(items,'rate','% p.a.'):null;
-        const roiSummary=hasRoi?investmentCategoryRateSummary(items,'roi','%'):null;
         const hasDatedContributions=items.some(inv=>investmentMonthlyAmount(inv)>0||(investmentContributionsById.get(inv.id)||[]).some(row=>Number(row.amount)>0));
         const categoryCagr=hasReturnMetrics&&!hasDatedContributions?investmentCategoryCagr(items,valuationDate):null;
-        const tileMetric=hasReturnMetrics?(hasDatedContributions?{label:'XIRR',value:categoryXirr===null?'N/A':`${(categoryXirr*100).toFixed(2)}%`,key:'xirr'}:{label:'CAGR',value:categoryCagr===null?'N/A':`${(categoryCagr*100).toFixed(2)}%`,key:'cagr'}):hasRate?{label:'Interest rate',value:interestSummary.label,key:'rate',title:interestSummary.title}:hasRoi?{label:'ROI',value:roiSummary.label,key:'roi',title:roiSummary.title}:{label:'Absolute return',value:absoluteReturn===null?'N/A':`${(absoluteReturn*100).toFixed(2)}%`,key:'absolute-return'};
+        const tileMetric=hasReturnMetrics?(hasDatedContributions?{label:'XIRR',value:categoryXirr===null?'N/A':`${(categoryXirr*100).toFixed(2)}%`,key:'xirr'}:{label:'CAGR',value:categoryCagr===null?'N/A':`${(categoryCagr*100).toFixed(2)}%`,key:'cagr'}):hasRate?{label:'Interest rate',value:interestSummary.label,key:'rate',title:interestSummary.title}:{label:'Absolute return',value:absoluteReturn===null?'N/A':`${(absoluteReturn*100).toFixed(2)}%`,key:'absolute-return'};
         const rows = items.map(inv => {
           const gain = Number(inv.current || 0) - Number(inv.invested || 0);
           const hasReturnMetrics=investmentUsesReturnMetrics(category);
@@ -400,12 +390,11 @@
             <td class="text-right ${gain >= 0 ? 'positive' : 'negative'}">${gain >= 0 ? '+' : ''}${formatCurrency(gain)}</td>
             ${hasReturnMetrics?`<td class="text-right" data-label="Absolute Return">${absoluteReturn===null?'N/A':(absoluteReturn*100).toFixed(2)+'%'}</td><td class="text-right" data-label="CAGR">${cagr===null?'N/A':(cagr*100).toFixed(2)+'%'}</td><td class="text-right" data-label="XIRR">${xirr===null?'N/A':(xirr*100).toFixed(2)+'%'}</td>`:''}
             ${investmentUsesInterestRate(category)?`<td class="text-right">${Number.isFinite(Number(inv.rate))?Number(inv.rate).toFixed(2)+'%':'—'}</td>`:''}
-            ${investmentUsesRoi(category)?`<td class="text-right">${Number.isFinite(Number(inv.roi))?Number(inv.roi).toFixed(2)+'%':'—'}</td>`:''}
             <td class="investment-row-actions"><div class="investment-row-action-group"><button type="button" class="investment-icon-action" title="View History" aria-label="View contribution history" onclick="openInvestmentContributionModal('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></button><button type="button" class="investment-icon-action" title="Add Contribution" aria-label="Add contribution" onclick="openManualInvestmentContribution('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg></button><button type="button" class="investment-icon-action" title="Edit" aria-label="Edit holding" onclick="editInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"></path><path d="m13.5 7 3.5 3.5"></path></svg></button><button type="button" class="investment-icon-action is-danger" title="Delete" aria-label="Delete holding" onclick="deleteInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button></div></td>
           </tr>`;
         }).join('');
-        const extraHeaders=`${hasReturnMetrics?'<th class="text-right" title="(Current value − total invested) ÷ total invested">Absolute Return</th><th class="text-right" title="Annualized return from the holding start date; contribution dates are not weighted">CAGR</th><th class="text-right" title="Annualized return using initial investment, dated contributions and current value">XIRR</th>':''}${hasRate?'<th class="text-right" title="Annual interest rate entered for this holding">Interest Rate</th>':''}${hasRoi?'<th class="text-right" title="ROI recorded for this P2P holding">ROI</th>':''}`;
-        const emptySpan=6+(hasMonthlyContribution?1:0)+(hasReturnMetrics?3:0)+(hasRate?1:0)+(hasRoi?1:0);
+        const extraHeaders=`${hasReturnMetrics?'<th class="text-right" title="(Current value − total invested) ÷ total invested">Absolute Return</th><th class="text-right" title="Annualized return from the holding start date; contribution dates are not weighted">CAGR</th><th class="text-right" title="Annualized return using initial investment, dated contributions and current value">XIRR</th>':''}${hasRate?'<th class="text-right" title="Annual interest rate entered for this holding">Interest Rate</th>':''}`;
+        const emptySpan=6+(hasMonthlyContribution?1:0)+(hasReturnMetrics?3:0)+(hasRate?1:0);
         return `<section class="panel investment-category-card" data-category-index="${defaultCategoryOrder.indexOf(category)}" data-investment-type="${analyticEscape(category)}">
           <div class="panel-header"><div><h3>${analyticEscape(category)}</h3><div class="investment-category-summary">${items.length} ${items.length===1?'holding':'holdings'}</div></div></div>
           <div class="investment-category-summary-grid" role="button" tabindex="0" aria-haspopup="dialog" aria-label="View ${analyticEscape(category)} holdings">

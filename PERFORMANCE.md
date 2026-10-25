@@ -1,16 +1,17 @@
-# Installed-PWA-style performance measurements
+# Performance checks — 2026.10.26.1
 
-Headless Chromium, 390x844 mobile viewport, real service worker, offline cached reloads; synthetic records. Not a physical iPhone.
+The release avoids cloning the full shared-review document for each displayed entry, caches computed review values between changes, and reads payment markers once per monthly render. Removed localStorage review mirrors eliminate repeated serialization on realtime updates. Ordinary financial saves avoid restore-journal reads unless a restore is involved.
 
-Two runs in opposite orders; 18 offline cached samples per version. Each reload restores the same synthetic fixture plus matched incremental test saves.
+Compared with commit 0e25514490e49f0bd7de8558bed985364870c75b. Two run orders provide 18 samples per version. The fixture adds 100 investment accounts with one automatic entry each and 100 valuation marks to synthetic financial records. The browser uses a 390×844 viewport, real service worker and offline cached reloads. Firebase network operations use the local adapter; these are not physical phone or production network measurements.
 
-| Operation | Before median | After median | Median change |
+| Metric | Before median (ms) | After median (ms) | Change |
 |---|---:|---:|---:|
-| offlineOpen | 110.4 ms | 94.45 ms | 14.4% reduction |
-| pageSwitch | 20.75 ms | 22.45 ms | -8.2% reduction |
-| scheduledRefresh | 19.55 ms | 6.0 ms | 69.3% reduction |
-| offlineSaveAndRefresh | 137.9 ms | 91.1 ms | 33.9% reduction |
+| offlineOpen | 114.0 | 117.55 | 3.1% |
+| pageSwitch | 99.55 | 104.65 | 5.1% |
+| scheduledRefresh | 6.9 | 6.9 | 0.0% |
+| offlineSaveAndRefresh | 145.35 | 135.9 | -6.5% |
+| monthlyReview100Entries | 34.95 | 27.4 | -21.6% |
 
-Negative reduction means slower. First-time page switching moves work onto navigation; the pooled median cost increased 1.7 ms. Cached opening improved about 14%, scheduled refresh work about 69%, and offline save plus refresh about 34% in these local runs. Do not interpret these as physical-iPhone results, cold-network startup or guaranteed production gains. Authentication and cloud latency are mocked; the service worker, offline cache, IndexedDB and rendering are real. Memory and battery were not measured.
+Monthly review is faster in both orders. Other timings are mixed, so no general startup/navigation/save speed improvement is claimed. The additional backup coordination is primarily a correctness change. Raw samples, separate run orders and environmental limitations are recorded in PERFORMANCE_RESULTS.json.
 
-Reproduce with `npm run test:performance` and `PFT_PERF_ORDER=after-first npm run test:performance`. Preserve each JSON output from `test-results/performance/report.json` before the second run. Full measurements are in `PERFORMANCE_RESULTS.json`.
+To reproduce, check out the baseline separately and set PFT_PERF_BASELINE_DIR to its dist directory, then run npm run test:performance. Repeat with PFT_PERF_ORDER=after-first. Use the same browser/device and avoid concurrent heavy work. Actual Android/iPhone timing, keyboard and assistive-technology checks remain manual-device work.

@@ -1,19 +1,19 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.25.14",
-  "released": "2026-10-25",
+  "version": "2026.10.26.1",
+  "released": "2026-10-26",
   "releaseNotes": [
-  "Review marks and goal planning now sync across devices with offline recovery and conflict checks.",
-  "Edit automatically posted contribution amounts before marking payments as statement-confirmed; confirmation never posts twice.",
-  "Successful direct form saves clear only their completed drafts and preserve unrelated or newly typed work."
-],
+    "Amount corrections return directly to payment review after a successful save.",
+    "Complete backups restore financial records and shared reviews together, with offline recovery and conflict choices.",
+    "Search is now a compact bottom control; obsolete migration and P2P ROI support have been removed."
+  ],
   "sections": [
     [
       "Short first EMI interest",
-      "New monthly loans use actual-days / 365 for a first EMI earlier than the one-calendar-month anniversary (clamped in shorter months). Example: March 1 to March 5 is four elapsed days, so ₹10,00,000 at 12% accrues about ₹1,315 interest. At or after one full monthly cycle, one regular monthly interest amount applies; any extra days are estimated separately at principal × annual rate × extra days ÷ 36,500. For example, March 1 to April 5 is one monthly interest amount (₹10,000 at ₹10,00,000 and 12%) plus four extra days (₹1,315.07). The Extra days' interest with first EMI field fills automatically and can be edited to match the bank. The first suggested payment includes the extra amount so the normal EMI principal portion remains unchanged. A statement correction remains authoritative and does not double-charge this estimate. Existing loans preserve their saved first-EMI method until edited and confirmed. This is a first-payment estimate, not a full daily-accrual model; use Daily interest basis (SBI style) for daily balances and month-end capitalization."
+      "New monthly loans use actual-days / 365 for a first EMI earlier than the one-calendar-month anniversary (clamped in shorter months). Example: March 1 to March 5 is four elapsed days, so \u20b910,00,000 at 12% accrues about \u20b91,315 interest. At or after one full monthly cycle, one regular monthly interest amount applies; any extra days are estimated separately at principal \u00d7 annual rate \u00d7 extra days \u00f7 36,500. For example, March 1 to April 5 is one monthly interest amount (\u20b910,000 at \u20b910,00,000 and 12%) plus four extra days (\u20b91,315.07). The Extra days' interest with first EMI field fills automatically and can be edited to match the bank. The first suggested payment includes the extra amount so the normal EMI principal portion remains unchanged. A statement correction remains authoritative and does not double-charge this estimate. Existing loans preserve their saved first-EMI method until edited and confirmed. This is a first-payment estimate, not a full daily-accrual model; use Daily interest basis (SBI style) for daily balances and month-end capitalization."
     ],
     [
       "Revising the regular EMI",
-      "Open Debts, click a loan and choose Revise EMI. Enter the effective repayment date and revised regular monthly payment. Preview the EMI and estimated remaining number of payments, then confirm. Increasing the regular EMI reduces estimated tenure without changing rate or borrowed principal. For example, if a loan has ₹951315 outstanding at 12%, raising regular EMI from ₹50000 to ₹82000 changes the monthly-model estimate from 22 payments to 13. Final payment may be smaller. Previously recorded payment amounts are preserved; a revision affects the future regular amount and the schedule from its date. Linked recurring EMI entries quote the regular EMI applicable on each due date. An extra one-time payment uses Part Payment and its existing Keep EMI or Reduce EMI choices. A one-time higher payment does not silently become the future regular EMI. Revise EMI history can be edited or removed, with later repayments replayed and validated. Overlapping rate/EMI changes on one date must be combined through the existing terms-change entry."
+      "Open Debts, click a loan and choose Revise EMI. Enter the effective repayment date and revised regular monthly payment. Preview the EMI and estimated remaining number of payments, then confirm. Increasing the regular EMI reduces estimated tenure without changing rate or borrowed principal. For example, if a loan has \u20b9951315 outstanding at 12%, raising regular EMI from \u20b950000 to \u20b982000 changes the monthly-model estimate from 22 payments to 13. Final payment may be smaller. Previously recorded payment amounts are preserved; a revision affects the future regular amount and the schedule from its date. Linked recurring EMI entries quote the regular EMI applicable on each due date. An extra one-time payment uses Part Payment and its existing Keep EMI or Reduce EMI choices. A one-time higher payment does not silently become the future regular EMI. Revise EMI history can be edited or removed, with later repayments replayed and validated. Overlapping rate/EMI changes on one date must be combined through the existing terms-change entry."
     ],
     [
       "First EMI date and bank-confirmed extra interest",
@@ -101,7 +101,7 @@ window.PFT_APP_INFO = {
     ],
     [
       "18. Account and deletion",
-      "Account shows the currently signed-in Google email. Delete Dashboard clears your own tracker records, custom values, recovery snapshot and local change log from the cloud and this device. It keeps your app login, Google account and family access. Other people’s trackers and downloaded backups are unchanged. Only the owner can use it, while viewing their own tracker. Download a backup, finish syncing and type DELETE DASHBOARD to confirm. You must be online; the cloud clear must succeed before local records are cleared. This uses the regular cloud sync and does not require the account-deletion service."
+      "Account shows the currently signed-in Google email. Delete Dashboard clears your own tracker records, custom values, recovery snapshot and local change log from the cloud and this device. It keeps your app login, Google account and family access. Other people\u2019s trackers and downloaded backups are unchanged. Only the owner can use it, while viewing their own tracker. Download a backup, finish syncing and type DELETE DASHBOARD to confirm. You must be online; the cloud clear must succeed before local records are cleared. This uses the regular cloud sync and does not require the account-deletion service."
     ],
     [
       "19. Reviewing changes and calculation details",
@@ -109,7 +109,11 @@ window.PFT_APP_INFO = {
     ],
     [
       "20. Page styles and appearance",
-      "Settings > Appearance > Page style offers Style 1 · Modern (default) and Style 2 · Classic (the earlier design). Modern uses top navigation on desktop and six main tabs on mobile. Analytics & Reports includes Analytics, Growth Projection and Date range reports. Classic keeps the earlier navigation and page layout. Both use the same records, calculations, forms, cloud sync and permissions. The selected style is saved per signed-in tracker context on this device. It is independent of light/dark mode and colour selection. Switching styles keeps the current page and any unfinished form entries."
+      "Settings > Appearance > Page style offers Style 1 \u00b7 Modern (default) and Style 2 \u00b7 Classic (the earlier design). Modern uses top navigation on desktop and six main tabs on mobile. Analytics & Reports includes Analytics, Growth Projection and Date range reports. Classic keeps the earlier navigation and page layout. Both use the same records, calculations, forms, cloud sync and permissions. The selected style is saved per signed-in tracker context on this device. It is independent of light/dark mode and colour selection. Switching styles keeps the current page and any unfinished form entries."
+    ],
+    [
+      "Complete backup and payment review",
+      "Export a current complete backup from Settings to include financial records, shared review marks, valuation dates, planner inputs and payment confirmations. Import previews replacement before saving. Records and reviews publish together; offline imports stay saved on this device until syncing succeeds. Resolve newer shared reviews from Sync details. Unversioned financial-only or obsolete backup formats are not imported. Current device-recovery files preserve existing shared reviews when a review snapshot was unavailable. Use the Search button at the bottom of the screen from any page. In Monthly close, Edit amount opens the contribution editor; Save & return to review saves the correction and returns to the statement check. Payment confirmation never posts a contribution again."
     ]
   ]
 };

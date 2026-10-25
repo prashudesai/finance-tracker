@@ -4,8 +4,6 @@
   const number=x=>typeof x==='number'&&Number.isFinite(x);
   const dateOK=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x)&&!Number.isNaN(Date.parse(x+'T00:00:00Z'))&&new Date(x+'T00:00:00Z').toISOString().slice(0,10)===x;
   const round=x=>Math.round(x*100)/100;
-  function monthEnd(date){const[y,m]=date.split('-').map(Number);return new Date(Date.UTC(y,m,0)).toISOString().slice(0,10);}
-  function legacyEndDate(debt,payments=[]){let last=debt.date;for(const row of [...(debt.loanChanges||[]),...(payments||[])])if(row.date>last)last=row.date;return monthEnd(last);}
   function firstEmiAnniversary(date){if(!dateOK(date))return null;const[y,m,d]=date.split('-').map(Number),last=new Date(Date.UTC(y,m+1,0)).getUTCDate();return new Date(Date.UTC(y,m,Math.min(d,last))).toISOString().slice(0,10);}
   function estimateExtraFirstEmiInterest(debt){
     if(!debt||debt.dailyInterestBasis===true||!dateOK(debt.date)||!dateOK(debt.firstEmiDate))return 0;
@@ -50,7 +48,8 @@
   function rebuildDaily(debt,payments,quoteId,asOfDate){
     validate(debt);let balance=Number(debt.principal)-(Number(debt.principalPaidBeforeTracking)||0),rate=Number(debt.openingRate??debt.rate),emi=Number(debt.openingEmi??debt.repaymentBaseEmi??debt.emi)||0;
     const day=x=>Math.floor(Date.parse(x+'T00:00:00Z')/86400000),key=n=>new Date(n*86400000).toISOString().slice(0,10);
-    const cutoff=dateOK(asOfDate)?asOfDate:legacyEndDate(debt,payments),end=day(cutoff);
+    if(!dateOK(asOfDate))throw Error('A valid as-of date is required for daily-interest calculations.');
+    const cutoff=asOfDate,end=day(cutoff);
     const events=[...(debt.loanChanges||[]).filter(e=>e.date<=cutoff).map(e=>({...e,priority:0})),...payments.filter(row=>row.date<=cutoff).map(row=>({date:row.date,id:row.id,row,priority:row.repaymentType==='part-payment'?1:2}))].sort((a,b)=>a.date.localeCompare(b.date)||a.priority-b.priority||a.id.localeCompare(b.id));
     let i=0,accrued=0,total=Number(debt.interestPaidBeforeTracking)||0,quote;const updates=[],history=[],caps=[];
     for(let d=day(debt.date);d<=end;d++){const date=key(d);while(i<events.length&&events[i].date===date){const e=events[i++];if(!e.row){const beforeBalance=balance,beforeRate=rate,beforeEmi=emi;if(e.type==='topup')balance+=e.amount;if(e.rate!==undefined)rate=e.rate;if(e.repaymentChoice==='manual')emi=e.emi;history.push({id:e.id,balance,rate,emi,beforeBalance,beforeRate,beforeEmi});continue;}const row=e.row;let n=Number(row.amount);if(quoteId===row.id)n=round(Math.min(emi,balance));if(!Number.isFinite(n)||n<=0||n>balance+.01)throw Error('Invalid payment for daily-balance loan.');if(row.repaymentType!=='part-payment'&&debt.firstEmiDate&&date<debt.firstEmiDate)throw Error('Monthly EMI cannot precede first EMI date.');balance=Math.max(0,balance-n);updates.push({id:row.id,principalPaid:round(n),interestPaid:0});if(quoteId===row.id)quote=round(n);}
@@ -120,7 +119,8 @@
     return result.error?result:{amount:result.quoteAmount,rate:before.rate,emi:before.emi};
   }
   function dailyStatement(debt,payments,asOfDate){
-    const cutoff=dateOK(asOfDate)?asOfDate:legacyEndDate(debt,payments),throughPayments=(payments||[]).filter(row=>row.date<=cutoff),throughDebt={...debt,...(Array.isArray(debt.loanChanges)?{loanChanges:debt.loanChanges.filter(row=>row.date<=cutoff)}:{})};
+    if(!dateOK(asOfDate))return {error:'A valid as-of date is required for a daily-interest statement.'};
+    const cutoff=asOfDate,throughPayments=(payments||[]).filter(row=>row.date<=cutoff),throughDebt={...debt,...(Array.isArray(debt.loanChanges)?{loanChanges:debt.loanChanges.filter(row=>row.date<=cutoff)}:{})};
     const result=rebuild(throughDebt,throughPayments,undefined,cutoff);if(result.error)return result;
     const events=[{date:debt.date,priority:-1,id:'opening',type:'opening',credit:Number(debt.principal)||0}];
     for(const change of throughDebt.loanChanges||[])events.push({date:change.date,priority:0,id:change.id,type:change.type,change});
@@ -141,8 +141,8 @@
     });
     return{rows,remaining:result.remaining,interestPaid:result.interestPaid,accruedInterest:result.accruedInterest||0,asOfDate:cutoff};
   }
-  function paymentBalances(debt,payments){
-    const result=rebuild(debt,payments);if(result.error)return result;
+  function paymentBalances(debt,payments,asOfDate){
+    const result=rebuild(debt,payments,undefined,asOfDate);if(result.error)return result;
     let balance=Number(debt.principal)-(Number(debt.principalPaidBeforeTracking)||0);
     const splits=new Map(result.payments.map(row=>[row.id,row]));
     const events=[...(debt.loanChanges||[]).map(change=>({...change,priority:0})),...(payments||[]).map(payment=>({date:payment.date,id:payment.id,type:'payment',payment,priority:payment.repaymentType==='part-payment'?1:2}))].sort((a,b)=>a.date.localeCompare(b.date)||a.priority-b.priority||String(a.id).localeCompare(String(b.id)));
@@ -150,5 +150,5 @@
     for(const event of events){if(event.type==='topup'){balance=round(balance+Number(event.amount));continue;}if(event.type!=='payment')continue;const split=splits.get(event.id);if(!split)continue;balance=round(Math.max(0,balance-Number(split.principalPaid||0)));balances.set(event.id,balance);}
     return{balances,remaining:result.remaining};
   }
-  return{validate,rebuild,totalPrincipal,estimate,quotePayment,dailyStatement,paymentBalances,firstEmiAnniversary,estimateExtraFirstEmiInterest,legacyEndDate};
+  return{validate,rebuild,totalPrincipal,estimate,quotePayment,dailyStatement,paymentBalances,firstEmiAnniversary,estimateExtraFirstEmiInterest};
 });

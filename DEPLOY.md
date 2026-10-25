@@ -1,12 +1,8 @@
-# Deployment — 2026.10.25.14
+# Deployment — 2026.10.26.1
 
-Pushes to `main` run the repository's test-and-deploy workflow. This release includes new rules for shared review metadata, so it requires a rules deployment before Hosting. No Functions deployment is needed.
+Pushes to main run the test-and-deploy workflow. CI uses Node 22, Java 17, the npm lockfile and v5 checkout/setup actions. It verifies the deterministic build, browser regressions, installed-PWA offline/update behavior, Firestore security and concurrent transactions, and unit suites. It deploys rules before Firebase Hosting. This release does not require new Firestore rules or a Functions deployment.
 
-CI uses Node 22, Java 17, the committed npm lockfile, deterministic application build checks, browser regressions, installed-PWA offline/update checks, unit suites and Firestore emulator security/concurrency checks. It then deploys Firestore rules and finally Hosting.
-
-The existing `FIREBASE_SERVICE_ACCOUNT_FINANCE_TRACKER_BC7C9` secret must identify a service account authorized to deploy both Firebase Hosting and Firestore rules. A failed rules deployment blocks Hosting.
-
-For manual deployment from the repository root:
+The FIREBASE_SERVICE_ACCOUNT_FINANCE_TRACKER_BC7C9 secret supplies the existing deployment identity, with Hosting and Firebase Rules deployment permissions.
 
 ```bash
 npm ci --ignore-scripts
@@ -19,4 +15,6 @@ npx firebase deploy --only firestore:rules --project finance-tracker-bc7c9
 npx firebase deploy --only hosting --project finance-tracker-bc7c9
 ```
 
-Apply the update notice in the browser or installed app and confirm version **2026.10.25.14** under Settings → App & updates. The worker cache is release 83. Verify the shared review state on a second signed-in device. See REVIEW_SYNC.md for migration, offline conflict handling and payment verification semantics.
+Apply the update notice in the browser or installed app. Confirm version 2026.10.26.1 under Settings → App & updates; the worker cache is release 84. Export a new complete backup from this version. Unversioned financial-only or obsolete backup files are no longer imported.
+
+Performance comparisons use tests/performance-browser.cjs with PFT_PERF_BASELINE_DIR pointing to the dist directory of baseline commit 0e25514490e49f0bd7de8558bed985364870c75b. Run once normally and once with PFT_PERF_ORDER=after-first. The benchmark uses synthetic records and an actual service worker; it is not a physical-device measurement.

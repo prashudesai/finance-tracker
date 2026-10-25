@@ -38,6 +38,9 @@
         if(action==='Clear all data')records.delete('recovery');
         const revision=storageRevision+1;
         records.put({revision,data:snapshot},'current');
+        const reviewRestore=syncRecord?.pending?syncRecord.envelope?.reviewRestore:null;
+        if(reviewRestore){records.put(reviewRestore,'backupReviewRestore:v1');if(action==='Imported backup')for(const id of reviewRestore.discardOps||[])records.delete('reviewOp:v1:'+id);}
+        else records.delete('backupReviewRestore:v1');
         if(syncRecord){const queued=records.get('cloudSync');queued.onsuccess=()=>{if(syncRecord.pending&&queued.result)syncRecord.baseRevision=Math.max(syncRecord.baseRevision,queued.result.baseRevision);records.put(syncRecord,'cloudSync');};}
         if(action==='Clear all data'){log.clear();changes.length=0;}
         if(importedAudit?.length)log.add({at:new Date().toISOString(),action:'Imported backup history',changes:[],importedHistory:importedAudit});
@@ -65,7 +68,7 @@
         window.financeCloud.resume(sent.baseRevision);
         storageMessage('Saved on device · Syncing…');
         const revision=await window.financeCloud.save(sent.envelope,{clearHistory:sent.clearHistory});
-        await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite'),store=tx.objectStore('records'),r=store.get('cloudSync');r.onsuccess=()=>{const latest=r.result;if(!latest)return;latest.baseRevision=revision;latest.lastCloudUpdated=window.financeCloud?.updatedAt?.()||new Date().toISOString();if(latest.token===sent.token){latest.pending=false;latest.clearHistory=false;}store.put(latest,'cloudSync');syncRecord=latest;};tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+        await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite'),store=tx.objectStore('records'),r=store.get('cloudSync');r.onsuccess=()=>{const latest=r.result;if(!latest)return;latest.baseRevision=revision;latest.lastCloudUpdated=window.financeCloud?.updatedAt?.()||new Date().toISOString();if(latest.token===sent.token){latest.pending=false;latest.clearHistory=false;if(latest.envelope)delete latest.envelope.reviewRestore;}store.put(latest,'cloudSync');syncRecord=latest;};tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
         syncStatus();
       }catch(error){
         if(error.code==='tracker/conflict'){cloudSaveBlocked=true;storageMessage('Saved on device · Another device has newer changes. Export this device’s backup before refreshing cloud records.',true);}
@@ -88,7 +91,7 @@
         lastAccepted=JSON.parse(JSON.stringify(state));initTheme();syncStatus();setTimeout(syncCloud,0);
       }catch(error){storageLoadFailed=true;storageMessage('Records could not be loaded. '+error.message,true);window.financeCloud.lock(error);}
     }
-    function saveData(action='Update',importedAudit=null){
+    function saveData(action='Update',importedAudit=null,reviewRestore=null){
       if(typeof action!=='string')action='Update';
       if(window.financeCloud?.deleting||window.financeCloud?.canEdit===false||window.financeCloud?.accessValid?.()===false){if(lastAccepted)state=JSON.parse(JSON.stringify(lastAccepted));scheduleAllViewsRefresh();return Promise.resolve(false);}
       if(window.financeCloud?.canManage===false&&['Imported backup','Clear all data','Restored recovery snapshot'].includes(action)){if(lastAccepted)state=JSON.parse(JSON.stringify(lastAccepted));return Promise.resolve(false);}
@@ -102,8 +105,8 @@
         try{
           const previous=syncRecord;
           const recovery=action==='Imported backup'?{at:new Date().toISOString(),data:cloudCommittedState}:action==='Clear all data'?null:cloudRecovery;
-          syncRecord={baseRevision:previous?.baseRevision||0,pending:true,token:crypto.randomUUID(),lastCloudUpdated:previous?.lastCloudUpdated||window.financeCloud?.updatedAt?.()||null,clearHistory:action==='Clear all data'||previous?.clearHistory===true,envelope:{data:snapshot,recovery}};syncRecord.envelope.mutationId=syncRecord.token;
-          try{await commitFinance(snapshot,action,importedAudit);}catch(error){syncRecord=previous;throw error;}
+          syncRecord={baseRevision:previous?.baseRevision||0,pending:true,token:crypto.randomUUID(),lastCloudUpdated:previous?.lastCloudUpdated||window.financeCloud?.updatedAt?.()||null,clearHistory:action==='Clear all data'||previous?.clearHistory===true,envelope:{data:snapshot,recovery}};const inheritedRestore=reviewRestore===false?null:reviewRestore||(!['Imported backup','Clear all data','Resolved device/cloud differences','Restored dated snapshot','Restored recovery snapshot'].includes(action)?(previous?.pending?previous.envelope?.reviewRestore:null):null);if(inheritedRestore)syncRecord.envelope.reviewRestore=inheritedRestore;syncRecord.envelope.mutationId=syncRecord.token;
+          try{await commitFinance(snapshot,action,importedAudit);if(syncRecord?.envelope?.reviewRestore||window.financeReviews?.hasRestore?.())await window.financeReviews?.refreshJournal?.();}catch(error){syncRecord=previous;throw error;}
           cloudRecovery=recovery;cloudCommittedState=JSON.parse(JSON.stringify(snapshot));
           document.getElementById('lastUpdate').textContent=snapshot.lastUpdate;persistenceDirty=pendingSaves>1;syncStatus();setTimeout(syncCloud,0);return true;
         }catch(error){persistenceDirty=true;showImportStatus('Device save failed. Export a backup before closing. '+error.message,true);storageMessage('Not saved · Export a backup',true);return false;}
@@ -116,7 +119,7 @@
       pendingSync:async()=>{await saveQueue;return Boolean(syncRecord?.pending)||(financeDB?await readPendingCloudSync():false);},
       settle:()=>saveQueue,dirty:()=>persistenceDirty||pendingSaves>0,
       reset(){clearTimeout(syncTimer);state=createEmptyState();lastAccepted=null;if(financeDB){financeDB.close();financeDB=null;}},
-      exportUnsaved(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='finance-unsaved-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},
+      exportUnsaved(){const blob=new Blob([JSON.stringify(makeDeviceRecoveryBackup(),null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='finance-unsaved-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},
       async refreshRemote(){await saveQueue;if(!navigator.onLine){alert('Connect to the internet to refresh cloud records.');return;}if(syncRecord?.pending){if(!confirm('This device has changes waiting to sync. Export a backup first. Replace this device’s pending changes with the latest cloud records?'))return;await window.financeCloud.load();await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').delete('cloudSync');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});}location.reload();},
       async retry(){await saveQueue;await syncCloud();}
     };
@@ -144,7 +147,7 @@
       const ids=new Set();
       for(const row of data.reconciliations){if(!row||typeof row.id!=='string'||ids.has(row.id)||!validCalendarDate(row.date)||!ACCOUNT_KINDS.includes(row.kind)||typeof row.accountId!=='string'||!['statementBalance','trackerBalance','difference'].every(k=>typeof row[k]==='number'&&Number.isFinite(row[k]))||row.statementBalance<0||row.trackerBalance<0||Math.abs(row.difference-(row.statementBalance-row.trackerBalance))>0.01||typeof row.notes!=='string'||row.notes.length>240)throw new Error('Invalid reconciliation record');ids.add(row.id);}
       if(data.auditLog!==undefined){if(!Array.isArray(data.auditLog)||data.auditLog.some(r=>!r||typeof r.action!=='string'||!Array.isArray(r.changes)||!Number.isFinite(Date.parse(r.at))))throw new Error('Invalid change log');delete data.auditLog;}
-      delete data.backupMetadata;
+      delete data.backupMetadata;delete data.reviewMetadata;delete data.backupFormat;delete data.backupVersion;delete data.backupKind;
       return data;
     }
     async function archiveAccount(kind,id){
