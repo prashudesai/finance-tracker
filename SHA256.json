@@ -34,7 +34,7 @@
   "dist/index.html": "11ab5402adc98a197ae0946a173f79a2a3db1ccc5e7276e0d0a7cfd15ff723e0",
   "dist/app-info.js": "7ebc79e58360432c575dc73c31e92a06b9ab14fdbcf3041d4a9c8013a52b1824",
   "dist/recurring-ui.js": "798410bcdfd7a87f0c838a164df2b841f5ac4673a12bc21be405089d569f1809",
-  "dist/service-worker.js": "45e95e6739b7a5b81a5fdbd47529f6148aa760848308c872fc99ea5b2a3b942f",
+  "dist/service-worker.js": "bb44e3fe22b02fb66356d8d5369faf125b62f849f3a3f7d71a65a5b254a65864",
   "dist/tracker-enhancements.css": "9212aa91926e951af580911d3fcde80cd26614eeb9f79976e9a65fcdb197deb9",
   "dist/app-style.js": "43d65be9d3ae9ef9951153030a013ecc82dc1a78186a2b6a3baed4e38d3abc77",
   "dist/manifest.webmanifest": "86a875d553a50576db7d510620619a7b6b28487dd2d606640675436dd9475355",
