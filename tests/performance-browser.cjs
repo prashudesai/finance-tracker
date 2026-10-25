@@ -1,0 +1,48 @@
+const fs=require('fs'),http=require('http'),path=require('path'),assert=require('assert/strict');
+const {chromium}=require('playwright');
+const root=path.resolve(__dirname,'../dist'),db=new Map(),results=[];let rejectClearPublish=false,release=66,benchmarkBaseline=false;
+const appStub=`export const initializeApp=c=>c;`;
+const authStub=`const a={currentUser:JSON.parse(sessionStorage.getItem('mockGoogle')||'null')},callbacks=[];window.__testAuth=a;export const getAuth=()=>a;export class GoogleAuthProvider{setCustomParameters(){}}export function onAuthStateChanged(_,cb){callbacks.push(cb);queueMicrotask(()=>cb(a.currentUser));}export async function signInWithPopup(){const q=new URLSearchParams(location.search);a.currentUser={uid:q.get('user'),email:q.get('email'),emailVerified:true,displayName:q.get('name')||''};sessionStorage.setItem('mockGoogle',JSON.stringify(a.currentUser));for(const cb of callbacks)cb(a.currentUser);}export async function reauthenticateWithPopup(){return {user:a.currentUser};}export async function signOut(){a.currentUser=null;sessionStorage.removeItem('mockGoogle');for(const cb of callbacks)cb(null);}`;
+const firestoreStub=`export const getFirestore=()=>({});export const doc=(_, ...parts)=>parts.join('/');export const collection=(_,path)=>path;export const where=(field,op,value)=>({field,op,value});export const query=(path,...filters)=>({path,filters});async function call(action,body){const r=await fetch('/__test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...body})});if(!r.ok)throw Error(await r.text());return r.json();}const wrap=(data,path)=>({id:path?.split('/').at(-1),exists:()=>data!==null,data:()=>data});export async function getDocFromServer(path){return wrap(await call('get',{path}),path);}export async function getDocsFromServer(query){const rows=await call('query',{query});return{docs:rows.map(r=>wrap(r.data,r.path))};}export async function setDoc(path,data){return call('writes',{writes:[{path,data}]});}export async function deleteDoc(path){return call('writes',{writes:[{path,remove:true}]});}export function onSnapshot(path,next,error){let stopped=false;const read=()=>getDocFromServer(path).then(s=>{if(!stopped)next(s)}).catch(e=>{if(navigator.onLine)error(e)});read();const timer=setInterval(read,150);return()=>{stopped=true;clearInterval(timer)};}export function writeBatch(){const writes=[];return{set:(path,data)=>writes.push({path,data}),delete:path=>writes.push({path,remove:true}),commit:()=>call('writes',{writes})};}export async function runTransaction(_,fn){const writes=[];const value=await fn({get:getDocFromServer,set:(path,data)=>writes.push({path,data}),update:(path,data)=>writes.push({path,data,merge:true})});await call('writes',{writes});return value;}`;
+const server=http.createServer(async(req,res)=>{try{
+ if(req.url==='/__test'){let body='';for await(const b of req)body+=b;const q=JSON.parse(body);let result=null;
+  if(q.action==='get')result=db.get(q.path)||null;
+  if(q.action==='query')result=[...db].filter(([p,d])=>p.startsWith(q.query.path+'/')&&q.query.filters.every(f=>d[f.field]===f.value)).map(([path,data])=>({path,data}));
+  if(q.action==='writes'&&rejectClearPublish&&q.writes.some(w=>w.path==='users/owner/tracker/current')){res.statusCode=503;res.end('Cloud unavailable');return;}
+  if(q.action==='writes'){for(const w of q.writes)w.remove?db.delete(w.path):db.set(w.path,w.merge?{...db.get(w.path),...w.data}:w.data);result=true;}
+  res.setHeader('Content-Type','application/json');res.end(JSON.stringify(result));return;
+ }
+ if(['/vendor/firebase-app.js','/vendor/firebase-auth.js','/vendor/firebase-firestore.js'].includes(req.url)){res.setHeader('Content-Type','application/javascript');res.end(req.url.endsWith('firebase-app.js')?appStub:req.url.endsWith('firebase-auth.js')?authStub:firestoreStub);return;}
+ const file=path.join(root,req.url.split('?')[0]==='/'?'index.html':req.url.split('?')[0]);if(!file.startsWith(root))throw Error('Bad path');res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript':file.endsWith('.html')?'text/html':file.endsWith('.css')?'text/css':'application/octet-stream');let content=fs.readFileSync(benchmarkBaseline&&file===path.join(root,'index.html')?path.join(__dirname,'fixtures/performance-before.html'):file);if(release===67&&/\.(js|css|html|json)$/.test(file))content=content.toString().replaceAll('v=66','v=67').replaceAll('shell-cloud-v80','shell-cloud-v81-test').replaceAll('2026.10.25.11','2026.10.25.12-test');res.end(content);
+}catch(e){res.statusCode=500;res.end(e.message)}});
+
+
+
+(async()=>{
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port;
+ const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,args:['--no-sandbox','--disable-gpu','--disable-dev-shm-usage']});
+ const report={environment:'Headless Chromium, 390x844 mobile viewport, real service worker, offline cached reloads; synthetic records. Not a physical iPhone.',results:{}};
+ const fixture=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/organic.json'),'utf8'));
+ for(const baseline of (process.env.PFT_PERF_ORDER==='after-first'?[false,true]:[true,false])){
+  benchmarkBaseline=baseline;const name=baseline?'before':'after',context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),p=await context.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));
+  await p.addInitScript(()=>{let cloud;Object.defineProperty(window,'financeCloud',{configurable:true,get:()=>cloud,set:v=>{cloud=v;const original=v.showApp;v.showApp=function(...args){const result=original.apply(this,args);window.__benchReady=performance.now();return result;};}});});
+  p.on('dialog',d=>d.accept());await p.goto(url+'/?user=bench'+name+'&email='+name+'@example.test&name=Tester');await p.locator('#cloudLogin').click();await p.waitForFunction(()=>window.__benchReady);if(await p.locator('#firstNameSetup').isVisible())await p.locator('#firstNameContinue').click();await p.evaluate(()=>window.trackerReady);
+  await p.evaluate(async fixture=>{state=validateBackup(fixture);activeFamilyProfile='__combined__';await saveData('Benchmark fixture');await saveQueue;},fixture);await p.waitForFunction(()=>!syncRecord.pending&&!syncBusy);await p.waitForFunction(()=>Boolean(navigator.serviceWorker.controller));await p.waitForTimeout(300);
+  await context.setOffline(true);const reloads=[],switches=[],refreshes=[],saves=[];
+  for(let i=0;i<9;i++){
+   await p.reload();await p.waitForFunction(()=>window.__benchReady);await p.evaluate(()=>window.trackerReady);reloads.push(await p.evaluate(()=>window.__benchReady));
+   await p.waitForTimeout(100);await p.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());
+   const sample=await p.evaluate(async()=>{
+    const tick=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    let t=performance.now();document.querySelector('.nav-tab[data-tab="investments"]').click();await tick();const switching=performance.now()-t;
+    document.querySelector('.nav-tab[data-tab="income-expenses"]').click();await tick();t=performance.now();
+    // Measure the real scheduled refresh path without idle-queue wait.
+    const schedule=window.requestIdleCallback;window.requestIdleCallback=fn=>{fn();return 0;};scheduleAllViewsRefresh();window.requestIdleCallback=schedule;const refresh=performance.now()-t;
+    const value=state.income.length;t=performance.now();state.income.push({id:'bench-'+crypto.randomUUID(),member:state.customValues.familyMembers[0],source:'Other',amount:1,date:localDateKey()});await saveData('Benchmark offline save');while(allViewsRefreshPending)await new Promise(r=>setTimeout(r,10));const save=performance.now()-t;return{switching,refresh,save,records:value};
+   });switches.push(sample.switching);refreshes.push(sample.refresh);saves.push(sample.save);
+  }
+  const stats=values=>{const a=[...values].sort((a,b)=>a-b);return{medianMs:+a[Math.floor(a.length/2)].toFixed(2),minMs:+a[0].toFixed(2),maxMs:+a.at(-1).toFixed(2),samples:values.map(x=>+x.toFixed(2))};};
+  report.results[name]={offlineOpen:stats(reloads),pageSwitch:stats(switches),scheduledRefresh:stats(refreshes),offlineSaveAndRefresh:stats(saves)};assert.deepEqual(errors,[]);await context.close();console.log(name+' benchmark complete');
+ }
+ fs.mkdirSync(path.join(__dirname,'../test-results/performance'),{recursive:true});fs.writeFileSync(path.join(__dirname,'../test-results/performance/report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));await browser.close();server.close();
+})().catch(e=>{console.error(e);process.exit(1)});

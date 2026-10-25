@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),path=require('path');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('node:assert/strict'),path=require('path');
 const code=fs.readFileSync(path.join(__dirname,'../dist/pwa-client.js'),'utf8');
 const tick=()=>new Promise(r=>setImmediate(r));
 function harness(opts={}){

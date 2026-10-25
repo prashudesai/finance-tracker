@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),A=require('assert/strict');const s=fs.readFileSync(__dirname+'/../dist/index.html','utf8');const begin=s.indexOf('    function setupFamilyDetailTiles('),fn=s.slice(begin,s.indexOf('\n    }',begin)+6);
+const fs=require('./app-source.cjs').fs,vm=require('vm'),A=require('assert/strict');const s=fs.readFileSync(__dirname+'/../dist/index.html','utf8');const begin=s.indexOf('    function setupFamilyDetailTiles('),fn=s.slice(begin,s.indexOf('\n    }',begin)+6);
 const callbacks={},status={},dialogs={},tile={dataset:{familyDialog:'familyInviteDetails',familyOwner:'true'}};let opens=0,closes=0,roleChecks=0;
 const panel={addEventListener:(n,f)=>callbacks[n]=f,querySelectorAll:()=>Object.values(dialogs),append(){},querySelector:()=>({focus(){}})};
 for(const id of ['familyTrackerDetails','familyNameDetails','familyInviteDetails','familyMemberDetails'])dialogs[id]={id,append(node){A.equal(node,status)},showModal(){opens++},close(){closes++},addEventListener(){}};

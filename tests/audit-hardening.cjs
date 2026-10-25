@@ -1,4 +1,4 @@
-const A=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const A=require('node:assert/strict'),fs=require('./app-source.cjs').fs,vm=require('node:vm');
 const html=fs.readFileSync(require.resolve('../dist/index.html'),'utf8');
 function fn(name,next){return html.slice(html.indexOf('    function '+name+'('),html.indexOf('    '+next,html.indexOf('    function '+name+'(')));}
 let printed='';const debt={id:'a',type:'Loan <unsafe>'};

@@ -1,4 +1,4 @@
-const A=require('node:assert/strict'),fs=require('fs'),vm=require('vm');
+const A=require('node:assert/strict'),fs=require('./app-source.cjs').fs,vm=require('vm');
 const L=require('../dist/loan-ledger.js'),clone=x=>JSON.parse(JSON.stringify(x));
 const base=()=>({id:'loan',type:'Home Loan',member:'Test',principal:1000000,remaining:1000000,rate:7.5,emi:20000,date:'2026-01-01',interestPaid:0,principalPaidBeforeTracking:0,interestPaidBeforeTracking:0,openingRate:7.5,openingEmi:20000,loanChanges:[]});
 const pay=(id,date,extra={})=>({id,date,amount:20000,isAnnual:false,notes:'Synthetic test',category:'EMI Payment',loanId:'loan',repaymentType:'emi',...extra});

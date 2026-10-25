@@ -1,4 +1,4 @@
-const fs=require('fs'),assert=require('assert/strict');
+const fs=require('./app-source.cjs').fs,assert=require('assert/strict');
 (async()=>{
  const source=fs.readFileSync(require('path').join(__dirname,'../dist/firebase-store.js'),'utf8');
  const {createCloudStore}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));

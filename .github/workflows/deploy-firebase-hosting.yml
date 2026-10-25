@@ -28,11 +28,19 @@ jobs:
       - name: Install test dependencies
         run: npm install --ignore-scripts
 
+      - name: Build and verify committed Hosting files
+        run: |
+          npm run build
+          git diff --exit-code -- dist
+
       - name: Install browser
         run: npx playwright install --with-deps chromium
 
       - name: Run browser regression tests
         run: npm run test:emerald
+
+      - name: Run installed-PWA offline and update checks
+        run: npm run test:pwa
 
       - name: Run regression tests
         run: npm test

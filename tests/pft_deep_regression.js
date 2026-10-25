@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),{performance}=require('perf_hooks');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('assert/strict'),{performance}=require('perf_hooks');
 const s=fs.readFileSync(require('path').join(__dirname,'../dist/index.html'),'utf8');
 function fn(n){const a=s.indexOf(`    function ${n}(`);if(a<0)throw Error(n);const nl=s.indexOf('\n',a);if(s.slice(a,nl).trimEnd().endsWith('}'))return s.slice(a,nl);return s.slice(a,s.indexOf('\n    }',a)+6);}
 const clone=x=>JSON.parse(JSON.stringify(x)),data=JSON.parse(fs.readFileSync(require('path').join(__dirname,'fixtures/organic.json'),'utf8'));

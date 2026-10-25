@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync(require('path').join(__dirname,'../dist/cloud-notice.js'),'utf8').replaceAll('export function','function');
 const context={};vm.createContext(context);vm.runInContext(source+';this.watch=watchCloudChanges;this.delay=retryDelay;',context);
 let next,error,stops=0,subscriptions=0,visible=true,base=3,token='own',notices=[],timer,delay;

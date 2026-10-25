@@ -1,4 +1,4 @@
-const A=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const A=require('node:assert/strict'),fs=require('./app-source.cjs').fs,vm=require('node:vm');
 const source=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
 const start=source.indexOf('    function syncNewLoanFirstEmiExtraInterest(');
 const end=source.indexOf('\n    document.getElementById(\'debtDailyInterestBasis\')',start);

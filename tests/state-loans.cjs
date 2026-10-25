@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),path=require('path');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('node:assert/strict'),path=require('path');
 const src=fs.readFileSync(path.join(__dirname,'../dist/index.html'),'utf8');
 function fn(name){const a=src.indexOf(`    function ${name}(`);assert(a>=0);const n=src.indexOf('\n',a);return src.slice(a,n).trimEnd().endsWith('}')?src.slice(a,n):src.slice(a,src.indexOf('\n    }',a)+6);}
 const clone=x=>JSON.parse(JSON.stringify(x));

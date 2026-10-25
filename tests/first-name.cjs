@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),path=require('path');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('assert/strict'),path=require('path');
 const src=fs.readFileSync(path.join(__dirname,'../dist/index.html'),'utf8');
 const start=src.indexOf('    function firstNameSetupNeeded('),end=src.indexOf('    async function setupFirstName(',start);
 const c={};vm.createContext(c);vm.runInContext(src.slice(start,end),c);

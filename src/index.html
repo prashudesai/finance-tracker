@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en" data-app-style="modern">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="./app-info.js?v=66"></script>
+  <script src="./loan-ledger.js?v=66"></script>
+  <script src="./recurring.js?v=66"></script>
+  <script src="./recurring-ui.js?v=66"></script>
+  <script defer src="./vendor/jspdf.umd.min.js"></script>
+  <script defer src="./pwa-client.js?v=66"></script>
+  <script defer src="./tracker-enhancements.js?v=66"></script>
+  <link rel="stylesheet" href="./tracker-enhancements.css?v=66">
+  <title>Personal Finance Tracker</title>
+  <meta name="theme-color" content="#0d2927">
+  <link rel="preload" as="image" href="./images/signin-light-desktop.webp" media="(min-width:761px)">
+  <link rel="preload" as="image" href="./images/signin-light-mobile.webp" media="(max-width:760px)">
+  <meta name="description" content="A private personal finance tracker with Google sign-in and cloud saving.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./runtime/legacy-1.css?v=80">
+  <!-- Bundled Chart.js 3.9.1 (MIT): charts remain available when offline. -->
+  <script src="./runtime/chart-3.9.1.js?v=80"></script>
+
+  <script src="./runtime/bootstrap-2.js?v=80"></script>
+  <script type="module" src="./firebase-client.js?v=66" onerror="document.body.classList.remove('cloud-loading');document.getElementById('cloudLogin').disabled=true;document.getElementById('cloudMessage').textContent='Unable to load the sign-in service. Connect to the internet and reload.'"></script>
+  <link rel="stylesheet" href="./runtime/legacy-2.css?v=80">
+
+
+  <link rel="stylesheet" href="./runtime/legacy-3.css?v=80">
+<link rel="stylesheet" href="./runtime/legacy-4.css?v=80">
+  <link rel="stylesheet" href="./app-style.css?v=66">
+  <script defer src="./app-style.js?v=66"></script>
+</head>
+<body class="cloud-pending cloud-loading">
+  <section id="cloudGate" aria-label="Account access"><span id="cloudLoadingIndicator" role="status" aria-label="Loading tracker"></span><div class="cloud-login-layout">
+    <div class="cloud-login-brand"><img class="cloud-login-logo" src="./icons/icon-192.png" alt=""><h1>Personal Finance Tracker</h1><p>A clearer view of your family’s financial future.</p></div>
+    <div class="cloud-login-card">
+    <h2>Welcome back</h2>
+    <p class="cloud-login-subtitle">Sign in to manage your family finances</p>
+    <p id="cloudMessage" role="status">Connecting to Google sign-in…</p>
+    <button id="cloudLogin" type="button"><svg class="cloud-google-mark" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M43.6 24.5c0-1.5-.1-3-.4-4.5H24v8.5h11a9.4 9.4 0 0 1-4.1 6.2v5.2h6.7c3.9-3.6 6-8.8 6-15.4Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.7-5.2c-1.8 1.2-4.1 2-6.8 2-5.2 0-9.7-3.5-11.3-8.2H5.8v5.4A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.7 27.7a12 12 0 0 1 0-7.4v-5.4H5.8a20 20 0 0 0 0 18.2l6.9-5.4Z"/><path fill="#EA4335" d="M24 12.1c3 0 5.7 1 7.8 3.1l5.9-5.9A19.7 19.7 0 0 0 24 4 20 20 0 0 0 5.8 14.9l6.9 5.4c1.6-4.7 6.1-8.2 11.3-8.2Z"/></svg><span>Continue with Google</span></button>
+    <p class="cloud-login-privacy"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg><span>Your tracker is private to your family</span></p>
+    <div id="cloudRecoveryActions" hidden>
+      <button id="cloudEmergencyExport" type="button">Export current session</button>
+      <button id="cloudSaveRetry" type="button">Retry save</button>
+      <button id="cloudReload" type="button">Reload cloud records</button>
+    </div>
+  </div><p class="cloud-login-footer"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg><span>Secure sign-in · Your records sync across devices</span></p></section>
+  <section id="firstNameSetup" hidden role="dialog" aria-modal="true" aria-labelledby="firstNameTitle" style="position:fixed;inset:0;z-index:10001;display:grid;place-items:center;padding:20px;background:rgba(15,23,42,.94);font-family:inherit;">
+    <form id="firstNameSetupForm" class="cloud-login-card" style="color:#e7f0f8">
+      <h1 id="firstNameTitle">What’s your first name?</h1>
+      <p>We’ll add you to Family Members so you can assign income and investments to yourself. You can add more members in Settings.</p>
+      <label for="firstNameInput" style="display:block;margin-bottom:8px">First name</label>
+      <input id="firstNameInput" name="given-name" autocomplete="given-name" maxlength="60" required style="box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #64748b;border-radius:8px;background:#0f172a;color:#e7f0f8;font:inherit">
+      <p id="firstNameError" role="alert" style="color:#fca5a5"></p>
+      <button id="firstNameContinue" type="submit">Continue</button>
+    </form>
+  </section>
+  <div class="container">
+    <header>
+      <div>
+        <h1> Personal Finance Tracker</h1>
+        <p>Track income, expenses, investments, and financial goals</p>
+      </div>
+      <button type="button" class="family-profile-mobile-trigger" data-family-profile-trigger aria-label="Choose family profile" title="Choose family profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg></button>
+      <div class="advanced-header-context" aria-live="polite"><strong id="layoutPageTitle">Dashboard</strong><span>Personal Finance Tracker</span></div>
+      <div class="header-controls">
+        <div class="theme-mode-switch" id="themeToggle" role="group" aria-label="Theme mode">
+          <button type="button" class="theme-mode-option" data-mode="light" aria-label="Switch to light mode" title="Switch to light mode"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button>
+        </div>
+      </div>
+    </header>
+
+    <div id="importStatus" role="status" aria-live="polite" class="info-box" style="display: none;"></div>
+
+    <div class="nav-tabs" role="navigation" aria-label="Tracker pages">
+      <div class="family-profile-sidebar-brand"><button type="button" class="family-profile-sidebar-trigger" data-family-profile-trigger aria-label="Choose family profile" title="Choose family profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg></button><div class="family-profile-sidebar-copy"><span class="family-profile-sidebar-title">PERSONAL FINANCE</span><span id="familyProfileSidebarLabel" class="family-profile-sidebar-label" hidden></span></div></div>
+      <button type="button" class="mobile-nav-page" id="mobileNavPrevious" aria-label="Show earlier pages" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+      <div class="nav-tab-items" id="mobileNavItems">
+      <button class="nav-tab active" data-tab="dashboard" aria-label="Dashboard">Dashboard</button>
+      <button class="nav-tab" data-tab="income-expenses" aria-label="Income & Expenses">Income &amp; Expenses</button>
+      <button class="nav-tab" data-tab="investments" aria-label="Investments">Investments</button>
+      <button class="nav-tab" data-tab="debts" aria-label="Debts">Debts</button>
+      <button class="nav-tab" data-tab="growth-projection" aria-label="Growth Projection">Growth Projection</button>
+      <button class="nav-tab" data-tab="analytics" aria-label="Analytics">Analytics</button>
+      <button class="nav-tab" data-tab="reports" aria-label="Reports">Reports</button>
+      <button class="nav-tab" data-tab="settings" aria-label="Settings">Settings</button>
+      </div>
+      <button type="button" class="mobile-nav-page" id="mobileNavNext" aria-label="Show more pages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
+    </div>
+    <button type="button" class="mobile-nav-reveal" id="mobileNavReveal" aria-label="Show page navigation" aria-hidden="true" tabindex="-1"><span aria-hidden="true">⌃</span><span>Show tabs</span></button>
+    <div id="familyProfileMenu" class="family-profile-menu" role="listbox" aria-label="Select family profile" hidden></div>
+
+    <div id="house-expenses" class="tab-content">
+      <div class="panel"><div class="panel-header"><h2>Monthly House Expenses</h2></div>
+      <p>House expense = starting balance + income − recorded expenses − Stallion contributions − next calendar month starting balance. Each amount is recorded against its own month and recalculated when inputs change. Do not enter these same household costs again as expenses.</p>
+      <div class="table-wrapper"><table><thead><tr><th>Month</th><th>House Expense</th><th>Status</th></tr></thead><tbody id="houseExpenseBody"></tbody></table></div></div>
+    </div>
+    <!-- DASHBOARD TAB -->
+    <div id="dashboard" class="tab-content active">
+      <aside id="dashboardUpdateNotice" class="dashboard-update-notice" hidden aria-label="App update">
+        <div><strong>Update available</strong><p id="dashboardUpdateStatus" role="status">A new version is ready to install.</p></div>
+        <button type="button" id="dashboardApplyUpdate">Update now</button>
+      </aside>
+      <div class="dashboard">
+        <section class="dashboard-card dashboard-net-worth" aria-label="Net worth overview">
+          <div>
+            <div class="dashboard-card-heading">
+              <span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18V6m0 12h16"/><path d="m7 14 4-4 3 2 5-6"/><path d="M15 6h4v4"/></svg></span>
+              <div><div class="dashboard-kicker">Net Worth</div><div class="dashboard-support">Assets after outstanding debts</div></div>
+            </div>
+            <div class="dashboard-main-value" id="netWorth">₹0</div>
+          </div>
+          <div>
+            <div class="dashboard-position-values">
+              <div class="dashboard-position-value"><span>Total Assets</span><strong id="dashboardAssetsValue">₹0</strong></div>
+              <div class="dashboard-position-value debt"><span>Total Debts</span><strong id="dashboardDebtValue">₹0</strong></div>
+            </div>
+            <div class="dashboard-position-bar" role="img" id="dashboardPositionBar" aria-label="Assets and debts as a share of gross position"><span class="assets-segment" id="dashboardAssetsSegment"></span><span class="debts-segment" id="dashboardDebtsSegment"></span></div>
+            <div class="dashboard-position-legend"><span><i class="dashboard-legend-dot"></i>Assets <b id="dashboardAssetsShare">0%</b></span><span><i class="dashboard-legend-dot debt"></i>Debts <b id="dashboardDebtsShare">0%</b></span></div>
+          </div>
+        </section>
+        <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18m-5 5h2"/></svg></span><span class="dashboard-kicker">Total Debts</span></div><div class="dashboard-stat-value" id="totalDebts">₹0</div></article>
+        <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 10 11l4 3 6-8"/><path d="M15 6h5v5"/></svg></span><span class="dashboard-kicker">Monthly Income</span></div><div class="dashboard-stat-value" id="monthlyIncome">₹0</div></article>
+        <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="M18 14v4m-1-3h2"/></svg></span><span class="dashboard-kicker">Available Balance</span></div><div class="dashboard-stat-value" id="surplusBalance">₹0</div></article>
+        <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8a8 8 0 0 1 13-3l2 2"/><path d="M19 3v4h-4M20 16a8 8 0 0 1-13 3l-2-2"/><path d="M5 21v-4h4"/></svg></span><span class="dashboard-kicker">Monthly Savings</span></div><div class="dashboard-stat-value" id="monthlyContrib">₹0</div></article>
+        <section class="dashboard-card dashboard-wide-card">
+          <div class="dashboard-wide-header"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 3v4m8-4v4M4 9h16"/></svg></span><span class="dashboard-kicker">Monthly Expense Snapshot</span></div><span class="dashboard-period-chip" id="dashboardExpenseMonth">Previous month</span></div>
+          <div class="dashboard-expense-row"><span class="dashboard-expense-label" id="houseExpenseLabel">House Expense</span><strong class="dashboard-expense-amount" id="lastMonthHouseExpense">Pending</strong></div>
+          <div class="dashboard-expense-row"><span class="dashboard-expense-label" id="fullExpenseLabel">Full Expense</span><strong class="dashboard-expense-amount" id="lastMonthFullExpense">Pending</strong></div>
+        </section>
+        <section class="dashboard-card dashboard-wide-card">
+          <div class="dashboard-wide-header"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V5m0 14h16"/><path d="M7 15h3v2H7zm5-5h3v7h-3zm5-4h3v11h-3z"/></svg></span><span class="dashboard-kicker" id="fyAverageLabel">Monthly Average</span></div><span class="dashboard-period-chip" id="dashboardFyLabel">FY 26–27</span></div>
+          <div class="dashboard-average-values">
+            <div class="dashboard-average-item"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></span><span class="dashboard-kicker">Income Average</span></div><div class="dashboard-average-value" id="fyAvgIncome">₹0</div></div>
+            <div class="dashboard-average-item"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14m6-6-6 6-6-6"/></svg></span><span class="dashboard-kicker">Expense Average</span></div><div class="dashboard-average-value" id="fyAvgExpense">₹0</div></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="advanced-dashboard-insights" id="advancedDashboardInsights" aria-label="Dashboard charts" hidden>
+        <article class="panel advanced-dashboard-chart-panel">
+          <div class="panel-header"><div><h2>Income vs expenses</h2><p id="advancedDashboardCashflowPeriod">Monthly trend · current financial year</p></div><button type="button" class="advanced-dashboard-link" data-open-tab="analytics">View report <span aria-hidden="true">→</span></button></div>
+          <svg id="advancedDashboardCashflowChart" viewBox="0 0 640 205" role="img" aria-label="Current financial year income and expense trend"></svg>
+          <div class="advanced-dashboard-legend"><span><i class="income-series"></i>Income</span><span><i class="expense-series"></i>Expenses</span></div>
+        </article>
+        <article class="panel advanced-dashboard-chart-panel">
+          <div class="panel-header"><div><h2>Investment allocation</h2><p>Current values · gratuity excluded</p></div><button type="button" class="advanced-dashboard-link" data-open-tab="investments">Details <span aria-hidden="true">→</span></button></div>
+          <div class="advanced-dashboard-allocation"><svg id="advancedDashboardAllocationChart" viewBox="0 0 180 180" role="img" aria-label="Investment allocation by account category"></svg><div id="advancedDashboardAllocationLegend" class="advanced-dashboard-allocation-legend"></div></div>
+        </article>
+      </section>
+
+      <div class="panel dashboard-portfolio-panel">
+        <div class="panel-header dashboard-portfolio-heading">
+          <h2>Investment Portfolio</h2>
+          <label class="portfolio-sort-control">Sort by
+            <select id="completePortfolioSort" aria-label="Sort investment portfolio">
+              <option value="current">Portfolio size</option>
+              <option value="invested">Invested amount</option>
+              <option value="gain">Gain</option>
+              <option value="return">Return</option>
+              <option value="category">Category</option>
+            </select>
+          </label>
+        </div>
+        <div class="portfolio-total-summary" aria-label="Portfolio totals">
+          <div class="portfolio-total-item"><span>Current value</span><strong id="completePortfolioCurrentTotal">₹0</strong></div>
+          <div class="portfolio-total-item"><span>Invested</span><strong id="completePortfolioInvestedTotal">₹0</strong></div>
+          <div class="portfolio-total-item portfolio-total-gain"><span>Total gain</span><strong id="completePortfolioGainTotal">₹0</strong><small id="completePortfolioReturnTotal">0.0%</small></div>
+          <div class="portfolio-bar-legend"><span><i class="portfolio-legend-invested"></i>Invested</span><span><i class="portfolio-legend-gain"></i>Gain</span></div>
+        </div>
+        <div class="portfolio-list-head" aria-hidden="true"><span>Category</span><span>Invested amount + gain</span><span>Current value</span><span>Gain / return</span><span></span></div>
+        <div id="completePortfolioBody" class="portfolio-category-list" aria-live="polite"></div>
+        <p class="portfolio-interaction-note">Select a category to view its holdings. Hover over a bar for the exact amounts.</p>
+      </div>
+
+      <div class="panel debt-summary-panel">
+        <div class="panel-header">
+          <div class="debt-summary-heading"><h2>Debt Summary</h2></div>
+          <div class="debt-summary-total"><span>Total outstanding</span><strong id="debtSummaryTotal">₹0</strong></div>
+        </div>
+        <div id="debtSummaryTiles" class="debt-summary-grid" aria-live="polite">
+          <p class="text-muted">No debts recorded</p>
+        </div>
+      </div>
+
+      
+
+    </div>
+
+
+
+    <!-- DEBTS TAB -->
+    <div id="debts" class="tab-content">
+      <div class="debt-page-intro"><div><span class="debt-page-kicker">BORROWING</span><h1>Debt &amp; EMI Tracker</h1><p>See what remains, monitor monthly commitments, and review repayments.</p></div><span class="debt-page-badge" id="debtPageStatus">0 active accounts</span></div>
+      <section class="debt-page-overview" aria-label="Debt overview" aria-live="polite">
+        <article class="debt-page-stat debt-page-stat-outstanding"><span class="debt-page-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18m-13 5h4"/></svg></span><span class="debt-page-stat-copy"><span class="debt-page-stat-label">Outstanding balance</span><strong class="debt-page-stat-value" id="debtPageOutstanding">₹0</strong></span></article>
+        <article class="debt-page-stat debt-page-stat-emi"><span class="debt-page-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="debt-page-stat-copy"><span class="debt-page-stat-label">Active monthly EMI</span><strong class="debt-page-stat-value" id="debtPageMonthlyEmi">₹0</strong></span></article>
+        <article class="debt-page-stat debt-page-stat-count"><span class="debt-page-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V5m0 14h16"/><path d="M8 15v-3m4 3V8m4 7V5"/></svg></span><span class="debt-page-stat-copy"><span class="debt-page-stat-label">Debt accounts</span><strong class="debt-page-stat-value" id="debtPageAccountCount">0 active · 0 total</strong></span></article>
+      </section>
+      <div class="advanced-debt-workspace">
+      <div class="panel debt-entry-panel investment-add-section" id="loanAddPanel" hidden>
+        <div class="panel-header"><div class="debt-section-title"><span class="debt-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14"/></svg></span><div><h2>Add Loan</h2><p>Enter loan details; EMI can be calculated from rate and tenure.</p></div></div></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Debt Type</label>
+            <select id="debtType">
+              <option>Home Loan</option>
+              <option>Personal Loan</option>
+              <option>Vehicle Loan</option>
+              <option>Credit Card</option>
+              <option>Gold Loan</option>
+              <option>Gold Loan OD</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Family Member (Optional)</label>
+            <select id="debtMember"><option value="">-- Optional --</option></select>
+          </div>
+          <div class="form-group">
+            <label>Principal Amount (₹)</label>
+            <input type="number" id="debtAmount" placeholder="500000" min="0">
+          </div>
+          <div class="form-group">
+            <label>Interest Rate (% p.a.)</label>
+            <input type="number" id="debtRate" placeholder="7.5" min="0" step="0.05">
+          </div>
+          <div class="form-group">
+            <label>Tenure (Months)</label>
+            <input type="number" id="debtTenure" placeholder="60" min="0">
+          </div>
+          <div class="form-group">
+            <label>EMI (₹)</label>
+            <input type="number" id="debtEMI" placeholder="Enter your monthly EMI" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label for="debtEmiDueDay">Monthly EMI Due Date (optional)</label>
+            <input type="number" id="debtEmiDueDay" min="1" max="31" step="1" inputmode="numeric" placeholder="e.g., 5">
+          </div>
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" id="debtDate">
+          </div>
+          <div class="form-group"><label for="debtDailyInterestBasis"><input type="checkbox" id="debtDailyInterestBasis"> Daily interest basis (SBI style)</label><small class="text-muted">Daily balance and rate; interest added at month-end.</small></div>
+          <div class="form-group">
+            <label for="debtFirstEmiDate">First EMI date (optional)</label>
+            <input type="date" id="debtFirstEmiDate">
+            <small class="text-muted">Use the bank-confirmed date. Leave blank to retain the current schedule.</small>
+          </div>
+          <div class="form-group" id="debtFirstEmiExtraInterestGroup">
+            <label for="debtFirstEmiExtraInterest">Extra days’ interest with first EMI (₹, automatic · editable)</label>
+            <input type="number" id="debtFirstEmiExtraInterest" min="0" step="0.01" placeholder="Enter start and first EMI dates">
+            <button type="button" class="btn-small" id="debtFirstEmiExtraRecalculate">Use calculated estimate</button>
+            <small class="text-muted" id="debtFirstEmiExtraHelp">Automatically estimates interest for days after one full monthly cycle, using actual days ÷ 365. You can edit it to match the bank. If the first EMI is earlier than one month, the full short period is already prorated.</small>
+          </div>
+          <div class="form-group">
+            <label>Notes (Optional)</label>
+            <input type="text" id="debtNotes" placeholder="e.g., Bank name, Lender">
+          </div>
+        </div>
+        <div class="debt-form-footer"><span class="debt-form-hint"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>For an existing loan, enter the remaining principal and use the date you start tracking it. Enter rate and tenure to auto-calculate EMI, or enter EMI directly.</span><button class="btn-primary" id="addDebtBtn">Save Loan</button></div>
+      </div>
+
+      <div class="panel debt-list-panel">
+        <div class="panel-header"><div class="debt-section-title"><span class="debt-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="1"/><circle cx="8" cy="12" r="1"/><circle cx="8" cy="18" r="1"/></svg></span><div><h2>Loan Summary</h2><p>Outstanding balances and recorded EMI history</p></div></div><div class="panel-controls"><span class="debt-list-count" id="debtListCount">0 accounts</span><button type="button" class="btn-primary" id="openAddLoanBtn" onclick="openEntryFormModal('loanAddPanel',this)">+ Add Loan</button></div></div>
+        
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th class="text-right">Total borrowed</th>
+                <th class="text-right">Rate</th>
+                <th class="text-right">EMI</th>
+                <th class="text-right">Remaining Principal</th>
+                <th class="text-right">Remaining EMIs (Est.)</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="debtsBody">
+              <tr><td colspan="7" class="text-muted">No debts recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- INCOME & EXPENSES TAB -->
+    <div id="income-expenses" class="tab-content">
+      <div class="transaction-intro">
+        <div class="transaction-intro-copy"><span class="transaction-eyebrow">CASH FLOW</span><h1>Income &amp; Expenses</h1><p>Record money received and spent, then review entries by month or financial year.</p></div>
+        <span class="transaction-period" id="transactionOverviewMonth">Current month</span>
+      </div>
+      <div class="recurring-launch"><button type="button" id="openRecurringBtn">↻ Recurring items</button></div>
+      <section class="transaction-overview" aria-label="Current month cash flow summary" aria-live="polite">
+        <article class="transaction-metric transaction-metric-income"><span class="transaction-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/><path d="M4 20h16"/></svg></span><span class="transaction-metric-copy"><span class="transaction-metric-label">Income recorded</span><strong class="transaction-metric-value" id="transactionIncomeTotal">₹0</strong></span></article>
+        <article class="transaction-metric transaction-metric-expense"><span class="transaction-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14m6-6-6 6-6-6"/><path d="M4 4h16"/></svg></span><span class="transaction-metric-copy"><span class="transaction-metric-label">Expenses recorded</span><strong class="transaction-metric-value" id="transactionExpenseTotal">₹0</strong></span></article>
+        <article class="transaction-metric transaction-metric-net" id="transactionNetCard"><span class="transaction-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 9 12l3 3 8-9"/><path d="M15 6h5v5"/></svg></span><span class="transaction-metric-copy"><span class="transaction-metric-label">Income after expenses</span><strong class="transaction-metric-value" id="transactionNetTotal">₹0</strong></span></article>
+      </section>
+      <div class="transaction-grid">
+      <div class="panel transaction-panel transaction-panel-income">
+        <div class="panel-header"><div class="transaction-section-heading"><span class="transaction-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/><path d="M4 20h16"/></svg></span><div><h2>Add Income</h2><p>Log a salary, rental receipt, or other income</p></div></div></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Family Member</label>
+            <select id="incomeMember">
+              <option value="">-- Select family member --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Source</label>
+            <select id="incomeSource">
+              <option>Salary</option>
+              <option>Bonus</option>
+              <option>Investments</option>
+              <option>Rental Income</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount (₹)</label>
+            <input type="number" id="incomeAmount" placeholder="50000" min="0">
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="incomeDate">
+          </div>
+          <div class="form-group">
+            <label>Notes (Optional)</label>
+            <input type="text" id="incomeNotes" placeholder="e.g., performance bonus">
+          </div>
+        </div>
+        <div class="transaction-submit"><button class="btn-primary" id="addIncomeBtn">Add Income</button></div>
+      <div class="history-section">
+        <div class="panel-header">
+          <h2>Income History</h2>
+          <div class="history-filter-controls">
+            <label class="history-month-control">Financial year
+              <select id="incomeHistoryFinancialYear" aria-label="Choose income history financial year"></select>
+            </label>
+            <label class="history-month-control">Month
+              <select id="incomeHistoryMonth" aria-label="Choose income history month"></select>
+            </label>
+          </div>
+        </div>
+        <div class="transaction-history-summary" id="incomeHistorySummary" aria-live="polite"></div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Source</th>
+                <th class="text-right">Amount</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="incomeBody">
+              <tr><td colspan="5" class="text-muted">No income recorded for this month.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="transaction-pagination" id="incomeHistoryPagination" data-transaction-pagination="income" aria-label="Income history pages"><div class="transaction-pagination-summary" id="incomeHistoryPaginationSummary"></div><nav class="transaction-pagination-controls" id="incomeHistoryPaginationControls" aria-label="Income history pagination"></nav></div>
+      </div>
+
+      </div>
+
+      <div class="panel transaction-panel transaction-panel-expense">
+        <div class="panel-header"><div class="transaction-section-heading"><span class="transaction-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14m6-6-6 6-6-6"/><path d="M4 4h16"/></svg></span><div><h2>Add Expense</h2><p>Record purchases, annual costs, or EMI payments</p></div></div></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="expenseCategory">
+              <option>Healthcare</option>
+              <option>Entertainment</option>
+              <option>Insurance</option>
+              <option>Maintenance</option>
+              <option>House Rent</option>
+              <option>Vacation</option>
+              <option>Education</option>
+              <option>EMI Payment</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group" id="expenseSubcategoryGroup" hidden>
+            <label for="expenseSubcategory">Expense type</label>
+            <select id="expenseSubcategory"></select>
+          </div>
+          <div class="form-group" id="loanSelectGroup" style="display: none;">
+            <label>Select Loan/Debt</label>
+            <select id="expenseLoan">
+              <option value="">-- Select Debt --</option>
+            </select>
+          </div>
+          <div class="form-group" id="repaymentTypeGroup" style="display: none;">
+            <label for="expenseRepaymentType">Payment type</label>
+            <select id="expenseRepaymentType">
+              <option value="emi">Monthly EMI</option>
+              <option value="part-payment">Part Payment</option>
+            </select>
+            <small class="text-muted" id="repaymentTypeNote">Monthly EMI includes interest and principal.</small>
+          </div>
+          <div class="form-group">
+            <label>Amount (₹)</label>
+            <input type="number" id="expenseAmount" placeholder="5000" min="0">
+          </div>
+          <div class="form-group">
+            <label>Is Annual Expense?</label>
+            <select id="isAnnual">
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="expenseDate">
+          </div>
+          <div class="form-group">
+            <label>Notes (Optional)</label>
+            <input type="text" id="expenseNotes" placeholder="e.g., Medical checkup">
+          </div>
+        </div>
+        <div class="transaction-submit"><button class="btn-primary" id="addExpenseBtn">Add Expense</button></div>
+      <div class="history-section">
+        <div class="panel-header">
+          <h2>Expense History</h2>
+          <div class="history-filter-controls">
+            <label class="history-month-control">Financial year
+              <select id="expenseHistoryFinancialYear" aria-label="Choose expense history financial year"></select>
+            </label>
+            <label class="history-month-control">Month
+              <select id="expenseHistoryMonth" aria-label="Choose expense history month"></select>
+            </label>
+          </div>
+        </div>
+        <div class="transaction-history-summary" id="expenseHistorySummary" aria-live="polite"></div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th class="text-right">Amount</th>
+                <th>Type</th>
+                <th>Loan/Notes</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+      <tbody id="expenseBody">
+              <tr><td colspan="6" class="text-muted">No expenses recorded for this month.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="transaction-pagination" id="expenseHistoryPagination" data-transaction-pagination="expense" aria-label="Expense history pages"><div class="transaction-pagination-summary" id="expenseHistoryPaginationSummary"></div><nav class="transaction-pagination-controls" id="expenseHistoryPaginationControls" aria-label="Expense history pagination"></nav></div>
+      </div>
+      </div>
+      </div>
+
+      <div class="panel monthly-surplus-panel transaction-surplus">
+        <div class="panel-header">
+          <h2>Monthly Surplus</h2>
+          <div class="panel-header-actions">
+            <button type="button" class="btn-secondary" id="toggleBalanceHistory" aria-expanded="false" aria-controls="balanceHistoryContent">View History</button>
+            <button type="button" class="btn-primary" id="toggleBalanceForm" aria-expanded="false" aria-controls="balanceEntryForm">+ Add Monthly Surplus</button>
+          </div>
+        </div>
+        <div id="balanceEntryForm" hidden>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Month & Year</label>
+              <input type="month" id="balanceMonth">
+            </div>
+            <div class="form-group">
+              <label>Start Balance (₹) - Balance at month start</label>
+              <input type="number" id="balanceStartAmount" placeholder="50000" min="0">
+            </div>
+          </div>
+          <button class="btn-primary" id="addBalanceBtn">Record Start Balance</button>
+          <div class="info-box">
+             <strong>Surplus Calculation:</strong>
+            <div style="margin-top: 8px; font-size: 12px;">
+            Monthly surplus balance = Start Balance + Income − Expenses − Stallion PMS
+            <br><br>
+             <strong>Reduces Surplus:</strong> Recorded expenses + Stallion PMS contributions
+            <br>
+             <strong>Does NOT Reduce:</strong> NPS, PPF and PF (tracked separately; not deducted in this balance calculation)
+            <br><br>
+            Enter the next calendar month's opening balance to calculate and record this month's house expense. Avoid entering the same household costs again as expenses.
+            </div>
+          </div>
+        </div>
+        <div id="balanceHistoryContent" class="surplus-history-content" hidden>
+          <div class="panel-header surplus-history-header">
+            <h2>Monthly Surplus History</h2>
+            <label class="history-month-control">Financial year
+              <select id="balanceHistoryFinancialYear" aria-label="View surplus history financial year"></select>
+            </label>
+            <p class="text-muted">Completed months only. Current and future months are hidden. Click other column headings to sort.</p>
+          </div>
+          <div class="table-wrapper">
+            <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="text-right">Start Balance</th>
+                <th class="text-right">Monthly Income</th>
+                <th class="text-right">Expenses</th>
+                <th class="text-right">Stallion PMS</th>
+                <th class="text-right">NPS + PPF</th>
+                <th class="text-right">Monthly Surplus Balance</th>
+                <th class="text-right">This Month House Expense</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="balanceHistoryBody">
+              <tr><td colspan="9" class="text-muted">No balance records yet.</td></tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVESTMENTS TAB -->
+    <div id="investments" class="tab-content">
+      <div class="investment-page-intro">
+        <div><span class="investment-page-kicker">Investment overview</span><h1>Investments</h1><p>Track your portfolio, retirement accounts, contributions and returns.</p></div>
+      </div>
+      <section class="investment-overview-grid" aria-label="Investment overview" aria-live="polite">
+        <article class="investment-overview-card"><span>Current portfolio value</span><strong id="investmentOverviewCurrent">₹0</strong><small>Across investment and retirement accounts</small></article>
+        <article class="investment-overview-card"><span>Total invested</span><strong id="investmentOverviewInvested">₹0</strong><small>Recorded invested balances</small></article>
+        <article class="investment-overview-card" id="investmentOverviewGainCard"><span>Overall gain / loss</span><strong id="investmentOverviewGain">₹0</strong><small id="investmentOverviewReturn">0.0% return</small></article>
+        <article class="investment-overview-card"><span>Monthly savings</span><strong id="investmentOverviewMonthly">₹0</strong><small>Scheduled and recorded PMS contributions</small></article>
+      </section>
+      <div class="panel investment-stallion-panel" id="stallionPmsPanel" hidden>
+        <div class="panel-header">
+          <h2>Stallion PMS</h2>
+          <div class="panel-controls">
+            <button type="button" class="btn-primary" id="openStallionContributionBtn">+ Add Contribution</button>
+            <button type="button" class="btn-secondary" data-open-entry="stallionProfitAddPanel">Update PMS Gain/Loss</button>
+          </div>
+        </div>
+        <div id="stallionPmsTileBody"></div>
+      </div>
+
+      <div class="panel investment-add-section" id="pfAddPanel">
+        <div class="panel-header">
+          <h2>Add PF (Provident Fund)</h2><p>Employee plus employer contributions, excluding the EPS portion, are added to PF invested and current once from next month onward, at the month start while the app is open, or on next open if it was closed. Update current value separately when interest is credited; invested stays unchanged. Missed months are caught up once.</p>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Family Member</label>
+            <select id="pfMember">
+              <option value="">-- Select family member --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Account Number (UAN)</label>
+            <input type="text" id="pfAccount" placeholder="UAN / PF Account">
+          </div>
+          <div class="form-group"><label class="custom-monthly-toggle-label"><input type="checkbox" id="pfAutomaticMonthly"> Include automatic monthly contribution</label></div>
+          <div class="form-group" id="pfEmployeeMonthlyGroup">
+            <label>Employee Contribution (₹)</label>
+            <input type="number" id="pfEmployee" placeholder="10000" min="0">
+          </div>
+          <div class="form-group" id="pfEmployerMonthlyGroup">
+            <label>Employer Contribution — total (₹)</label>
+            <input type="number" id="pfEmployer" placeholder="10000" min="0">
+          </div>
+          <div class="form-group" id="pfEpsMonthlyGroup"><label>Employer portion to EPS per month (₹)</label><input type="number" id="pfEpsMonthly" value="0" min="0" step="0.01"><small>Included in employer total. Enter your passbook amount; use 0 if not applicable.</small></div>
+          <div class="form-group"><label>Current EPS balance (₹)</label><input type="number" id="pfEpsCurrent" value="0" min="0" step="0.01"></div>
+          <div class="form-group">
+            <label>Current PF Balance (₹)</label>
+            <input type="number" id="pfCurrent" placeholder="300000" min="0">
+          </div>
+          <div class="form-group">
+            <label>Interest Rate (% p.a.)</label>
+            <input type="number" id="pfRate" placeholder="8.25" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Last Updated</label>
+            <input type="date" id="pfDate">
+          </div>
+        </div>
+        <div class="info-box">
+           Check automatic monthly contributions to post the employee and employer amounts from next month onward. Leave it unchecked when you do not want a recurring contribution.
+        </div>
+        <div class="panel-controls"><button type="button" class="btn-secondary" data-close-entry="pfAddPanel">Cancel</button><button class="btn-primary" id="addPfBtn">Save PF</button></div>
+      </div>
+
+      <div class="panel investment-add-section" id="ppfAddPanel">
+        <div class="panel-header">
+          <h2>Add PPF (Public Provident Fund)</h2><p>If enabled, monthly contributions are added to invested and current from next month onward at month start. Update current value separately when interest is credited; missed scheduled months are caught up once on the next open.</p>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Family Member</label>
+            <select id="ppfMember">
+              <option value="">-- Select family member --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Account Number</label>
+            <input type="text" id="ppfAccount" placeholder="PPF Account Number">
+          </div>
+          <div class="form-group">
+            <label>Total Invested (₹)</label>
+            <input type="number" id="ppfInvested" placeholder="100000" min="0">
+          </div>
+          <div class="form-group">
+            <label>Current Balance (₹)</label>
+            <input type="number" id="ppfCurrent" placeholder="150000" min="0">
+          </div>
+          <div class="form-group">
+            <label>Opening Date</label>
+            <input type="date" id="ppfDate">
+          </div>
+          <div class="form-group">
+            <label>Interest Rate (% p.a.)</label>
+            <input type="number" id="ppfRate" placeholder="7.1" step="0.1">
+          </div>
+          <div class="form-group"><label class="custom-monthly-toggle-label"><input type="checkbox" id="ppfAutomaticMonthly"> Include automatic monthly contribution</label></div>
+          <div class="form-group" id="ppfMonthlyGroup">
+            <label>Monthly Contribution (₹)</label>
+            <input type="number" id="ppfMonthly" placeholder="10000" min="0">
+          </div>
+        </div>
+        <div class="panel-controls"><button type="button" class="btn-secondary" data-close-entry="ppfAddPanel">Cancel</button><button class="btn-primary" id="addPpfBtn">Save PPF</button></div>
+      </div>
+
+      <div class="panel investment-add-section" id="otherInvestmentAddPanel">
+        <div class="panel-header">
+          <h2 id="investmentCategoryTitle">Add Investment</h2>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Family Member</label>
+            <select id="investMember">
+              <option value="">-- Select family member --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Investment Type</label>
+            <select id="investType">
+              <option>Mutual Funds</option>
+              <option>Bonds</option>
+              <option>Fixed Deposits</option>
+              <option>Stallion PMS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Investment Name</label>
+            <input type="text" id="investName" placeholder="e.g., HDFC Growth Fund">
+          </div>
+          <div class="form-group">
+            <label>Invested Amount (₹)</label>
+            <input type="number" id="investAmount" placeholder="100000" min="0">
+          </div>
+          <div class="form-group" id="investCurrentGroup">
+            <label>Current Value (₹)</label>
+            <input type="number" id="investCurrent" placeholder="120000" min="0">
+          </div>
+          <div class="form-group" id="investAutomaticMonthlyGroup">
+            <label class="custom-monthly-toggle-label"><input type="checkbox" id="investAutomaticMonthly"> Include automatic monthly contribution</label>
+            <small class="custom-monthly-toggle-note">Adds to invested and current value, and records each contribution.</small>
+          </div>
+          <div class="form-group" id="investMonthlyGroup" hidden>
+            <label>Monthly Contribution (₹)</label>
+            <input type="number" id="investMonthly" placeholder="e.g., 5000" min="0" step="0.01">
+          </div>
+          <div class="form-group" id="investMonthlyDateGroup" hidden>
+            <label>First Monthly Contribution Date</label>
+            <input type="date" id="investMonthlyDate">
+            <small class="custom-monthly-toggle-note">Repeats monthly on this day (or the month’s last day when needed).</small>
+          </div>
+          <div class="form-group">
+            <label>Purchase Date</label>
+            <input type="date" id="investDate">
+          </div>
+          <div class="form-group" id="investRateGroup" hidden>
+            <label>Interest Rate (% p.a.)</label>
+            <input type="number" id="investRate" min="0" step="0.01" placeholder="e.g., 7.25">
+          </div>
+          <div class="form-group" id="investRoiGroup" hidden>
+            <label>ROI (%)</label>
+            <input type="number" id="investRoi" min="0" step="0.01" placeholder="e.g., 12">
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <input type="text" id="investNotes" placeholder="Optional notes">
+          </div>
+        </div>
+        <div class="panel-controls"><button type="button" class="btn-secondary" data-close-entry="otherInvestmentAddPanel">Cancel</button><button class="btn-primary" id="addInvestBtn">Save Investment</button></div>
+      </div>
+
+      <div class="panel" id="investmentListPanel">
+        <div class="panel-header">
+          <h2>Investment Portfolio</h2>
+          <div class="investment-add-menu-wrap"><button type="button" class="btn-primary" id="openGeneralInvestmentBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="investmentAddMenu">+ Add Investment</button><div class="retirement-add-menu investment-add-menu" id="investmentAddMenu" role="menu" hidden></div></div>
+        </div>
+        <div id="investmentCategoryPanels"></div>
+      </div>
+
+      <section class="retirement-accounts-section" aria-labelledby="retirementAccountsHeading">
+      <div class="retirement-accounts-heading"><div><h2 id="retirementAccountsHeading">Retirement Accounts</h2><p>PF, PPF and NPS balances, plus gratuity estimates and account history</p></div><div class="retirement-add-menu-wrap"><button type="button" class="btn-primary" id="retirementAddBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="retirementAddMenu">+ Add</button><div class="retirement-add-menu" id="retirementAddMenu" role="menu" hidden><button type="button" role="menuitem" data-retirement-add="pf">Provident Fund (PF)</button><button type="button" role="menuitem" data-retirement-add="ppf">Public Provident Fund (PPF)</button><button type="button" role="menuitem" data-retirement-add="nps">National Pension Scheme (NPS)</button><button type="button" role="menuitem" data-retirement-add="gratuity">Gratuity</button></div></div></div>
+      <div id="retirementAccountPanels"><div class="retirement-empty-state" id="retirementEmptyState" hidden><strong>No retirement accounts yet</strong><span>Choose PF, PPF, NPS or gratuity from <b>+ Add</b> above. A tile appears here after you save an account.</span></div>
+      <div class="panel retirement-account-card" id="pfListPanel" data-retirement-type="pf" hidden>
+        <div class="panel-header">
+          <div><h2>PF Accounts</h2><div class="retirement-account-count" id="pfTileCount">0 accounts</div></div>
+          <div class="retirement-account-actions"></div>
+        </div>
+        <details class="retirement-account-details" id="pfAccountDetails">
+          <summary class="retirement-account-summary investment-category-summary-grid">
+            <span class="investment-summary-value retirement-summary-value"><span>Current value</span><strong id="pfTileCurrent">₹0</strong></span>
+            <span class="investment-summary-metric retirement-summary-metric"><span>Interest rate</span><strong id="pfTileRate">—</strong></span>
+            <span class="investment-summary-detail"><span>Invested</span><strong id="pfTileInvested">₹0</strong></span>
+            <span class="investment-summary-detail"><span>Gain / loss</span><strong id="pfTileGain">₹0</strong></span>
+            <span class="investment-summary-detail" id="pfTileMonthlyWrap"><span>Monthly PF</span><strong id="pfTileMonthly">₹0</strong></span>
+            <span class="investment-summary-detail"><span>EPS balance</span><strong id="pfTileEpsCurrent">₹0</strong></span>
+            <span class="investment-summary-chevron retirement-account-chevron" aria-hidden="true">›</span>
+          </summary>
+        <div class="table-wrapper">
+          <table class="pf-holdings-table">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>UAN</th>
+                <th class="text-right monthly-contribution-column">Employee<br> Monthly</th>
+                <th class="text-right monthly-contribution-column">Employer<br> Monthly</th>
+                <th class="text-right">Invested</th>
+                <th class="text-right">Current PF<br> Balance</th>
+                <th class="text-right">EPS<br> Balance</th>
+                <th class="text-right">Gain/Loss</th>
+                <th class="text-right">Interest<br> Rate</th>
+                <th class="annual-interest-column">Last FY<br> Interest</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pfBody">
+              <tr><td colspan="11" class="text-muted">No PF added yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="retirement-account-help">Expand to review each PF account, its employee and employer contributions, interest rate and recorded history.</p>
+        </details>
+      </div>
+
+      <div class="panel investment-add-section" id="npsAddPanel">
+        <div class="panel-header">
+          <h2>Add NPS (National Pension Scheme)</h2><p>Monthly NPS is tracked separately from salary and is not deducted from the remaining balance calculation. If enabled, contributions are added to invested and current from next month onward at month start. Update current value separately when returns are credited.</p>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Family Member</label>
+            <select id="npsMember">
+              <option value="">-- Select family member --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Account Number</label>
+            <input type="text" id="npsAccount" placeholder="NPS Account Number">
+          </div>
+          <div class="form-group">
+            <label>Invested Amount (₹)</label>
+            <input type="number" id="npsInvested" placeholder="500000" min="0">
+          </div>
+          <div class="form-group">
+            <label>Current Value (₹)</label>
+            <input type="number" id="npsCurrent" placeholder="600000" min="0">
+          </div>
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" id="npsDate">
+          </div>
+          <div class="form-group">
+            <label>Scheme Type</label>
+            <select id="npsScheme">
+              <option>Active Choice Pension Fund</option>
+              <option>Auto Choice Pension Fund</option>
+              <option>Aggressive Tier I</option>
+              <option>Aggressive Tier II</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="custom-monthly-toggle-label"><input type="checkbox" id="npsAutomaticMonthly"> Include automatic monthly contribution</label></div>
+          <div class="form-group" id="npsMonthlyGroup">
+            <label>Monthly Contribution (₹)</label>
+            <input type="number" id="npsMonthly" placeholder="5000" min="0">
+          </div>
+        </div>
+        <div class="panel-controls"><button type="button" class="btn-secondary" data-close-entry="npsAddPanel">Cancel</button><button class="btn-primary" id="addNpsBtn">Save NPS</button></div>
+      </div>
+
+      <div class="panel retirement-account-card" id="npsListPanel" data-retirement-type="nps" hidden>
+        <div class="panel-header">
+          <div><h2>NPS Portfolio</h2><div class="retirement-account-count" id="npsTileCount">0 accounts</div></div>
+          <div class="retirement-account-actions">
+            <button type="button" class="btn-secondary" id="openNpsBalanceUpdate" onclick="openNpsCurrentBalanceModal()" hidden>Update Balance</button>
+          </div>
+        </div>
+        <details class="retirement-account-details" id="npsAccountDetails">
+          <summary class="retirement-account-summary investment-category-summary-grid">
+            <span class="investment-summary-value retirement-summary-value"><span>Current value</span><strong id="npsTileCurrent">₹0</strong></span>
+            <span class="investment-summary-metric retirement-summary-metric"><span>XIRR</span><strong id="npsTileXirr">—</strong></span>
+            <span class="investment-summary-detail"><span>Invested</span><strong id="npsTileInvested">₹0</strong></span>
+            <span class="investment-summary-detail"><span>Gain / loss</span><strong id="npsTileGain">₹0</strong></span>
+            <span class="investment-summary-detail" id="npsTileMonthlyWrap"><span>Monthly</span><strong id="npsTileMonthly">₹0</strong></span>
+            <span class="investment-summary-chevron retirement-account-chevron" aria-hidden="true">›</span>
+          </summary>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Account</th>
+                <th>Scheme</th>
+                <th class="text-right monthly-contribution-column">Monthly</th>
+                <th class="text-right">Invested</th>
+                <th class="text-right">Current Value</th>
+                <th class="text-right">Gain/Loss</th>
+                <th class="text-right" title="(Current value − invested amount) ÷ invested amount; not annualized">Absolute Return</th>
+                <th class="text-right" title="Annualized return from account start date based on invested amount and current value; monthly contribution timing is not weighted">CAGR</th>
+                <th class="text-right" title="Annualized return based on dated investments and current value as of today">XIRR</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="npsBody">
+              <tr><td colspan="11" class="text-muted">No NPS added yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-muted">Absolute Return = (current value − invested) ÷ invested. CAGR annualizes current value against invested amount from the account start date; it does not weight monthly contribution timing. XIRR uses dated NPS contributions and current value as of today. Contributions without recorded dates are included in the opening invested amount.</p>
+        <p class="retirement-account-help">Expand to review account-level XIRR and contributions. Update Balance, Edit, Delete and View History remain available.</p>
+        </details>
+      </div>
+      <div id="ppfRetirementTileSlot"></div>
+      <div id="gratuityRetirementTileSlot"></div>
+      </div>
+      </section>
+
+
+      <div class="panel investment-add-section" id="stallionContributionAddPanel">
+        <div class="panel-header">
+          <h2>Stallion PMS Contribution</h2>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Family Member</label>
+            <select id="stallionContribMember">
+              <option>-- Select Member --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Contribution (₹)</label>
+            <input type="number" id="stallionContribAmount" placeholder="15000" min="0">
+          </div>
+          <div class="form-group">
+            <label>Contribution Date</label>
+            <input type="date" id="stallionContribDate">
+          </div>
+        </div>
+        <div class="panel-controls"><button type="button" class="btn-secondary" data-close-entry="stallionContributionAddPanel">Cancel</button><button class="btn-primary" id="addStallionContribBtn">Add Contribution</button></div>
+        <div class="info-box">
+           <strong>How to use:</strong> Select a Stallion PMS portfolio from the dropdown (lists your active portfolios), enter the contribution amount and date, then add it. Contribution history tracks all additions to your Stallion portfolios.
+        </div>
+      </div>
+
+      <div class="panel" id="stallionContributionListPanel">
+        <div class="panel-header">
+          <h2>Stallion PMS Contribution History</h2>
+          <div class="history-filter-controls">
+            <label class="history-month-control">Financial year
+              <select id="stallionContributionFinancialYear" aria-label="View Stallion contribution financial year"></select>
+            </label>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Portfolio Name</th>
+                <th class="text-right">Monthly Contribution</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="stallionContribBody">
+              <tr><td colspan="5" class="text-muted">No contributions recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel investment-add-section" id="stallionProfitAddPanel">
+        <div class="panel-header">
+          <h2>Update Stallion PMS Gain / Loss</h2>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Select Portfolio</label>
+            <select id="stallionProfitMember">
+              <option>-- Select Portfolio --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>New Gain / Loss (₹)</label>
+            <input type="number" id="stallionProfitAmount" placeholder="Positive gain or negative loss">
+          </div>
+          <div class="form-group">
+            <label>As of Date</label>
+            <input type="date" id="stallionProfitDate">
+          </div>
+        </div>
+        <div class="panel-controls"><button type="button" class="btn-secondary" data-close-entry="stallionProfitAddPanel">Cancel</button><button class="btn-primary" id="updateStallionProfitBtn">Save Gain / Loss</button></div>
+        <div class="info-box" style="margin-top: 15px;">
+           <strong>Current Value Calculation:</strong> Current Value = Invested Amount + Gain / Loss
+        </div>
+      </div>
+    </div>
+
+    <div id="investmentEditModal" class="investment-edit-modal" hidden>
+      <div class="investment-edit-backdrop" data-close-edit></div>
+      <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="investmentEditTitle">
+        <h2 id="investmentEditTitle">Edit investment</h2>
+        <div id="investmentEditFields" class="form-grid"></div>
+        <div class="investment-edit-actions"><button type="button" class="btn-secondary" data-close-edit>Cancel</button><button type="button" class="btn-primary" id="saveInvestmentEdit">Save changes</button></div>
+      </section>
+    </div>
+
+    <div id="gratuityEditModal" class="investment-edit-modal" hidden>
+      <div class="investment-edit-backdrop" data-close-gratuity></div>
+      <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="gratuityEditTitle">
+        <h2 id="gratuityEditTitle">Add gratuity estimate</h2>
+        <p class="text-muted">Enter the family member’s current Basic salary and employer start date. The estimate is separate from investment balances.</p>
+        <div class="form-grid">
+          <div class="form-group"><label for="gratuityMember">Family member</label><select id="gratuityMember"><option value="">-- Select family member --</option></select></div>
+          <div class="form-group"><label for="gratuityDate">Date of joining</label><input type="date" id="gratuityDate"></div>
+          <div class="form-group"><label for="gratuityBasicSalary">Current Basic salary per month (₹)</label><input type="number" id="gratuityBasicSalary" min="1" step="1" inputmode="numeric" placeholder="e.g., 80000"></div>
+        </div>
+        <p class="text-muted">Estimate = Basic salary × 15 ÷ 26 × counted years, subject to the ₹20 lakh cap and standard 5-year continuous-service rule. This is a planning estimate, not an employer payout quote.</p>
+        <div class="investment-edit-actions"><button type="button" class="btn-secondary" data-close-gratuity>Cancel</button><button type="button" class="btn-primary" id="saveGratuityAccount">Save Gratuity</button></div>
+      </section>
+    </div>
+
+    <div id="accountUpdateModal" class="investment-edit-modal" hidden>
+      <div class="investment-edit-backdrop" data-close-account-update></div>
+      <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="accountUpdateTitle">
+        <h2 id="accountUpdateTitle">Update Account</h2>
+        <p class="text-muted" id="accountUpdateNote"></p>
+        <div class="form-grid">
+          <div class="form-group" id="accountUpdateNpsAccountWrap" hidden><label for="accountUpdateNpsAccount">NPS account</label><select id="accountUpdateNpsAccount"></select></div>
+          <div class="form-group" id="accountUpdateContributionMonthWrap" hidden><label for="accountUpdateContributionMonth">Contribution date</label><input type="date" id="accountUpdateContributionMonth"></div>
+          <div class="form-group"><label id="accountUpdateValueLabel" for="accountUpdateValue">Amount (₹)</label><input type="number" id="accountUpdateValue" min="0" step="0.01" inputmode="decimal"></div>
+        </div>
+        <div class="investment-edit-actions"><button type="button" class="btn-secondary" data-close-account-update>Cancel</button><button type="button" class="btn-primary" id="saveAccountUpdate">Save</button></div>
+      </section>
+    </div>
+
+    <div id="retirementContributionHistoryModal" class="investment-edit-modal" hidden>
+      <div class="investment-edit-backdrop" data-close-retirement-history></div>
+      <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="retirementContributionHistoryTitle">
+        <div class="panel-header"><h2 id="retirementContributionHistoryTitle">Contribution History</h2><button type="button" class="btn-secondary" data-close-retirement-history>Close</button></div>
+        <div class="history-filter-controls" style="margin-bottom:14px">
+          <label class="history-month-control" id="retirementHistoryTypeWrap">History
+            <select id="retirementHistoryType" aria-label="Choose contribution or interest history">
+              <option value="contributions">Monthly Contributions</option>
+              <option value="interest">Interest History</option>
+              <option value="eps" data-pf-only>EPS Contributions</option>
+            </select>
+          </label>
+          <label class="history-month-control">Financial year
+            <select id="retirementContributionHistoryFinancialYear" aria-label="Filter contribution history by financial year"></select>
+          </label>
+        </div>
+        <p class="text-muted" id="retirementContributionHistorySummary"></p>
+        <div class="table-wrapper"><table><thead><tr><th id="retirementHistoryPeriodHeading">Contribution Date</th><th class="text-right" id="retirementContributionAmountHeading">Contribution</th><th id="retirementHistoryCreditDateHeading" hidden>Credited Date</th><th>Actions</th></tr></thead><tbody id="retirementContributionHistoryBody"></tbody></table></div>
+      </section>
+    </div>
+
+    <div id="loanDetailsModal" class="investment-edit-modal" hidden style="z-index:1100;background:rgba(15,23,42,.55)" role="dialog" aria-modal="true" aria-labelledby="loanDetailsTitle"><div class="investment-edit-dialog"><div style="display:flex;justify-content:space-between;gap:12px"><h3 id="loanDetailsTitle">Loan details</h3><button class="btn-small" aria-label="Close loan details" onclick="closeLoanDetails()">✕</button></div><div id="loanDetailsContent"></div></div></div>
+    <div id="debtEmiHistoryModal" class="investment-edit-modal" hidden>
+      <div class="investment-edit-backdrop" data-close-debt-emi-history></div>
+      <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="debtEmiHistoryTitle">
+        <div class="panel-header"><h2 id="debtEmiHistoryTitle">Loan Payment History</h2><button type="button" class="btn-secondary" data-close-debt-emi-history>Close</button></div>
+        <p class="text-muted" id="debtEmiHistorySummary"></p>
+        <div class="investment-edit-actions" style="justify-content:flex-start;margin:0 0 12px">
+          <button type="button" class="btn-secondary" id="debtEmiHistoryPdf">Save as PDF</button>
+          <button type="button" class="btn-secondary" id="debtEmiHistoryCsv">Save for Excel (CSV)</button>
+          <button type="button" class="btn-secondary" id="debtEmiHistoryPrint">Print</button>
+        </div>
+        <div class="table-wrapper"><table><thead id="debtEmiHistoryHead"><tr><th>Payment date</th><th>Payment type</th><th class="text-right">Amount</th><th class="text-right">Principal</th><th class="text-right">Interest</th><th>Notes</th></tr></thead><tbody id="debtEmiHistoryBody"></tbody></table></div>
+      </section>
+    </div>
+
+    <div id="investmentContributionModal" class="investment-edit-modal" hidden>
+      <div class="investment-edit-backdrop" data-close-investment-contribution></div>
+      <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="investmentContributionTitle">
+        <div class="panel-header"><h2 id="investmentContributionTitle">Investment Contributions</h2><button type="button" class="btn-secondary" data-close-investment-contribution>Close</button></div>
+        <p class="text-muted" id="investmentContributionSummary"></p>
+        <div id="investmentContributionEntryForm" hidden>
+          <div class="form-grid">
+            <div class="form-group"><label for="investmentContributionDate">Contribution date</label><input type="date" id="investmentContributionDate"></div>
+            <div class="form-group"><label for="investmentContributionAmount">Contribution amount (₹)</label><input type="number" id="investmentContributionAmount" min="0.01" step="0.01"></div>
+          </div>
+          <div class="investment-edit-actions"><button type="button" class="btn-secondary" data-close-investment-contribution>Cancel</button><button type="button" class="btn-primary" id="saveInvestmentContribution">Add Contribution</button></div>
+        </div>
+        <div id="investmentContributionHistoryPanel">
+          <div class="panel-header investment-contribution-history-heading"><h3>Contribution history</h3><label class="investment-contribution-filter-label" for="investmentContributionFilter">Show <select id="investmentContributionFilter"><option value="all">Both automatic and manual</option><option value="automatic">Automatic only</option><option value="manual">Manual only</option></select></label></div>
+          <div class="table-wrapper"><table><thead><tr><th>Date</th><th class="text-right">Amount</th><th>Type</th><th>Actions</th></tr></thead><tbody id="investmentContributionBody"></tbody></table></div>
+        </div>
+      </section>
+    </div>
+
+
+    <!-- GROWTH PROJECTION TAB -->
+    <div id="growth-projection" class="tab-content">
+      <header class="growth-page-intro">
+        <div class="growth-page-intro-copy"><span class="growth-page-eyebrow">Plan ahead</span><h1>Growth Projection</h1><p>Compare possible portfolio paths using today’s investment values, contribution choices and return assumptions.</p></div>
+        <div class="growth-page-live-badge">Projection starts today</div>
+      </header>
+      <div class="panel growth-assumptions-panel">
+        <div class="panel-header"><h2>Current Values and Assumptions</h2></div>
+        <p class="text-muted">Select an investment tile to adjust its assumptions. Stress, base and optimistic returns stay visible on each tile.</p>
+        <div class="growth-assumption-grid" id="growthProjectionAssumptionTiles"></div>
+      </div>
+      <div class="panel" id="growthProjectionControls">
+        <div class="panel-header"><h2>Projection Settings</h2></div>
+        <div class="form-grid">
+          <div class="form-group"><label for="growthProjectionYears">Investment horizon</label><div class="growth-horizon-control"><input id="growthProjectionYears" type="range" min="1" max="10" step="1" value="5" aria-label="Investment horizon in years"><output id="growthProjectionYearsValue" for="growthProjectionYears">5 years</output></div><div class="growth-horizon-scale"><span>1 year</span><span>10 years</span></div><div class="pms-optimistic-control" id="pmsOptimisticControl" hidden><label for="pmsOptimisticReturn">Stallion PMS optimistic return</label><div class="growth-horizon-control"><input id="pmsOptimisticReturn" type="range" min="8" max="24" step="0.05" aria-label="Stallion PMS optimistic return"><span class="pms-optimistic-value-box"><input id="pmsOptimisticReturnValue" type="number" min="-100" max="100" step="0.05" value="15" inputmode="decimal" aria-label="Stallion PMS optimistic return percentage"><span aria-hidden="true">%</span></span></div><div class="growth-horizon-scale"><span id="pmsOptimisticMin">8%</span><span id="pmsOptimisticMax">24%</span></div><p class="pms-optimistic-help">Slider: 8%–24%. Enter another custom return in the value box.</p></div></div>
+          <div class="form-group"><label>Monthly contributions</label><label class="growth-contribution-toggle"><span>Include monthly contributions</span><span class="growth-switch"><input id="growthIncludeMonthlyContributions" type="checkbox" checked aria-label="Include monthly contributions"><span class="growth-switch-track"></span></span></label><label class="growth-contribution-toggle growth-gratuity-toggle" id="growthGratuityBalanceWrap" hidden><span>Gratuity balance</span><span class="growth-switch"><input id="growthIncludeGratuityBalance" type="checkbox" checked aria-label="Include gratuity balance and growth"><span class="growth-switch-track"></span></span></label></div>
+        </div>
+        <div class="growth-contribution-exclusions" id="growthContributionExclusionsWrap" hidden>
+          <label>Exclude particular monthly contributions</label>
+          <div class="growth-exclusion-list" id="growthContributionExclusions"></div>
+        </div>
+      </div>
+      <div class="dashboard" id="growthProjectionSummary"></div>
+      <div class="panel growth-projection-chart-panel">
+        <div class="panel-header"><h2>Projected Portfolio Growth</h2></div>
+        <div class="growth-projection-chart-wrap" id="growthProjectionChartWrap"><canvas id="growthProjectionChart" style="max-height:340px"></canvas><div class="growth-projection-cursor-tooltip" id="growthProjectionCursorTooltip" role="status" aria-live="polite"></div></div>
+        <div class="chart-takeaway growth-projection-takeaway" id="growthProjectionTakeaway" aria-live="polite"></div>
+      </div>
+      <div class="panel growth-breakdown-panel">
+        <div class="panel-header"><h2>Financial Year Breakdown</h2></div>
+        <div class="table-wrapper"><table id="growthProjectionResultsTable"><thead><tr><th>Financial year</th><th class="text-right">Opening value</th><th class="text-right">Contributions</th><th class="text-right">Additions</th><th class="text-right">Withdrawals</th><th class="text-right">Stress growth</th><th class="text-right">Base growth</th><th class="text-right">Optimistic growth</th><th class="text-right">Stress closing value</th><th class="text-right">Base closing value</th><th class="text-right">Optimistic closing value</th></tr></thead><tbody id="growthProjectionResultsBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS TAB -->
+    <div id="analytics" class="tab-content">
+      <header class="analytics-intro">
+        <div class="analytics-intro-copy"><span class="analytics-eyebrow">Financial insights</span><h1>Analytics</h1><p>Explore your portfolio, monthly cash flow, debt progress and recorded activity in one place.</p></div>
+        <div class="analytics-intro-badge">Your financial overview</div>
+      </header>
+      <div class="analytics-grid">
+<div class="panel analytics-card">
+        <div class="panel-header">
+          <h2> Asset Allocation</h2>
+        </div>
+        <canvas id="assetAllocationChart" style="max-height: 300px;"></canvas>
+        <p class="chart-takeaway" id="assetAllocationChartTakeaway" aria-live="polite"></p>
+        <button type="button" class="analytics-view-details" data-analytics-detail-toggle aria-expanded="false" aria-controls="assetAllocationChartDetails"><span data-detail-label>View Details</span></button>
+        <div class="chart-detail table-wrapper" id="assetAllocationChartDetails" hidden></div>
+      </div>
+<div class="panel analytics-card">
+        <div class="panel-header">
+          <h2> Investment Returns</h2>
+        </div>
+        <div class="investment-returns-chart-scroll" id="investmentReturnsChartScroll" role="region" aria-label="Investment returns chart. Swipe horizontally to view all investments." tabindex="0">
+          <div class="investment-returns-chart-inner" id="investmentReturnsChartInner">
+            <canvas id="investmentReturnsChart" style="max-height: 300px;"></canvas>
+          </div>
+        </div>
+        <p class="investment-returns-swipe-hint" aria-hidden="true">Swipe left or right to see all investments&nbsp; →</p>
+        <p class="chart-takeaway" id="investmentReturnsChartTakeaway" aria-live="polite"></p>
+        <button type="button" class="analytics-view-details" data-analytics-detail-toggle aria-expanded="false" aria-controls="investmentReturnsChartDetails"><span data-detail-label>View Details</span></button>
+        <div class="chart-detail table-wrapper" id="investmentReturnsChartDetails" hidden></div>
+      </div>
+<div class="panel analytics-card">
+        <div class="panel-header">
+          <h2> Monthly Income & Cash Outflows</h2>
+        </div>
+        <canvas id="incomeExpenseChart" style="max-height: 300px;"></canvas>
+        <p class="chart-takeaway" id="incomeExpenseChartTakeaway" aria-live="polite"></p>
+        <button type="button" class="analytics-view-details" data-analytics-detail-toggle aria-expanded="false" aria-controls="incomeExpenseChartDetails"><span data-detail-label>View Details</span></button>
+        <div class="chart-detail table-wrapper" id="incomeExpenseChartDetails" hidden></div>
+      </div>
+<div class="panel analytics-card">
+        <div class="panel-header">
+          <h2> Debt Reduction Progress</h2>
+        </div>
+        <canvas id="debtProgressChart" style="max-height: 300px;"></canvas>
+        <p class="chart-takeaway" id="debtProgressChartTakeaway" aria-live="polite"></p>
+        <button type="button" class="analytics-view-details" data-analytics-detail-toggle aria-expanded="false" aria-controls="debtProgressChartDetails"><span data-detail-label>View Details</span></button>
+        <div class="chart-detail table-wrapper" id="debtProgressChartDetails" hidden></div>
+      </div>
+<div class="panel analytics-card analytics-card-wide">
+        <div class="panel-header">
+          <h2>Stallion PMS Profit Trend</h2>
+          <label class="history-month-control">Financial year
+            <select id="stallionProfitTrendFinancialYear" aria-label="View Stallion PMS profit trend financial year"></select>
+          </label>
+        </div>
+        <canvas id="stallionProfitTrendChart" style="max-height: 300px;"></canvas>
+        <p class="chart-takeaway" id="stallionProfitTrendChartTakeaway" aria-live="polite"></p>
+        <button type="button" class="analytics-view-details" data-analytics-detail-toggle aria-expanded="false" aria-controls="stallionProfitTrendChartDetails"><span data-detail-label>View Details</span></button>
+        <div class="chart-detail table-wrapper" id="stallionProfitTrendChartDetails" hidden></div>
+      </div>
+<div class="panel analytics-card analytics-card-wide">
+        <div class="panel-header">
+          <h2> Monthly Surplus Balance Trend</h2>
+          <label class="history-month-control">Financial year
+            <select id="surplusTrendFinancialYear" aria-label="View monthly surplus balance trend financial year"></select>
+          </label>
+        </div>
+        <canvas id="surplusTrendChart" style="max-height: 300px;"></canvas>
+        <p class="chart-takeaway" id="surplusTrendChartTakeaway" aria-live="polite"></p>
+        <button type="button" class="analytics-view-details" data-analytics-detail-toggle aria-expanded="false" aria-controls="surplusTrendChartDetails"><span data-detail-label>View Details</span></button>
+        <div class="chart-detail table-wrapper" id="surplusTrendChartDetails" hidden></div>
+      </div>
+
+<div class="panel analytics-card">
+        <div class="panel-header">
+          <h2> Retirement Funds Breakdown</h2>
+        </div>
+        <canvas id="retirementFundsChart" style="max-height: 300px;"></canvas>
+        <p class="chart-takeaway" id="retirementFundsChartTakeaway" aria-live="polite"></p>
+        <button type="button" class="analytics-view-details" data-analytics-detail-toggle aria-expanded="false" aria-controls="retirementFundsChartDetails"><span data-detail-label>View Details</span></button>
+        <div class="chart-detail table-wrapper" id="retirementFundsChartDetails" hidden></div>
+      </div>
+<div class="panel analytics-card">
+        <div class="panel-header">
+          <h2> Family Member Contributions</h2>
+        </div>
+        <canvas id="familyContributionChart" style="max-height: 300px;"></canvas>
+        <p class="chart-takeaway" id="familyContributionChartTakeaway" aria-live="polite"></p>
+        <button type="button" class="analytics-view-details" data-analytics-detail-toggle aria-expanded="false" aria-controls="familyContributionChartDetails"><span data-detail-label>View Details</span></button>
+        <div class="chart-detail table-wrapper" id="familyContributionChartDetails" hidden></div>
+      </div>
+<div class="panel analytics-card analytics-summary-card">
+        <div class="panel-header">
+          <h2> Financial Summary</h2>
+        </div>
+        <div class="financial-summary-grid" role="group" aria-label="Financial summary metrics">
+          <div class="financial-summary-metric"><span class="financial-summary-label">Total Monthly Income</span><strong class="financial-summary-value is-income" id="summaryIncome">₹0</strong></div>
+          <div class="financial-summary-metric"><span class="financial-summary-label">Total Monthly Expenses</span><strong class="financial-summary-value is-expense" id="summaryExpenses">₹0</strong></div>
+          <div class="financial-summary-metric"><span class="financial-summary-label">Monthly Surplus Balance</span><strong class="financial-summary-value is-surplus" id="summarySurplus">₹0</strong></div>
+          <div class="financial-summary-metric"><span class="financial-summary-label">Total Assets</span><strong class="financial-summary-value is-assets" id="summaryAssets">₹0</strong></div>
+          <div class="financial-summary-metric"><span class="financial-summary-label">Total Debts</span><strong class="financial-summary-value is-debt" id="summaryDebts">₹0</strong></div>
+          <div class="financial-summary-metric"><span class="financial-summary-label">Net Worth</span><strong class="financial-summary-value is-networth" id="summaryNetWorth">₹0</strong></div>
+          <div class="financial-summary-metric"><span class="financial-summary-label">Total Investment Returns</span><strong class="financial-summary-value is-returns" id="summaryReturns">₹0</strong></div>
+          <div class="financial-summary-metric"><span class="financial-summary-label">Total Retirement Funds</span><strong class="financial-summary-value is-retirement" id="summaryRetirement">₹0</strong></div>
+        </div>
+      </div>
+      <div class="panel analytics-card analytics-average-card" aria-labelledby="analyticsAverageHeading">
+        <div class="panel-header">
+          <h2 id="analyticsAverageHeading">Average Monthly Snapshot</h2>
+          <span class="analytics-average-period" id="analyticsAveragePeriod">Current financial year</span>
+        </div>
+        <div class="analytics-average-grid">
+          <div class="analytics-average-metric">
+            <span class="analytics-average-label">Income average</span>
+            <strong class="analytics-average-value is-income" id="analyticsAverageIncome">—</strong>
+            <span class="analytics-average-count" id="analyticsAverageIncomeCount">No income entries recorded</span>
+          </div>
+          <div class="analytics-average-metric">
+            <span class="analytics-average-label">Expense average</span>
+            <strong class="analytics-average-value" id="analyticsAverageExpenses">—</strong>
+            <span class="analytics-average-count" id="analyticsAverageExpenseCount">No expense entries recorded</span>
+          </div>
+          <div class="analytics-average-metric">
+            <span class="analytics-average-label">Investment contributions</span>
+            <strong class="analytics-average-value" id="analyticsAverageContributions">—</strong>
+            <span class="analytics-average-count" id="analyticsAverageContributionCount">No contribution entries recorded</span>
+          </div>
+          <div class="analytics-average-metric">
+            <span class="analytics-average-label">Expense / income</span>
+            <strong class="analytics-average-value is-positive" id="analyticsAverageExpenseRatio">—</strong>
+            <span class="analytics-average-count">Based on recorded FY totals</span>
+          </div>
+        </div>
+        <div class="analytics-average-ratio" role="img" id="analyticsAverageRatioGraphic" aria-label="Reported expenses as a share of reported income">
+          <div class="analytics-average-ratio-line"><span>Reported expenses as a share of income</span><strong id="analyticsAverageRatioLabel">—</strong></div>
+          <div class="analytics-average-ratio-track" aria-hidden="true"><div class="analytics-average-ratio-fill" id="analyticsAverageRatioFill"></div></div>
+        </div>
+        <p class="analytics-average-note" id="analyticsAverageNote">Averages use months with recorded entries. Annual expenses count in full in the month recorded. Investment contributions include recorded PF, PPF, NPS, mutual fund / ETF and PMS contributions.</p>
+      </div>
+      </div>
+    </div>
+
+    <div id="reports" class="tab-content">
+      <header class="analytics-intro"><div class="analytics-intro-copy"><span class="analytics-eyebrow">Recorded activity</span><h1>Reports</h1><p>Choose a financial year or date range, filter recorded entries, and export the results.</p></div><div class="analytics-intro-badge">Dates · Filters · Exports</div></header>
+      <div class="panel analytics-report-card">
+        <div class="report-builder-head">
+          <div class="report-builder-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M10 12h5M10 16h5"/></svg></div>
+          <div class="report-builder-copy"><span class="report-builder-eyebrow">Report builder</span><h2>Date Range Reports</h2><p>Set the reporting period and data type, then generate a filterable report.</p></div>
+          <span class="report-builder-badge">CSV export available</span>
+        </div>
+        <div class="report-builder-content">
+          <div class="report-quick-range" role="group" aria-label="Quick date range">
+            <span class="report-quick-range-label">Quick period</span>
+            <button type="button" data-report-preset="this-month" aria-pressed="false">This month</button>
+            <button type="button" data-report-preset="this-fy" aria-pressed="false">This FY</button>
+            <button type="button" data-report-preset="last-fy" aria-pressed="false">Last FY</button>
+            <button type="button" data-report-preset="last-3-months" aria-pressed="false">Last 3 months</button>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label for="reportFinancialYear">Financial year</label><select id="reportFinancialYear"><option value="">Custom date range</option></select></div>
+            <div class="form-group"><label for="reportStartDate">From date</label><input type="date" id="reportStartDate"></div>
+            <div class="form-group"><label for="reportEndDate">To date</label><input type="date" id="reportEndDate"></div>
+            <div class="form-group"><label for="reportType">Report type</label><select id="reportType">
+            <option value="all">All data</option><option value="income">Income</option><option value="expenses">Expenses</option><option value="investmentContributions">Investment contributions</option><option value="stallionProfitHistory">Stallion PMS gain / loss snapshots</option><option value="stallionContributions">PMS SIP contributions</option><option value="npsContributions">NPS contributions</option><option value="ppfContributions">PPF contributions</option><option value="interestCredits">PF / PPF annual interest</option><option value="pfContributions">PF / EPS contributions</option><option value="monthlyBalances">Monthly balances &amp; house expenses</option>
+            </select></div>
+          </div>
+          <div class="panel-controls report-action-bar"><button class="btn-primary" id="generateRangeReport">Generate Report</button><div class="report-export-tools"><span id="rangeReportExportCount" class="report-export-count" aria-live="polite">Generate a report to see matching rows</span><button id="exportRangeReport" disabled>Export Report CSV</button><button id="printRangeReport" disabled>Print / Save PDF</button></div></div>
+          <details class="report-calculation-note"><summary>What this report includes</summary><p>Both dates are included. Income, expenses, contributions, Stallion profit updates and monthly balances use their recorded dates. Current investment, PF, PPF, NPS and debt balances are not included because historical balance snapshots are not stored. Scheduled retirement contributions appear as dated monthly entries once processed. Monthly balances use the first day of the month. Annual expenses are included in full.</p></details>
+          <p id="rangeReportStatus" role="status" aria-live="polite"></p>
+          <div id="rangeReportActiveFilters" class="range-report-active-filters" aria-live="polite" hidden></div>
+          <div id="rangeReportSummary" class="report-summary-grid" aria-live="polite" hidden></div>
+          <div id="rangeReportResults" class="range-report-results"><div class="range-report-empty"><div><strong>Your report will appear here</strong>Select a financial year or date range, then choose Generate Report.</div></div></div>
+          <div id="rangeReportColumnFilterPopover" class="range-report-filter-popover" role="dialog" aria-label="Filter report column" hidden></div>
+        </div>
+      </div>
+      <div id="rangeReportPrintView" class="report-print-view" aria-hidden="true"></div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="settings" class="tab-content">
+      <header class="settings-intro">
+        <div><span class="settings-eyebrow">PERSONALIZE YOUR TRACKER</span><h1>Settings</h1><p>Adjust the look, manage the values in your forms, and protect your backup.</p></div>
+        <span class="settings-local-note">Private cloud account</span>
+      </header>
+      <section class="cloud-account-panel"><div><strong id="cloudAccountLabel"></strong><p id="cloudSyncStatus" role="status">Connecting…</p></div><div class="cloud-refresh-info"><button id="cloudRefresh" aria-label="Refresh cloud records" title="Refresh cloud records" type="button" class="btn-secondary cloud-refresh-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/></svg></button><small id="cloudLastUpdated" role="status">Last sync: checking…</small></div><button id="cloudSignOut" type="button" class="btn-secondary">Sign out</button></section>
+      <div class="settings-layout">
+      <section class="panel settings-panel" id="familyAccessPanel" style="grid-column:1/-1">
+        <h2>Family Access</h2><p id="familyAccessRole">Checking access…</p><div class="family-tile-grid">
+        <button type="button" class="family-compact-tile" data-family-dialog="familyTrackerDetails" aria-haspopup="dialog" aria-controls="familyTrackerDetails"><strong>Your family tracker</strong><span>Switch tracker or refresh invitations</span><b aria-hidden="true">›</b></button><dialog id="familyTrackerDetails" class="family-detail-dialog" aria-labelledby="familyTrackerDetailsTitle"><header><h3 id="familyTrackerDetailsTitle">Your family tracker</h3><button type="button" data-close-family-dialog aria-label="Close your family tracker">×</button></header><p>Choose your own tracker or one shared with you.</p><div class="family-access-row"><label for="familyTrackerSelect">Tracker</label><select id="familyTrackerSelect" aria-label="Choose family tracker"></select><button type="button" class="btn-secondary" id="familyAccessRefresh">Refresh invitations</button></div></dialog>
+        <button type="button" class="family-compact-tile" data-family-dialog="familyNameDetails" aria-haspopup="dialog" aria-controls="familyNameDetails"><strong>Family member names</strong><span>Names used in your records</span><b aria-hidden="true">›</b></button><dialog id="familyNameDetails" class="family-detail-dialog" aria-labelledby="familyNameDetailsTitle"><header><h3 id="familyNameDetailsTitle">Family member names</h3><button type="button" data-close-family-dialog aria-label="Close family member names">×</button></header><div id="familyNamesSection"><p>Add names used in income, investments and loan records. Adding a name does not grant tracker access.</p><form id="familyMemberNameForm" class="family-name-form"><div class="family-field"><label for="familyMemberNameInput">Family member name</label><input id="familyMemberNameInput" type="text" required maxlength="60" autocomplete="off" placeholder="Enter a name"></div><button type="submit" class="btn-primary" id="addFamilyMemberNameBtn">+ Add name</button></form><p id="familyMemberNameStatus" role="status" aria-live="polite"></p><div id="familyMemberNamesList" class="family-name-list" aria-label="Available family member names"></div></div></dialog>
+        <div id="familyOwnerControls" hidden>
+          <button type="button" class="family-compact-tile" data-family-dialog="familyInviteDetails" data-family-owner="true" aria-haspopup="dialog" aria-controls="familyInviteDetails"><strong>Invite a member</strong><span>Give viewer or editor access</span><b aria-hidden="true">›</b></button><dialog id="familyInviteDetails" class="family-detail-dialog" aria-labelledby="familyInviteDetailsTitle"><header><h3 id="familyInviteDetailsTitle">Invite a family member</h3><button type="button" data-close-family-dialog aria-label="Close invite a family member">×</button></header><p>Use their Google sign-in email. They can accept the invitation when they open this app.</p>
+          <form id="familyInviteForm" class="family-access-row"><div class="family-field"><label for="familyInviteEmail">Google email</label><input type="email" id="familyInviteEmail" required maxlength="254" autocomplete="off" placeholder="member@gmail.com"></div><div class="family-field"><label for="familyInviteRole">Access</label><select id="familyInviteRole"><option value="viewer">Viewer</option><option value="editor">Editor</option></select></div><button type="submit" id="familyInviteSubmit" class="btn-primary">Create invitation</button></form></dialog>
+          <button type="button" class="family-compact-tile" data-family-dialog="familyMemberDetails" data-family-owner="true" aria-haspopup="dialog" aria-controls="familyMemberDetails"><strong>Manage access</strong><span>Review members and permissions</span><b aria-hidden="true">›</b></button><dialog id="familyMemberDetails" class="family-detail-dialog" aria-labelledby="familyMemberDetailsTitle"><header><h3 id="familyMemberDetailsTitle">Family members with access</h3><button type="button" data-close-family-dialog aria-label="Close family members with access">×</button></header><p>Review invitations, change access, or remove a member.</p><div id="familyMemberAccessList"></div></dialog>
+        </div>
+        </div><p id="familyAccessStatus" role="status"></p>
+        <small>Viewer: view and export. Editor: add, edit and delete records. Owner: manage access, import backups and clear all data. Previously downloaded copies cannot be recalled.</small>
+      </section>
+
+        <section class="panel settings-panel settings-appearance-panel" aria-labelledby="settingsAppearanceTitle">
+          <div class="settings-panel-heading"><div><span class="settings-step">01</span><div><h2 id="settingsAppearanceTitle">Appearance</h2><p>Choose a palette. Switch Light or Dark mode from the top bar.</p></div></div></div>
+          <div class="appearance-panel"><div class="theme-options" id="themeOptions" role="group" aria-label="Color themes"></div><p class="theme-description" id="themeDescription" aria-live="polite">Select a color palette to preview it across the tracker.</p></div>
+        </section>
+        <section class="panel custom-values-panel settings-panel" id="customValuesPanel" aria-labelledby="customValuesTitle" hidden>
+          <div class="settings-panel-heading"><div><span class="settings-step">02</span><div><h2 id="customValuesTitle">Custom values</h2><p>Add options for income, expenses, debts, investments, or family members.</p></div></div></div>
+          <div class="custom-value-form" id="customValueForm">
+            <div class="form-group" id="customValueCategoryGroup"><label for="customValueType">Value category</label><select id="customValueType"><option value="incomeSources">Income source</option><option value="expenseCategories">Expense category</option><option value="debtTypes">Debt type</option><option value="investmentTypes">Investment type</option><option value="familyMembers">Family member</option></select></div>
+            <div class="custom-investment-profile" id="customInvestmentProfileFields" hidden>
+              <div class="form-group" id="customInvestmentGrowthGroup"><label for="customInvestmentGrowthType">Growth behaviour</label><select id="customInvestmentGrowthType"><option value="">Choose growth behaviour</option><option value="market">Market Linked</option><option value="fixed">Fixed Return</option><option value="no-return">No Return</option></select></div>
+              <p class="custom-investment-profile-note" id="customInvestmentProfileNote">Choose an investment behaviour.</p>
+            </div>
+            <div class="form-group" id="customValueNameGroup"><label for="customValueInput">New value</label><input id="customValueInput" type="text" maxlength="60" placeholder="Enter a name"></div>
+            <button type="button" class="btn-primary" id="addCustomValueBtn">+ Add</button>
+          </div>
+          <p class="custom-value-help">Values in saved records cannot be deleted. Unused options can be removed without changing existing records.</p>
+          <p class="custom-value-status" id="customValueStatus" role="status" aria-live="polite"></p>
+          <details open><summary id="customValuesSummary">Available values</summary><div class="custom-values-list" id="customValuesList"></div></details>
+        </section>
+        <section class="panel settings-panel settings-data-panel" aria-labelledby="settingsDataTitle">
+          <div class="settings-panel-heading"><div><span class="settings-step">03</span><div><h2 id="settingsDataTitle">Data &amp; backup</h2><p>Export a backup before importing another file or clearing records.</p></div></div></div>
+          <div class="settings-data-actions">
+            <div class="settings-data-action"><span class="settings-data-icon" aria-hidden="true">↓</span><div><h3>Export backup</h3><p>Download all tracker records as a JSON file.</p></div><button type="button" class="btn-primary" id="exportBtn">Export JSON</button></div>
+            <div class="settings-data-action"><span class="settings-data-icon" aria-hidden="true">↑</span><div><h3>Import backup</h3><p>Load a validated JSON backup. This replaces current records.</p></div><button type="button" class="btn-secondary" id="openImportBtn">Choose file</button><input type="file" id="importBtn" accept=".json,application/json" style="display:none;"></div>
+          </div>
+          <p class="settings-backup-note">A recovery snapshot is saved before an import and stays available after reopening. Keep a separate exported backup too.</p>
+          <div class="backup-care"><div class="backup-care-heading"><h3>Backup care</h3><label for="backupReminderDays">Remind me <select id="backupReminderDays" onchange="setBackupReminder()"><option value="7">Every 7 days</option><option value="30">Every 30 days</option><option value="0">Off</option></select></label></div><p id="backupCareStatus" role="status"></p><small>Reminders appear here when you open the tracker. Confirm that the download finishes in your browser.</small><details><summary>Recovery snapshot</summary><p id="recoveryStatus"></p><button type="button" class="btn-secondary" id="restoreRecoveryBtn" onclick="restoreRecovery()" disabled>Restore pre-import records</button></details><details><summary>Data health</summary><p>Check references, balances and possible duplicate entries. Findings do not change your data.</p><button type="button" class="btn-secondary" onclick="runDataHealth()">Run data-health check</button><div id="dataHealthResults" aria-live="polite"></div></details></div><details class="settings-danger-zone" id="clearTrackerSection"><summary>Delete Dashboard</summary><div style="display:block"><p>This clears all dashboard and tracker data owned by <strong id="clearTrackerOwner"></strong>, including its local and cloud records, custom values, recovery snapshot and local change log. Your app login, Google account and family-access permissions remain. Other people’s trackers and downloaded backups are unchanged.</p><p>Download a backup before continuing. This action requires an internet connection and all changes must be synced.</p><button type="button" class="btn-secondary" id="clearBackupBtn">Download backup</button><div class="form-group" style="margin-top:16px"><label for="clearTrackerPhrase">Type <strong>DELETE DASHBOARD</strong> to confirm</label><input id="clearTrackerPhrase" type="text" autocomplete="off" spellcheck="false" style="width:100%;box-sizing:border-box"></div><p id="clearTrackerStatus" role="status"></p><button type="button" class="btn-danger" id="clearBtn" disabled>Delete Dashboard</button></div></details>
+        </section>
+        <section class="panel settings-panel" aria-labelledby="pwaTitle">
+          <h2 id="pwaTitle">App &amp; updates</h2>
+          <div class="pwa-install-section" style="margin:16px 0;padding-bottom:16px;border-bottom:1px solid var(--border)">
+            <h3>Install app</h3>
+            <p>Add Personal Finance Tracker to your Home Screen or desktop for easy access.</p>
+            <button type="button" class="btn-secondary" id="pwaInstall" aria-describedby="pwaInstallHelp">Install app</button>
+            <p id="pwaInstallHelp" role="status" aria-live="polite" style="margin-top:10px"></p>
+          </div>
+          <p id="pwaStatus" role="status" aria-live="polite">Preparing the app for offline use…</p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button type="button" class="btn-secondary" id="pwaCheckUpdate">Check for updates</button>
+            <button type="button" class="btn-primary" id="pwaApplyUpdate" hidden>Apply update</button>
+          </div>
+        </section>
+        <section class="panel settings-panel record-tools-panel" style="grid-column:1/-1"><h2>Records &amp; statement checks</h2><p id="storageHealth" role="status">Opening saved records…</p>
+<div class="custom-value-form record-account-row"><div class="form-group"><label for="recordAccount">Account</label><select id="recordAccount" onchange="populateStatementPayments()"></select></div><button class="btn-secondary" onclick="const [kind,id]=document.getElementById('recordAccount').value.split(':');archiveAccount(kind,id)">Archive account</button></div>
+<details><summary>Compare with a statement</summary><p>Compare today's tracker balance with a current statement. This records a check; it does not change balances. Correct an account or EMI entry in its original page, then check again.</p><div class="custom-value-form"><div class="form-group"><label for="statementBalance">Statement balance ₹</label><input id="statementBalance" type="number" min="0" step="0.01"></div><div class="form-group"><label for="statementNotes">Statement reference / notes</label><input id="statementNotes" maxlength="240"></div><button class="btn-primary" onclick="recordReconciliation()">Check balance</button></div><div id="reconciliationList"></div><div id="statementSplitPanel" hidden><h3>Correct an EMI split from your statement</h3><p>The payment amount stays unchanged. Enter the principal component; the balance is interest.</p><div class="custom-value-form"><div class="form-group"><label for="statementPayment">Recorded EMI</label><select id="statementPayment"></select></div><div class="form-group"><label for="statementPrincipal">Principal paid ₹</label><input id="statementPrincipal" type="number" min="0" step="0.01"></div><button class="btn-secondary" onclick="correctStatementPayment()">Update split</button></div></div></details>
+<details><summary>Archived accounts</summary><p>Archived accounts are excluded from current totals and projections. Restore before editing history. Restoring resumes contributions from next month; archived months are not backfilled.</p><div id="archiveList"></div><div id="archivedRecordDetails"></div></details>
+<details ontoggle="if(this.open)renderChangeLog()"><summary>Change log</summary><p>Read-only record of saved changes on this device. Up to 50 changes are previewed per save; JSON backups contain the full log. Clearing all data also clears this log. Compatibility storage does not provide a change log.</p><div id="changeLogList"></div></details></section>
+      </div>
+    </div>
+
+    <footer>
+      <p> Changes save on this device and sync to your signed-in cloud tracker. Export backups regularly. Last updated: <span id="lastUpdate">Never</span></p>
+    </footer>
+  </div>
+
+  <div id="entryFormParking" hidden></div>
+  <div id="stallionHistoryModal" class="investment-edit-modal" hidden>
+    <div class="investment-edit-backdrop" data-close-stallion-history></div>
+    <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="stallionHistoryTitle">
+      <div class="modal-heading"><h2 id="stallionHistoryTitle">Stallion PMS History</h2><button type="button" class="modal-close-button" data-close-stallion-history aria-label="Close Stallion PMS history"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+      <div class="modal-history-filters"><div class="form-group"><label for="stallionHistoryType">History</label><select id="stallionHistoryType"><option value="">Choose history…</option><option value="contributions">Contribution history</option><option value="profit">Gain / loss history</option></select></div><div class="form-group" id="stallionHistoryYearWrap" hidden><label for="stallionHistoryFinancialYear">Financial year</label><select id="stallionHistoryFinancialYear"></select></div></div>
+      <p id="stallionHistorySummary" class="text-muted"></p><div id="stallionHistoryResults" hidden><div class="table-wrapper"><table><thead><tr><th>Date</th><th>Portfolio</th><th id="stallionHistoryAmountHeading" class="text-right">Contribution</th><th id="stallionHistoryKindHeading">Entry type</th><th>Actions</th></tr></thead><tbody id="stallionModalHistoryBody"></tbody></table></div></div>
+    </section>
+  </div>
+  <div id="entryFormModal" class="investment-edit-modal" hidden>
+    <div class="investment-edit-backdrop" data-close-entry-modal></div>
+    <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="entryFormModalTitle"><div class="modal-heading"><h2 id="entryFormModalTitle">Add record</h2><button type="button" class="modal-close-button" data-close-entry-modal aria-label="Close entry form"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div id="entryFormModalContent"></div></section>
+  </div>
+
+<dialog id="recurringDialog" aria-labelledby="recurringTitle"><header class="recurring-heading"><h2 id="recurringTitle">Recurring items</h2><button type="button" id="closeRecurringBtn" aria-label="Close recurring items">×</button></header><p>Monthly income, expenses and linked EMIs, recorded automatically while the app is open.</p><button type="button" id="addRecurringBtn">+ Add recurring</button><div id="recurringList"></div><h3>Review due &amp; missed months</h3><details class="recurring-help"><summary>How monthly entries work</summary><p>Select months to add, adjust amounts, or skip them. Existing payments are matched without adding another entry. Edit an income or expense entry to adjust that month only. These records do not make bank payments.</p></details><div id="recurringReview"></div><div class="recurring-actions"><button type="button" id="postRecurringBtn">Add / match selected</button><button type="button" id="skipRecurringBtn">Skip selected</button></div><p id="recurringStatus" role="status" aria-live="polite"></p></dialog>
+<dialog id="recordEditorDialog" aria-labelledby="recordEditorTitle"><form id="recordEditorForm"><header><h2 id="recordEditorTitle">Edit record</h2></header><div id="recordEditorFields"></div><p id="recordEditorError" role="alert"></p><div class="record-editor-actions"><button type="button" id="cancelRecordEditor" class="btn-secondary">Cancel</button><button type="submit" class="btn-primary">Save changes</button></div></form></dialog>
+  <div id="investmentCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="investmentCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="investmentCategoryDialogTitle"></h2><p id="investmentCategoryDialogSubtitle"></p></div><button type="button" class="investment-category-dialog-close" data-close-investment-category-dialog aria-label="Close investment details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Portfolio summary</h3><div id="investmentCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Holdings and actions</h3><div id="investmentCategoryDialogTable"></div></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-investment-category-dialog>Done</button></footer></div></div>
+    <div id="retirementCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="retirementCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="retirementCategoryDialogTitle"></h2><p id="retirementCategoryDialogSubtitle"></p></div><div id="retirementCategoryDialogActions" class="retirement-account-actions"></div><button type="button" class="investment-category-dialog-close" data-close-retirement-category-dialog aria-label="Close retirement account details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Account summary</h3><div id="retirementCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Accounts and actions</h3><div id="retirementCategoryDialogTable"></div><p id="retirementCategoryDialogNote" class="retirement-account-help"></p></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-retirement-category-dialog>Done</button></footer></div></div>
+
+  <script src="./runtime/app-core.js?v=80"></script>
+
+
+</body>
+</html>

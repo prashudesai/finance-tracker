@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const fs=require('node:fs');
+const fs=require('./app-source.cjs').fs;
 const vm=require('node:vm');
 const ledger=require('../dist/loan-ledger.js');
 const html=fs.readFileSync(require.resolve('../dist/index.html'),'utf8');

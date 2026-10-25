@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),path=require('path');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('assert/strict'),path=require('path');
 const source=fs.readFileSync(path.join(__dirname,'../dist/family-access.js'),'utf8').replace(/^import .*\n/,'').replace(/export /g,'');
 const c={};vm.createContext(c);vm.runInContext(source,c);
 assert.equal(c.normalizeFamilyEmail(' WIFE@Example.com '),'wife@example.com');

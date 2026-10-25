@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),path=require('path'),{performance}=require('perf_hooks');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('node:assert/strict'),path=require('path'),{performance}=require('perf_hooks');
 const before=fs.readFileSync(process.env.BASELINE_HTML||path.join(__dirname,'fixtures/projection-before.js'),'utf8');
 const after=fs.readFileSync(path.join(__dirname,'../dist/index.html'),'utf8');
 function fn(s,name){const start=s.indexOf(`    function ${name}(`);assert(start>=0);const lineEnd=s.indexOf('\n',start);return s.slice(start,lineEnd).trimEnd().endsWith('}')?s.slice(start,lineEnd):s.slice(start,s.indexOf('\n    }',start)+6);}

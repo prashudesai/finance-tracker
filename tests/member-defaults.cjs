@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('assert');
 const html=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
 const source=html.slice(html.indexOf('    function preferredEntryMember('),html.indexOf('    // Native form.reset()'));
 let names=['Prashanth'],fields={};

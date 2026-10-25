@@ -9,3 +9,7 @@ The .10 unit suite includes original financial regression tests, 4,800 month com
 Device-only review metadata is explicitly labelled and does not alter financial balances. It is not synchronised or included in financial JSON backups. Legacy automatic contribution behaviour remains unchanged. A confirmed statement check is distinct from posting a contribution.
 
 This is an incremental modularisation. The legacy main HTML and theme overrides remain; a complete framework rewrite and removal of all legacy renderers are not claimed. Native iPhone keyboard and screen-reader testing remains a manual-device validation item. See WORKBENCH_RELEASE.md for scope and limits.
+
+- 2026.10.25.11: extracted HTML/CSS/runtime assets, feature-organised source fragments and deterministic build gate. Classic runtime and theme cascade preserved; no framework rewrite or visual redesign claimed.
+
+Installed-PWA-style benchmarks for .11 use a real service worker and offline cached reloads, two run orders and 18 samples per version. Rendering changes are validated by dirty-page/coalescing tests, the full browser suite and offline update tests. Physical-iPhone timing remains unmeasured.

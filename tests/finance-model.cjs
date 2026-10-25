@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),path=require('path');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('node:assert/strict'),path=require('path');
 const c={};vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(__dirname,'../dist/finance-model.js'),'utf8').replaceAll('export function','function').replaceAll('export const','const')+';this.api={cashflowIndex,monthClose,realValue,valuationStatus,nextMonth};',c);const model=c.api;
 const html=fs.readFileSync(path.join(__dirname,'../dist/index.html'),'utf8');function extract(name){const a=html.indexOf('    function '+name+'(');return html.slice(a,html.indexOf('\n    }',a)+6);}
 const old={inMonth:(d,m)=>d?.slice(0,7)===m,retirementOutflow:()=>0};vm.createContext(old);vm.runInContext(['monthTotals','recalculateHouseExpenses'].map(extract).join('\n'),old);

@@ -1,10 +1,10 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.25.10",
+  "version": "2026.10.25.11",
   "released": "2026-10-25",
   "releaseNotes": [
-  "Added shared household cash-flow calculations with reconciliation checks and guided monthly review.",
-  "Added device-only valuation dates, automatic-entry review and an inflation-adjusted portfolio goal planner.",
-  "Added pending recurring commitment review, sync details, remembered filters and mobile accessibility improvements."
+  "Split the large HTML into a small shell and cached scripts/styles with feature-organised source.",
+  "Reduced scheduled save refreshes to the visible page and moved hidden-page rendering to navigation.",
+  "Added installed-PWA-style offline benchmarks, lazy-render checks and deterministic build validation."
 ],
   "sections": [
     [

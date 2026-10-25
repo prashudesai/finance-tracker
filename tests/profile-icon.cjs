@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),A=require('assert/strict');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),A=require('assert/strict');
 const source=fs.readFileSync(__dirname+'/../dist/account-photo.js','utf8');
 const fn=source.slice(source.indexOf('  function render(){'),source.indexOf("  window.addEventListener('pft-profile-view-change'"));
 const classes=new Set(['has-account-photo']);const button={dataset:{familyProfileView:'combined',householdIcon:'GROUP'},innerHTML:'PHOTO',classList:{remove:x=>classes.delete(x),toggle:(x,on)=>on?classes.add(x):classes.delete(x)},replaceChildren(x){this.innerHTML=x}};

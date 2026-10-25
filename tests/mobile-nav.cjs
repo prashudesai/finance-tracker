@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('node:assert/strict');
 const src=fs.readFileSync(require('path').join(__dirname,'../dist/index.html'),'utf8');
 const start=src.indexOf('    function refreshMobileNavPages('),end=src.indexOf("    mobileNavPrevious?.addEventListener",start);
 let width=390,active=0;const tabs=Array.from({length:8},(_,i)=>({hidden:false,classList:{contains:()=>i===active}}));

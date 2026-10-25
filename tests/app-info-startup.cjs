@@ -1,4 +1,4 @@
-const A=require('assert/strict'),fs=require('fs'),vm=require('vm'),{performance}=require('perf_hooks');
+const A=require('assert/strict'),fs=require('./app-source.cjs').fs,vm=require('vm'),{performance}=require('perf_hooks');
 const src=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
 function extract(name){const start=src.indexOf('    function '+name+'(');return src.slice(start,src.indexOf('\n    }',start)+6);}
 const normal=fs.readFileSync(__dirname+'/../dist/app-info.js','utf8'),valid={window:{}};vm.runInNewContext(normal,valid);A(valid.window.PFT_APP_INFO.sections.length>5);

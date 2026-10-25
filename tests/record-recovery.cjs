@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('node:assert/strict');
 const code=fs.readFileSync(require('path').join(__dirname,'../dist/record-recovery.js'),'utf8').replaceAll('export function','function');const c={};vm.createContext(c);vm.runInContext(code+';this.rows=recoveryRows;this.select=selectRecovery;',c);
 const local={income:[{id:'a',amount:10},{id:'b',amount:20}],settings:{rate:8}},cloud={income:[{id:'a',amount:15},{id:'c',amount:30}],settings:{rate:9}};
 const rows=c.rows(local,cloud);assert.equal(rows.length,4);assert.throws(()=>c.select(local,rows,[]),/every/);

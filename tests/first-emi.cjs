@@ -1,4 +1,4 @@
-const A=require('node:assert/strict'),fs=require('fs'),vm=require('vm'),L=require('../dist/loan-ledger.js'),R=require('../dist/recurring.js');let passed=0;
+const A=require('node:assert/strict'),fs=require('./app-source.cjs').fs,vm=require('vm'),L=require('../dist/loan-ledger.js'),R=require('../dist/recurring.js');let passed=0;
 const d=(x={})=>({id:'loan',type:'Personal Loan',principal:1500000,remaining:1500000,rate:10,emi:32131,date:'2026-10-15',emiDueDay:5,firstEmiDate:'2026-12-05',firstEmiExtraInterest:8000,interestPaid:0,principalPaidBeforeTracking:0,interestPaidBeforeTracking:0,...x});
 const pay=(id,date,amount=40131,x={})=>({id,date,amount,loanId:'loan',category:'EMI Payment',isAnnual:false,notes:'Synthetic test',repaymentType:'emi',...x});
 function test(name,fn){fn();passed++;console.log('PASS '+name);}

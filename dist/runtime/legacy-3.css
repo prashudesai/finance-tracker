@@ -1,0 +1,25 @@
+
+    body.advanced-layout #settings .settings-layout{grid-template-columns:minmax(0,1fr);gap:18px;}
+    body.advanced-layout #settings #customValuesPanel{grid-column:1/-1;}
+    #settingsQuickTiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+    #settingsQuickTiles .settings-quick-tile{display:flex;align-items:center;gap:14px;min-height:104px;padding:18px;text-align:left;border:1px solid var(--border);border-radius:14px;background:var(--card-bg);color:var(--text);font:inherit;cursor:pointer;box-shadow:var(--card-shadow);transition:border-color .15s,transform .15s;}
+    #settingsQuickTiles .settings-quick-tile:hover{border-color:var(--primary);transform:translateY(-2px);}
+    #settingsQuickTiles .settings-quick-tile:focus-visible{outline:2px solid var(--primary);outline-offset:3px;}
+    .settings-tile-icon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:12px;background:color-mix(in srgb,var(--primary) 13%,var(--card-bg));color:var(--primary);}
+    .settings-tile-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+    .settings-tile-copy{flex:1;min-width:0;}.settings-tile-copy strong{display:block;font-size:14px;line-height:1.35;}.settings-tile-copy small{display:block;margin-top:5px;color:var(--text-light);font-size:11px;line-height:1.45;font-weight:400;}.settings-tile-arrow{color:var(--text-light);font-size:21px;}
+    #settingsTileDialog{box-sizing:border-box;width:min(820px,calc(100% - 32px));max-width:calc(100% - 32px);max-height:86dvh;padding:0;border:1px solid var(--border);border-radius:18px;background:var(--card-bg);color:var(--text);box-shadow:0 24px 80px #0006;overflow:auto;}
+    #settingsTileDialog::backdrop{background:rgba(2,6,23,.72);backdrop-filter:blur(3px);}
+    #settingsTileDialog .settings-modal-heading{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;border-bottom:1px solid var(--border);background:var(--card-bg);}
+    #settingsTileDialog .settings-modal-heading h2{margin:0;font-size:20px;}
+    #settingsTileClose{display:grid;place-items:center;flex:0 0 36px;width:36px;min-height:36px;padding:0;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:22px;cursor:pointer;}
+    #settingsTileContent{padding:20px 22px;}
+    body.advanced-layout #settings #settingsTileContent>.settings-panel{display:block;min-height:0;padding:0;margin:0;border:0;background:transparent;box-shadow:none;}
+    #settingsTileContent>.settings-panel>h2,#settingsTileContent .settings-panel-heading h2,#settingsTileContent .settings-step,#settingsTileContent #storageHealth{display:none;}
+    #settingsTileContent .settings-panel-heading{margin-bottom:14px;}#settingsTileContent .settings-panel-heading p{font-size:12px;}
+    #settingsTileContent .theme-options{grid-template-columns:repeat(3,minmax(0,1fr));}
+    #settingsTileContent .record-account-row{grid-template-columns:minmax(0,1fr) auto;}
+    body.settings-tile-open{overflow:hidden;}
+    @media(max-width:1050px){#settingsQuickTiles{grid-template-columns:repeat(2,minmax(0,1fr));}}
+    @media(max-width:520px){#settingsQuickTiles{grid-template-columns:minmax(0,1fr);gap:9px;}#settingsQuickTiles .settings-quick-tile{min-height:86px;padding:14px;}#settingsTileDialog{width:calc(100% - 20px);max-width:calc(100% - 20px);max-height:90dvh;border-radius:14px;}#settingsTileContent{padding:16px;}#settingsTileDialog .settings-modal-heading{display:flex;flex-direction:row;align-items:center;justify-content:space-between;text-align:left;}#settingsTileDialog .settings-modal-heading h2{font-size:19px;margin:0;}#settingsTileDialog .settings-modal-heading{padding:14px 16px;}#settingsTileContent .theme-options{grid-template-columns:repeat(2,minmax(0,1fr));}#settingsTileContent .record-account-row{grid-template-columns:1fr;}#settingsTileContent .settings-data-actions{grid-template-columns:1fr;}}
+  

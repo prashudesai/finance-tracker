@@ -1,4 +1,4 @@
-const fs=require('fs'),path=require('path'),vm=require('vm'),A=require('assert/strict'),{spawnSync}=require('child_process');const root=path.resolve(__dirname,'..'),dist=path.join(root,'dist'),html=fs.readFileSync(path.join(dist,'index.html'),'utf8');
+const fs=require('./app-source.cjs').fs,path=require('path'),vm=require('vm'),A=require('assert/strict'),{spawnSync}=require('child_process');const root=path.resolve(__dirname,'..'),dist=path.join(root,'dist'),html=fs.readFileSync(path.join(dist,'index.html'),'utf8');
 for(const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)){if(!match[1].includes('src=')&&!match[1].includes('type="module"'))new vm.Script(match[2]);}
 const visit=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?visit(path.join(dir,e.name)):[path.join(dir,e.name)]);
 for(const file of [...visit(dist),...visit(path.join(root,'functions'))].filter(f=>f.endsWith('.js'))){const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});A.equal(result.status,0,result.stderr);}

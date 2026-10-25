@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const fs=require('node:fs');
+const fs=require('./app-source.cjs').fs;
 const html=fs.readFileSync(require.resolve('../dist/index.html'),'utf8');
 const styles=fs.readFileSync(require.resolve('../dist/app-style.css'),'utf8');
 const match=html.match(/<button id="cloudRefresh"([^>]*)>([\s\S]*?)<\/button>/);

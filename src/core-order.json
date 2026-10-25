@@ -1,0 +1,20 @@
+[
+  "core/00-entry-controls.js",
+  "core/01-state.js",
+  "core/02-theme.js",
+  "core/03-storage.js",
+  "core/04-debts.js",
+  "core/05-income.js",
+  "core/06-expenses.js",
+  "core/07-investments.js",
+  "core/08-nps.js",
+  "core/09-ppf.js",
+  "core/10-pf.js",
+  "core/11-pms.js",
+  "core/12-balances.js",
+  "core/13-dashboard.js",
+  "core/14-analytics.js",
+  "core/15-projections.js",
+  "core/16-backup.js",
+  "core/17-startup.js"
+]

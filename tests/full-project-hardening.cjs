@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),A=require('assert/strict'),{performance}=require('perf_hooks');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),A=require('assert/strict'),{performance}=require('perf_hooks');
 const html=fs.readFileSync(require.resolve('../dist/index.html'),'utf8');
 function fn(s,n){const a=s.indexOf('    function '+n+'('),b=s.indexOf('\n    }',a)+6;A(a>=0);return s.slice(a,b);}
 A(!html.includes('applyRequestedDefaultValueRemovals'));A(!html.includes('REQUESTED_DEFAULT_VALUE_REMOVALS'));

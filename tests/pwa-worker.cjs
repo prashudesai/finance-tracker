@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('node:assert/strict');
 const path=require('path');
 const source=fs.readFileSync(process.env.WORKER_SOURCE||path.join(__dirname,'../dist/service-worker.js'),'utf8');
 const origin='https://tracker.example';

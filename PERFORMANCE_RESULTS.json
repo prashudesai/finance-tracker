@@ -1,0 +1,218 @@
+{
+  "environment": "Headless Chromium, 390x844 mobile viewport, real service worker, offline cached reloads; synthetic records. Not a physical iPhone.",
+  "method": "Two runs in opposite orders; 18 offline cached samples per version. Each reload restores the same synthetic fixture plus matched incremental test saves.",
+  "results": {
+    "offlineOpen": {
+      "before": {
+        "medianMs": 110.4,
+        "minMs": 97.2,
+        "maxMs": 146.9,
+        "samples": [
+          100.9,
+          109.7,
+          143.4,
+          110.3,
+          103.1,
+          110.5,
+          118.1,
+          111.1,
+          97.2,
+          101.1,
+          105.5,
+          109.9,
+          112.6,
+          124,
+          128,
+          109.8,
+          133.5,
+          146.9
+        ]
+      },
+      "after": {
+        "medianMs": 94.45,
+        "minMs": 79.1,
+        "maxMs": 131.3,
+        "samples": [
+          89.1,
+          79.1,
+          98.1,
+          89.8,
+          85.6,
+          86.6,
+          131.3,
+          86.5,
+          99.2,
+          96,
+          92.9,
+          89.7,
+          89,
+          107.4,
+          108.6,
+          97.8,
+          106.7,
+          111.8
+        ]
+      },
+      "medianReductionPercent": 14.4
+    },
+    "pageSwitch": {
+      "before": {
+        "medianMs": 20.75,
+        "minMs": 15.8,
+        "maxMs": 33.4,
+        "samples": [
+          20.4,
+          19.5,
+          15.8,
+          19.6,
+          22.1,
+          17.9,
+          19.7,
+          21.5,
+          21.1,
+          21.1,
+          22.8,
+          20.7,
+          20.3,
+          20.8,
+          15.8,
+          33.4,
+          21.5,
+          28.7
+        ]
+      },
+      "after": {
+        "medianMs": 22.45,
+        "minMs": 18.6,
+        "maxMs": 29.5,
+        "samples": [
+          29.5,
+          24.3,
+          24.1,
+          18.6,
+          22.6,
+          22.3,
+          23.2,
+          22.3,
+          23.2,
+          28.2,
+          23.3,
+          21.3,
+          23.3,
+          20.3,
+          20.4,
+          22.2,
+          18.8,
+          19.6
+        ]
+      },
+      "medianReductionPercent": -8.2
+    },
+    "scheduledRefresh": {
+      "before": {
+        "medianMs": 19.55,
+        "minMs": 17.4,
+        "maxMs": 33.4,
+        "samples": [
+          20.3,
+          19.2,
+          18.9,
+          17.4,
+          17.6,
+          20.5,
+          20.1,
+          17.7,
+          19.1,
+          21.6,
+          22.9,
+          33.4,
+          18.4,
+          18.9,
+          19.6,
+          22.8,
+          19.5,
+          20.5
+        ]
+      },
+      "after": {
+        "medianMs": 6.0,
+        "minMs": 5.1,
+        "maxMs": 8.1,
+        "samples": [
+          5.4,
+          5.4,
+          5.2,
+          5.1,
+          5.1,
+          5.3,
+          6,
+          6.5,
+          6.2,
+          6.1,
+          6.2,
+          6.5,
+          7.3,
+          6,
+          6.4,
+          5.9,
+          5.8,
+          8.1
+        ]
+      },
+      "medianReductionPercent": 69.3
+    },
+    "offlineSaveAndRefresh": {
+      "before": {
+        "medianMs": 137.9,
+        "minMs": 96.5,
+        "maxMs": 256.1,
+        "samples": [
+          127.2,
+          146,
+          96.5,
+          128.3,
+          104.1,
+          124.7,
+          180.3,
+          150.4,
+          131.5,
+          145.5,
+          126.4,
+          113.5,
+          256.1,
+          167.6,
+          108.9,
+          178.4,
+          144.3,
+          158.9
+        ]
+      },
+      "after": {
+        "medianMs": 91.1,
+        "minMs": 58.2,
+        "maxMs": 234.6,
+        "samples": [
+          92.5,
+          72.6,
+          58.2,
+          58.2,
+          90.8,
+          77.5,
+          91.4,
+          116.9,
+          77,
+          84.4,
+          105.5,
+          91.9,
+          90,
+          64.9,
+          131,
+          106.7,
+          108.8,
+          234.6
+        ]
+      },
+      "medianReductionPercent": 33.9
+    }
+  }
+}

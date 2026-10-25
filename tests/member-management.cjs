@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),A=require('assert/strict');
+const fs=require('./app-source.cjs').fs,vm=require('vm'),A=require('assert/strict');
 const html=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
 const source=html.slice(html.indexOf('    function memberRecordCount('),html.indexOf('    let familyNameChangeBusy='));
 const c={};vm.createContext(c);vm.runInContext(source,c);

@@ -1,4 +1,4 @@
-const A=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const A=require('node:assert/strict'),fs=require('./app-source.cjs').fs,vm=require('node:vm');
 const R=require('../dist/recurring.js'),L=require('../dist/loan-ledger.js');
 function setup(state,edit=async()=>null){
  const nodes=new Map(),element=()=>({innerHTML:'',textContent:'',disabled:false,onclick:null,options:[],value:'',addEventListener(){},showModal(){},close(){},querySelectorAll(){return[];}});

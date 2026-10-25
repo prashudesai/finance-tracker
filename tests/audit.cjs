@@ -1,4 +1,4 @@
-const A=require('node:assert/strict'),fs=require('fs'),vm=require('vm'),{performance}=require('perf_hooks');
+const A=require('node:assert/strict'),fs=require('./app-source.cjs').fs,vm=require('vm'),{performance}=require('perf_hooks');
 const R=require('../dist/recurring.js'),L=require('../dist/loan-ledger.js');
 const rule={id:'r',kind:'income',name:'Salary',member:'Test',source:'Salary',amount:100,day:5,startMonth:'2020-01',endMonth:'',paused:false,amountChanges:[]};
 function big(n){const data={income:[],expenses:[],debts:[],recurringRules:[],recurringOccurrences:[]};for(let r=0;r<100;r++)data.recurringRules.push({...rule,id:'r'+r});for(let i=0;i<n;i++){const r='r'+i%100,k=Math.floor(i/100),month=`${2000+Math.floor(k/12)}-${String(k%12+1).padStart(2,'0')}`,id='i'+i;data.income.push({id,member:'Test',source:'Salary',date:month+'-05',amount:100,recurringRuleId:r,recurringMonth:month});data.recurringOccurrences.push({ruleId:r,month,status:'posted',recordId:id});}return data;}
