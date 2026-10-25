@@ -1,10 +1,9 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.25.7",
+  "version": "2026.10.25.8",
   "released": "2026-10-25",
   "releaseNotes": [
-  "Added live cloud change notices with conflict review and backup actions; unfinished forms are preserved until an explicit reload.",
-  "Added adaptive cloud save retries and background listener recovery.",
-  "App update checks run when returning or reconnecting, throttled to once per five minutes."
+  "Added account-scoped device draft recovery with explicit restore and discard. Drafts never affect financial totals.",
+  "Added browser regression checks to the production deployment gate."
 ],
   "sections": [
     [

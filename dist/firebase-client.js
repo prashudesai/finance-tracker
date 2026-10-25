@@ -1,6 +1,7 @@
 import {initializeApp} from './vendor/firebase-app.js';
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
 import {getFirestore,doc,getDocFromServer,writeBatch,runTransaction,onSnapshot} from './vendor/firebase-firestore.js';
+import {installWorkProtection} from './work-protection.js?v=76';
 import {installCloudNotice} from './cloud-notice.js?v=75';
 import {initializeFamilyAccess} from './family-access.js?v=66';
 import {initializeAccountPhoto} from './account-photo.js?v=66';
@@ -86,6 +87,7 @@ onAuthStateChanged(auth,async user=>{
   document.getElementById('cloudSaveRetry').addEventListener('click',()=>window.financeBridge?.retry());
   document.getElementById('cloudRefresh').addEventListener('click',()=>window.financeBridge?.refreshRemote().catch(error=>alert(friendly(error))));
   window.financeCloudResolve();
+  Promise.resolve(window.trackerReady).then(installWorkProtection).catch(error=>console.warn('Draft recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>installCloudNotice((next,error)=>onSnapshot(doc(db,'users/'+family.ownerUid+'/tracker/current'),snapshot=>next(snapshot.exists()?snapshot.data():null),error))).catch(error=>console.warn('Live cloud notice unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>initializeAccountPhoto({
     uid:user.uid,

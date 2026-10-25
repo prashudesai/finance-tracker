@@ -25,6 +25,15 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install test dependencies
+        run: npm install --ignore-scripts
+
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser regression tests
+        run: npm run test:emerald
+
       - name: Run regression tests
         run: npm test
 
