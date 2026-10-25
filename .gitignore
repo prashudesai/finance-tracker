@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Local credentials
+.env*
+!.env.example
+functions/.env*
+!functions/.env.example
+.secret.local
+.runtimeconfig.json
+functions/.runtimeconfig.json
+
+# Firebase emulator and local cache
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+*-debug.log
+
+# Generated test and coverage output
+coverage/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Logs and package-manager noise
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local release archives
+*.zip
+*.tgz
+*.tar.gz
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
