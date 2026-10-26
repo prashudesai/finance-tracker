@@ -72,6 +72,12 @@ html body #income-expenses.cash-flow-layout [data-cash-history-kind] .history-se
 .cash-record-actions{position:absolute;right:0;top:100%;display:flex;gap:8px;padding:10px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;box-shadow:0 6px 20px #0003;min-width:110px}
 .cash-record-menu summary:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 @media(max-width:700px){
+ /* Keep the mobile title and period on one compact row, like other pages. */
+ html body #income-expenses.cash-flow-layout .transaction-intro{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:0;margin:12px 0 16px;min-height:0}
+ html body #income-expenses.cash-flow-layout .transaction-intro h1{font-size:21px;line-height:1.25;letter-spacing:-.3px;margin:0}
+ html body #income-expenses.cash-flow-layout .transaction-intro-copy{min-width:0}
+ html body #income-expenses.cash-flow-layout .transaction-eyebrow{display:none}
+ html body #income-expenses.cash-flow-layout .transaction-period{flex:0 0 auto;padding:7px 10px;font-size:11px;line-height:1.4;white-space:nowrap}
  .cash-entry-dialog{width:100%;height:100dvh;max-height:100dvh;max-width:100%;margin:0;inset:0;border:0;border-radius:0;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
  .cash-entry-dialog .transaction-submit{position:sticky;bottom:0}
  html body #income-expenses.cash-flow-layout .transaction-metric{align-items:flex-start}
