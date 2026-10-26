@@ -1,3 +1,12 @@
+# 2026.10.26.3
+
+- Cash Flow shows one Income or Expenses history at a time, with a dedicated mobile entry screen and balance-after-expenses bar.
+- Startup opens verified owner device records sooner and checks cloud revisions before publishing changes; Refresh explicitly reloads cloud records.
+- Charts and PDF tools load on demand; versioned assets improve browser and installed-app caching.
+- Layout readiness, navigation accessibility and safe offline/update behavior have been improved.
+
+Validated with 44 regression suites, 137 browser, 21 Cash Flow, 7 startup and 10 installed-PWA checks. Physical-device and signed-in production Lighthouse checks remain post-deployment validation.
+
 # v2026.10.26.1
 
 - Save & return to review keeps retirement, fund and PMS corrections in one flow. Failed saves retain the editor; confirmation never posts twice.

@@ -1,6 +1,6 @@
-# Cash Flow redesign — held for a combined release
+# Cash Flow redesign — release 2026.10.26.3
 
-Status: prepared for the `cash-flow-mobile-redesign` feature branch. Production deployment remains held for the combined release.
+Status: included in combined production release 2026.10.26.3. Deployment is verified through GitHub Actions and the live version endpoint.
 
 ## Behavior
 
@@ -19,7 +19,7 @@ Status: prepared for the `cash-flow-mobile-redesign` feature branch. Production 
 - `dist/firebase-client.js` installs the module and stylesheet.
 - `dist/app-style.js` lets the new module own Cash Flow instead of building a second composition. Dashboard Add actions open the new entry screen.
 - `src/core/05-income.js`, `06-expenses.js`, `12-balances.js` connect save outcomes, record IDs, selected-month summary and balance bar. Rebuilt `dist/runtime/app-core.js`.
-- `dist/service-worker.js` stages cache v86 and both new assets. Assign a release version with the combined release; current app metadata still reads 2026.10.26.2.
+- The generated service worker stages the full hashed asset graph in a content-derived v87 cache. Release metadata is 2026.10.26.3.
 - Browser suite updated for opening and closing the dedicated entry form. New focused suite: `npm run test:cash-flow`.
 
 ## Validation

@@ -1,4 +1,4 @@
-# Lighthouse improvements — pending combined release
+# Lighthouse improvements — release 2026.10.26.3
 
 The supplied Lighthouse reports measured Desktop performance 91 and Mobile 73. Mobile simulated LCP was 6.9s, with 40ms total blocking time. Both runs included extension scripts and warned about IndexedDB and an incomplete/time-limited run. Their observed LCP breakdown and simulated headline timings are different measurement types and must not be added together.
 
@@ -37,4 +37,4 @@ These figures compare the local implementation under controlled conditions. They
 
 ## Release
 
-Prepared alongside Cash Flow on `cash-flow-mobile-redesign`; production is held for the combined release. Assign the combined release version and refresh release metadata before merging to main. The existing npm-ci/build/test/Firebase workflow is sufficient. No separate infrastructure, Firestore rule or Cloud Function deployment is required. Re-run signed-in mobile and desktop Lighthouse after deployment, plus a physical phone keyboard/PWA check.
+Included alongside Cash Flow in combined release 2026.10.26.3. The existing npm-ci/build/test/Firebase workflow is sufficient. No separate infrastructure, Firestore rule or Cloud Function deployment is required. Re-run signed-in mobile and desktop Lighthouse after deployment, plus a physical phone keyboard/PWA check.

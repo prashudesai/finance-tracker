@@ -1,13 +1,14 @@
 {
-  "version": "2026.10.26.1",
+  "version": "2026.10.26.3",
   "unitSuites": 44,
-  "fullBrowserChecksBeforeFinalTargetedChecks": 136,
-  "focusedReleaseBrowserChecks": 12,
+  "fullBrowserChecks": 137,
+  "cashFlowBrowserChecks": 21,
+  "startupBrowserChecks": 7,
   "installedPwaChecks": 10,
-  "firestoreEmulator": "passed: permissions, concurrent review edits, reset epochs, atomic backup publish and failed-transaction rollback",
   "failures": 0,
   "physicalPhoneTested": false,
   "realGoogleFirebaseUserFlowTested": false,
-  "performance": "Two run orders, 18 samples per version; monthly review median 34.95ms to 27.4ms. Other timings mixed.",
-  "deploymentVerification": "GitHub Actions checks for this commit and live version are verified separately after push."
+  "realFirebaseSdkSignedOutSmokeTested": true,
+  "performance": "Five samples per condition: cold startup 32.0% faster; signed-in return navigation 25.9% faster. Controlled local mobile timings, not production Lighthouse scores.",
+  "deploymentVerification": "GitHub Actions and live version endpoint are verified separately after push."
 }

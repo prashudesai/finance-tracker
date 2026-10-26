@@ -1,10 +1,10 @@
 {
-  "version": "2026.10.26.2",
+  "version": "2026.10.26.3",
   "released": "2026-10-26",
   "releaseNotes": [
-    "Search stays hidden until you scroll to the bottom; installed apps receive refreshed Search assets.",
-    "Amount corrections return directly to payment review after a successful save.",
-    "Complete backups restore financial records and shared reviews together, with offline recovery and conflict choices.",
-    "Search is now a compact bottom control; obsolete migration and P2P ROI support have been removed."
+    "Cash Flow shows one Income or Expenses history at a time, with a dedicated mobile entry screen and balance-after-expenses bar.",
+    "Startup opens verified owner device records sooner and checks cloud revisions before publishing changes; Refresh explicitly reloads cloud records.",
+    "Charts and PDF tools load on demand; versioned assets improve browser and installed-app caching.",
+    "Layout readiness, navigation accessibility and safe offline/update behavior have been improved."
   ]
 }
