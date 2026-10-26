@@ -34,3 +34,12 @@ body:has(>#financeBottomSync){padding-bottom:130px}
 .finance-insight-body{padding:6px 0 8px}
 #cashBalanceBreakdown{padding:4px 0 0;margin-top:8px}
 @media(max-width:700px){.finance-insight-card:not(.finance-automatic-prompt){padding:4px 12px}.finance-insight-card>summary{min-height:44px;font-size:14px}#cashBalanceBreakdown{padding:0;margin-top:8px}}
+
+/* Search and sync share one bottom row, without covering the last records. */
+#financeBottomTools{position:fixed;left:max(20px,env(safe-area-inset-left));right:max(20px,env(safe-area-inset-right));bottom:20px;z-index:40;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch;pointer-events:none}
+#financeBottomTools #financeBottomSync,#financeBottomTools #openRecordSearch{position:static;transform:none;width:auto;max-width:100%;min-width:0;min-height:48px;margin:0;font-family:inherit;font-weight:500}
+#financeBottomTools #financeBottomSync{grid-column:2;justify-self:center;overflow-wrap:anywhere}
+#financeBottomTools #openRecordSearch{grid-column:3;justify-self:end}
+body:has(>#financeBottomTools){padding-bottom:76px}
+@media(max-width:700px){#financeBottomTools{left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));grid-template-columns:minmax(0,1fr) auto}html[data-app-style="modern"] #financeBottomTools{bottom:calc(84px + env(safe-area-inset-bottom))}#financeBottomTools #financeBottomSync{grid-column:1}#financeBottomTools #openRecordSearch{grid-column:2}}
+@media print{#financeBottomTools{display:none!important}}

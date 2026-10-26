@@ -1,8 +1,9 @@
 {
-  "version": "2026.10.26.11",
+  "version": "2026.10.26.12",
   "released": "2026-10-26",
   "releaseNotes": [
-    "Make expandable Cash Flow and monthly insight sections more compact, with smaller labels and reduced spacing.",
-    "Keep a 44px tap area for disclosure controls on mobile."
+    "Use consistent medium-weight fonts for insight headings, review sections and Cash Flow toggles.",
+    "Align sync status and Search on one bottom row, visible only at the page bottom.",
+    "Remove the Dashboard Backup & record checks shortcut; backup tools remain in Settings."
   ]
 }

@@ -35,3 +35,11 @@ The first CI attempt stopped at the investment add-menu browser check, before an
 ## Compact follow-up: 2026.10.26.11
 
 Reduce disclosure-card padding, label size and corner radius. Collapsed desktop disclosure rows use a 36px summary with 6px vertical card padding; mobile keeps a 44px summary tap target with 4px vertical card padding. Expanded bodies retain separate spacing. Financial logic, record storage and authentication are unchanged. Production remains governed by the full CI workflow.
+
+## Prepared follow-up: 2026.10.26.12
+
+Use inherited fonts, 14px disclosure labels and weight 500 throughout shared financial insights/review sections and Cash Flow toggles. Remove only the Dashboard Backup & record checks shortcut; Settings retains its backup and recovery tools. Move sync and Search into one shared bottom toolbar, with the existing bottom-only visibility behaviour, editor/dialog hiding and safe-area spacing. Use two columns on mobile to keep long status messages from overlapping Search, and centre the status on desktop. Reduce obsolete footer spacing.
+
+Validation covers same-row alignment, non-overlap, viewport containment, tap targets and typography across all three Appearance styles at 320, 390, 701 and 1440px; it also checks removal of the shortcut and preservation of the Settings backup tile. Prepared on PR #2; not merged or deployed.
+
+Follow-up validation: all 8 focused browser checks passed, along with deterministic build and package/asset integrity checks.
