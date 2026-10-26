@@ -1,11 +1,8 @@
 {
-  "version": "2026.10.26.10",
+  "version": "2026.10.26.11",
   "released": "2026-10-26",
   "releaseNotes": [
-    "Add expandable Cash Flow balance reconciliation and upcoming recorded commitments.",
-    "Review automatic entries at month end, with existing amount correction and shared confirmations.",
-    "Show investment valuation dates and recorded monthly financial changes.",
-    "Show sync status only at page bottom, alongside the existing search visibility behaviour.",
-    "Show a clear loading message after sign-in while financial records open."
+    "Make expandable Cash Flow and monthly insight sections more compact, with smaller labels and reduced spacing.",
+    "Keep a 44px tap area for disclosure controls on mobile."
   ]
 }

@@ -31,3 +31,7 @@ Prepared against 2026.10.26.9. Commit to main runs the normal test-and-deploy wo
 ## Deployment correction
 
 The first CI attempt stopped at the investment add-menu browser check, before any production deployment. The menu's existing capture-phase scroll listener dismissed it on every scroll, including layout/scroll anchoring events after valuation footers appeared. Keep an open menu anchored to its visible Add button, ignore scrolling inside the menu, and dismiss it when its anchor leaves the viewport. Outside click, Escape, and selection continue to dismiss it. Regression checks explicitly deliver document and internal-menu scroll events before choosing a type across Appearance styles and mobile/desktop widths.
+
+## Compact follow-up: 2026.10.26.11
+
+Reduce disclosure-card padding, label size and corner radius. Collapsed desktop disclosure rows use a 36px summary with 6px vertical card padding; mobile keeps a 44px summary tap target with 4px vertical card padding. Expanded bodies retain separate spacing. Financial logic, record storage and authentication are unchanged. Production remains governed by the full CI workflow.

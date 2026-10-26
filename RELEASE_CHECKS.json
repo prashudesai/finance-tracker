@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.26.10",
+  "version": "2026.10.26.11",
   "unitSuites": 45,
   "fullBrowserChecks": 137,
   "cashFlowBrowserChecks": 28,
@@ -8,5 +8,6 @@
   "realGoogleFirebaseUserFlowTested": false,
   "notes": "Browser tests use local Chromium and mocked Firebase. PWA install/security suites remain required by CI; no rules/authentication logic changes in this feature batch.",
   "deploymentCorrection": "Keep the investment add menu stable during layout scrolls; regression coverage exercises menu selection after document/internal scroll events.",
-  "localCorrectionValidation": "7 insight browser checks passed, including scroll-stable add-menu selection across styles and mobile/desktop. Full rerun passed the previously failing menu action, then timed out on a later navigation action; CI remains required."
+  "localCorrectionValidation": "7 insight browser checks passed, including scroll-stable add-menu selection across styles and mobile/desktop. Full rerun passed the previously failing menu action, then timed out on a later navigation action; CI remains required.",
+  "compactFollowUp": "Compact disclosure-row CSS; generated build and asset-integrity checks. Existing browser regression suite remains required by CI."
 }

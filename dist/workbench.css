@@ -27,3 +27,10 @@ html[data-layout-style="emerald-flow"] #dashboard>#monthlyChanges{display:block!
 body:has(>#financeBottomSync){padding-bottom:130px}
 @media(max-width:700px){#financeBottomSync{bottom:calc(74px + env(safe-area-inset-bottom));max-width:calc(100vw - 32px);width:max-content}html[data-app-style="modern"] #financeBottomSync{bottom:calc(142px + env(safe-area-inset-bottom))}.finance-insight-card{padding:14px}.finance-insight-values{gap:10px;font-size:13px}.finance-valuation-footer{padding:10px 12px}.finance-valuation-footer>div{flex-wrap:wrap;gap:4px}.finance-valuation-footer button{font-size:12px}}
 @media print{#financeBottomSync,.finance-automatic-prompt{display:none!important}}
+
+/* Compact disclosure rows; expanded financial details keep their own spacing. */
+.finance-insight-card:not(.finance-automatic-prompt){padding:6px 12px;margin-bottom:10px;border-radius:12px}
+.finance-insight-card>summary{min-height:36px;font-size:14px;line-height:1.4}
+.finance-insight-body{padding:6px 0 8px}
+#cashBalanceBreakdown{padding:4px 0 0;margin-top:8px}
+@media(max-width:700px){.finance-insight-card:not(.finance-automatic-prompt){padding:4px 12px}.finance-insight-card>summary{min-height:44px;font-size:14px}#cashBalanceBreakdown{padding:0;margin-top:8px}}

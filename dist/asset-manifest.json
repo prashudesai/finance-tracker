@@ -1,10 +1,10 @@
 {
   "runtime/chart-3.9.1.js": "assets/chart-3.9.1.201631840661244a.js",
   "vendor/jspdf.umd.min.js": "assets/jspdf.umd.min.fa438fc5411fafc3.js",
-  "workbench.css": "assets/workbench.1c833f89492de309.css",
+  "workbench.css": "assets/workbench.b83b289e276ea393.css",
   "cash-flow.css": "assets/cash-flow.f6ae78bf7d4dbb12.css",
-  "boot.js": "assets/boot.d59b54d9568bc68c.js",
-  "app-info.js": "assets/app-info.0decc9830af7a623.js",
+  "boot.js": "assets/boot.35676013039cfc85.js",
+  "app-info.js": "assets/app-info.0b904293274dd132.js",
   "loan-ledger.js": "assets/loan-ledger.68deb1413e30aa08.js",
   "recurring.js": "assets/recurring.21005de2ca263681.js",
   "recurring-ui.js": "assets/recurring-ui.7063af9db85dae04.js",
