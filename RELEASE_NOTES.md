@@ -1,3 +1,9 @@
+# 2026.10.26.4
+
+- Desktop Cash Flow retains its previous layout in every Appearance style.
+- Mobile keeps the Income / Expenses toggle, dedicated entry screen and balance bar.
+- Drafts and the original form controls are preserved when resizing between mobile and desktop.
+
 # 2026.10.26.3
 
 - Cash Flow shows one Income or Expenses history at a time, with a dedicated mobile entry screen and balance-after-expenses bar.

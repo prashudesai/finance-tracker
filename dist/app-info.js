@@ -1,11 +1,10 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.26.3",
+  "version": "2026.10.26.4",
   "released": "2026-10-26",
   "releaseNotes": [
-    "Cash Flow shows one Income or Expenses history at a time, with a dedicated mobile entry screen and balance-after-expenses bar.",
-    "Startup opens verified owner device records sooner and checks cloud revisions before publishing changes; Refresh explicitly reloads cloud records.",
-    "Charts and PDF tools load on demand; versioned assets improve browser and installed-app caching.",
-    "Layout readiness, navigation accessibility and safe offline/update behavior have been improved."
+    "Desktop Cash Flow retains its previous layout in every Appearance style.",
+    "Mobile keeps the Income / Expenses toggle, dedicated entry screen and balance bar.",
+    "Drafts and the original form controls are preserved when resizing between mobile and desktop."
   ],
   "sections": [
     [

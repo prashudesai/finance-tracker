@@ -105,3 +105,6 @@ html body #income-expenses.cash-flow-layout [data-cash-history-kind] .history-se
  html body #income-expenses.cash-flow-layout .transaction-mobile-details .badge-success{display:none}
 }
 @media print{.cash-controls,.cash-add,.cash-entry-dialog{display:none!important}}
+
+/* The focused layout is mobile only; desktop retains its original workspace. */
+.cash-controls[hidden],.cash-balance[hidden],.cash-tools[hidden],.cash-add[hidden],.cash-cancel[hidden]{display:none!important}

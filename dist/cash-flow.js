@@ -4,6 +4,8 @@ export function installCashFlow(){
  const make=(tag,cls,text)=>{const n=document.createElement(tag);n.className=cls;if(text)n.textContent=text;return n;};
  const grid=page.querySelector('.transaction-grid'),overview=page.querySelector('.transaction-overview');
  if(!grid||!overview)return;
+ const mobile=matchMedia('(max-width:700px)');let compact=mobile.matches;
+ const originalTitle=page.querySelector('.transaction-intro h1').textContent,originalNet=overview.querySelector('.transaction-metric-net .transaction-metric-label').textContent;
  page.classList.add('cash-flow-layout');page.dataset.cashKind='expense';
  page.querySelector('.transaction-intro h1').textContent='Cash flow';
  overview.querySelector('.transaction-metric-net .transaction-metric-label').textContent='Balance after expenses';
@@ -21,7 +23,7 @@ export function installCashFlow(){
    const history=original.querySelector('.history-section');
    if(history){histories[kind]=original;original.id='cashHistory-'+kind;original.setAttribute('role','tabpanel');original.setAttribute('aria-labelledby',button.id);original.dataset.cashHistoryKind=kind;
     const add=make('button','btn-primary cash-add','+ Add '+kind);add.type='button';add.dataset.cashAdd=kind;history.querySelector('.panel-header').prepend(add);add.onclick=()=>open(kind,add);}
-   for(const node of [...original.children].filter(n=>n.matches('.form-grid,.transaction-submit'))){const marker=document.createComment('cash-entry-home');node.before(marker);moved.push({node,marker});panel.append(node);}
+   for(const node of [...original.children].filter(n=>n.matches('.form-grid,.transaction-submit'))){const marker=document.createComment('cash-entry-home');node.before(marker);moved.push({node,marker,kind});panel.append(node);}
    if(!history)original.classList.add('cash-entry-home');
   }
   const submit=document.getElementById(kind==='income'?'addIncomeBtn':'addExpenseBtn');submit.textContent='Save '+kind;
@@ -33,9 +35,9 @@ export function installCashFlow(){
  }
  grid.before(controls);
  const recurring=page.querySelector('.recurring-launch');if(recurring)grid.after(recurring);
- const surplus=page.querySelector('.transaction-surplus');if(surplus){const tools=make('details','cash-tools'),summary=make('summary','','Monthly surplus & opening balance');surplus.before(tools);tools.append(summary,surplus);}
- function select(kind){if(!histories[kind])return;page.dataset.cashKind=kind;for(const name of ['income','expense']){histories[name].hidden=name!==kind;tabs[name].setAttribute('aria-selected',String(name===kind));tabs[name].tabIndex=name===kind?0:-1;}renderTransactionOverview();}
- function decorateHistory(kind){for(const row of document.getElementById(kind==='income'?'incomeBody':'expenseBody').querySelectorAll('tr[data-cash-record]')){
+ const surplus=page.querySelector('.transaction-surplus'),surplusHome=document.createComment('cash-surplus-home');let tools;if(surplus){surplus.before(surplusHome);tools=make('details','cash-tools');const summary=make('summary','','Monthly surplus & opening balance');surplus.before(tools);tools.append(summary,surplus);}
+ function select(kind){if(!histories[kind])return;if(compact)page.dataset.cashKind=kind;for(const name of ['income','expense']){histories[name].hidden=compact&&name!==kind;tabs[name].setAttribute('aria-selected',String(name===kind));tabs[name].tabIndex=name===kind?0:-1;}renderTransactionOverview();}
+ function decorateHistory(kind){if(!compact)return;for(const row of document.getElementById(kind==='income'?'incomeBody':'expenseBody').querySelectorAll('tr[data-cash-record]')){
   const cell=row.querySelector(kind==='income'?'td[data-label=Source]':'td[data-label=Category]');
   if(cell&&!cell.querySelector('.cash-category-icon')){const icon=make('span','cash-category-icon');icon.setAttribute('aria-hidden','true');icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h14l-1 12H6L5 8ZM9 8V6a3 3 0 0 1 6 0v2M9 12v4m6-4v4"/></svg>';cell.prepend(icon);}
   const actions=row.querySelector('.transaction-actions');if(actions&&!actions.querySelector('details')){const menu=make('details','cash-record-menu'),summary=make('summary','','•••'),items=make('div','cash-record-actions');summary.setAttribute('aria-label','Record actions');for(const button of [...actions.querySelectorAll('button')])items.append(button);menu.append(summary,items);actions.append(menu);}
@@ -47,7 +49,7 @@ export function installCashFlow(){
  function close(){if(active&&pending[active]?.busy)return;dialog.close();}
  back.onclick=close;dialog.addEventListener('cancel',e=>{if(active&&pending[active]?.busy)e.preventDefault();});
  dialog.addEventListener('close',()=>{if(dialog.open)return;document.body.classList.remove('cash-entry-open');active=null;window.scrollTo({top:scroll,behavior:'instant'});trigger?.focus({preventScroll:true});savedRow?.scrollIntoView({block:'nearest',behavior:'instant'});savedRow=null;});
- function open(kind,from){select(kind);if(dialog.open)return;trigger=from||document.activeElement;scroll=window.scrollY;active=kind;for(const name of ['income','expense'])entries[name].hidden=name!==kind;title.textContent='Add '+kind;status.textContent=pending[kind]?'The previous entry still needs a device save. Retry before adding another.':'';document.body.classList.add('cash-entry-open');dialog.showModal();requestAnimationFrame(()=>document.getElementById(kind+'Amount').focus());}
+ function open(kind,from){select(kind);if(!compact){window.dispatchEvent(new CustomEvent('pft:desktop-cash-kind',{detail:kind}));document.getElementById(kind+'Amount').focus();return;}if(dialog.open)return;trigger=from||document.activeElement;scroll=window.scrollY;active=kind;for(const name of ['income','expense'])entries[name].hidden=name!==kind;title.textContent='Add '+kind;status.textContent=pending[kind]?'The previous entry still needs a device save. Retry before adding another.':'';document.body.classList.add('cash-entry-open');dialog.showModal();requestAnimationFrame(()=>document.getElementById(kind+'Amount').focus());}
  function updateBar(income,expenses){
   const net=income-expenses,positive=income>0,remaining=positive?Math.max(0,Math.min(100,net/income*100)):0,spent=positive?100-remaining:expenses>0?100:0;
   bar.querySelector('.cash-balance-remaining').style.width=remaining+'%';bar.querySelector('.cash-balance-spent').style.width=spent+'%';bar.dataset.deficit=String(net<0);
@@ -56,11 +58,12 @@ export function installCashFlow(){
  }
  // A failed device write retries the same record, rather than posting it twice.
  function trackSave(kind,id,date,operation,values){
-  const panel=entries[kind],submit=document.getElementById(kind==='income'?'addIncomeBtn':'addExpenseBtn');
+  const panel=compact?entries[kind]:document.getElementById(kind+'Amount').closest('.transaction-panel'),submit=document.getElementById(kind==='income'?'addIncomeBtn':'addExpenseBtn');
+  const form=panel.querySelector('.form-grid');
   const baseline=Object.fromEntries([...panel.querySelectorAll('input[id],select[id],textarea[id]')].map(n=>[n.id,n.value]));
-  const entry=pending[kind]={id,date,values:values||pending[kind]?.values,busy:true};panel.querySelector('.form-grid').inert=false;submit.disabled=true;submit.textContent='Saving…';status.textContent='Saving to this device…';
+  const entry=pending[kind]={id,date,values:values||pending[kind]?.values,busy:true};form.inert=false;submit.disabled=true;submit.textContent='Saving…';status.textContent='Saving to this device…';
   return Promise.resolve(operation).then(ok=>{
-   entry.busy=false;submit.disabled=false;panel.querySelector('.form-grid').inert=false;
+   entry.busy=false;submit.disabled=false;form.inert=false;
    if(!ok){for(const [key,value]of Object.entries(entry.values||{})){const field=document.getElementById(key);if(field&&field.value===baseline[key])field.value=value;}submit.textContent='Retry save';status.textContent='Device save failed. Retry saves this same entry; export a backup if it keeps failing.';return false;}
    delete pending[kind];submit.textContent='Save '+kind;status.textContent='';
    const changed=Object.entries(baseline).some(([key,value])=>document.getElementById(key)?.value!==value);
@@ -69,10 +72,26 @@ export function installCashFlow(){
    if(dialog.open&&active===kind&&!changed)dialog.close();else if(changed)status.textContent='Previous entry saved. Your next unfinished entry is still here.';return true;
   });
  }
- const capture=e=>{const kind=e.target.closest('#addIncomeBtn')?'income':e.target.closest('#addExpenseBtn')?'expense':null;if(!kind)return;const item=pending[kind];if(item){e.preventDefault();e.stopImmediatePropagation();if(!item.busy)trackSave(kind,item.id,item.date,saveData('Retry cash flow save'),item.values);return;}entries[kind].__cashValues=Object.fromEntries([...entries[kind].querySelectorAll('input[id],select[id],textarea[id]')].map(n=>[n.id,n.value]));};
+ const capture=e=>{const kind=e.target.closest('#addIncomeBtn')?'income':e.target.closest('#addExpenseBtn')?'expense':null;if(!kind)return;const item=pending[kind];if(item){e.preventDefault();e.stopImmediatePropagation();if(!item.busy)trackSave(kind,item.id,item.date,saveData('Retry cash flow save'),item.values);return;}entries[kind].__cashValues=Object.fromEntries([...(compact?entries[kind]:document.getElementById(kind+'Amount').closest('.transaction-panel')).querySelectorAll('input[id],select[id],textarea[id]')].map(n=>[n.id,n.value]));};
  document.addEventListener('click',capture,true);
  const onNavigation=e=>{if(e.target.closest('.nav-tab,[data-style-page]')&&dialog.open)close();};document.addEventListener('click',onNavigation,true);
- const reset=window.financeBridge.reset;window.financeBridge.reset=function(){historyObserver.disconnect();document.removeEventListener('click',closeMenus);document.removeEventListener('click',capture,true);document.removeEventListener('click',onNavigation,true);if(dialog.open)dialog.close();for(const {node,marker}of moved)if(marker.isConnected)marker.replaceWith(node);dialog.remove();controls.remove();bar.remove();delete window.financeCashFlow;return reset.apply(this,arguments);};
+ function adapt(){
+  compact=mobile.matches;
+  if(!compact&&dialog.open){dialog.close();document.body.classList.remove('cash-entry-open');}
+  page.classList.toggle('cash-flow-layout',compact);
+  controls.hidden=bar.hidden=!compact;
+  page.querySelector('.transaction-intro h1').textContent=compact?'Cash flow':originalTitle;
+  overview.querySelector('.transaction-metric-net .transaction-metric-label').textContent=compact?'Balance after expenses':originalNet;
+  for(const {node,marker,kind}of moved){if(compact)entries[kind].append(node);else marker.after(node);}
+  for(const node of page.querySelectorAll('.cash-add,.cash-cancel'))node.hidden=!compact;
+  if(tools){tools.hidden=!compact;if(compact)tools.append(surplus);else surplusHome.after(surplus);}
+  if(!compact){delete page.dataset.cashKind;for(const h of Object.values(histories))h.hidden=false;for(const menu of page.querySelectorAll('.cash-record-menu')){const actions=menu.parentNode;for(const b of menu.querySelectorAll('button'))actions.append(b);menu.remove();}for(const icon of page.querySelectorAll('.cash-category-icon'))icon.remove();}
+  else {select('expense');decorateHistory('income');decorateHistory('expense');}
+  for(const kind of ['income','expense'])if(!pending[kind])document.getElementById(kind==='income'?'addIncomeBtn':'addExpenseBtn').textContent=(compact?'Save ':'Add ')+kind;
+  renderTransactionOverview();
+ }
+ mobile.addEventListener('change',adapt);
+ const reset=window.financeBridge.reset;window.financeBridge.reset=function(){mobile.removeEventListener('change',adapt);historyObserver.disconnect();document.removeEventListener('click',closeMenus);document.removeEventListener('click',capture,true);document.removeEventListener('click',onNavigation,true);if(dialog.open)dialog.close();for(const {node,marker}of moved)if(marker.isConnected)marker.replaceWith(node);dialog.remove();controls.remove();bar.remove();delete window.financeCashFlow;return reset.apply(this,arguments);};
  window.financeCashFlow={open,select,updateBar,trackSave:(kind,id,date,operation)=>trackSave(kind,id,date,operation,entries[kind].__cashValues)};
- select('expense');
+ adapt();
 }

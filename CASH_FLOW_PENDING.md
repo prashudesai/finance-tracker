@@ -1,17 +1,17 @@
-# Cash Flow redesign — release 2026.10.26.3
+# Cash Flow layout — release 2026.10.26.4
 
-Status: included in combined production release 2026.10.26.3. Deployment is verified through GitHub Actions and the live version endpoint.
+Status: responsive correction for production release 2026.10.26.4. Deployment is verified through GitHub Actions and the live version endpoint.
 
 ## Behavior
 
-- One Income / Expenses history at a time across Classic, Modern and Emerald Flow.
-- Original add controls move into a native dialog, full-screen on mobile, with Back/Cancel and focus restoration. The original financial handlers remain connected.
+- At 700px and below, one Income / Expenses history at a time across Classic, Modern and Emerald Flow. Above 700px, retain the previous desktop forms and each style’s workspace, including Emerald Flow tabs.
+- On mobile, original add controls move into a native dialog, full-screen on mobile, with Back/Cancel and focus restoration. The original financial handlers remain connected.
 - Draft values stay in the original fields when cancelling or switching types.
 - Successful saves return to history; failed device writes offer Retry save for the same pending record rather than inserting a duplicate. Typing the next entry while a write is in flight preserves it.
-- Compact summary uses the selected history month. Balance after expenses is income minus household expenses, consistent with existing profile rules.
+- The mobile compact summary uses the selected history month. Balance after expenses is income minus household expenses, consistent with existing profile rules.
 - Mint/gold balance bar uses income as the denominator. No income, no activity and deficit states use explanatory text instead of misleading percentages.
 - Original family, source, annual-expense, subcategory, EMI / part-payment, notes, financial-year and month controls remain available.
-- Monthly surplus / opening balance tools are collapsed into a secondary disclosure.
+- Mobile monthly surplus / opening balance tools are collapsed into a secondary disclosure. Desktop retains the previous placement.
 
 ## Changed code
 
@@ -19,7 +19,7 @@ Status: included in combined production release 2026.10.26.3. Deployment is veri
 - `dist/firebase-client.js` installs the module and stylesheet.
 - `dist/app-style.js` lets the new module own Cash Flow instead of building a second composition. Dashboard Add actions open the new entry screen.
 - `src/core/05-income.js`, `06-expenses.js`, `12-balances.js` connect save outcomes, record IDs, selected-month summary and balance bar. Rebuilt `dist/runtime/app-core.js`.
-- The generated service worker stages the full hashed asset graph in a content-derived v87 cache. Release metadata is 2026.10.26.3.
+- The generated service worker stages the full hashed asset graph in a content-derived v87 cache. Release metadata is 2026.10.26.4.
 - Browser suite updated for opening and closing the dedicated entry form. New focused suite: `npm run test:cash-flow`.
 
 ## Validation
