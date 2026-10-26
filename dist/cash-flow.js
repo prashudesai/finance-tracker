@@ -15,7 +15,7 @@ export function installCashFlow(){
  const dialog=make('dialog','cash-entry-dialog');dialog.id='cashEntryDialog';dialog.setAttribute('aria-labelledby','cashEntryTitle');
  const heading=make('header','cash-entry-heading'),back=make('button','btn-secondary','← Back'),title=make('h2','','Add expense');title.id='cashEntryTitle';back.type='button';heading.append(back,title);
  const status=make('p','cash-entry-status');status.setAttribute('role','status');dialog.append(heading,status);document.body.append(dialog);
- const entries={},histories={},tabs={},pending={},moved=[];let active=null,trigger=null,scroll=0,savedRow=null;
+ const entries={},histories={},tabs={},pending={},moved=[];let selectedKind='expense',active=null,trigger=null,scroll=0,savedRow=null;
  for(const kind of ['income','expense']){
   const label=kind==='income'?'Income':'Expenses',button=make('button','',label);button.type='button';button.id='cashTab-'+kind;button.setAttribute('role','tab');button.setAttribute('aria-controls','cashHistory-'+kind);controls.append(button);tabs[kind]=button;
   const panel=make('section','cash-entry-panel panel');panel.dataset.cashEntryKind=kind;panel.hidden=true;dialog.append(panel);entries[kind]=panel;
@@ -36,7 +36,7 @@ export function installCashFlow(){
  grid.before(controls);
  const recurring=page.querySelector('.recurring-launch');if(recurring)grid.after(recurring);
  const surplus=page.querySelector('.transaction-surplus'),surplusHome=document.createComment('cash-surplus-home');let tools;if(surplus){surplus.before(surplusHome);tools=make('details','cash-tools');const summary=make('summary','','Monthly surplus & opening balance');surplus.before(tools);tools.append(summary,surplus);}
- function select(kind){if(!histories[kind])return;if(compact)page.dataset.cashKind=kind;for(const name of ['income','expense']){histories[name].hidden=compact&&name!==kind;tabs[name].setAttribute('aria-selected',String(name===kind));tabs[name].tabIndex=name===kind?0:-1;}renderTransactionOverview();}
+ function select(kind){if(!histories[kind])return;selectedKind=kind;if(compact)page.dataset.cashKind=kind;for(const name of ['income','expense']){histories[name].hidden=compact&&name!==kind;tabs[name].setAttribute('aria-selected',String(name===kind));tabs[name].tabIndex=name===kind?0:-1;}renderTransactionOverview();}
  function decorateHistory(kind){if(!compact)return;for(const row of document.getElementById(kind==='income'?'incomeBody':'expenseBody').querySelectorAll('tr[data-cash-record]')){
   const cell=row.querySelector(kind==='income'?'td[data-label=Source]':'td[data-label=Category]');
   if(cell&&!cell.querySelector('.cash-category-icon')){const icon=make('span','cash-category-icon');icon.setAttribute('aria-hidden','true');icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h14l-1 12H6L5 8ZM9 8V6a3 3 0 0 1 6 0v2M9 12v4m6-4v4"/></svg>';cell.prepend(icon);}
@@ -86,7 +86,7 @@ export function installCashFlow(){
   for(const node of page.querySelectorAll('.cash-add,.cash-cancel'))node.hidden=!compact;
   if(tools){tools.hidden=!compact;if(compact)tools.append(surplus);else surplusHome.after(surplus);}
   if(!compact){delete page.dataset.cashKind;for(const h of Object.values(histories))h.hidden=false;for(const menu of page.querySelectorAll('.cash-record-menu')){const actions=menu.parentNode;for(const b of menu.querySelectorAll('button'))actions.append(b);menu.remove();}for(const icon of page.querySelectorAll('.cash-category-icon'))icon.remove();}
-  else {select('expense');decorateHistory('income');decorateHistory('expense');}
+  else {select(selectedKind);decorateHistory('income');decorateHistory('expense');}
   for(const kind of ['income','expense'])if(!pending[kind])document.getElementById(kind==='income'?'addIncomeBtn':'addExpenseBtn').textContent=(compact?'Save ':'Add ')+kind;
   renderTransactionOverview();
  }
