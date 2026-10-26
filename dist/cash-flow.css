@@ -108,3 +108,12 @@ html body #income-expenses.cash-flow-layout [data-cash-history-kind] .history-se
 
 /* The focused layout is mobile only; desktop retains its original workspace. */
 .cash-controls[hidden],.cash-balance[hidden],.cash-tools[hidden],.cash-add[hidden],.cash-cancel[hidden]{display:none!important}
+/* Keep the mobile page heading as compact as the other tracker pages. */
+@media screen and (max-width:700px){
+ html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout>.transaction-intro{display:flex;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:12px;min-height:0;height:auto;padding:0;margin:12px 0}
+ html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-intro-copy{min-width:0;margin:0;padding:0}
+ html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-intro h1{font-size:22px;line-height:1.25;letter-spacing:-.3px;margin:0;padding:0}
+ html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-eyebrow,
+ html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-intro-copy p{display:none}
+ html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-period{flex:0 0 auto;display:inline-flex;align-items:center;min-height:0;height:auto;padding:6px 10px;margin:0;font-size:12px;line-height:1.4;white-space:nowrap;border-radius:10px}
+}

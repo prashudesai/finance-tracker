@@ -1,10 +1,9 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.26.4",
+  "version": "2026.10.26.5",
   "released": "2026-10-26",
   "releaseNotes": [
-    "Desktop Cash Flow retains its previous layout in every Appearance style.",
-    "Mobile keeps the Income / Expenses toggle, dedicated entry screen and balance bar.",
-    "Drafts and the original form controls are preserved when resizing between mobile and desktop."
+    "Mobile Cash Flow title and month share a compact single row, with reduced space above the balance card.",
+    "Desktop Cash Flow retains its previous layout."
   ],
   "sections": [
     [
