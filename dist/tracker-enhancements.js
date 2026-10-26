@@ -139,10 +139,7 @@
       }show(node);
     };
     document.querySelectorAll('input[type="number"]').forEach(input=>{if(!input.hasAttribute('inputmode'))input.setAttribute('inputmode','decimal');});
-    const care=el('button','Backup & record checks','btn-secondary');care.type='button';
-    // Use the actual existing tile and its handlers, keeping all backup behaviours.
-    care.onclick=()=>{document.querySelector('.nav-tab[data-tab="settings"]').click();const tile=[...document.querySelectorAll('.settings-quick-tile')].find(b=>b.querySelector('strong')?.textContent==='Data & backup');tile?.click();};
-    const foot=el('p');foot.append(care);document.getElementById('dashboard').append(foot);
+
   }
   window.PFT_REVIEW_TOOLS={compareRecords};
   Promise.resolve(window.trackerReady).then(()=>{if(window.financeCloud&&!storageLoadFailed)install();}).catch(()=>{});

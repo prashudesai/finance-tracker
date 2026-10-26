@@ -22,7 +22,7 @@ html body #income-expenses.cash-flow-layout .cash-balance{grid-column:1/-1;paddi
 .cash-balance[data-deficit=true] .cash-balance-spent{background:var(--danger,#c44)}
 .cash-balance-caption{font-size:12px;color:var(--text-light,var(--text));margin:8px 0 0;line-height:1.5}
 html body #income-expenses.cash-flow-layout .cash-controls{display:flex;gap:4px;padding:5px;border:1px solid var(--border);border-radius:14px;background:var(--card-bg);margin:0 0 14px}
-html body #income-expenses.cash-flow-layout .cash-controls button{flex:1;min-height:44px;margin:0;border:0;border-radius:10px;background:transparent;color:var(--text);font:inherit;font-weight:600}
+html body #income-expenses.cash-flow-layout .cash-controls button{flex:1;min-height:44px;margin:0;border:0;border-radius:10px;background:transparent;color:var(--text);font:inherit;font-size:14px;font-weight:500;letter-spacing:normal;line-height:1.4}
 html body #income-expenses.cash-flow-layout .cash-controls button[aria-selected=true]{background:var(--primary);color:var(--button-text,#fff)}
 html body #income-expenses.cash-flow-layout .transaction-grid,
 html body #income-expenses.cash-flow-layout .advanced-cashflow-history-row{display:block;margin:0}
@@ -39,7 +39,7 @@ html body #income-expenses.cash-flow-layout .history-month-control{flex:1;max-wi
 html body #income-expenses.cash-flow-layout .history-month-control select{width:100%;min-width:0;min-height:44px}
 html body #income-expenses.cash-flow-layout .recurring-launch{margin:16px 0;text-align:left}
 html body #income-expenses.cash-flow-layout .cash-tools{margin:18px 0;border-top:1px solid var(--border);padding-top:16px}
-.cash-tools>summary{cursor:pointer;min-height:44px;font-weight:600}
+.cash-tools>summary{cursor:pointer;min-height:44px;font-family:inherit;font-size:14px;font-weight:500;letter-spacing:normal;line-height:1.4}
 .cash-entry-dialog{box-sizing:border-box;width:min(620px,calc(100% - 32px));max-height:92dvh;overflow:auto;padding:24px;border:1px solid var(--border);border-radius:20px;background:var(--bg,var(--card-bg));color:var(--text);overscroll-behavior:contain}
 .cash-entry-dialog::backdrop{background:#001a12b3}
 .cash-entry-heading{display:flex;align-items:center;gap:16px;margin-bottom:20px}
