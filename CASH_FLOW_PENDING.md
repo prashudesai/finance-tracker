@@ -33,4 +33,6 @@ Status: prepared for the `cash-flow-mobile-redesign` feature branch. Production 
 - Inspected the final mobile screenshots, including compact record action menus and gold icons.
 - Physical phone keyboard behavior remains manual QA.
 
-Before combined deployment: run build, all browser/PWA checks, update package/app metadata and release notes, and regenerate SHA256.json.
+Lighthouse startup/loading/cache/accessibility improvements are prepared with this release; see LIGHTHOUSE_IMPROVEMENTS.md and STARTUP_PERFORMANCE_RESULTS.json.
+
+Before combined deployment: assign the release version, refresh app metadata/release notes, run CI checks and regenerate SHA256.json.

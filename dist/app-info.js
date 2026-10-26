@@ -119,8 +119,8 @@ window.PFT_APP_INFO = {
   ]
 };
 
-window.downloadTrackerGuide = function(){
-  if(!window.jspdf?.jsPDF)throw new Error('The PDF service is still loading. Please try again.');
+window.downloadTrackerGuide = async function(){
+  if(!window.jspdf?.jsPDF)await window.PFTLoadScript('pdf');
   const info=window.PFT_APP_INFO, pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4'});
   let y=24;const width=174,bottom=274;
   function pageRoom(height){if(y+height>bottom){pdf.addPage();y=24;}}

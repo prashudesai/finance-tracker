@@ -2,6 +2,7 @@
   const status = document.getElementById('pwaStatus');
   const check = document.getElementById('pwaCheckUpdate');
   const apply = document.getElementById('pwaApplyUpdate');
+  if(apply)apply.disabled=true;
   const notice = document.getElementById('dashboardUpdateNotice');
   const dashboardApply = document.getElementById('dashboardApplyUpdate');
   const dashboardStatus = document.getElementById('dashboardUpdateStatus');
@@ -53,7 +54,7 @@
   const show = message => { if (status) status.textContent = message; if(dashboardStatus)dashboardStatus.textContent=message; };
   function updateStatus() {
     const updateReady = Boolean(registration?.waiting);
-    if (apply) apply.hidden = !updateReady;
+    if (apply) {apply.hidden = !updateReady;apply.disabled = !updateReady || applying;}
     if (notice) notice.hidden = !updateReady;
     show(updateReady ? 'An app update is ready. Saved device records are kept when applying the update.' : offlineReady
       ? (navigator.onLine === false ? 'Offline · changes save on this device and sync when connected.' : 'App ready · local saving with automatic cloud sync.')
@@ -117,5 +118,5 @@
       if (check) check.disabled = true;
     }
   }
-  register();
+  if(window.PFTPerformance){let started=false;const start=()=>{if(started)return;started=true;setTimeout(register,0);};window.addEventListener('pft:visible',start,{once:true});window.addEventListener('pft:signed-out',start,{once:true});if(!document.body.classList.contains('cloud-loading'))start();setTimeout(start,10000);}else register();
 })();

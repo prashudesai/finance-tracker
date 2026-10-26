@@ -147,7 +147,7 @@
     setupInlineCustomValues();
     
     document.querySelector('.container').inert=true;
-    window.trackerReady=(async()=>{
+    const trackerStartup=(async()=>{
     await loadData();
     if(storageLoadFailed)return;
     populateCustomValueSelects();initializeFamilyProfile();populateReportFinancialYears();
@@ -165,7 +165,8 @@
 
 
 
-    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();document.querySelector('.container').inert=false;window.financeCloud.showApp();await setupFirstName();applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
+    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();window.dispatchEvent(new Event('pft:before-reveal'));window.PFTPerformance?.mark('layout-ready');document.querySelector('.container').inert=false;window.financeCloud.showApp();window.PFTPerformance?.mark('visible');window.dispatchEvent(new Event('pft:visible'));void verifyStartupRevision();await setupFirstName();applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
+    if(window.PFTResolveTrackerReady)trackerStartup.then(window.PFTResolveTrackerReady);else window.trackerReady=trackerStartup;
 
     const tableSortChoices = {};
     try { Object.assign(tableSortChoices, JSON.parse(trackerStorage.getItem('familyWealthTableSort') || '{}')); } catch (error) { /* Defaults if storage unavailable. */ }

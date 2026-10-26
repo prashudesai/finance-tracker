@@ -50,9 +50,9 @@
       };
       tx.onabort=()=>reject(failure||tx.error||new Error('Save transaction aborted'));tx.onerror=()=>{};
     });}
-    let syncRecord=null,syncBusy=false,syncTimer=null;
+    let syncRecord=null,syncBusy=false,syncTimer=null,startupRevisionTimer=null;
     function readSync(){return new Promise((resolve,reject)=>{const r=financeDB.transaction('records').objectStore('records').get('cloudSync');r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
-    function syncStatus(){renderCloudUpdated();storageMessage(syncRecord?.pending?(navigator.onLine?'Saved on device · Waiting to sync':'Saved on device · Offline'):(navigator.onLine?'All changes synced':'Offline · Showing saved records'));}
+    function syncStatus(){renderCloudUpdated();if(window.financeStartupChecking){storageMessage('Saved on device · Checking cloud revision');return;}storageMessage(syncRecord?.pending?(navigator.onLine?'Saved on device · Waiting to sync':'Saved on device · Offline'):(navigator.onLine?'All changes synced':'Offline · Showing saved records'));}
     function renderCloudUpdated(){
       let value=window.financeCloud?.updatedAt?.()||syncRecord?.lastCloudUpdated||null;
       if(value&&!Number.isNaN(Date.parse(value))){try{trackerStorage.setItem('lastCloudUpdated',value);}catch(_){} }
@@ -60,7 +60,7 @@
       const label=document.getElementById('cloudLastUpdated');if(label)label.textContent=value&&!Number.isNaN(Date.parse(value))?'Last sync: '+new Date(value).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}) : 'Last sync: not available yet';
     }
     async function syncCloud(){
-      if(window.financeCloud?.deleting||window.financeCloud?.canEdit===false||window.financeCloud?.accessValid?.()===false||syncBusy||!syncRecord?.pending||!navigator.onLine||cloudSaveBlocked)return;
+      if(window.financeStartupChecking||window.financeCloud?.deleting||window.financeCloud?.canEdit===false||window.financeCloud?.accessValid?.()===false||syncBusy||!syncRecord?.pending||!navigator.onLine||cloudSaveBlocked)return;
       syncBusy=true;
       try{
         await saveQueue;
@@ -75,21 +75,40 @@
         else storageMessage('Saved on device · Sync will retry when connected');
       }finally{syncBusy=false;clearTimeout(syncTimer);if(syncRecord?.pending&&!cloudSaveBlocked)syncTimer=setTimeout(syncCloud,15000);}
     }
+    function readStartupSnapshot(){return new Promise((resolve,reject)=>{
+      const tx=financeDB.transaction('records','readonly'),store=tx.objectStore('records'),values=[];
+      for(const [index,key]of ['current','cloudSync','forceRemoteRead'].entries()){const request=store.get(key);request.onsuccess=()=>{values[index]=request.result||null;};}
+      tx.oncomplete=()=>resolve(values);tx.onabort=()=>reject(tx.error||new Error('Device snapshot could not be read'));
+    });}
     async function loadData(){
       await window.financeCloudReady;
       try{
         financeDB=await openFinanceDB();storageBackend='IndexedDB';
-        const [cached,savedSync]=await Promise.all([readStoredFinance(),readSync()]);storageRevision=cached?.revision||0;syncRecord=savedSync;
-        let envelope;
+        const [cached,savedSync,forceRemote]=await readStartupSnapshot();storageRevision=cached?.revision||0;syncRecord=savedSync;
+        let envelope,openingCached=false,freshCloud=false;
+        window.PFTPerformance?.mark('device-read');
         if(window.financeCloud?.canEdit!==false&&cached&&syncRecord&&(syncRecord.pending||!navigator.onLine))envelope=syncRecord.pending?syncRecord.envelope:{data:cached.data,recovery:syncRecord.envelope?.recovery||null};
-        else try{envelope=await window.financeCloud.load();syncRecord={baseRevision:window.financeCloud.revision(),pending:false,envelope,lastCloudUpdated:window.financeCloud?.updatedAt?.()||null};}
+        else if(!forceRemote&&window.financeCloud?.role==='owner'&&cached&&syncRecord&&window.financeCloud.checkRevision){
+          try{validateBackup(cached.data);envelope={data:cached.data,recovery:syncRecord.envelope?.recovery||null};openingCached=true;window.financeCloud.resume(syncRecord.baseRevision||0);window.financeStartupChecking=true;}catch(_){envelope=await window.financeCloud.load();freshCloud=true;syncRecord={baseRevision:window.financeCloud.revision(),pending:false,envelope,lastCloudUpdated:window.financeCloud?.updatedAt?.()||null};}
+        }
+        else try{envelope=await window.financeCloud.load();freshCloud=true;syncRecord={baseRevision:window.financeCloud.revision(),pending:false,envelope,lastCloudUpdated:window.financeCloud?.updatedAt?.()||null};}
         catch(error){if(window.financeCloud?.role!=='owner'||!cached||!syncRecord)throw error;envelope={data:cached.data,recovery:syncRecord.envelope?.recovery||null};}
         cloudRecovery=envelope?.recovery||null;state=validateBackup(envelope?.data||createEmptyState());
         cloudCommittedState=JSON.parse(JSON.stringify(state));
         if(window.financeCloud?.canEdit!==false){syncStallionPmsFromInvestments();}
-        await commitFinance(state,'Opened cloud account');
+        if(!openingCached||JSON.stringify(state)!==JSON.stringify(cached.data))await commitFinance(state,'Opened cloud account');
+        if(forceRemote&&freshCloud)await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').delete('forceRemoteRead');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+        window.PFTPerformance?.mark(openingCached?'cached-records-ready':'cloud-records-ready');
         lastAccepted=JSON.parse(JSON.stringify(state));initTheme();syncStatus();setTimeout(syncCloud,0);
       }catch(error){storageLoadFailed=true;storageMessage('Records could not be loaded. '+error.message,true);window.financeCloud.lock(error);}
+    }
+    async function verifyStartupRevision(){
+      if(!window.financeStartupChecking||!navigator.onLine||!financeDB)return;
+      clearTimeout(startupRevisionTimer);
+      try{const expected=syncRecord?.baseRevision||0,revision=await window.financeCloud.checkRevision();if(!financeDB)return;window.financeStartupChecking=false;
+        if(revision!==expected){cloudSaveBlocked=true;storageMessage('Saved records · New cloud records need review',true);}
+        else{window.PFTPerformance?.mark('cloud-verified');syncStatus();void syncCloud();}
+      }catch(_){if(financeDB)startupRevisionTimer=setTimeout(verifyStartupRevision,15000);}
     }
     function saveData(action='Update',importedAudit=null,reviewRestore=null){
       if(typeof action!=='string')action='Update';
@@ -113,14 +132,14 @@
         finally{pendingSaves--;}
       });saveQueue=operation;return operation;
     }
-    window.addEventListener('online',()=>{syncCloud();});
+    window.addEventListener('online',()=>{void verifyStartupRevision();syncCloud();});
     window.addEventListener('offline',syncStatus);
     window.financeBridge={
       pendingSync:async()=>{await saveQueue;return Boolean(syncRecord?.pending)||(financeDB?await readPendingCloudSync():false);},
       settle:()=>saveQueue,dirty:()=>persistenceDirty||pendingSaves>0,
-      reset(){clearTimeout(syncTimer);state=createEmptyState();lastAccepted=null;if(financeDB){financeDB.close();financeDB=null;}},
+      reset(){clearTimeout(syncTimer);clearTimeout(startupRevisionTimer);window.financeStartupChecking=false;state=createEmptyState();lastAccepted=null;if(financeDB){financeDB.close();financeDB=null;}},
       exportUnsaved(){const blob=new Blob([JSON.stringify(makeDeviceRecoveryBackup(),null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='finance-unsaved-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},
-      async refreshRemote(){await saveQueue;if(!navigator.onLine){alert('Connect to the internet to refresh cloud records.');return;}if(syncRecord?.pending){if(!confirm('This device has changes waiting to sync. Export a backup first. Replace this device’s pending changes with the latest cloud records?'))return;await window.financeCloud.load();await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').delete('cloudSync');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});}location.reload();},
+      async refreshRemote(){await saveQueue;if(!navigator.onLine){alert('Connect to the internet to refresh cloud records.');return;}if(syncRecord?.pending){if(!confirm('This device has changes waiting to sync. Export a backup first. Replace this device’s pending changes with the latest cloud records?'))return;await window.financeCloud.load();await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').delete('cloudSync');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});}await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').put(true,'forceRemoteRead');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});location.reload();},
       async retry(){await saveQueue;await syncCloud();}
     };
 

@@ -35,3 +35,5 @@
     #cloudAccountLabel{overflow-wrap:anywhere;font-size:13px;}
     #cloudSyncStatus{font-size:12px;color:var(--text-light);margin:4px 0 0;}
   
+/* Session restoration does not need the sign-in illustration. */
+body.cloud-loading #cloudGate{background-image:none}

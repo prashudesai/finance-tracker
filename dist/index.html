@@ -3,35 +3,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="./app-info.js?v=66"></script>
-  <script src="./loan-ledger.js?v=66"></script>
-  <script src="./recurring.js?v=66"></script>
-  <script src="./recurring-ui.js?v=66"></script>
-  <script defer src="./vendor/jspdf.umd.min.js"></script>
-  <script defer src="./pwa-client.js?v=66"></script>
-  <script defer src="./tracker-enhancements.js?v=66"></script>
-  <link rel="stylesheet" href="./tracker-enhancements.css?v=66">
+  <script src="./assets/boot.96e94a706c99fb12.js"></script>
+  <script defer src="./assets/app-info.0224324438dfd0e8.js"></script>
+  <script defer src="./assets/loan-ledger.68deb1413e30aa08.js"></script>
+  <script defer src="./assets/recurring.21005de2ca263681.js"></script>
+  <script defer src="./assets/recurring-ui.7063af9db85dae04.js"></script>
+  <script defer src="./assets/pwa-client.413a672c4e71a741.js"></script>
+  <script defer src="./assets/tracker-enhancements.ba92144a1f121614.js"></script>
+  <link rel="stylesheet" href="./assets/tracker-enhancements.2898ff9bcb30e400.css">
   <title>Personal Finance Tracker</title>
   <meta name="theme-color" content="#0d2927">
-  <link rel="preload" as="image" href="./images/signin-light-desktop.webp" media="(min-width:761px)">
-  <link rel="preload" as="image" href="./images/signin-light-mobile.webp" media="(max-width:760px)">
   <meta name="description" content="A private personal finance tracker with Google sign-in and cloud saving.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
-  <link rel="stylesheet" href="./runtime/legacy-1.css?v=80">
+  <link rel="stylesheet" href="./assets/legacy-1.e3b790b2ba002e59.css">
   <!-- Bundled Chart.js 3.9.1 (MIT): charts remain available when offline. -->
-  <script src="./runtime/chart-3.9.1.js?v=80"></script>
 
-  <script src="./runtime/bootstrap-2.js?v=80"></script>
-  <script type="module" src="./firebase-client.js?v=66" onerror="document.body.classList.remove('cloud-loading');document.getElementById('cloudLogin').disabled=true;document.getElementById('cloudMessage').textContent='Unable to load the sign-in service. Connect to the internet and reload.'"></script>
-  <link rel="stylesheet" href="./runtime/legacy-2.css?v=80">
+  <script defer src="./assets/bootstrap-2.d146d9c1acc0d967.js"></script>
+  <script type="module" src="./assets/firebase-client.25dc205e90990c9d.js" onerror="document.body.classList.remove('cloud-loading');document.getElementById('cloudLogin').disabled=true;document.getElementById('cloudMessage').textContent='Unable to load the sign-in service. Connect to the internet and reload.'"></script>
+  <link rel="stylesheet" href="./assets/legacy-2.9cbb5af1c73898b1.css">
 
 
-  <link rel="stylesheet" href="./runtime/legacy-3.css?v=80">
-<link rel="stylesheet" href="./runtime/legacy-4.css?v=80">
-  <link rel="stylesheet" href="./app-style.css?v=66">
-  <script defer src="./app-style.js?v=66"></script>
+  <link rel="stylesheet" href="./assets/legacy-3.da8e96c8d3a1dcce.css">
+<link rel="stylesheet" href="./assets/legacy-4.453862e3306d6301.css">
+  <link rel="stylesheet" href="./assets/app-style.4d2dca3618dfebbc.css">
+  <link rel="stylesheet" href="./assets/workbench.2874805f42ef7d1d.css">
+  <link rel="stylesheet" href="./assets/cash-flow.e26234543432d2e9.css">
+  <link rel="stylesheet" href="./assets/print.7aa8f0c59a63dd9c.css" media="print">
+  <script defer src="./assets/app-style.7a3ec5581340affc.js"></script>
 </head>
 <body class="cloud-pending cloud-loading">
   <section id="cloudGate" aria-label="Account access"><span id="cloudLoadingIndicator" role="status" aria-label="Loading tracker"></span><div class="cloud-login-layout">
@@ -58,7 +58,7 @@
       <button id="firstNameContinue" type="submit">Continue</button>
     </form>
   </section>
-  <div class="container">
+  <div class="container" role="main" id="trackerMain" tabindex="-1">
     <header>
       <div>
         <h1> Personal Finance Tracker</h1>
@@ -1322,7 +1322,7 @@
   <div id="investmentCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="investmentCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="investmentCategoryDialogTitle"></h2><p id="investmentCategoryDialogSubtitle"></p></div><button type="button" class="investment-category-dialog-close" data-close-investment-category-dialog aria-label="Close investment details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Portfolio summary</h3><div id="investmentCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Holdings and actions</h3><div id="investmentCategoryDialogTable"></div></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-investment-category-dialog>Done</button></footer></div></div>
     <div id="retirementCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="retirementCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="retirementCategoryDialogTitle"></h2><p id="retirementCategoryDialogSubtitle"></p></div><div id="retirementCategoryDialogActions" class="retirement-account-actions"></div><button type="button" class="investment-category-dialog-close" data-close-retirement-category-dialog aria-label="Close retirement account details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Account summary</h3><div id="retirementCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Accounts and actions</h3><div id="retirementCategoryDialogTable"></div><p id="retirementCategoryDialogNote" class="retirement-account-help"></p></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-retirement-category-dialog>Done</button></footer></div></div>
 
-  <script src="./runtime/app-core.js?v=80"></script>
+  <script defer src="./assets/app-core.71e2208e5577b87c.js"></script>
 
 
 </body>

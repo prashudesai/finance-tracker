@@ -23,7 +23,7 @@
     const layoutStyle=style==='classic'?'classic':'modern';
     if(typeof closeEntryFormModal==='function'&&!document.getElementById('entryFormModal')?.hidden)closeEntryFormModal();
     root.dataset.appStyle=layoutStyle;
-    root.dataset.layoutStyle=style;
+    root.dataset.layoutStyle=style;window.PFTPaint?.remember();
     if(persist){try{window.trackerStorage.setItem(key,style);}catch(_){/* The layout still applies to this session. */}}
     controls?.querySelectorAll('[data-app-style-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.appStyleChoice===style)));
     const labels={modern:'Style 1 · Modern',classic:'Style 2 · Classic','emerald-flow':'Style 3 · Emerald Flow'};
@@ -40,7 +40,7 @@
     header.children[0].after(brand);
     nav=document.createElement('nav');nav.className='pft-style-navigation';nav.setAttribute('aria-label','Main tracker pages');
     for(const [id,label,short,path] of pages){
-      const b=document.createElement('button');b.type='button';b.dataset.stylePage=id;b.setAttribute('aria-label',label);b.title=label;
+      const b=document.createElement('button');b.type='button';b.dataset.stylePage=id;b.setAttribute('aria-label',label===short?label:short+' · '+label);b.title=label;
       b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+path+'</svg><span class="pft-desktop-label"></span><span class="pft-mobile-label"></span>';
       b.querySelector('.pft-desktop-label').textContent=label;b.querySelector('.pft-mobile-label').textContent=short;
       b.addEventListener('click',()=>openPage(id));nav.append(b);
@@ -74,6 +74,7 @@
     applyStyle(saved,false);
     window.PFT_STYLE={apply:applyStyle,get current(){return root.dataset.layoutStyle||root.dataset.appStyle;}};
   }
+  window.addEventListener('pft:before-reveal',install);
   Promise.resolve(window.trackerReady).then(()=>{if(window.financeCloud)install();}).catch(()=>{});
 })();
 
@@ -132,5 +133,6 @@
  }
  function styleCharts(active){if(!window.Chart?.instances)return;for(const chart of Object.values(window.Chart.instances)){if(!charts.has(chart))charts.set(chart,{type:chart.config.type,cutout:chart.options.cutout,animation:chart.options.animation,legend:chart.options.plugins?.legend?.position,datasets:chart.data.datasets.map(d=>({borderRadius:d.borderRadius,barPercentage:d.barPercentage,categoryPercentage:d.categoryPercentage}))});const previous=charts.get(chart);chart.config.type=active&&previous.type==='pie'?'doughnut':previous.type;if(previous.type==='pie')chart.options.cutout=active?'68%':previous.cutout;chart.options.animation=active?false:previous.animation;chart.data.datasets.forEach((d,i)=>{const old=previous.datasets[i];if(chart.config.type==='bar'){d.borderRadius=active?7:old?.borderRadius;d.barPercentage=active?0.72:old?.barPercentage;d.categoryPercentage=active?0.72:old?.categoryPercentage;}});if(chart.options.plugins?.legend)chart.options.plugins.legend.position=active?'bottom':previous.legend;chart.update('none');}}
  function apply(){const next=root.dataset.layoutStyle==='emerald-flow';if(next===enabled)return;if(typeof closeEntryFormModal==='function'&&!$('#entryFormModal')?.hidden)closeEntryFormModal();enabled=next;if(next){for(const m of moves)m.dest.append(m.node);spaces.forEach(s=>s.hidden=false);draw();}else{for(const m of [...moves].reverse())if(m.anchor.parentNode)m.anchor.after(m.node);spaces.forEach(s=>s.hidden=true);}styleCharts(next);requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));}
- Promise.resolve(window.trackerReady).then(()=>{if(!window.financeCloud)return;build();new MutationObserver(apply).observe(root,{attributes:true,attributeFilter:['data-layout-style']});apply();});
+ let built=false;function prepare(){if(built||!window.financeCloud)return;built=true;build();new MutationObserver(apply).observe(root,{attributes:true,attributeFilter:['data-layout-style']});apply();}
+ window.addEventListener('pft:before-reveal',prepare);Promise.resolve(window.trackerReady).then(prepare);
 })();

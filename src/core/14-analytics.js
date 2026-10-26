@@ -1,3 +1,11 @@
+    const chartLibraryCallbacks=new Set();
+    let chartLibraryPromise=null;
+    function requestChartLibrary(render){
+      if(!window.PFTLoadScript)return;
+      chartLibraryCallbacks.add(render);if(chartLibraryPromise)return;
+      chartLibraryPromise=window.PFTLoadScript('chart').then(()=>{const callbacks=[...chartLibraryCallbacks];chartLibraryCallbacks.clear();chartLibraryPromise=null;document.getElementById('chartLoadError')?.remove();for(const fn of callbacks)fn();}).catch(()=>{chartLibraryCallbacks.clear();chartLibraryPromise=null;let notice=document.getElementById('chartLoadError');if(!notice){notice=document.createElement('div');notice.id='chartLoadError';notice.className='info-box';notice.setAttribute('role','status');const button=document.createElement('button');button.type='button';button.textContent='Retry charts';button.onclick=()=>requestChartLibrary(()=>{const active=document.querySelector('.nav-tab.active')?.dataset.tab;active==='growth-projection'?renderGrowthProjection({preserveAssumptions:true}):renderCharts();});notice.append('Charts could not load. Your records are still available. ',button);document.querySelector('.tab-content.active')?.prepend(notice);}});
+    }
+
     // CHARTS & ANALYTICS
     let chartInstances = {};
 
@@ -15,8 +23,7 @@
     function renderCharts() {
       try {
         if (typeof Chart === 'undefined') {
-          console.warn(' Chart.js not loaded yet, retrying in 500ms...');
-          setTimeout(() => renderCharts(), 500);
+          requestChartLibrary(renderCharts);
           return;
         }
         

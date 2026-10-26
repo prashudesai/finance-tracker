@@ -15,3 +15,8 @@ Compared with commit 0e25514490e49f0bd7de8558bed985364870c75b. Two run orders pr
 Monthly review is faster in both orders. Other timings are mixed, so no general startup/navigation/save speed improvement is claimed. The additional backup coordination is primarily a correctness change. Raw samples, separate run orders and environmental limitations are recorded in PERFORMANCE_RESULTS.json.
 
 To reproduce, check out the baseline separately and set PFT_PERF_BASELINE_DIR to its dist directory, then run npm run test:performance. Repeat with PFT_PERF_ORDER=after-first. Use the same browser/device and avoid concurrent heavy work. Actual Android/iPhone timing, keyboard and assistive-technology checks remain manual-device work.
+
+
+## Pending Lighthouse startup improvements
+
+See LIGHTHOUSE_IMPROVEMENTS.md and STARTUP_PERFORMANCE_RESULTS.json for the controlled cold/return-navigation comparison against Cash Flow commit 6bc2453. These measurements use an isolated local fixture and do not replace a post-deployment Lighthouse run.

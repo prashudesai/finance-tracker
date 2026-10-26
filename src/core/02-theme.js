@@ -33,7 +33,7 @@
       if (safeKey === 'arctic-glass') vars['card-bg'] = mode === 'dark' ? 'rgba(8, 51, 68, .88)' : 'rgba(255, 255, 255, .88)';
       else htmlElement.style.removeProperty('--card-bg');
       Object.entries(vars).forEach(([name,value]) => htmlElement.style.setProperty(`--${name}`,value));
-      htmlElement.setAttribute('data-color-theme',safeKey);
+      htmlElement.setAttribute('data-color-theme',safeKey);window.PFTPaint?.remember();
       themeOptions?.querySelectorAll('.theme-choice').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.themeKey===safeKey)));
       if (persist) { try { trackerStorage.setItem(COLOR_THEME_KEY,safeKey); } catch (error) { /* Theme still changes for this session. */ } }
     }

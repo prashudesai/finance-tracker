@@ -25,7 +25,8 @@ export async function initializeFamilyAccess(db,user,lock){
     ]);
     incoming=received.docs.map(d=>({id:d.id,...d.data()}));members=owned.docs.map(d=>({id:d.id,...d.data()}));
   }
-  try{await reloadLists();}catch(e){listError=e.message;}
+  let returningOwner=false;try{returningOwner=selected===user.uid&&localStorage.getItem(key)===user.uid;}catch(_){}
+  if(!returningOwner){try{await reloadLists();}catch(e){listError=e.message;}}
   const own={ownerUid:user.uid,ownerEmail:email,role:'owner',status:'accepted'};
   let active=own;
   if(selected!==user.uid){
@@ -96,6 +97,7 @@ export async function initializeFamilyAccess(db,user,lock){
   document.getElementById('familyAccessRefresh').onclick=async()=>{try{listError='';await reloadLists();render();status.textContent='Family Access refreshed.';}catch(e){status.textContent=e.message;}};
   document.getElementById('familyInviteForm').onsubmit=async event=>{event.preventDefault();const button=document.getElementById('familyInviteSubmit');button.disabled=true;try{await grant(document.getElementById('familyInviteEmail').value,document.getElementById('familyInviteRole').value);document.getElementById('familyInviteEmail').value='';status.textContent='Invitation created. Ask this member to open the same website and sign in with that Google email. No email message is sent.';}catch(e){status.textContent=e.message;}finally{button.disabled=false;}};
   render();
+  if(active.role==='owner'){try{localStorage.setItem(key,user.uid);}catch(_){}if(returningOwner)setTimeout(()=>reloadLists().then(()=>{listError='';render();}).catch(error=>{listError=error.message;render();}),0);}
   let accessValid=true;
   if(active.role!=='owner'){
     onSnapshot(doc(db,'familyInvites',inviteDocumentId(active.ownerUid,email)),snapshot=>{

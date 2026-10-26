@@ -581,7 +581,7 @@
       infoPanel.innerHTML='<h2>App info</h2><p>Your family finance tracker: features and calculation guide.</p><button type="button" id="downloadAppInfoPdf">Download PDF</button><p id="appInfoPdfStatus" role="status"></p>';
       for(const [title,body] of window.PFT_APP_INFO.sections){const heading=document.createElement('h3'),text=document.createElement('p');heading.textContent=title;text.textContent=body;infoPanel.append(heading,text);}
       parking.append(infoPanel);
-      infoPanel.querySelector('button').addEventListener('click',()=>{try{window.downloadTrackerGuide();document.getElementById('appInfoPdfStatus').textContent='PDF downloaded.';}catch(error){document.getElementById('appInfoPdfStatus').textContent=error.message;}});
+      infoPanel.querySelector('button').addEventListener('click',async()=>{const button=infoPanel.querySelector('button');button.disabled=true;document.getElementById('appInfoPdfStatus').textContent='Preparing PDF…';try{await window.downloadTrackerGuide();document.getElementById('appInfoPdfStatus').textContent='PDF downloaded.';}catch(error){document.getElementById('appInfoPdfStatus').textContent=error.message;}finally{button.disabled=false;}});
       const tiles=[
         ['settingsInfoPanel','App info','Features, calculations and PDF guide','<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/>'],
         ['settingsAccountPanel','Account','Signed-in account and Delete Dashboard','<circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>'],
@@ -1130,7 +1130,7 @@
       if (safeKey === 'arctic-glass') vars['card-bg'] = mode === 'dark' ? 'rgba(8, 51, 68, .88)' : 'rgba(255, 255, 255, .88)';
       else htmlElement.style.removeProperty('--card-bg');
       Object.entries(vars).forEach(([name,value]) => htmlElement.style.setProperty(`--${name}`,value));
-      htmlElement.setAttribute('data-color-theme',safeKey);
+      htmlElement.setAttribute('data-color-theme',safeKey);window.PFTPaint?.remember();
       themeOptions?.querySelectorAll('.theme-choice').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.themeKey===safeKey)));
       if (persist) { try { trackerStorage.setItem(COLOR_THEME_KEY,safeKey); } catch (error) { /* Theme still changes for this session. */ } }
     }
@@ -1230,9 +1230,9 @@
       };
       tx.onabort=()=>reject(failure||tx.error||new Error('Save transaction aborted'));tx.onerror=()=>{};
     });}
-    let syncRecord=null,syncBusy=false,syncTimer=null;
+    let syncRecord=null,syncBusy=false,syncTimer=null,startupRevisionTimer=null;
     function readSync(){return new Promise((resolve,reject)=>{const r=financeDB.transaction('records').objectStore('records').get('cloudSync');r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
-    function syncStatus(){renderCloudUpdated();storageMessage(syncRecord?.pending?(navigator.onLine?'Saved on device · Waiting to sync':'Saved on device · Offline'):(navigator.onLine?'All changes synced':'Offline · Showing saved records'));}
+    function syncStatus(){renderCloudUpdated();if(window.financeStartupChecking){storageMessage('Saved on device · Checking cloud revision');return;}storageMessage(syncRecord?.pending?(navigator.onLine?'Saved on device · Waiting to sync':'Saved on device · Offline'):(navigator.onLine?'All changes synced':'Offline · Showing saved records'));}
     function renderCloudUpdated(){
       let value=window.financeCloud?.updatedAt?.()||syncRecord?.lastCloudUpdated||null;
       if(value&&!Number.isNaN(Date.parse(value))){try{trackerStorage.setItem('lastCloudUpdated',value);}catch(_){} }
@@ -1240,7 +1240,7 @@
       const label=document.getElementById('cloudLastUpdated');if(label)label.textContent=value&&!Number.isNaN(Date.parse(value))?'Last sync: '+new Date(value).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}) : 'Last sync: not available yet';
     }
     async function syncCloud(){
-      if(window.financeCloud?.deleting||window.financeCloud?.canEdit===false||window.financeCloud?.accessValid?.()===false||syncBusy||!syncRecord?.pending||!navigator.onLine||cloudSaveBlocked)return;
+      if(window.financeStartupChecking||window.financeCloud?.deleting||window.financeCloud?.canEdit===false||window.financeCloud?.accessValid?.()===false||syncBusy||!syncRecord?.pending||!navigator.onLine||cloudSaveBlocked)return;
       syncBusy=true;
       try{
         await saveQueue;
@@ -1255,21 +1255,40 @@
         else storageMessage('Saved on device · Sync will retry when connected');
       }finally{syncBusy=false;clearTimeout(syncTimer);if(syncRecord?.pending&&!cloudSaveBlocked)syncTimer=setTimeout(syncCloud,15000);}
     }
+    function readStartupSnapshot(){return new Promise((resolve,reject)=>{
+      const tx=financeDB.transaction('records','readonly'),store=tx.objectStore('records'),values=[];
+      for(const [index,key]of ['current','cloudSync','forceRemoteRead'].entries()){const request=store.get(key);request.onsuccess=()=>{values[index]=request.result||null;};}
+      tx.oncomplete=()=>resolve(values);tx.onabort=()=>reject(tx.error||new Error('Device snapshot could not be read'));
+    });}
     async function loadData(){
       await window.financeCloudReady;
       try{
         financeDB=await openFinanceDB();storageBackend='IndexedDB';
-        const [cached,savedSync]=await Promise.all([readStoredFinance(),readSync()]);storageRevision=cached?.revision||0;syncRecord=savedSync;
-        let envelope;
+        const [cached,savedSync,forceRemote]=await readStartupSnapshot();storageRevision=cached?.revision||0;syncRecord=savedSync;
+        let envelope,openingCached=false,freshCloud=false;
+        window.PFTPerformance?.mark('device-read');
         if(window.financeCloud?.canEdit!==false&&cached&&syncRecord&&(syncRecord.pending||!navigator.onLine))envelope=syncRecord.pending?syncRecord.envelope:{data:cached.data,recovery:syncRecord.envelope?.recovery||null};
-        else try{envelope=await window.financeCloud.load();syncRecord={baseRevision:window.financeCloud.revision(),pending:false,envelope,lastCloudUpdated:window.financeCloud?.updatedAt?.()||null};}
+        else if(!forceRemote&&window.financeCloud?.role==='owner'&&cached&&syncRecord&&window.financeCloud.checkRevision){
+          try{validateBackup(cached.data);envelope={data:cached.data,recovery:syncRecord.envelope?.recovery||null};openingCached=true;window.financeCloud.resume(syncRecord.baseRevision||0);window.financeStartupChecking=true;}catch(_){envelope=await window.financeCloud.load();freshCloud=true;syncRecord={baseRevision:window.financeCloud.revision(),pending:false,envelope,lastCloudUpdated:window.financeCloud?.updatedAt?.()||null};}
+        }
+        else try{envelope=await window.financeCloud.load();freshCloud=true;syncRecord={baseRevision:window.financeCloud.revision(),pending:false,envelope,lastCloudUpdated:window.financeCloud?.updatedAt?.()||null};}
         catch(error){if(window.financeCloud?.role!=='owner'||!cached||!syncRecord)throw error;envelope={data:cached.data,recovery:syncRecord.envelope?.recovery||null};}
         cloudRecovery=envelope?.recovery||null;state=validateBackup(envelope?.data||createEmptyState());
         cloudCommittedState=JSON.parse(JSON.stringify(state));
         if(window.financeCloud?.canEdit!==false){syncStallionPmsFromInvestments();}
-        await commitFinance(state,'Opened cloud account');
+        if(!openingCached||JSON.stringify(state)!==JSON.stringify(cached.data))await commitFinance(state,'Opened cloud account');
+        if(forceRemote&&freshCloud)await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').delete('forceRemoteRead');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+        window.PFTPerformance?.mark(openingCached?'cached-records-ready':'cloud-records-ready');
         lastAccepted=JSON.parse(JSON.stringify(state));initTheme();syncStatus();setTimeout(syncCloud,0);
       }catch(error){storageLoadFailed=true;storageMessage('Records could not be loaded. '+error.message,true);window.financeCloud.lock(error);}
+    }
+    async function verifyStartupRevision(){
+      if(!window.financeStartupChecking||!navigator.onLine||!financeDB)return;
+      clearTimeout(startupRevisionTimer);
+      try{const expected=syncRecord?.baseRevision||0,revision=await window.financeCloud.checkRevision();if(!financeDB)return;window.financeStartupChecking=false;
+        if(revision!==expected){cloudSaveBlocked=true;storageMessage('Saved records · New cloud records need review',true);}
+        else{window.PFTPerformance?.mark('cloud-verified');syncStatus();void syncCloud();}
+      }catch(_){if(financeDB)startupRevisionTimer=setTimeout(verifyStartupRevision,15000);}
     }
     function saveData(action='Update',importedAudit=null,reviewRestore=null){
       if(typeof action!=='string')action='Update';
@@ -1293,14 +1312,14 @@
         finally{pendingSaves--;}
       });saveQueue=operation;return operation;
     }
-    window.addEventListener('online',()=>{syncCloud();});
+    window.addEventListener('online',()=>{void verifyStartupRevision();syncCloud();});
     window.addEventListener('offline',syncStatus);
     window.financeBridge={
       pendingSync:async()=>{await saveQueue;return Boolean(syncRecord?.pending)||(financeDB?await readPendingCloudSync():false);},
       settle:()=>saveQueue,dirty:()=>persistenceDirty||pendingSaves>0,
-      reset(){clearTimeout(syncTimer);state=createEmptyState();lastAccepted=null;if(financeDB){financeDB.close();financeDB=null;}},
+      reset(){clearTimeout(syncTimer);clearTimeout(startupRevisionTimer);window.financeStartupChecking=false;state=createEmptyState();lastAccepted=null;if(financeDB){financeDB.close();financeDB=null;}},
       exportUnsaved(){const blob=new Blob([JSON.stringify(makeDeviceRecoveryBackup(),null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='finance-unsaved-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},
-      async refreshRemote(){await saveQueue;if(!navigator.onLine){alert('Connect to the internet to refresh cloud records.');return;}if(syncRecord?.pending){if(!confirm('This device has changes waiting to sync. Export a backup first. Replace this device’s pending changes with the latest cloud records?'))return;await window.financeCloud.load();await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').delete('cloudSync');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});}location.reload();},
+      async refreshRemote(){await saveQueue;if(!navigator.onLine){alert('Connect to the internet to refresh cloud records.');return;}if(syncRecord?.pending){if(!confirm('This device has changes waiting to sync. Export a backup first. Replace this device’s pending changes with the latest cloud records?'))return;await window.financeCloud.load();await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').delete('cloudSync');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});}await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').put(true,'forceRemoteRead');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});location.reload();},
       async retry(){await saveQueue;await syncCloud();}
     };
 
@@ -1958,7 +1977,12 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       downloadLoanHistory('\ufeff'+lines.join('\r\n'),'text/csv;charset=utf-8','csv');
     }
     function saveLoanHistoryPdf(){
-      if(!window.jspdf?.jsPDF){alert('The PDF service is still loading. Please try again.');return;}
+      if(!window.jspdf?.jsPDF){
+        if(saveLoanHistoryPdf.loading)return saveLoanHistoryPdf.loading;
+        const modal=document.getElementById('debtEmiHistoryModal'),selected=modal.dataset.loanId,button=document.getElementById('debtEmiHistoryPdf'),label=button?.textContent;
+        if(button){button.disabled=true;button.textContent='Loading PDF…';}
+        saveLoanHistoryPdf.loading=window.PFTLoadScript('pdf').then(()=>{saveLoanHistoryPdf.loading=null;if(!modal.hidden&&modal.dataset.loanId===selected)saveLoanHistoryPdf();}).catch(error=>{saveLoanHistoryPdf.loading=null;if(!modal.hidden&&modal.dataset.loanId===selected)alert(error.message);}).finally(()=>{if(button){button.disabled=false;button.textContent=label;}});return saveLoanHistoryPdf.loading;
+      }
       const debt=allAccounts('debts').find(row=>row.id===document.getElementById('debtEmiHistoryModal').dataset.loanId),title=`${debt?.type||'Loan'} Payment History`,pdf=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),rows=loanHistoryOrdered(true),columns=[['Date',22],['Entry',36],['Amount / Debit',28],['Interest',24],['Principal / Credit',31],['Balance',29],['Notes / Description',119]];let page=1,y=18;
       const header=()=>{pdf.setFont('helvetica','bold');pdf.setFontSize(13);pdf.text(title,5,10);pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text('Oldest to newest · Generated '+new Date().toLocaleDateString('en-IN'),5,15);let x=5;pdf.setFillColor(232,242,241);pdf.setDrawColor(180);for(const [label,width] of columns){pdf.rect(x,y,width,7,'FD');pdf.text(label,x+1.2,y+4.8);x+=width;}y+=7;};
       const newPage=()=>{pdf.addPage();page++;y=18;header();pdf.setFontSize(7);};header();pdf.setFont('helvetica','normal');pdf.setFontSize(7);
@@ -4724,6 +4748,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`wealth-report-${report.start}-to-${report.end}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     }
 
+    const chartLibraryCallbacks=new Set();
+    let chartLibraryPromise=null;
+    function requestChartLibrary(render){
+      if(!window.PFTLoadScript)return;
+      chartLibraryCallbacks.add(render);if(chartLibraryPromise)return;
+      chartLibraryPromise=window.PFTLoadScript('chart').then(()=>{const callbacks=[...chartLibraryCallbacks];chartLibraryCallbacks.clear();chartLibraryPromise=null;document.getElementById('chartLoadError')?.remove();for(const fn of callbacks)fn();}).catch(()=>{chartLibraryCallbacks.clear();chartLibraryPromise=null;let notice=document.getElementById('chartLoadError');if(!notice){notice=document.createElement('div');notice.id='chartLoadError';notice.className='info-box';notice.setAttribute('role','status');const button=document.createElement('button');button.type='button';button.textContent='Retry charts';button.onclick=()=>requestChartLibrary(()=>{const active=document.querySelector('.nav-tab.active')?.dataset.tab;active==='growth-projection'?renderGrowthProjection({preserveAssumptions:true}):renderCharts();});notice.append('Charts could not load. Your records are still available. ',button);document.querySelector('.tab-content.active')?.prepend(notice);}});
+    }
+
     // CHARTS & ANALYTICS
     let chartInstances = {};
 
@@ -4741,8 +4773,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     function renderCharts() {
       try {
         if (typeof Chart === 'undefined') {
-          console.warn(' Chart.js not loaded yet, retrying in 500ms...');
-          setTimeout(() => renderCharts(), 500);
+          requestChartLibrary(renderCharts);
           return;
         }
         
@@ -5760,6 +5791,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const todayLabel=`Today · ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
       const labelsForChart=[todayLabel,...baseRows.map(row=>financialYearLabel(row.fyStart))];
       const chartData={labels:labelsForChart,datasets:['stress','base','optimistic'].map(scenario=>({label:labels[scenario],data:[Math.round(current),...projections[scenario].rows.map(row=>Math.round(row.closing))],borderColor:colors[scenario],backgroundColor:scenario==='base'?'rgba(37,99,235,.10)':'transparent',borderWidth:scenario==='base'?3.25:2.75,pointRadius:3,pointHoverRadius:7,pointHitRadius:18,tension:.35,fill:scenario==='base'?'origin':false}))};
+      if(typeof Chart==='undefined')requestChartLibrary(()=>renderGrowthProjection({preserveAssumptions:true}));
       if(typeof Chart!=='undefined'){
         if(growthProjectionChartInstance)growthProjectionChartInstance.destroy();
         growthProjectionChartInstance=new Chart(document.getElementById('growthProjectionChart'),{type:'line',data:chartData,plugins:[{id:'growthProjectionLightPlot',beforeDraw(chart){const area=chart.chartArea;if(!area)return;const ctx=chart.ctx;ctx.save();ctx.fillStyle='#ffffff';ctx.fillRect(area.left,area.top,area.right-area.left,area.bottom-area.top);ctx.restore();}}],options:{responsive:true,interaction:{mode:'nearest',intersect:false,axis:'xy'},plugins:{legend:{position:'bottom',labels:{color:'#334155',usePointStyle:true,pointStyle:'line',padding:20,font:{size:12}}},analyticLabels:{display:false},tooltip:{enabled:false}},scales:{x:{title:{display:true,text:'Financial year from today',color:'#475569',padding:{top:6}},ticks:{color:'#475569',maxRotation:0,autoSkip:true},grid:{color:'rgba(100,116,139,.08)',borderDash:[3,6],drawBorder:false}},y:{beginAtZero:false,title:{display:true,text:includeGratuityBalance?'Value incl. gratuity (₹ Lakhs)':'Value (₹ Lakhs)',color:'#475569',padding:{bottom:6}},ticks:{color:'#475569',callback:value=>formatProjectionLakh(value)},grid:{color:'rgba(100,116,139,.16)',borderDash:[5,6],drawBorder:false}}}}});
@@ -6498,7 +6530,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     setupInlineCustomValues();
     
     document.querySelector('.container').inert=true;
-    window.trackerReady=(async()=>{
+    const trackerStartup=(async()=>{
     await loadData();
     if(storageLoadFailed)return;
     populateCustomValueSelects();initializeFamilyProfile();populateReportFinancialYears();
@@ -6516,7 +6548,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
 
 
-    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();document.querySelector('.container').inert=false;window.financeCloud.showApp();await setupFirstName();applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
+    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();window.dispatchEvent(new Event('pft:before-reveal'));window.PFTPerformance?.mark('layout-ready');document.querySelector('.container').inert=false;window.financeCloud.showApp();window.PFTPerformance?.mark('visible');window.dispatchEvent(new Event('pft:visible'));void verifyStartupRevision();await setupFirstName();applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
+    if(window.PFTResolveTrackerReady)trackerStartup.then(window.PFTResolveTrackerReady);else window.trackerReady=trackerStartup;
 
     const tableSortChoices = {};
     try { Object.assign(tableSortChoices, JSON.parse(trackerStorage.getItem('familyWealthTableSort') || '{}')); } catch (error) { /* Defaults if storage unavailable. */ }

@@ -1,5 +1,5 @@
 
-    window.financeCloudReady=new Promise(resolve=>{window.financeCloudResolve=resolve;});
+    window.financeCloudReady=window.financeCloudReady||new Promise(resolve=>{window.financeCloudResolve=resolve;});
     window.trackerStorage={
       key(key){const uid=window.financeCloud?.uid;if(!uid)throw new Error('Sign in before storing tracker data.');return 'pft:'+uid+':'+key;},
       getItem(key){if(!window.financeCloud?.uid)return null;return localStorage.getItem(this.key(key));},

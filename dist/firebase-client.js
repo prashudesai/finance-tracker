@@ -1,6 +1,6 @@
 import {installCashFlow} from './cash-flow.js?v=86';
 import {initializeApp} from './vendor/firebase-app.js';
-import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
+import {initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence,browserPopupRedirectResolver,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
 import {getFirestore,doc,getDocFromServer,writeBatch,runTransaction,onSnapshot,serverTimestamp} from './vendor/firebase-firestore.js';
 import {installReviewSync} from './review-sync.js?v=83';
 import {reviewValues,applyReviewPatch,validateReviewRestore} from './review-model.js?v=83';
@@ -15,7 +15,7 @@ import {initializeFamilyAccess} from './family-access.js?v=66';
 import {initializeAccountPhoto} from './account-photo.js?v=66';
 import {createCloudStore} from './firebase-store.js?v=66';
 const config={apiKey:'AIzaSyBYhF_dyyOSyHyGletR58W7bYlL0xw8dQk',authDomain:'finance-tracker-bc7c9.firebaseapp.com',projectId:'finance-tracker-bc7c9',storageBucket:'finance-tracker-bc7c9.firebasestorage.app',messagingSenderId:'720970373789',appId:'1:720970373789:web:bb792be22a462f359cd274'};
-const app=initializeApp(config),auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider();
+const app=initializeApp(config),auth=initializeAuth(app,{persistence:[indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence]}),db=getFirestore(app),provider=new GoogleAuthProvider();
 provider.setCustomParameters({prompt:'select_account'});
 const gate=document.getElementById('cloudGate'),message=document.getElementById('cloudMessage'),login=document.getElementById('cloudLogin');
 const accountLabel=document.getElementById('cloudAccountLabel');
@@ -30,7 +30,7 @@ function friendly(error){
 }
 login.addEventListener('click',async()=>{
   login.disabled=true;message.textContent='Opening Google sign-in…';
-  try{await signInWithPopup(auth,provider);}
+  try{await signInWithPopup(auth,provider,browserPopupRedirectResolver);}
   catch(error){
     if(error.code==='auth/popup-closed-by-user'||error.code==='auth/cancelled-popup-request'){message.textContent='Sign-in cancelled. You can try again.';login.disabled=false;}
     else showError(error);
@@ -55,9 +55,12 @@ onAuthStateChanged(auth,async user=>{
     if(user?.uid!==initialUid){window.financeBridge?.reset();location.reload();}
     return;
   }
-  if(!user){document.body.classList.remove('cloud-loading');login.hidden=false;message.textContent='';login.disabled=false;return;}
+  if(!user){document.body.classList.remove('cloud-loading');window.dispatchEvent(new Event('pft:signed-out'));login.hidden=false;message.textContent='';login.disabled=false;return;}
+  window.PFTPerformance?.mark('auth-ready');
   initialUid=user.uid;document.body.classList.add('cloud-loading');login.hidden=true;message.textContent='Opening your tracker…';
   let family;try{family=await initializeFamilyAccess(db,user,lock);}catch(error){lock(error);return;}
+  window.PFTPerformance?.mark('access-ready');
+  window.addEventListener('pft:before-reveal',()=>installCashFlow(),{once:true});
   const assertAccess=()=>{if(!family.accessValid())throw new Error('Family access changed. Reload.');};
   const api={
     currentUid:()=>auth.currentUser?.uid,
@@ -80,7 +83,7 @@ onAuthStateChanged(auth,async user=>{
   const store=createCloudStore(api,family.ownerUid,user.uid);
   // Read-only comparisons use a separate store so their load cannot change the writer revision.
   const inspect=()=>{assertAccess();return createCloudStore(api,family.ownerUid,user.uid).load();};
-  window.financeCloud={uid:family.role==='owner'?user.uid:'shared:'+user.uid+'|'+family.ownerUid+'|'+family.role,ownerUid:family.ownerUid,ownerEmail:family.ownerEmail,inspect,email:user.email||'',role:family.role,canEdit:family.canEdit,canManage:family.canManage,accessValid:family.accessValid,displayName:user.displayName||'',load:store.load,save:(envelope,options)=>{assertAccess();if(!family.canEdit)throw new Error('Viewer access cannot save changes.');return store.save(envelope,options);},resume:store.resume,revision:()=>store.revision,updatedAt:()=>store.updatedAt,lock,
+  window.financeCloud={uid:family.role==='owner'?user.uid:'shared:'+user.uid+'|'+family.ownerUid+'|'+family.role,ownerUid:family.ownerUid,ownerEmail:family.ownerEmail,inspect,email:user.email||'',role:family.role,canEdit:family.canEdit,canManage:family.canManage,accessValid:family.accessValid,displayName:user.displayName||'',checkRevision:async()=>{assertAccess();const pointer=await api.get('users/'+family.ownerUid+'/tracker/current');assertAccess();const revision=pointer?.revision||0;if(!Number.isInteger(revision)||revision<0)throw new Error('Cloud revision is invalid.');return revision;},load:store.load,save:(envelope,options)=>{assertAccess();if(!family.canEdit)throw new Error('Viewer access cannot save changes.');return store.save(envelope,options);},resume:store.resume,revision:()=>store.revision,updatedAt:()=>store.updatedAt,lock,
     showApp(){const label=document.getElementById('accountSignedInEmail');if(label)label.textContent=user.email||'Google account';document.body.classList.remove('cloud-pending','cloud-loading');gate.hidden=true;},
     async logout(){
       await window.financeBridge?.settle();
@@ -128,7 +131,7 @@ onAuthStateChanged(auth,async user=>{
   }
   const reviewApi={subscribe:(next,error)=>onSnapshot(reviewRef,{includeMetadataChanges:true},snapshot=>{try{next(decodeReviews(snapshot));}catch(e){error(e);}},error),load:async()=>decodeReviews(await getDocFromServer(reviewRef)),save:saveReviews,reset:resetReviews};
   window.financeCloudResolve();
-  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);const css=document.createElement('link');css.rel='stylesheet';css.href='./workbench.css?v=85';document.head.append(css);const cashCss=document.createElement('link');cashCss.rel='stylesheet';cashCss.href='./cash-flow.css?v=86';document.head.append(cashCss);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();installCashFlow();}).catch(error=>console.warn('Workbench unavailable',error));
+  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();installCashFlow();}).catch(error=>console.warn('Workbench unavailable',error));
   Promise.resolve(window.trackerReady).then(installRecordRecovery).catch(error=>console.warn('Record recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(installWorkProtection).catch(error=>console.warn('Draft recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>installCloudNotice((next,error)=>onSnapshot(doc(db,'users/'+family.ownerUid+'/tracker/current'),snapshot=>next(snapshot.exists()?snapshot.data():null),error))).catch(error=>console.warn('Live cloud notice unavailable',error));

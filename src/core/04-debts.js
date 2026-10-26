@@ -296,7 +296,12 @@
       downloadLoanHistory('\ufeff'+lines.join('\r\n'),'text/csv;charset=utf-8','csv');
     }
     function saveLoanHistoryPdf(){
-      if(!window.jspdf?.jsPDF){alert('The PDF service is still loading. Please try again.');return;}
+      if(!window.jspdf?.jsPDF){
+        if(saveLoanHistoryPdf.loading)return saveLoanHistoryPdf.loading;
+        const modal=document.getElementById('debtEmiHistoryModal'),selected=modal.dataset.loanId,button=document.getElementById('debtEmiHistoryPdf'),label=button?.textContent;
+        if(button){button.disabled=true;button.textContent='Loading PDF…';}
+        saveLoanHistoryPdf.loading=window.PFTLoadScript('pdf').then(()=>{saveLoanHistoryPdf.loading=null;if(!modal.hidden&&modal.dataset.loanId===selected)saveLoanHistoryPdf();}).catch(error=>{saveLoanHistoryPdf.loading=null;if(!modal.hidden&&modal.dataset.loanId===selected)alert(error.message);}).finally(()=>{if(button){button.disabled=false;button.textContent=label;}});return saveLoanHistoryPdf.loading;
+      }
       const debt=allAccounts('debts').find(row=>row.id===document.getElementById('debtEmiHistoryModal').dataset.loanId),title=`${debt?.type||'Loan'} Payment History`,pdf=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),rows=loanHistoryOrdered(true),columns=[['Date',22],['Entry',36],['Amount / Debit',28],['Interest',24],['Principal / Credit',31],['Balance',29],['Notes / Description',119]];let page=1,y=18;
       const header=()=>{pdf.setFont('helvetica','bold');pdf.setFontSize(13);pdf.text(title,5,10);pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text('Oldest to newest · Generated '+new Date().toLocaleDateString('en-IN'),5,15);let x=5;pdf.setFillColor(232,242,241);pdf.setDrawColor(180);for(const [label,width] of columns){pdf.rect(x,y,width,7,'FD');pdf.text(label,x+1.2,y+4.8);x+=width;}y+=7;};
       const newPage=()=>{pdf.addPage();page++;y=18;header();pdf.setFontSize(7);};header();pdf.setFont('helvetica','normal');pdf.setFontSize(7);

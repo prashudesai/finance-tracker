@@ -3,27 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="./app-info.js?v=66"></script>
-  <script src="./loan-ledger.js?v=66"></script>
-  <script src="./recurring.js?v=66"></script>
-  <script src="./recurring-ui.js?v=66"></script>
-  <script defer src="./vendor/jspdf.umd.min.js"></script>
+  <script src="./boot.js"></script>
+  <script defer src="./app-info.js?v=66"></script>
+  <script defer src="./loan-ledger.js?v=66"></script>
+  <script defer src="./recurring.js?v=66"></script>
+  <script defer src="./recurring-ui.js?v=66"></script>
   <script defer src="./pwa-client.js?v=66"></script>
   <script defer src="./tracker-enhancements.js?v=66"></script>
   <link rel="stylesheet" href="./tracker-enhancements.css?v=66">
   <title>Personal Finance Tracker</title>
   <meta name="theme-color" content="#0d2927">
-  <link rel="preload" as="image" href="./images/signin-light-desktop.webp" media="(min-width:761px)">
-  <link rel="preload" as="image" href="./images/signin-light-mobile.webp" media="(max-width:760px)">
   <meta name="description" content="A private personal finance tracker with Google sign-in and cloud saving.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="stylesheet" href="./runtime/legacy-1.css?v=80">
   <!-- Bundled Chart.js 3.9.1 (MIT): charts remain available when offline. -->
-  <script src="./runtime/chart-3.9.1.js?v=80"></script>
 
-  <script src="./runtime/bootstrap-2.js?v=80"></script>
+  <script defer src="./runtime/bootstrap-2.js?v=80"></script>
   <script type="module" src="./firebase-client.js?v=66" onerror="document.body.classList.remove('cloud-loading');document.getElementById('cloudLogin').disabled=true;document.getElementById('cloudMessage').textContent='Unable to load the sign-in service. Connect to the internet and reload.'"></script>
   <link rel="stylesheet" href="./runtime/legacy-2.css?v=80">
 
@@ -31,6 +28,9 @@
   <link rel="stylesheet" href="./runtime/legacy-3.css?v=80">
 <link rel="stylesheet" href="./runtime/legacy-4.css?v=80">
   <link rel="stylesheet" href="./app-style.css?v=66">
+  <link rel="stylesheet" href="./workbench.css?v=85">
+  <link rel="stylesheet" href="./cash-flow.css?v=86">
+  <link rel="stylesheet" href="./print.css" media="print">
   <script defer src="./app-style.js?v=66"></script>
 </head>
 <body class="cloud-pending cloud-loading">
@@ -58,7 +58,7 @@
       <button id="firstNameContinue" type="submit">Continue</button>
     </form>
   </section>
-  <div class="container">
+  <div class="container" role="main" id="trackerMain" tabindex="-1">
     <header>
       <div>
         <h1> Personal Finance Tracker</h1>
@@ -1322,7 +1322,7 @@
   <div id="investmentCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="investmentCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="investmentCategoryDialogTitle"></h2><p id="investmentCategoryDialogSubtitle"></p></div><button type="button" class="investment-category-dialog-close" data-close-investment-category-dialog aria-label="Close investment details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Portfolio summary</h3><div id="investmentCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Holdings and actions</h3><div id="investmentCategoryDialogTable"></div></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-investment-category-dialog>Done</button></footer></div></div>
     <div id="retirementCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="retirementCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="retirementCategoryDialogTitle"></h2><p id="retirementCategoryDialogSubtitle"></p></div><div id="retirementCategoryDialogActions" class="retirement-account-actions"></div><button type="button" class="investment-category-dialog-close" data-close-retirement-category-dialog aria-label="Close retirement account details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Account summary</h3><div id="retirementCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Accounts and actions</h3><div id="retirementCategoryDialogTable"></div><p id="retirementCategoryDialogNote" class="retirement-account-help"></p></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-retirement-category-dialog>Done</button></footer></div></div>
 
-  <script src="./runtime/app-core.js?v=80"></script>
+  <script defer src="./runtime/app-core.js?v=80"></script>
 
 
 </body>
