@@ -1,11 +1,9 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.26.8",
+  "version": "2026.10.26.6",
   "released": "2026-10-26",
   "releaseNotes": [
     "Restore the mint accent stripe beside the mobile Cash Flow heading while keeping the title and month compact.",
-    "Desktop Cash Flow retains its previous layout.",
-    "Fix mobile Google sign-in on iOS by updating Firebase Auth with its popup persistence recovery fix.",
-    "Improve the mobile Cash Flow month label contrast and cache versioned app icons efficiently."
+    "Desktop Cash Flow retains its previous layout."
   ],
   "sections": [
     [

@@ -2,17 +2,6 @@
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),zlib=require('zlib'),esbuild=require('esbuild');
 const root=path.resolve(__dirname,'..'),source=path.join(root,'src'),dist=path.join(root,'dist');
 const digest=s=>crypto.createHash('sha256').update(s).digest('hex').slice(0,16);
-// Keep the checked-in browser SDK aligned with the pinned npm Firebase version.
-// The package's browser bundles reference its shared app bundle by a gstatic URL;
-// rewrite that import to the local copy so auth continues to work offline.
-const firebaseVersion=require('firebase/package.json').version;
-const firebaseVendor=path.join(dist,'vendor');fs.mkdirSync(firebaseVendor,{recursive:true});
-for(const name of ['firebase-app.js','firebase-auth.js','firebase-firestore.js']){
- let content=fs.readFileSync(path.join(root,'node_modules/firebase',name),'utf8');
- content=content.replaceAll(`https://www.gstatic.com/firebasejs/${firebaseVersion}/firebase-app.js`,'./firebase-app.js');
- if(content.includes('https://www.gstatic.com/firebasejs/'))throw Error('Unexpected remote Firebase SDK import in '+name);
- fs.writeFileSync(path.join(firebaseVendor,name),content);
-}
 const order=JSON.parse(fs.readFileSync(path.join(source,'core-order.json'),'utf8'));
 const assets=JSON.parse(fs.readFileSync(path.join(source,'runtime-assets.json'),'utf8'));
 fs.mkdirSync(path.join(dist,'runtime'),{recursive:true});
