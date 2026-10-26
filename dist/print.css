@@ -27,4 +27,5 @@
     }
 @media print{.pft-dashboard-caption{display:none}}
 @media print{#openRecordSearch{display:none!important}}
+@media print{#financeBottomSync,.finance-automatic-prompt{display:none!important}}
 @media print{.cash-controls,.cash-add,.cash-entry-dialog{display:none!important}}

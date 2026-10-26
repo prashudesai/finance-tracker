@@ -1,3 +1,4 @@
+import {installFinanceInsights} from './finance-insights.js';
 import {installCashFlow} from './cash-flow.js?v=86';
 import {initializeApp} from './vendor/firebase-app.js';
 import {initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence,browserPopupRedirectResolver,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
@@ -58,7 +59,7 @@ onAuthStateChanged(auth,async user=>{
   }
   if(!user){document.body.classList.remove('cloud-loading');window.dispatchEvent(new Event('pft:signed-out'));login.hidden=false;message.textContent='';login.disabled=false;return;}
   window.PFTPerformance?.mark('auth-ready');
-  initialUid=user.uid;document.body.classList.add('cloud-loading');login.hidden=true;message.textContent='Opening your tracker…';
+  initialUid=user.uid;const loadingStatus=document.getElementById('cloudLoadingIndicator');if(loadingStatus)loadingStatus.textContent='Signed in — loading your family’s financial data…';document.body.classList.add('cloud-loading');login.hidden=true;message.textContent='Opening your tracker…';
   let family;try{family=await initializeFamilyAccess(db,user,lock);}catch(error){lock(error);return;}
   window.PFTPerformance?.mark('access-ready');
   window.addEventListener('pft:before-reveal',()=>installCashFlow(),{once:true});
@@ -132,7 +133,7 @@ onAuthStateChanged(auth,async user=>{
   }
   const reviewApi={subscribe:(next,error)=>onSnapshot(reviewRef,{includeMetadataChanges:true},snapshot=>{try{next(decodeReviews(snapshot));}catch(e){error(e);}},error),load:async()=>decodeReviews(await getDocFromServer(reviewRef)),save:saveReviews,reset:resetReviews};
   window.financeCloudResolve();
-  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();installCashFlow();}).catch(error=>console.warn('Workbench unavailable',error));
+  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();installCashFlow();installFinanceInsights();}).catch(error=>console.warn('Workbench unavailable',error));
   Promise.resolve(window.trackerReady).then(installRecordRecovery).catch(error=>console.warn('Record recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(installWorkProtection).catch(error=>console.warn('Draft recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>installCloudNotice((next,error)=>onSnapshot(doc(db,'users/'+family.ownerUid+'/tracker/current'),snapshot=>next(snapshot.exists()?snapshot.data():null),error))).catch(error=>console.warn('Live cloud notice unavailable',error));

@@ -1,9 +1,12 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.26.9",
+  "version": "2026.10.26.10",
   "released": "2026-10-26",
   "releaseNotes": [
-  "Restore early Firebase popup initialization required by iPhone, iPad and Safari sign-in.",
-  "Preserve the Lighthouse improvements and existing tracker records."
+  "Add expandable Cash Flow balance reconciliation and upcoming recorded commitments.",
+  "Review automatic entries at month end, with existing amount correction and shared confirmations.",
+  "Show investment valuation dates and recorded monthly financial changes.",
+  "Show sync status only at page bottom, alongside the existing search visibility behaviour.",
+  "Show a clear loading message after sign-in while financial records open."
 ],
   "sections": [
     [

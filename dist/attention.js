@@ -1,3 +1,4 @@
+import {monthEnd} from './finance-insights-model.js';
 import {cashflowIndex,monthClose,automaticCheckKey} from './finance-model.js?v=79';
 export function attentionItems(data,visible,meta,today,sync={}){
  const items=[],current=today.slice(0,7),totals=cashflowIndex(data),balanceMonths=new Set((data.monthlyBalances||[]).map(r=>r.month));const active=m=>{const r=totals.get(m);return balanceMonths.has(m)||r&&(r.income!==0||r.expenses!==0||r.stallion!==0);};
@@ -14,7 +15,7 @@ export function attentionItems(data,visible,meta,today,sync={}){
  const ids=new Set(Object.values(visible).flat().map(r=>r.id));
  const automatic=[...(data.retirementContributions||[]),...(data.investmentContributions||[]),...(data.stallionContributions||[])].filter(r=>r.automatic===true&&r.date?.slice(0,7)===current&&ids.has(r.accountId||r.investmentId||r.stallionId));
  const unchecked=automatic.filter(r=>{const key=automaticCheckKey(r),paid=meta.paymentStatus?.[key];return paid?paid.status!=='paid'||paid.amount!==r.amount||(paid.epsAmount||0)!==(r.epsAmount||0):true;}).length;
- if(unchecked)items.push({key:'automatic',label:unchecked+' automatic entr'+(unchecked===1?'y needs':'ies need')+' a statement check',action:'monthly',month:current});
+ if(unchecked&&monthEnd(today))items.push({key:'automatic',label:unchecked+' automatic entr'+(unchecked===1?'y needs':'ies need')+' a statement check',action:'monthly',month:current});
  return items;
 }
 export function installAttention(){

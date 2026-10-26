@@ -1,15 +1,10 @@
 {
-  "version": "2026.10.26.4",
-  "unitSuites": 44,
+  "version": "2026.10.26.10",
+  "unitSuites": 45,
   "fullBrowserChecks": 137,
   "cashFlowBrowserChecks": 28,
-  "startupBrowserChecks": 7,
-  "installedPwaChecks": 10,
-  "failures": 0,
+  "financialInsightBrowserChecks": 6,
   "physicalPhoneTested": false,
   "realGoogleFirebaseUserFlowTested": false,
-  "realFirebaseSdkSignedOutSmokeTested": true,
-  "performance": "Five samples per condition: cold startup 32.0% faster; signed-in return navigation 25.9% faster. Controlled local mobile timings, not production Lighthouse scores.",
-  "deploymentVerification": "GitHub Actions and live version endpoint are verified separately after push.",
-  "responsiveCashFlow": "Mobile 320/390/700px and desktop 701/1024/1440px across all styles; drafts survive resizing and style changes."
+  "notes": "Browser tests use local Chromium and mocked Firebase. PWA install/security suites remain required by CI; no rules/authentication logic changes in this feature batch."
 }
