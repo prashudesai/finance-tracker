@@ -1,5 +1,5 @@
     // INCOME
-    document.getElementById('addIncomeBtn').addEventListener('click', () => {
+    document.getElementById('addIncomeBtn').addEventListener('click', async () => {
       const member = document.getElementById('incomeMember').value;
       const src = document.getElementById('incomeSource').value;
       const amt = Number(document.getElementById('incomeAmount').value);
@@ -16,8 +16,9 @@
       }
 
       if(state.income.some(row=>row.recurringRuleId&&row.member===member&&row.source===incomeSourceForStorage(src,member)&&row.date.slice(0,7)===date.slice(0,7))){alert('An automatic entry for this member and source already exists this month. Edit that income entry to adjust its amount.');return;}
+      const cashIncomeId=generateId();
       state.income.push({
-        id: generateId(),
+        id: cashIncomeId,
         member: member,
         source: incomeSourceForStorage(src,member),
         amount: amt,
@@ -32,9 +33,10 @@
       document.getElementById('incomeHistoryFinancialYear').dataset.preferredYear = String(financialYearStartYearForMonthKey(date.slice(0,7)));
       document.getElementById('incomeHistoryMonth').dataset.preferredMonth = date.slice(0, 7);
       transactionHistoryPages.income=1;
-      saveData();
+      const operation=saveData();
       renderIncome();
       updateDashboard();
+      if(window.financeCashFlow)await window.financeCashFlow.trackSave('income',cashIncomeId,date,operation);
     });
 
     function currentFinancialYearStartYear(now = new Date()) {
@@ -136,7 +138,7 @@
         tbody.innerHTML = `<tr><td colspan="5" class="text-muted">No income recorded for ${analyticEscape(label)}.</td></tr>`;
       } else {
       tbody.innerHTML = pageRecords.map(i => `
-        <tr>
+        <tr data-cash-record="${analyticEscape(i.id)}">
           <td data-label="Member"><strong>${analyticEscape(i.member || '—')}</strong></td>
           <td data-label="Source">
             <strong>${analyticEscape(i.source)}</strong>
@@ -152,6 +154,7 @@
       `).join('');
       }
       renderTransactionPagination('income',records.length);
+      if(window.financeCashFlow)renderTransactionOverview();
     }
 
     async function editIncome(id) {

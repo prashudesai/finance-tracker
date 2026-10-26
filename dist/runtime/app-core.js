@@ -2107,7 +2107,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     }
 
     // INCOME
-    document.getElementById('addIncomeBtn').addEventListener('click', () => {
+    document.getElementById('addIncomeBtn').addEventListener('click', async () => {
       const member = document.getElementById('incomeMember').value;
       const src = document.getElementById('incomeSource').value;
       const amt = Number(document.getElementById('incomeAmount').value);
@@ -2124,8 +2124,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       }
 
       if(state.income.some(row=>row.recurringRuleId&&row.member===member&&row.source===incomeSourceForStorage(src,member)&&row.date.slice(0,7)===date.slice(0,7))){alert('An automatic entry for this member and source already exists this month. Edit that income entry to adjust its amount.');return;}
+      const cashIncomeId=generateId();
       state.income.push({
-        id: generateId(),
+        id: cashIncomeId,
         member: member,
         source: incomeSourceForStorage(src,member),
         amount: amt,
@@ -2140,9 +2141,10 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       document.getElementById('incomeHistoryFinancialYear').dataset.preferredYear = String(financialYearStartYearForMonthKey(date.slice(0,7)));
       document.getElementById('incomeHistoryMonth').dataset.preferredMonth = date.slice(0, 7);
       transactionHistoryPages.income=1;
-      saveData();
+      const operation=saveData();
       renderIncome();
       updateDashboard();
+      if(window.financeCashFlow)await window.financeCashFlow.trackSave('income',cashIncomeId,date,operation);
     });
 
     function currentFinancialYearStartYear(now = new Date()) {
@@ -2244,7 +2246,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         tbody.innerHTML = `<tr><td colspan="5" class="text-muted">No income recorded for ${analyticEscape(label)}.</td></tr>`;
       } else {
       tbody.innerHTML = pageRecords.map(i => `
-        <tr>
+        <tr data-cash-record="${analyticEscape(i.id)}">
           <td data-label="Member"><strong>${analyticEscape(i.member || '—')}</strong></td>
           <td data-label="Source">
             <strong>${analyticEscape(i.source)}</strong>
@@ -2260,6 +2262,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       `).join('');
       }
       renderTransactionPagination('income',records.length);
+      if(window.financeCashFlow)renderTransactionOverview();
     }
 
     async function editIncome(id) {
@@ -2554,11 +2557,12 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       document.getElementById('expenseHistoryFinancialYear').dataset.preferredYear = String(financialYearStartYearForMonthKey(date.slice(0,7)));
       document.getElementById('expenseHistoryMonth').dataset.preferredMonth = date.slice(0, 7);
       transactionHistoryPages.expense=1;
-      saveData();
+      const operation=saveData();
       renderExpenses();
       renderDebts();
       updateDashboard();
       populateLoanDropdown();
+      if(window.financeCashFlow)await window.financeCashFlow.trackSave('expense',newExpense.id,date,operation);
       }finally{submit.disabled=false;}
     });
 
@@ -2593,7 +2597,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         }
 
         return `
-          <tr>
+          <tr data-cash-record="${analyticEscape(e.id)}">
             <td data-label="Category"><strong>${analyticEscape(e.category)}</strong>${e.category==='EMI Payment'&&e.loanId?`<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</div>`:''}${e.subcategory ? `<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${analyticEscape(e.subcategory)}</div>` : ''}<div class="transaction-mobile-details"><span class="badge ${e.isAnnual ? 'badge-danger' : 'badge-success'}">${e.isAnnual ? 'Annual' : 'Monthly'}</span>${e.category==='EMI Payment'&&e.loanId?`<span class="transaction-mobile-detail">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</span>`:''}${e.subcategory?`<span class="transaction-mobile-detail">${analyticEscape(e.subcategory)}</span>`:''}${loanInfo&&loanInfo!=='-'?`<span class="transaction-mobile-detail">${analyticEscape(loanInfo)}</span>`:''}</div></td>
             <td class="text-right" data-label="Amount">${formatCurrency(e.amount)}${breakdown}</td>
             <td data-label="Type"><span class="badge ${e.isAnnual ? 'badge-danger' : 'badge-success'}">${e.isAnnual ? 'Annual' : 'Monthly'}</span></td>
@@ -2608,6 +2612,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       }).join('');
       }
       renderTransactionPagination('expense',records.length);
+      if(window.financeCashFlow)renderTransactionOverview();
     }
 
     async function editExpense(id) {
@@ -4139,7 +4144,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     }
 
     function renderTransactionOverview() {
-      const month=currentMonthKey();
+      const cashKind=document.getElementById('income-expenses')?.dataset.cashKind;
+      const month=(cashKind&&document.getElementById(cashKind+'HistoryMonth')?.value)||currentMonthKey();
       const income=profileRows(state.income).filter(row=>inMonth(row.date,month)).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
       const expenses=state.expenses.filter(row=>inMonth(row.date,month)).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
       const net=income-expenses;
@@ -4153,6 +4159,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(expenseTotal) expenseTotal.textContent=formatCurrency(expenses);
       if(netTotal) netTotal.textContent=`${net<0?'−':''}${formatCurrency(Math.abs(net))}`;
       if(netCard) netCard.classList.toggle('is-negative',net<0);
+      window.financeCashFlow?.updateBar(income,expenses);
     }
 
     // DASHBOARD UPDATE

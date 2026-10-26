@@ -74,7 +74,8 @@
     }
 
     function renderTransactionOverview() {
-      const month=currentMonthKey();
+      const cashKind=document.getElementById('income-expenses')?.dataset.cashKind;
+      const month=(cashKind&&document.getElementById(cashKind+'HistoryMonth')?.value)||currentMonthKey();
       const income=profileRows(state.income).filter(row=>inMonth(row.date,month)).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
       const expenses=state.expenses.filter(row=>inMonth(row.date,month)).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
       const net=income-expenses;
@@ -88,5 +89,6 @@
       if(expenseTotal) expenseTotal.textContent=formatCurrency(expenses);
       if(netTotal) netTotal.textContent=`${net<0?'−':''}${formatCurrency(Math.abs(net))}`;
       if(netCard) netCard.classList.toggle('is-negative',net<0);
+      window.financeCashFlow?.updateBar(income,expenses);
     }
 

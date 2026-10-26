@@ -235,11 +235,12 @@
       document.getElementById('expenseHistoryFinancialYear').dataset.preferredYear = String(financialYearStartYearForMonthKey(date.slice(0,7)));
       document.getElementById('expenseHistoryMonth').dataset.preferredMonth = date.slice(0, 7);
       transactionHistoryPages.expense=1;
-      saveData();
+      const operation=saveData();
       renderExpenses();
       renderDebts();
       updateDashboard();
       populateLoanDropdown();
+      if(window.financeCashFlow)await window.financeCashFlow.trackSave('expense',newExpense.id,date,operation);
       }finally{submit.disabled=false;}
     });
 
@@ -274,7 +275,7 @@
         }
 
         return `
-          <tr>
+          <tr data-cash-record="${analyticEscape(e.id)}">
             <td data-label="Category"><strong>${analyticEscape(e.category)}</strong>${e.category==='EMI Payment'&&e.loanId?`<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</div>`:''}${e.subcategory ? `<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${analyticEscape(e.subcategory)}</div>` : ''}<div class="transaction-mobile-details"><span class="badge ${e.isAnnual ? 'badge-danger' : 'badge-success'}">${e.isAnnual ? 'Annual' : 'Monthly'}</span>${e.category==='EMI Payment'&&e.loanId?`<span class="transaction-mobile-detail">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</span>`:''}${e.subcategory?`<span class="transaction-mobile-detail">${analyticEscape(e.subcategory)}</span>`:''}${loanInfo&&loanInfo!=='-'?`<span class="transaction-mobile-detail">${analyticEscape(loanInfo)}</span>`:''}</div></td>
             <td class="text-right" data-label="Amount">${formatCurrency(e.amount)}${breakdown}</td>
             <td data-label="Type"><span class="badge ${e.isAnnual ? 'badge-danger' : 'badge-success'}">${e.isAnnual ? 'Annual' : 'Monthly'}</span></td>
@@ -289,6 +290,7 @@
       }).join('');
       }
       renderTransactionPagination('expense',records.length);
+      if(window.financeCashFlow)renderTransactionOverview();
     }
 
     async function editExpense(id) {
