@@ -1,10 +1,10 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.26.6",
+  "version": "2026.10.26.9",
   "released": "2026-10-26",
   "releaseNotes": [
-    "Restore the mint accent stripe beside the mobile Cash Flow heading while keeping the title and month compact.",
-    "Desktop Cash Flow retains its previous layout."
-  ],
+  "Restore early Firebase popup initialization required by iPhone, iPad and Safari sign-in.",
+  "Preserve the Lighthouse improvements and existing tracker records."
+],
   "sections": [
     [
       "Short first EMI interest",

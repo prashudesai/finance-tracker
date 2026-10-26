@@ -15,7 +15,8 @@ import {initializeFamilyAccess} from './family-access.js?v=66';
 import {initializeAccountPhoto} from './account-photo.js?v=66';
 import {createCloudStore} from './firebase-store.js?v=66';
 const config={apiKey:'AIzaSyBYhF_dyyOSyHyGletR58W7bYlL0xw8dQk',authDomain:'finance-tracker-bc7c9.firebaseapp.com',projectId:'finance-tracker-bc7c9',storageBucket:'finance-tracker-bc7c9.firebasestorage.app',messagingSenderId:'720970373789',appId:'1:720970373789:web:bb792be22a462f359cd274'};
-const app=initializeApp(config),auth=initializeAuth(app,{persistence:[indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence]}),db=getFirestore(app),provider=new GoogleAuthProvider();
+// Safari and mobile need Firebase's auth iframe prepared before the sign-in tap.
+const app=initializeApp(config),auth=initializeAuth(app,{persistence:[indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence],popupRedirectResolver:browserPopupRedirectResolver}),db=getFirestore(app),provider=new GoogleAuthProvider();
 provider.setCustomParameters({prompt:'select_account'});
 const gate=document.getElementById('cloudGate'),message=document.getElementById('cloudMessage'),login=document.getElementById('cloudLogin');
 const accountLabel=document.getElementById('cloudAccountLabel');

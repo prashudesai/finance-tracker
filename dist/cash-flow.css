@@ -119,4 +119,5 @@ html body #income-expenses.cash-flow-layout [data-cash-history-kind] .history-se
 }
 @media screen and (max-width:700px){
  html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-intro h1{border-inline-start:3px solid var(--primary);padding-inline-start:10px}
+ html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-period{color:var(--text)}
 }

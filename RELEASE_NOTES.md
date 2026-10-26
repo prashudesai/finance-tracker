@@ -1,3 +1,18 @@
+# 2026.10.26.9
+
+- Restore proactive Firebase popup resolver initialization for Safari and mobile. The startup optimization had omitted this dependency, delaying auth iframe setup until the sign-in tap.
+
+# 2026.10.26.8
+
+- Fixed mobile Google sign-in on iOS with Firebase Auth’s popup persistence recovery fix.
+- Updated the rules-testing SDK to match the Firebase SDK version.
+
+# 2026.10.26.7
+
+- Improved Cash Flow's mobile month-selector contrast to meet the WCAG AA text threshold.
+- Added a Firebase Auth preconnect hint to reduce connection setup delay.
+- Content-hashed app icons now receive one-year immutable caching without risking stale icon updates.
+
 # 2026.10.26.4
 
 - Desktop Cash Flow retains its previous layout in every Appearance style.
