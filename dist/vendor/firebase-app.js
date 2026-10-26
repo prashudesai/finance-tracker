@@ -1693,7 +1693,7 @@ function isVersionServiceProvider(provider) {
     return component?.type === "VERSION" /* ComponentType.VERSION */;
 }
 const name$q = "./firebase-app.js";
-const version$1 = "0.16.3";
+const version$1 = "0.16.2";
 /**
  * @license
  * Copyright 2019 Google LLC
@@ -1737,7 +1737,7 @@ const name$3 = "@firebase/firestore";
 const name$2 = "@firebase/ai";
 const name$1 = "@firebase/firestore-compat";
 const name$r = "firebase";
-const version$2 = "13.0.0";
+const version$2 = "12.19.0";
 /**
  * @license
  * Copyright 2019 Google LLC
@@ -2861,7 +2861,7 @@ function registerCoreComponents(variant) {
 registerCoreComponents('');
 
 var name = "firebase";
-var version = "13.0.0";
+var version = "12.19.0";
 
 /**
  * @license

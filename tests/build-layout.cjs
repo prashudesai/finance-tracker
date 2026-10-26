@@ -1,6 +1,12 @@
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),assert=require('node:assert/strict'),{execFileSync}=require('node:child_process');
 const root=path.resolve(__dirname,'..'),dist=path.join(root,'dist'),src=path.join(root,'src');
 const hash=x=>crypto.createHash('sha256').update(x).digest('hex');const assets=require('../src/runtime-assets.json');
+const firebaseVersion=require('../node_modules/firebase/package.json').version;
+for(const name of ['firebase-app.js','firebase-auth.js','firebase-firestore.js']){
+ let expected=fs.readFileSync(path.join(root,'node_modules/firebase',name),'utf8');
+ expected=expected.replaceAll(`https://www.gstatic.com/firebasejs/${firebaseVersion}/firebase-app.js`,'./firebase-app.js');
+ assert.equal(fs.readFileSync(path.join(dist,'vendor',name),'utf8'),expected,'Firebase vendor drift: '+name);
+}
 const before=new Map(['index.html',...assets.map(x=>'runtime/'+x)].map(p=>[p,fs.readFileSync(path.join(dist,p))]));
 execFileSync(process.execPath,[path.join(root,'tools/build.cjs')]);for(const[p,bytes]of before)assert.deepEqual(fs.readFileSync(path.join(dist,p)),bytes,'Generated output drift: '+p);
 for(const[p,digest]of Object.entries(require('../src/migration-baseline.json')))if(p.includes('chart-'))assert.equal(hash(fs.readFileSync(path.join(dist,p))),digest,'Vendor changed during extraction: '+p);
