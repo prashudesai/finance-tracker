@@ -220,7 +220,7 @@
   "dist/assets/print.7aa8f0c59a63dd9c.css.map": "b4fe02eca0df40e55e735d7f3ba36351a65bbd790c603d979b819cd021030955",
   "dist/assets/account-photo.cfe2691cc9bf3338.js.map": "add4c37e76f792f9950a6416dcdc3443a96485c5fe25cb8a3d52bc4720e03deb",
   "tools/css-partition.cjs": "260bb75ca7cd24d8185c6edc27983a4c5897d8b330eda818ef19048f4c3d2075",
-  "tests/optimization-browser.cjs": "8bc0a9513001821a43b125d8a38b75e1e2c0ad6f672f4d6a12f461ea5c078ea5",
+  "tests/optimization-browser.cjs": "c63dc772dbff0a7d42b8da8805e2bab96aa4d4bdfb308edec52826607191702c",
   "tests/browser-fixtures.cjs": "b48377966f8b43125ac22a42f2f4725d89afd2b9b03b09f77da14aa5ef327a4c",
   "STARTUP_PERFORMANCE_RESULTS.json": "05ba13c994538169e133778ecc2eb65e89c89d32a820392a81b4780066a2aba5",
   "LIGHTHOUSE_IMPROVEMENTS.md": "5da099b83428a4ab994e050daf3fd8ced14678849c0712178f302e68ba600d13",
