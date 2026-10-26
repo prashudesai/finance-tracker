@@ -1,7 +1,8 @@
 {
-  "version": "2026.10.26.1",
+  "version": "2026.10.26.2",
   "released": "2026-10-26",
   "releaseNotes": [
+    "Search stays hidden until you scroll to the bottom; installed apps receive refreshed Search assets.",
     "Amount corrections return directly to payment review after a successful save.",
     "Complete backups restore financial records and shared reviews together, with offline recovery and conflict choices.",
     "Search is now a compact bottom control; obsolete migration and P2P ROI support have been removed."

@@ -3,7 +3,7 @@ import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} f
 import {getFirestore,doc,getDocFromServer,writeBatch,runTransaction,onSnapshot,serverTimestamp} from './vendor/firebase-firestore.js';
 import {installReviewSync} from './review-sync.js?v=83';
 import {reviewValues,applyReviewPatch,validateReviewRestore} from './review-model.js?v=83';
-import {installRecordSearch} from './record-search.js?v=82';
+import {installRecordSearch} from './record-search.js?v=85';
 import {installAttention} from './attention.js?v=81';
 import {installFinanceWorkbench} from './finance-workbench.js?v=79';
 import {installExperience} from './experience.js?v=79';
@@ -127,7 +127,7 @@ onAuthStateChanged(auth,async user=>{
   }
   const reviewApi={subscribe:(next,error)=>onSnapshot(reviewRef,{includeMetadataChanges:true},snapshot=>{try{next(decodeReviews(snapshot));}catch(e){error(e);}},error),load:async()=>decodeReviews(await getDocFromServer(reviewRef)),save:saveReviews,reset:resetReviews};
   window.financeCloudResolve();
-  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);const css=document.createElement('link');css.rel='stylesheet';css.href='./workbench.css?v=79';document.head.append(css);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();}).catch(error=>console.warn('Workbench unavailable',error));
+  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);const css=document.createElement('link');css.rel='stylesheet';css.href='./workbench.css?v=85';document.head.append(css);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();}).catch(error=>console.warn('Workbench unavailable',error));
   Promise.resolve(window.trackerReady).then(installRecordRecovery).catch(error=>console.warn('Record recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(installWorkProtection).catch(error=>console.warn('Draft recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>installCloudNotice((next,error)=>onSnapshot(doc(db,'users/'+family.ownerUid+'/tracker/current'),snapshot=>next(snapshot.exists()?snapshot.data():null),error))).catch(error=>console.warn('Live cloud notice unavailable',error));
