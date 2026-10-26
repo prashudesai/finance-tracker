@@ -7,6 +7,9 @@ for(const[p,digest]of Object.entries(require('../src/migration-baseline.json')))
 assert.equal(hash(fs.readFileSync(path.join(dist,'runtime/app-core.js'))),hash(require('../src/core-order.json').map(p=>fs.readFileSync(path.join(src,p),'utf8')).join('')));
 const html=fs.readFileSync(path.join(dist,'index.html'),'utf8'),worker=fs.readFileSync(path.join(dist,'service-worker.js'),'utf8');
 assert(html.length<150000);assert(!/<script\s*>([\s\S]+?)<\/script>/.test(html));
+const icon192='icons/icon-192.9e1b24ddae720af1.png',icon512='icons/icon-512.11926f609d950641.png',webmanifest=JSON.parse(fs.readFileSync(path.join(dist,'manifest.webmanifest'),'utf8'));
+assert(html.includes('rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin'));assert(html.includes('./'+icon192));assert(fs.existsSync(path.join(dist,icon192)));assert(fs.existsSync(path.join(dist,icon512)));
+assert.deepEqual(webmanifest.icons.map(icon=>icon.src),['./'+icon192,'./'+icon512]);assert(worker.includes(icon192)&&worker.includes(icon512));
 const manifest=require('../dist/asset-manifest.json');for(const asset of assets){const built=manifest['runtime/'+asset];assert(built);assert(worker.includes(built));if(asset!=='chart-3.9.1.js')assert(html.includes('./'+built));assert(fs.existsSync(path.join(dist,built+'.map')));}
 assert(!html.includes('vendor/jspdf.umd.min.js'));assert(!html.includes('runtime/chart-3.9.1.js'));
 assert(html.indexOf(manifest['runtime/bootstrap-2.js'])<html.indexOf(manifest['runtime/app-core.js']));
@@ -19,5 +22,5 @@ for(const [logical,built]of Object.entries(manifest)){
 const shell=JSON.parse(worker.match(/const APP_SHELL = (\[[^\n]+\])/)[1]);const staticDigests=shell.filter(p=>!p.startsWith('assets/')).map(p=>[p,hash(p==='index.html'?html:fs.readFileSync(path.join(dist,p))).slice(0,16)]);const release=hash(JSON.stringify(manifest)+JSON.stringify(staticDigests)+fs.readFileSync(path.join(src,'service-worker.js'),'utf8')).slice(0,16);assert(worker.includes('shell-cloud-v87-'+release));
 assert(html.includes('media="print"'));assert(fs.readFileSync(path.join(dist,'print.css'),'utf8').includes('@media print'));
 const split=require('../tools/css-partition.cjs')('@media print{body{display:block}}@media print,screen{.shared{color:red}}.screen{content:"{x}"}');assert(split.secondary.includes('display:block'));assert(split.critical.includes('@media print,screen'));assert(split.critical.includes('.screen'));
-const headers=require('../firebase.json').hosting.headers;assert(headers.some(h=>h.source==='/assets/**'&&h.headers.some(v=>v.value.includes('immutable'))));assert(headers.some(h=>h.source==='/'&&h.headers.some(v=>v.value==='no-cache')));
+const headers=require('../firebase.json').hosting.headers;assert(headers.some(h=>h.source==='/assets/**'&&h.headers.some(v=>v.value.includes('immutable'))));assert(headers.some(h=>h.source==='/icons/icon-192.*.png'&&h.headers.some(v=>v.value.includes('immutable'))));assert(headers.some(h=>h.source==='/icons/icon-512.*.png'&&h.headers.some(v=>v.value.includes('immutable'))));assert(headers.some(h=>h.source==='/'&&h.headers.some(v=>v.value==='no-cache')));
 console.log('PASS deterministic hashed build, source agreement, source maps, offline coverage, image paths, print CSS and cache policy');

@@ -1,3 +1,9 @@
+# 2026.10.26.7
+
+- Improved Cash Flow's mobile month-selector contrast to meet the WCAG AA text threshold.
+- Added a Firebase Auth preconnect hint to reduce connection setup delay.
+- Content-hashed app icons now receive one-year immutable caching without risking stale icon updates.
+
 # 2026.10.26.4
 
 - Desktop Cash Flow retains its previous layout in every Appearance style.
