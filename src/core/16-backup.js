@@ -257,7 +257,17 @@
         updateRetirementTilesVisibility();
       });
       document.addEventListener('click',event=>{if(!event.target.closest('.investment-add-menu-wrap')&&!event.target.closest('#investmentAddMenu'))closeInvestmentAddMenu();});
-      document.addEventListener('scroll',()=>{if(!investmentAddMenu.hidden)closeInvestmentAddMenu();},true);
+      // Layout shifts and scrolling within the menu must not dismiss a choice.
+      let investmentMenuFrame=null;
+      document.addEventListener('scroll',event=>{
+        if(investmentAddMenu.hidden||investmentAddMenu.contains(event.target)||investmentMenuFrame!==null)return;
+        investmentMenuFrame=requestAnimationFrame(()=>{
+          investmentMenuFrame=null;if(investmentAddMenu.hidden)return;
+          const anchor=investmentAddButton.getBoundingClientRect();
+          if(!anchor.width||!anchor.height||anchor.bottom<=0||anchor.top>=window.innerHeight)closeInvestmentAddMenu();
+          else placeInvestmentAddMenu();
+        });
+      },true);
       window.addEventListener('resize',()=>{if(!investmentAddMenu.hidden)placeInvestmentAddMenu();});
       investmentAddMenu?.addEventListener('keydown',event=>{if(event.key==='Escape'){closeInvestmentAddMenu();investmentAddButton?.focus();}});
       document.getElementById('openStallionContributionBtn')?.addEventListener('click',buttonEvent=>{

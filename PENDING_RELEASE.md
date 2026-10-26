@@ -22,8 +22,12 @@ Prepared against 2026.10.26.9. Commit to main runs the normal test-and-deploy wo
 ## Validation
 
 - Full npm test chain passed, including new financial-insight model checks.
-- Existing broad browser suite: 137 passed.
+- Existing broad browser suite: 137 passed before the menu correction. The correction passed the formerly failing menu check; a later local rerun timed out in an unrelated navigation action. The normal CI suite must pass before deployment.
 - Existing Cash Flow browser suite: 28 passed.
-- New insight browser suite: 6 passed, including all three Appearance styles at 320, 390, 701 and 1440 pixels.
+- New insight browser suite: 7 checks (including the menu regression), including all three Appearance styles at 320, 390, 701 and 1440 pixels.
 - Browser checks use mocked Google/Firebase services and a local Chromium executable. Physical iOS/Android and real Google authentication were not exercised for this batch.
 - No Firestore rules or authentication logic changes were introduced by the six-feature batch.
+
+## Deployment correction
+
+The first CI attempt stopped at the investment add-menu browser check, before any production deployment. The menu's existing capture-phase scroll listener dismissed it on every scroll, including layout/scroll anchoring events after valuation footers appeared. Keep an open menu anchored to its visible Add button, ignore scrolling inside the menu, and dismiss it when its anchor leaves the viewport. Outside click, Escape, and selection continue to dismiss it. Regression checks explicitly deliver document and internal-menu scroll events before choosing a type across Appearance styles and mobile/desktop widths.
