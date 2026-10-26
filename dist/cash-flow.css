@@ -117,3 +117,6 @@ html body #income-expenses.cash-flow-layout [data-cash-history-kind] .history-se
  html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-intro-copy p{display:none}
  html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-period{flex:0 0 auto;display:inline-flex;align-items:center;min-height:0;height:auto;padding:6px 10px;margin:0;font-size:12px;line-height:1.4;white-space:nowrap;border-radius:10px}
 }
+@media screen and (max-width:700px){
+ html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-intro h1{border-inline-start:3px solid var(--primary);padding-inline-start:10px}
+}

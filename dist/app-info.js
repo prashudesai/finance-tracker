@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.26.5",
+  "version": "2026.10.26.6",
   "released": "2026-10-26",
   "releaseNotes": [
-    "Mobile Cash Flow title and month share a compact single row, with reduced space above the balance card.",
+    "Restore the mint accent stripe beside the mobile Cash Flow heading while keeping the title and month compact.",
     "Desktop Cash Flow retains its previous layout."
   ],
   "sections": [
