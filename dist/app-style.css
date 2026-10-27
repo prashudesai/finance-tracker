@@ -1405,3 +1405,12 @@ html[data-app-style] body.advanced-layout #income-expenses .history-month-contro
    max-width:100%;overflow-wrap:anywhere;touch-action:manipulation;
  }
 }
+
+
+/* Issue 6: evidence-backed balance-sheet ratio, not a fictitious growth badge. */
+.dashboard-networth-ratio{
+  display:inline-flex;max-width:100%;align-items:center;margin:9px 0 0;
+  padding:5px 10px;border:1px solid color-mix(in srgb,var(--primary) 23%,var(--border));
+  border-radius:999px;background:color-mix(in srgb,var(--primary) 9%,var(--card-bg));
+  font-size:12px;font-weight:600;line-height:1.4;color:inherit;
+}
