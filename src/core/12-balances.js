@@ -73,6 +73,34 @@
       }
     }
 
+    function renderCashFlowTrend(month) {
+      const host=document.getElementById('cashFlowTrendChart');
+      if(!host||!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(month))return;
+      const [year,number]=month.split('-').map(Number);
+      const months=Array.from({length:6},(_,index)=>{
+        const day=new Date(year,number-1-(5-index),1);
+        const key=`${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}`;
+        return {key,label:day.toLocaleDateString('en-IN',{month:'short'}),income:0,expenses:0};
+      });
+      const byMonth=new Map(months.map(row=>[row.key,row]));
+      for(const row of profileRows(state.income)){
+        const found=byMonth.get(String(row.date||'').slice(0,7));
+        if(found)found.income+=Number(row.amount)||0;
+      }
+      for(const row of state.expenses){
+        const found=byMonth.get(String(row.date||'').slice(0,7));
+        if(found)found.expenses+=Number(row.amount)||0;
+      }
+      const maximum=Math.max(1,...months.flatMap(row=>[row.income,row.expenses]));
+      const x=index=>34+index*52;
+      const y=value=>126-Math.max(0,value)/maximum*100;
+      const points=kind=>months.map((row,index)=>`${x(index)},${y(row[kind]).toFixed(2)}`).join(' ');
+      const incomePoints=points('income'),expensePoints=points('expenses');
+      const grid=[0,0.5,1].map(fraction=>`<line x1="26" y1="${126-fraction*100}" x2="302" y2="${126-fraction*100}" class="cash-flow-trend-grid"/>`).join('');
+      const labels=months.map((row,index)=>`<text x="${x(index)}" y="146" text-anchor="middle">${row.label}</text>`).join('');
+      host.innerHTML=`<svg viewBox="0 0 320 156" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">${grid}<polyline class="cash-flow-trend-income" points="${incomePoints}"/><polyline class="cash-flow-trend-expense" points="${expensePoints}"/>${labels}</svg>`;
+      host.setAttribute('aria-label',`Recorded cash flow for ${months.map(row=>`${row.key}: income ${formatCurrency(row.income)}, expenses ${formatCurrency(row.expenses)}`).join('; ')}. Profile-filtered income and household expenses; future or missing months have no recorded transactions.`);
+    }
     function renderTransactionOverview() {
       const cashKind=document.getElementById('income-expenses')?.dataset.cashKind;
       const month=document.getElementById('income-expenses')?.dataset.cashMonth||(cashKind&&document.getElementById(cashKind+'HistoryMonth')?.value)||currentMonthKey();
@@ -89,6 +117,7 @@
       if(expenseTotal) expenseTotal.textContent=formatCurrency(expenses);
       if(netTotal) netTotal.textContent=`${net<0?'−':''}${formatCurrency(Math.abs(net))}`;
       if(netCard) netCard.classList.toggle('is-negative',net<0);
+      renderCashFlowTrend(month);
       window.financeCashFlow?.refreshMonthFilter();
       window.financeCashFlow?.updateBar(income,expenses);
     }
