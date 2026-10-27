@@ -264,7 +264,7 @@
       expenseCategories: { label: 'Expense category', selectIds: ['expenseCategory'], usage: [{ collection: 'expenses', field: 'category' }] },
       debtTypes: { label: 'Debt type', selectIds: ['debtType'], usage: [{ collection: 'debts', field: 'type' }] },
       investmentTypes: { label: 'Investment type', selectIds: ['investType'], usage: [{ collection: 'investments', field: 'type' }] },
-      familyMembers: { label: 'Family member', selectIds: ['incomeMember','pfMember','npsMember','ppfMember','investMember','gratuityMember','debtMember'], usage: ['income','debts','investments','nps','ppf','pf','stallionPms','stallionContributions','stallionProfitHistory','retirementContributions','investmentContributions','gratuityAccounts'].map(collection=>({ collection, field: 'member' })) }
+      familyMembers: { label: 'Family member', selectIds: ['incomeMember','expenseMember','pfMember','npsMember','ppfMember','investMember','gratuityMember','debtMember'], usage: ['income','expenses','debts','investments','nps','ppf','pf','stallionPms','stallionContributions','stallionProfitHistory','retirementContributions','investmentContributions','gratuityAccounts'].map(collection=>({ collection, field: 'member' })) }
     };
     const CUSTOM_VALUE_DEFAULT_OPTIONS = Object.fromEntries(Object.entries(CUSTOM_VALUE_CONFIG).map(([key,config])=>[key,Object.fromEntries(config.selectIds.map(id=>{const select=document.getElementById(id);return [id,Array.from(select?.options||[]).map((option,index)=>({option:option.cloneNode(true),index}))]}))]));
     function validateCustomValues(data) {

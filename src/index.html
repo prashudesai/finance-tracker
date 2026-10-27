@@ -143,12 +143,12 @@
 
       <section class="advanced-dashboard-insights" id="advancedDashboardInsights" aria-label="Dashboard charts" hidden>
         <article class="panel advanced-dashboard-chart-panel">
-          <div class="panel-header"><div><h2>Income vs expenses</h2><p id="advancedDashboardCashflowPeriod">Monthly trend · current financial year</p></div><button type="button" class="advanced-dashboard-link" data-open-tab="analytics">View report <span aria-hidden="true">→</span></button></div>
+          <div class="panel-header"><div><h2>Income vs expenses</h2><p id="advancedDashboardCashflowPeriod">Monthly trend · current financial year</p></div><button type="button" class="advanced-dashboard-link" data-open-tab="analytics">View details <span aria-hidden="true">›</span></button></div>
           <svg id="advancedDashboardCashflowChart" viewBox="0 0 640 205" role="img" aria-label="Current financial year income and expense trend"></svg>
           <div class="advanced-dashboard-legend"><span><i class="income-series"></i>Income</span><span><i class="expense-series"></i>Expenses</span></div>
         </article>
         <article class="panel advanced-dashboard-chart-panel">
-          <div class="panel-header"><div><h2>Investment allocation</h2><p>Current values · gratuity excluded</p></div><button type="button" class="advanced-dashboard-link" data-open-tab="investments">Details <span aria-hidden="true">→</span></button></div>
+          <div class="panel-header"><div><h2>Investment allocation</h2><p>Current values · gratuity excluded</p></div><button type="button" class="advanced-dashboard-link" data-open-tab="investments">View details <span aria-hidden="true">›</span></button></div>
           <div class="advanced-dashboard-allocation"><svg id="advancedDashboardAllocationChart" viewBox="0 0 180 180" role="img" aria-label="Investment allocation by account category"></svg><div id="advancedDashboardAllocationLegend" class="advanced-dashboard-allocation-legend"></div></div>
         </article>
       </section>
@@ -349,7 +349,8 @@
             </label>
           </div>
         </div>
-        <div class="transaction-history-summary" id="incomeHistorySummary" aria-live="polite"></div>
+        <div class="transaction-history-toolbar"><div class="transaction-history-summary" id="incomeHistorySummary" aria-live="polite"></div>
+        <label class="transaction-search"><span class="transaction-search-icon" aria-hidden="true">⌕</span><span class="sr-only">Filter income transactions</span><input type="search" id="incomeHistorySearch" placeholder="Filter transactions..." aria-label="Filter income transactions"></label></div>
         <div class="table-wrapper">
           <table>
             <thead>
@@ -374,6 +375,7 @@
       <div class="panel transaction-panel transaction-panel-expense">
         <div class="panel-header"><div class="transaction-section-heading"><span class="transaction-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14m6-6-6 6-6-6"/><path d="M4 4h16"/></svg></span><div><h2>Add Expense</h2><p>Record purchases, annual costs, or EMI payments</p></div></div></div>
         <div class="form-grid">
+          <div class="form-group"><label for="expenseMember">Family Member (Optional)</label><select id="expenseMember"><option value="">-- Household / unspecified --</option></select></div>
           <div class="form-group">
             <label>Category</label>
             <select id="expenseCategory">
@@ -439,7 +441,8 @@
             </label>
           </div>
         </div>
-        <div class="transaction-history-summary" id="expenseHistorySummary" aria-live="polite"></div>
+        <div class="transaction-history-toolbar"><div class="transaction-history-summary" id="expenseHistorySummary" aria-live="polite"></div>
+        <label class="transaction-search"><span class="transaction-search-icon" aria-hidden="true">⌕</span><span class="sr-only">Filter expense transactions</span><input type="search" id="expenseHistorySearch" placeholder="Filter transactions..." aria-label="Filter expense transactions"></label></div>
         <div class="table-wrapper">
           <table>
             <thead>
@@ -1038,7 +1041,7 @@
           <div class="form-group"><label>Monthly contributions</label><label class="growth-contribution-toggle"><span>Include monthly contributions</span><span class="growth-switch"><input id="growthIncludeMonthlyContributions" type="checkbox" checked aria-label="Include monthly contributions"><span class="growth-switch-track"></span></span></label><label class="growth-contribution-toggle growth-gratuity-toggle" id="growthGratuityBalanceWrap" hidden><span>Gratuity balance</span><span class="growth-switch"><input id="growthIncludeGratuityBalance" type="checkbox" checked aria-label="Include gratuity balance and growth"><span class="growth-switch-track"></span></span></label></div>
         </div>
         <div class="growth-contribution-exclusions" id="growthContributionExclusionsWrap" hidden>
-          <label>Exclude particular monthly contributions</label>
+          <label id="growthContributionHeading">Active monthly contributions</label>
           <div class="growth-exclusion-list" id="growthContributionExclusions"></div>
         </div>
       </div>
@@ -1050,7 +1053,7 @@
       </div>
       <div class="panel growth-breakdown-panel">
         <div class="panel-header"><h2>Financial Year Breakdown</h2></div>
-        <div class="table-wrapper" tabindex="0" role="region" aria-label="Financial year projection breakdown. Scroll horizontally to see all scenarios."><table id="growthProjectionResultsTable"><thead><tr><th>Financial year</th><th class="text-right">Opening value</th><th class="text-right">Contributions</th><th class="text-right">Additions</th><th class="text-right">Withdrawals</th><th class="text-right">Stress growth</th><th class="text-right">Base growth</th><th class="text-right">Optimistic growth</th><th class="text-right">Stress closing value</th><th class="text-right">Base closing value</th><th class="text-right">Optimistic closing value</th></tr></thead><tbody id="growthProjectionResultsBody"></tbody></table></div>
+        <div class="table-wrapper" tabindex="0" role="region" aria-label="Financial year projection breakdown for the selected scenario. Scroll horizontally if needed."><table id="growthProjectionResultsTable"><thead><tr><th>Financial year</th><th class="text-right">Opening value</th><th class="text-right">Contributions</th><th class="text-right">Additions</th><th class="text-right">Withdrawals</th><th class="text-right">Stress growth</th><th class="text-right">Base growth</th><th class="text-right">Optimistic growth</th><th class="text-right">Stress closing value</th><th class="text-right">Base closing value</th><th class="text-right">Optimistic closing value</th></tr></thead><tbody id="growthProjectionResultsBody"></tbody></table></div>
       </div>
     </div>
 
@@ -1147,14 +1150,14 @@
       </div>
 <div class="panel analytics-card analytics-summary-card">
         <div class="panel-header">
-          <h2> Financial Summary</h2>
+          <h2> Financial Summary</h2><span class="analytics-summary-context">Assets, debts and returns are current</span>
         </div>
         <div class="financial-summary-grid" role="group" aria-label="Financial summary metrics">
           <div class="financial-summary-metric"><span class="financial-summary-label">FY Income</span><strong class="financial-summary-value is-income" id="summaryIncome">₹0</strong></div>
           <div class="financial-summary-metric"><span class="financial-summary-label">FY Expenses</span><strong class="financial-summary-value is-expense" id="summaryExpenses">₹0</strong></div>
-          <div class="financial-summary-metric"><span class="financial-summary-label">FY Income less expenses and PMS contributions</span><strong class="financial-summary-value is-surplus" id="summarySurplus">₹0</strong></div>
-          <div class="financial-summary-metric"><span class="financial-summary-label">Investment Returns · current</span><strong class="financial-summary-value is-returns" id="summaryReturns">₹0</strong></div>
-          <div class="financial-summary-metric"><span class="financial-summary-label">Retirement Funds · current</span><strong class="financial-summary-value is-retirement" id="summaryRetirement">₹0</strong></div>
+          <div class="financial-summary-metric"><span class="financial-summary-label" title="FY household income less recorded expenses and PMS contributions; excludes starting balance and retirement contributions">FY net cash surplus</span><strong class="financial-summary-value is-surplus" id="summarySurplus">₹0</strong></div>
+          <div class="financial-summary-metric"><span class="financial-summary-label">Investment Returns</span><strong class="financial-summary-value is-returns" id="summaryReturns">₹0</strong></div>
+          <div class="financial-summary-metric"><span class="financial-summary-label">Retirement Funds</span><strong class="financial-summary-value is-retirement" id="summaryRetirement">₹0</strong></div>
           <div class="financial-summary-metric"><span class="financial-summary-label">FY recorded contributions</span><strong class="financial-summary-value" id="summaryContributions">₹0</strong></div>
           <div class="analytics-networth-bar"><div><span>Net Worth · current</span><strong id="summaryNetWorth">₹0</strong></div><div class="analytics-networth-track" aria-hidden="true"><i id="analyticsNetworthAssets"></i></div><div class="analytics-networth-labels"><span>Assets <strong id="summaryAssets">₹0</strong></span><span>Debts <strong id="summaryDebts">₹0</strong></span></div></div>
         </div>
@@ -1162,7 +1165,7 @@
       <div class="panel analytics-card analytics-average-card" aria-labelledby="analyticsAverageHeading">
         <div class="panel-header">
           <h2 id="analyticsAverageHeading">Average Monthly Snapshot</h2>
-          <span class="analytics-average-period" id="analyticsAveragePeriod">Current financial year</span>
+          <span class="analytics-average-period" id="analyticsAveragePeriod" hidden>Current financial year</span>
         </div>
         <div class="analytics-average-grid">
           <div class="analytics-average-metric">
@@ -1196,16 +1199,12 @@
     </div>
 
     <div id="reports" class="tab-content">
-      <header class="analytics-intro"><div class="analytics-intro-copy"><span class="analytics-eyebrow">Recorded activity</span><h1>Reports</h1><p>Choose a financial year or date range, filter recorded entries, and export the results.</p></div><div class="analytics-intro-badge">Dates · Filters · Exports</div></header>
+      <header class="analytics-intro report-page-header"><div class="analytics-intro-copy"><span class="analytics-eyebrow">Recorded activity</span><h1>Reports</h1><p>Choose a financial year or date range, filter recorded entries, and export the results.</p></div><div class="report-header-actions"><span id="reportPageStatus" class="report-page-status" role="status">Choose a report period</span><div class="report-export-tools"><span id="rangeReportExportCount" class="report-export-count" aria-live="polite">Generate a report to see matching rows</span><button id="exportRangeReport" disabled>Export Report CSV</button><button id="printRangeReport" disabled>Print / Save PDF</button></div></div></header>
       <div class="panel analytics-report-card">
-        <div class="report-builder-head">
-          <div class="report-builder-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M10 12h5M10 16h5"/></svg></div>
-          <div class="report-builder-copy"><span class="report-builder-eyebrow">Report builder</span><h2>Date Range Reports</h2><p>Set the reporting period and data type, then generate a filterable report.</p></div>
-          <span class="report-builder-badge">CSV export available</span>
-        </div>
         <div class="report-builder-content">
           <div class="report-quick-range" role="group" aria-label="Quick date range">
             <span class="report-quick-range-label">Quick period</span>
+            <button type="button" data-report-preset="custom" aria-pressed="true">Custom date range</button>
             <button type="button" data-report-preset="this-month" aria-pressed="false">This month</button>
             <button type="button" data-report-preset="this-fy" aria-pressed="false">This FY</button>
             <button type="button" data-report-preset="last-fy" aria-pressed="false">Last FY</button>
@@ -1219,7 +1218,7 @@
             <option value="all">All data</option><option value="income">Income</option><option value="expenses">Expenses</option><option value="investmentContributions">Investment contributions</option><option value="stallionProfitHistory">Stallion PMS gain / loss snapshots</option><option value="stallionContributions">PMS SIP contributions</option><option value="npsContributions">NPS contributions</option><option value="ppfContributions">PPF contributions</option><option value="interestCredits">PF / PPF annual interest</option><option value="pfContributions">PF / EPS contributions</option><option value="monthlyBalances">Monthly balances &amp; house expenses</option>
             </select></div>
           </div>
-          <div class="panel-controls report-action-bar"><button class="btn-primary" id="generateRangeReport">Generate Report</button><div class="report-export-tools"><span id="rangeReportExportCount" class="report-export-count" aria-live="polite">Generate a report to see matching rows</span><button id="exportRangeReport" disabled>Export Report CSV</button><button id="printRangeReport" disabled>Print / Save PDF</button></div></div>
+          <div class="panel-controls report-action-bar"><button class="btn-primary" id="generateRangeReport">Generate Report</button></div>
           <details class="report-calculation-note"><summary>What this report includes</summary><p>Both dates are included. Income, expenses, contributions, Stallion profit updates and monthly balances use their recorded dates. Current investment, PF, PPF, NPS and debt balances are not included because historical balance snapshots are not stored. Scheduled retirement contributions appear as dated monthly entries once processed. Monthly balances use the first day of the month. Annual expenses are included in full.</p></details>
           <p id="rangeReportStatus" role="status" aria-live="polite"></p>
           <div id="rangeReportActiveFilters" class="range-report-active-filters" aria-live="polite" hidden></div>

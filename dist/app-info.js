@@ -1,7 +1,9 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.7",
+  "version": "2026.10.27.8",
   "released": "2026-10-27",
   "releaseNotes": [
+    "Refine Dashboard, Investments, Analytics, Growth Projection and Date Range Reports.",
+    "Add optional expense ownership, transaction search and clearer cash-flow histories.",
     "Redesign Analytics with a financial-year filter, compact chart views and clear empty states.",
     "Refresh the Investments overview and improve the cash-entry focus behavior.",
     "Use the Google profile photo in the header by default, label it My finances, and keep Black in Appearance.",

@@ -81,7 +81,7 @@ export function installFinanceWorkbench(){
   const d=window.PFT_DASHBOARD_INSIGHTS;if(d&&d.currentMonthStr===currentMonthKey()){const r=monthClose(state,currentMonthKey());if(Math.abs(r.available-d.surplusBalance)>.005)issues.push('Dashboard available balance');if(Math.abs(d.totalAssets-d.totalDebts-d.netWorth)>.005)issues.push('Dashboard net worth');}
   add(dialog,'p',issues.length?'Review: '+issues.join(', '):'Monthly cash-flow helpers, house-expense balances and available dashboard totals reconcile.');button(dialog,'Run full record health checks',()=>{dialog.close();runDataHealth();});
  }
- function tools(host,title,actions){if(!host)return;const details=add(host,'details');details.className='finance-workbench-tools';add(details,'summary',title);for(const [label,fn]of actions)button(details,label,fn);}
+ function tools(host,title,actions){if(!host)return;const details=add(host,'details');details.className='finance-workbench-tools';const summary=add(details,'summary');add(summary,'span',title);if(title==='Month review'){const hint=add(summary,'span','Review available');hint.className='month-review-hint';}for(const [label,fn]of actions)button(details,label,fn);}
  tools(document.getElementById('income-expenses'),'Month review',[['Review month',monthly],['Upcoming commitments',commitments]]);
  tools(document.getElementById('investments'),'Record freshness',[['Review valuation dates',valuations]]);
  tools(document.getElementById('growth-projection'),'Goal planning',[['Portfolio goal planner',planning]]);

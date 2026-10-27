@@ -103,12 +103,17 @@
         return (choice.direction==='desc'?-cmp:cmp)||a.index-b.index;
       }).map(item=>item.row);
     }
+    function filterTransactionHistory(rows,kind) {
+      const query=(document.getElementById(`${kind}HistorySearch`)?.value||'').trim().toLocaleLowerCase();
+      if(!query)return rows;
+      return rows.filter(row=>{const debt=row.loanId?allAccounts('debts').find(item=>item.id===row.loanId):null;return [row.member,row.source,row.category,row.subcategory,row.notes,row.date,row.amount,formatCurrency(row.amount),debt?.type,row.category==='EMI Payment'?'EMI':row.isAnnual?'Annual':'Monthly'].some(value=>String(value??'').toLocaleLowerCase().includes(query));});
+    }
     function renderTransactionPagination(kind,total) {
       const pageCount=Math.max(1,Math.ceil(total/TRANSACTION_HISTORY_PAGE_SIZE));
       transactionHistoryPages[kind]=Math.min(Math.max(transactionHistoryPages[kind]||1,1),pageCount);
       const page=transactionHistoryPages[kind],start=total?(page-1)*TRANSACTION_HISTORY_PAGE_SIZE+1:0,end=Math.min(page*TRANSACTION_HISTORY_PAGE_SIZE,total);
       const title=kind==='income'?'Income':'Expense';
-      document.getElementById(`${kind}HistoryPaginationSummary`).innerHTML=`<strong>Showing ${start}–${end} of ${total}</strong><span>8 entries per page · Page ${page} of ${pageCount}</span>`;
+      document.getElementById(`${kind}HistoryPaginationSummary`).innerHTML=`<span>Showing ${start}–${end} of ${total} entries</span>`;
       const pages=pageCount<=5?Array.from({length:pageCount},(_,i)=>i+1):[...new Set([1,page-1,page,page+1,pageCount].filter(n=>n>=1&&n<=pageCount))].sort((a,b)=>a-b);
       let pageMarkup='',last=0;
       pages.forEach(n=>{if(n-last>1)pageMarkup+='<span class="transaction-pagination-ellipsis" aria-hidden="true">…</span>';pageMarkup+=`<button type="button" data-transaction-page="${n}"${n===page?' aria-current="page"':''} aria-label="${title} history page ${n}">${n}</button>`;last=n;});
@@ -122,7 +127,7 @@
     function changeTransactionHistoryPage(kind,event) {
       const button=event.target.closest('[data-transaction-page]');
       if(!button||button.disabled)return;
-      const total=kind==='income'?profileRows(state.income).filter(row=>row.date.slice(0,7)===document.getElementById('incomeHistoryMonth').value).length:state.expenses.filter(row=>row.date.slice(0,7)===document.getElementById('expenseHistoryMonth').value).length;
+      const month=document.getElementById(`${kind}HistoryMonth`).value;const rows=kind==='income'?profileRows(state.income):state.expenses;const total=filterTransactionHistory(rows.filter(row=>row.date.slice(0,7)===month),kind).length;
       const pages=Math.max(1,Math.ceil(total/TRANSACTION_HISTORY_PAGE_SIZE)),current=transactionHistoryPages[kind]||1;
       const requested=button.dataset.transactionPage==='prev'?current-1:button.dataset.transactionPage==='next'?current+1:Number(button.dataset.transactionPage);
       transactionHistoryPages[kind]=Math.min(Math.max(requested,1),pages);
@@ -134,15 +139,16 @@
       const incomeRows=profileRows(state.income);
       const selectedYear = populateHistoryFinancialYear('incomeHistoryFinancialYear', incomeRows.map(row => row.date.slice(0,7)));
       const selectedMonth = populateHistoryMonth('incomeHistoryMonth', incomeRows, selectedYear);
-      const records = sortTransactionHistoryRecords(incomeRows.filter(i => i.date.slice(0, 7) === selectedMonth).sort((a, b) => b.date.localeCompare(a.date)),'income');
-      renderTransactionHistorySummary('income',records);
+      const monthRecords=incomeRows.filter(i=>i.date.slice(0,7)===selectedMonth);
+      const records = sortTransactionHistoryRecords(filterTransactionHistory(monthRecords,'income').sort((a,b)=>b.date.localeCompare(a.date)),'income');
+      renderTransactionHistorySummary('income',monthRecords);
       const pageCount=Math.max(1,Math.ceil(records.length/TRANSACTION_HISTORY_PAGE_SIZE));
       transactionHistoryPages.income=Math.min(Math.max(transactionHistoryPages.income||1,1),pageCount);
       const pageStart=(transactionHistoryPages.income-1)*TRANSACTION_HISTORY_PAGE_SIZE;
       const pageRecords=records.slice(pageStart,pageStart+TRANSACTION_HISTORY_PAGE_SIZE);
       if (records.length === 0) {
         const label = selectedMonth ? new Date(selectedMonth + '-01T12:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : financialYearLabel(selectedYear);
-        tbody.innerHTML = `<tr><td colspan="5" class="text-muted">No income recorded for ${analyticEscape(label)}.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-muted">${document.getElementById('incomeHistorySearch').value.trim()?'No matching income transactions.':`No income recorded for ${analyticEscape(label)}.`}</td></tr>`;
       } else {
       tbody.innerHTML = pageRecords.map(i => `
         <tr data-cash-record="${analyticEscape(i.id)}">

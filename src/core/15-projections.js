@@ -154,7 +154,9 @@
       const monthlyAssets=assets.filter(asset=>asset.kind!=='eps'&&(Number(asset.monthly)>0||(asset.kind==='pf'&&assets.some(row=>row.kind==='eps'&&row.monthly>0))));
       wrap.hidden=!includeMonthlyContributions||!monthlyAssets.length;
       const excluded=state.projectionSettings?.excludedMonthlyContributions||[];
-      list.innerHTML=monthlyAssets.map(asset=>`<label class="growth-exclusion-item"><span class="growth-exclusion-name"><strong>${analyticEscape(asset.name)}</strong><small>${formatCurrency((Number(asset.monthly)||0)+(asset.kind==='pf'?(assets.find(row=>row.kind==='eps')?.monthly||0):0))} per month${asset.kind==='pf'&&assets.some(row=>row.kind==='eps')?' · PF + EPS':''}</small></span><span class="growth-exclusion-control"><span>Exclude</span><span class="growth-switch growth-switch-small"><input type="checkbox" class="growth-monthly-exclude-toggle" data-asset="${analyticEscape(asset.name)}" aria-label="Exclude ${analyticEscape(asset.name)} monthly contribution" ${excluded.includes(asset.name)?'checked':''}><span class="growth-switch-track"></span></span></span></label>`).join('');
+      const activeCount=monthlyAssets.filter(asset=>!excluded.includes(asset.name)).length;
+      document.getElementById('growthContributionHeading').textContent=`Active monthly contributions (${activeCount}/${monthlyAssets.length})`;
+      list.innerHTML=monthlyAssets.map(asset=>{const included=!excluded.includes(asset.name);return `<label class="growth-exclusion-item${included?'':' is-excluded'}"><span class="growth-exclusion-name"><strong>${analyticEscape(asset.name)}</strong><small>${formatCurrency((Number(asset.monthly)||0)+(asset.kind==='pf'?(assets.find(row=>row.kind==='eps')?.monthly||0):0))} per month${asset.kind==='pf'&&assets.some(row=>row.kind==='eps')?' · PF + EPS':''}</small></span><span class="growth-exclusion-control"><span>${included?'Included':'Excluded'}</span><span class="growth-switch growth-switch-small"><input type="checkbox" class="growth-monthly-exclude-toggle" data-asset="${analyticEscape(asset.name)}" aria-label="Include ${analyticEscape(asset.name)} monthly contribution" ${included?'checked':''}><span class="growth-switch-track"></span></span></span></label>`;}).join('');
     }
     function renderGrowthAdjustmentRows(assets) {
       const select=document.getElementById('growthAdjustmentAsset'),previous=select.value;
@@ -342,7 +344,7 @@
       summary.innerHTML='<h3 class="growth-scenario-heading">'+years+'-year scenario comparison</h3>'+['stress','base','optimistic'].map(scenario=>`<button type="button" data-projection-scenario="${scenario}" class="stat-card growth-projection-stat-card growth-projection-stat-card-${scenario}" aria-pressed="${scenario===selectedScenario}"><span class="stat-label">${labels[scenario]}</span><strong class="stat-value">${formatProjectionLakh(projections[scenario].ending)}</strong></button>`).join('');
 
       const baseRows=projections.base.rows;
-      body.innerHTML=baseRows.map((row,index)=>{const s=projections.stress.rows[index],b=projections.base.rows[index],o=projections.optimistic.rows[index];return `<tr><td>${financialYearLabel(row.fyStart)}</td><td class="text-right">${formatCurrency(row.opening)}</td><td class="text-right">${formatCurrency(row.contributions)}</td><td class="text-right">${formatCurrency(row.additions)}</td><td class="text-right">${formatCurrency(row.withdrawals)}</td><td class="text-right">${formatCurrency(s.growth)}</td><td class="text-right">${formatCurrency(b.growth)}</td><td class="text-right">${formatCurrency(o.growth)}</td><td class="text-right">${formatCurrency(s.closing)}</td><td class="text-right">${formatCurrency(b.closing)}</td><td class="text-right">${formatCurrency(o.closing)}</td></tr>`;}).join('');
+
       const todayLabel=`Today · ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
       const labelsForChart=[todayLabel,...baseRows.map(row=>financialYearLabel(row.fyStart))];
       const chartData={labels:labelsForChart,datasets:['stress','base','optimistic'].map(scenario=>({label:labels[scenario],data:[Math.round(current),...projections[scenario].rows.map(row=>Math.round(row.closing))],borderColor:colors[scenario],backgroundColor:context=>{const a=context.chart.chartArea;if(!a||scenario==='stress')return 'transparent';const g=context.chart.ctx.createLinearGradient(0,a.top,0,a.bottom);g.addColorStop(0,scenario==='base'?'rgba(56,189,248,.24)':'rgba(52,211,153,.20)');g.addColorStop(1,'rgba(0,0,0,0)');return g;},borderDash:scenario==='stress'?[6,5]:[],borderWidth:scenario==='base'?3:2.5,pointRadius:3,pointHoverRadius:7,pointHitRadius:18,tension:.35,fill:scenario==='stress'?false:'origin'}))};
@@ -355,6 +357,10 @@
       function renderScenarioBreakdown(scenario){
       summary.dataset.scenario=scenario;summary.querySelectorAll('[data-projection-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.projectionScenario===scenario)));
       const takeaway=document.getElementById('growthProjectionTakeaway'),base=projections[scenario];
+      const table=document.getElementById('growthProjectionResultsTable');
+      table.querySelector('thead').innerHTML=`<tr><th>Financial year</th><th class="text-right">Opening value</th><th class="text-right">Contributions &amp; changes</th><th class="text-right">${labels[scenario]} growth</th><th class="text-right">${labels[scenario]} closing value</th><th class="text-right">Growth / opening</th></tr>`;
+      const amountCell=(value,description='')=>{const n=Number(value)||0,compact=`${n<0?'−':''}₹${(Math.abs(n)/100000).toFixed(2)}L`,exact=analyticEscape(description||formatCurrency(n));return `<td class="text-right" title="${exact}" aria-label="${exact}">${compact}</td>`;};
+      body.innerHTML=base.rows.map(row=>{const net=row.contributions+row.additions-row.withdrawals,detail=`Net ${formatCurrency(net)}; contributions ${formatCurrency(row.contributions)}, additions ${formatCurrency(row.additions)}, withdrawals ${formatCurrency(row.withdrawals)}`,ratio=row.opening>0?`${(row.growth/row.opening*100).toFixed(1)}%`:'—';return `<tr><td>${financialYearLabel(row.fyStart)}</td>${amountCell(row.opening)}${amountCell(net,detail)}${amountCell(row.growth)}${amountCell(row.closing)}<td class="text-right" title="Growth divided by opening value; not an annualised investment return">${ratio}</td></tr>`;}).join('');
       const flowItems=[
         {label:'Starting value',value:investmentCurrent,operator:''},
         ...(includeGratuityBalance?[{label:'Gratuity balance',value:gratuityCurrent,operator:'+'}]:[]),
@@ -378,7 +384,7 @@
       const asset=toggle.dataset.asset;if(!asset)return;
       state.projectionSettings=state.projectionSettings||{years:5,includeMonthlyContributions:true,excludedMonthlyContributions:[],monthlyContributions:{},returns:{}};
       state.projectionSettings.excludedMonthlyContributions=state.projectionSettings.excludedMonthlyContributions||[];
-      state.projectionSettings.excludedMonthlyContributions=toggle.checked?[...new Set([...state.projectionSettings.excludedMonthlyContributions,asset])]:state.projectionSettings.excludedMonthlyContributions.filter(name=>name!==asset);
+      state.projectionSettings.excludedMonthlyContributions=toggle.checked?state.projectionSettings.excludedMonthlyContributions.filter(name=>name!==asset):[...new Set([...state.projectionSettings.excludedMonthlyContributions,asset])];
       saveData();renderGrowthProjection();
     });
     const growthAssumptionTiles=document.getElementById('growthProjectionAssumptionTiles');

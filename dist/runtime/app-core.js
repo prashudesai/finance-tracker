@@ -264,7 +264,7 @@
       expenseCategories: { label: 'Expense category', selectIds: ['expenseCategory'], usage: [{ collection: 'expenses', field: 'category' }] },
       debtTypes: { label: 'Debt type', selectIds: ['debtType'], usage: [{ collection: 'debts', field: 'type' }] },
       investmentTypes: { label: 'Investment type', selectIds: ['investType'], usage: [{ collection: 'investments', field: 'type' }] },
-      familyMembers: { label: 'Family member', selectIds: ['incomeMember','pfMember','npsMember','ppfMember','investMember','gratuityMember','debtMember'], usage: ['income','debts','investments','nps','ppf','pf','stallionPms','stallionContributions','stallionProfitHistory','retirementContributions','investmentContributions','gratuityAccounts'].map(collection=>({ collection, field: 'member' })) }
+      familyMembers: { label: 'Family member', selectIds: ['incomeMember','expenseMember','pfMember','npsMember','ppfMember','investMember','gratuityMember','debtMember'], usage: ['income','expenses','debts','investments','nps','ppf','pf','stallionPms','stallionContributions','stallionProfitHistory','retirementContributions','investmentContributions','gratuityAccounts'].map(collection=>({ collection, field: 'member' })) }
     };
     const CUSTOM_VALUE_DEFAULT_OPTIONS = Object.fromEntries(Object.entries(CUSTOM_VALUE_CONFIG).map(([key,config])=>[key,Object.fromEntries(config.selectIds.map(id=>{const select=document.getElementById(id);return [id,Array.from(select?.options||[]).map((option,index)=>({option:option.cloneNode(true),index}))]}))]));
     function validateCustomValues(data) {
@@ -2251,12 +2251,17 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         return (choice.direction==='desc'?-cmp:cmp)||a.index-b.index;
       }).map(item=>item.row);
     }
+    function filterTransactionHistory(rows,kind) {
+      const query=(document.getElementById(`${kind}HistorySearch`)?.value||'').trim().toLocaleLowerCase();
+      if(!query)return rows;
+      return rows.filter(row=>{const debt=row.loanId?allAccounts('debts').find(item=>item.id===row.loanId):null;return [row.member,row.source,row.category,row.subcategory,row.notes,row.date,row.amount,formatCurrency(row.amount),debt?.type,row.category==='EMI Payment'?'EMI':row.isAnnual?'Annual':'Monthly'].some(value=>String(value??'').toLocaleLowerCase().includes(query));});
+    }
     function renderTransactionPagination(kind,total) {
       const pageCount=Math.max(1,Math.ceil(total/TRANSACTION_HISTORY_PAGE_SIZE));
       transactionHistoryPages[kind]=Math.min(Math.max(transactionHistoryPages[kind]||1,1),pageCount);
       const page=transactionHistoryPages[kind],start=total?(page-1)*TRANSACTION_HISTORY_PAGE_SIZE+1:0,end=Math.min(page*TRANSACTION_HISTORY_PAGE_SIZE,total);
       const title=kind==='income'?'Income':'Expense';
-      document.getElementById(`${kind}HistoryPaginationSummary`).innerHTML=`<strong>Showing ${start}–${end} of ${total}</strong><span>8 entries per page · Page ${page} of ${pageCount}</span>`;
+      document.getElementById(`${kind}HistoryPaginationSummary`).innerHTML=`<span>Showing ${start}–${end} of ${total} entries</span>`;
       const pages=pageCount<=5?Array.from({length:pageCount},(_,i)=>i+1):[...new Set([1,page-1,page,page+1,pageCount].filter(n=>n>=1&&n<=pageCount))].sort((a,b)=>a-b);
       let pageMarkup='',last=0;
       pages.forEach(n=>{if(n-last>1)pageMarkup+='<span class="transaction-pagination-ellipsis" aria-hidden="true">…</span>';pageMarkup+=`<button type="button" data-transaction-page="${n}"${n===page?' aria-current="page"':''} aria-label="${title} history page ${n}">${n}</button>`;last=n;});
@@ -2270,7 +2275,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     function changeTransactionHistoryPage(kind,event) {
       const button=event.target.closest('[data-transaction-page]');
       if(!button||button.disabled)return;
-      const total=kind==='income'?profileRows(state.income).filter(row=>row.date.slice(0,7)===document.getElementById('incomeHistoryMonth').value).length:state.expenses.filter(row=>row.date.slice(0,7)===document.getElementById('expenseHistoryMonth').value).length;
+      const month=document.getElementById(`${kind}HistoryMonth`).value;const rows=kind==='income'?profileRows(state.income):state.expenses;const total=filterTransactionHistory(rows.filter(row=>row.date.slice(0,7)===month),kind).length;
       const pages=Math.max(1,Math.ceil(total/TRANSACTION_HISTORY_PAGE_SIZE)),current=transactionHistoryPages[kind]||1;
       const requested=button.dataset.transactionPage==='prev'?current-1:button.dataset.transactionPage==='next'?current+1:Number(button.dataset.transactionPage);
       transactionHistoryPages[kind]=Math.min(Math.max(requested,1),pages);
@@ -2282,15 +2287,16 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const incomeRows=profileRows(state.income);
       const selectedYear = populateHistoryFinancialYear('incomeHistoryFinancialYear', incomeRows.map(row => row.date.slice(0,7)));
       const selectedMonth = populateHistoryMonth('incomeHistoryMonth', incomeRows, selectedYear);
-      const records = sortTransactionHistoryRecords(incomeRows.filter(i => i.date.slice(0, 7) === selectedMonth).sort((a, b) => b.date.localeCompare(a.date)),'income');
-      renderTransactionHistorySummary('income',records);
+      const monthRecords=incomeRows.filter(i=>i.date.slice(0,7)===selectedMonth);
+      const records = sortTransactionHistoryRecords(filterTransactionHistory(monthRecords,'income').sort((a,b)=>b.date.localeCompare(a.date)),'income');
+      renderTransactionHistorySummary('income',monthRecords);
       const pageCount=Math.max(1,Math.ceil(records.length/TRANSACTION_HISTORY_PAGE_SIZE));
       transactionHistoryPages.income=Math.min(Math.max(transactionHistoryPages.income||1,1),pageCount);
       const pageStart=(transactionHistoryPages.income-1)*TRANSACTION_HISTORY_PAGE_SIZE;
       const pageRecords=records.slice(pageStart,pageStart+TRANSACTION_HISTORY_PAGE_SIZE);
       if (records.length === 0) {
         const label = selectedMonth ? new Date(selectedMonth + '-01T12:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : financialYearLabel(selectedYear);
-        tbody.innerHTML = `<tr><td colspan="5" class="text-muted">No income recorded for ${analyticEscape(label)}.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-muted">${document.getElementById('incomeHistorySearch').value.trim()?'No matching income transactions.':`No income recorded for ${analyticEscape(label)}.`}</td></tr>`;
       } else {
       tbody.innerHTML = pageRecords.map(i => `
         <tr data-cash-record="${analyticEscape(i.id)}">
@@ -2577,6 +2583,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const newExpense={
         id: generateId(),
         category: cat,
+        ...(document.getElementById('expenseMember').value?{member:document.getElementById('expenseMember').value}:{}),
         subcategory: subcategory || '',
         amount: amt,
         isAnnual: annual,
@@ -2617,15 +2624,16 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const tbody = document.getElementById('expenseBody');
       const selectedYear = populateHistoryFinancialYear('expenseHistoryFinancialYear', state.expenses.map(row => row.date.slice(0,7)));
       const selectedMonth = populateHistoryMonth('expenseHistoryMonth', state.expenses, selectedYear);
-      const records = sortTransactionHistoryRecords(state.expenses.filter(e => e.date.slice(0, 7) === selectedMonth).sort((a, b) => b.date.localeCompare(a.date)),'expense');
-      renderTransactionHistorySummary('expense',records);
+      const monthRecords=state.expenses.filter(e=>e.date.slice(0,7)===selectedMonth);
+      const records = sortTransactionHistoryRecords(filterTransactionHistory(monthRecords,'expense').sort((a,b)=>b.date.localeCompare(a.date)),'expense');
+      renderTransactionHistorySummary('expense',monthRecords);
       const pageCount=Math.max(1,Math.ceil(records.length/TRANSACTION_HISTORY_PAGE_SIZE));
       transactionHistoryPages.expense=Math.min(Math.max(transactionHistoryPages.expense||1,1),pageCount);
       const pageStart=(transactionHistoryPages.expense-1)*TRANSACTION_HISTORY_PAGE_SIZE;
       const pageRecords=records.slice(pageStart,pageStart+TRANSACTION_HISTORY_PAGE_SIZE);
       if (records.length === 0) {
         const label = selectedMonth ? new Date(selectedMonth + '-01T12:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : financialYearLabel(selectedYear);
-        tbody.innerHTML = `<tr><td colspan="6" class="text-muted">No expenses recorded for ${analyticEscape(label)}.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-muted">${document.getElementById('expenseHistorySearch').value.trim()?'No matching expense transactions.':`No expenses recorded for ${analyticEscape(label)}.`}</td></tr>`;
       } else {
       tbody.innerHTML = pageRecords.map(e => {
         let loanInfo = '';
@@ -2643,11 +2651,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           loanInfo = e.notes || '-';
         }
 
+        const typeLabel=e.category==='EMI Payment'?(e.repaymentType==='part-payment'?'Part payment':'EMI'):e.isAnnual?'Annual':'Monthly';
+        const typeClass=e.category==='EMI Payment'?'emi':e.isAnnual?'annual':'monthly';
+        const badge=`<span class="transaction-type-badge transaction-type-${typeClass}"${e.category==='EMI Payment'?` title="Principal: ${analyticEscape(formatCurrency(e.principalPaid ?? e.amount))} · Interest: ${analyticEscape(formatCurrency(e.interestPaid ?? 0))}" tabindex="0"`:''}>${typeLabel}</span>`;
         return `
           <tr data-cash-record="${analyticEscape(e.id)}">
-            <td data-label="Category"><strong>${analyticEscape(e.category)}</strong>${e.category==='EMI Payment'&&e.loanId?`<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</div>`:''}${e.subcategory ? `<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${analyticEscape(e.subcategory)}</div>` : ''}<div class="transaction-mobile-details"><span class="badge ${e.isAnnual ? 'badge-danger' : 'badge-success'}">${e.isAnnual ? 'Annual' : 'Monthly'}</span>${e.category==='EMI Payment'&&e.loanId?`<span class="transaction-mobile-detail">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</span>`:''}${e.subcategory?`<span class="transaction-mobile-detail">${analyticEscape(e.subcategory)}</span>`:''}${loanInfo&&loanInfo!=='-'?`<span class="transaction-mobile-detail">${analyticEscape(loanInfo)}</span>`:''}</div></td>
+            <td data-label="Category"><strong>${analyticEscape(e.category)}</strong>${e.member?`<div class="text-muted transaction-expense-member">${analyticEscape(e.member)}</div>`:''}${e.category==='EMI Payment'&&e.loanId?`<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</div>`:''}${e.subcategory ? `<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${analyticEscape(e.subcategory)}</div>` : ''}<div class="transaction-mobile-details">${badge}${e.category==='EMI Payment'&&e.loanId?`<span class="transaction-mobile-detail">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</span>`:''}${e.subcategory?`<span class="transaction-mobile-detail">${analyticEscape(e.subcategory)}</span>`:''}${loanInfo&&loanInfo!=='-'?`<span class="transaction-mobile-detail">${analyticEscape(loanInfo)}</span>`:''}</div></td>
             <td class="text-right" data-label="Amount">${formatCurrency(e.amount)}${breakdown}</td>
-            <td data-label="Type"><span class="badge ${e.isAnnual ? 'badge-danger' : 'badge-success'}">${e.isAnnual ? 'Annual' : 'Monthly'}</span></td>
+            <td data-label="Type">${badge}</td>
             <td class="text-muted" data-label="Loan / Notes">${analyticEscape(loanInfo)}</td>
             <td class="text-muted" data-label="Date"><span class="transaction-date-desktop">${calendarDate(e.date).toLocaleDateString('en-IN')}</span><span class="transaction-date-mobile">${calendarDate(e.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span></td>
             <td class="transaction-actions" data-label="Actions">
@@ -2667,7 +2678,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const expense = state.expenses.find(e => e.id === id);
       if (!expense) return;
       const originalRecord=JSON.stringify(expense);
-      const fields=[{key:'amount',label:'Amount ₹',type:'number',min:0.01,value:expense.amount},...(expense.category==='EMI Payment'&&expense.loanId?[{key:'repaymentType',label:'Payment type',value:expense.repaymentType||'emi',options:['emi','part-payment'],optionLabels:{emi:'Monthly EMI','part-payment':'Part Payment'}}]:[]),{key:'date',label:'Expense date',type:'date',value:expense.date},{key:'notes',label:'Notes',type:'textarea',value:expense.notes||''}];
+      const fields=[{key:'member',label:'Family member (optional)',value:expense.member||'',options:Array.from(document.getElementById('expenseMember').options,o=>o.value).filter(Boolean),optional:true,placeholder:'Household / unspecified'},{key:'amount',label:'Amount ₹',type:'number',min:0.01,value:expense.amount},...(expense.category==='EMI Payment'&&expense.loanId?[{key:'repaymentType',label:'Payment type',value:expense.repaymentType||'emi',options:['emi','part-payment'],optionLabels:{emi:'Monthly EMI','part-payment':'Part Payment'}}]:[]),{key:'date',label:'Expense date',type:'date',value:expense.date},{key:'notes',label:'Notes',type:'textarea',value:expense.notes||''}];
       const values=await openRecordEditor('Edit expense',fields,v=>expense.recurringMonth&&v.date.slice(0,7)!==expense.recurringMonth?'Keep this recurring entry in its scheduled month. Adjust its amount or day within that month.':null);
       if(!values)return;
       if(!state.expenses.includes(expense)||JSON.stringify(expense)!==originalRecord){alert('This record changed while editing. Reopen it and try again.');return;}
@@ -2696,6 +2707,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       }
       const debtSnapshot=debt?JSON.stringify(debt):null;
       const rowSnapshots=debt?state.expenses.filter(row=>row.category==='EMI Payment'&&row.loanId===debt.id).map(row=>[row,JSON.stringify(row)]):[];
+      if(values.member)expense.member=values.member;else delete expense.member;
       expense.amount = amt;
       expense.date = newDate;
       expense.notes = newNotes;
@@ -4474,11 +4486,11 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(donut){
         const colors=['var(--primary)','#4f78c9','#d18b2c','#c96974','#8069a8','#468b87'],radius=60,circumference=2*Math.PI*radius;
         let offset=0;
-        const segments=slices.map((item,index)=>{const length=total>0?circumference*item.value/total:0,segment=`<circle class="advanced-dashboard-donut-segment" cx="90" cy="90" r="${radius}" stroke="${colors[index%colors.length]}" stroke-dasharray="${length.toFixed(2)} ${(circumference-length).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"><title>${analyticEscape(item.name)}: ${formatCurrency(item.value)} (${analyticPercent(item.value,total)})</title></circle>`;offset+=length;return segment;}).join('');
+        const segments=slices.map((item,index)=>{const length=total>0?circumference*item.value/total:0,color=item.name==='Other'?'#64748b':colors[index%colors.length],segment=`<circle class="advanced-dashboard-donut-segment" cx="90" cy="90" r="${radius}" stroke="${color}" stroke-dasharray="${length.toFixed(2)} ${(circumference-length).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"><title>${analyticEscape(item.name)}: ${formatCurrency(item.value)} (${analyticPercent(item.value,total)})</title></circle>`;offset+=length;return segment;}).join('');
         donut.innerHTML=`<circle class="advanced-dashboard-donut-track" cx="90" cy="90" r="${radius}"/>${segments}<text class="advanced-dashboard-donut-total" x="90" y="87">${total?analyticEscape(analyticCompact(total)):'₹0'}</text><text class="advanced-dashboard-donut-caption" x="90" y="103">PORTFOLIO VALUE</text>`;
         donut.setAttribute('aria-label',total?`Investment portfolio allocation totaling ${formatCurrency(total)}, excluding gratuity. ${slices.map(item=>`${item.name} ${formatCurrency(item.value)}, ${analyticPercent(item.value,total)}`).join('; ')}.`:'No investment balances are recorded; gratuity is excluded.');
       }
-      if(legend)legend.innerHTML=slices.length?slices.map((item,index)=>`<div class="advanced-dashboard-allocation-item" style="--allocation-color:${['var(--primary)','#4f78c9','#d18b2c','#c96974','#8069a8','#468b87'][index%6]}"><i aria-hidden="true"></i><span title="${analyticEscape(item.name)}">${analyticEscape(item.name)}</span><strong>${analyticEscape(analyticCompact(item.value))} · ${analyticPercent(item.value,total)}</strong></div>`).join(''):'<p class="text-muted">Add an investment to see your allocation.</p>';
+      if(legend)legend.innerHTML=slices.length?slices.map((item,index)=>`<div class="advanced-dashboard-allocation-item" style="--allocation-color:${item.name==='Other'?'#64748b':['var(--primary)','#4f78c9','#d18b2c','#c96974','#8069a8','#468b87'][index%6]}"><i aria-hidden="true"></i><span title="${analyticEscape(item.name)}">${analyticEscape(item.name)}</span><strong>${analyticEscape(analyticCompact(item.value))} · ${analyticPercent(item.value,total)}</strong></div>`).join(''):'<p class="text-muted">Add an investment to see your allocation.</p>';
     }
 
     function populateReportFinancialYears() {
@@ -4500,8 +4512,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       document.getElementById('reportEndDate').value=`${startYear+1}-03-31`;
       renderRangeReport(true);
     }
-    function clearReportPresetSelection(){document.querySelectorAll('[data-report-preset]').forEach(button=>button.setAttribute('aria-pressed','false'));}
+    function clearReportPresetSelection(){document.querySelectorAll('[data-report-preset]').forEach(button=>button.setAttribute('aria-pressed','false'));if(!document.getElementById('reportFinancialYear').value)document.querySelector('[data-report-preset=custom]')?.setAttribute('aria-pressed','true');}
     function applyReportDatePreset(preset){
+      if(preset==='custom'){document.getElementById('reportFinancialYear').value='';clearReportPresetSelection();document.getElementById('reportStartDate').focus();return;}
       const now=new Date(),today=localDateKey(),year=now.getFullYear(),month=now.getMonth(),fyStart=month>=3?year:year-1;
       const dateKey=date=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
       let start='',end=today;
@@ -4514,6 +4527,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       document.getElementById('reportStartDate').value=start;
       document.getElementById('reportEndDate').value=end;
       clearReportPresetSelection();
+      document.querySelector('[data-report-preset=custom]')?.setAttribute('aria-pressed','false');
       document.querySelector(`[data-report-preset="${preset}"]`)?.setAttribute('aria-pressed','true');
       renderRangeReport(true);
     }
@@ -4541,7 +4555,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const totalsByMonth=recalculateHouseExpenses();
       const reportDebts=new Map(allAccounts('debts').map(row=>[row.id,row]));
       const reportInvestments=new Map(allAccounts('investments').map(row=>[row.id,row]));
-      const money=['Amount','Invested','Current value','Monthly scheduled','Employee monthly','Employer monthly','Principal','Remaining principal','EMI','Interest paid','Principal paid','Starting balance','Income','Recorded expenses','PMS SIP','Surplus','House expense','Full expense','Gain / loss'];
+      const money=['Amount','Invested','Current value','Monthly scheduled','Employee monthly','Employer monthly','Principal','Remaining principal','EMI','Interest paid','Principal paid','Starting balance','Income','Recorded expenses','PMS SIP','Surplus','House expense','Full expense','Gain / loss','EPS contribution','Total contribution'];
       const common=r=>({Date:r.date,Member:r.member||'',Notes:r.notes||''});
       const definitions=[
         ['interestCredits','PF / PPF annual interest',r=>({Date:r.date,Member:r.member,Account:r.accountName,Type:r.investmentType.toUpperCase(),'Financial year':r.financialYear,Amount:r.amount})],
@@ -4642,6 +4656,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const cell=(k,v)=>v==null?'Pending / not calculated':group.money.includes(k)?formatCurrency(v):analyticEscape(v);
       return `<tr>${group.cols.map(k=>`<td${numericColumn(k)?' class="text-right"':''}>${cell(k,row[k])}</td>`).join('')}</tr>`;
     }
+    function rangeReportSummable(group,column){if(group.key==='stallionProfitHistory')return false;if(group.key==='monthlyBalances'&&['Starting balance','Surplus'].includes(column))return false;return group.money.includes(column);}
     function applyRangeReportPagination(table) {
       if(!table?.dataset.rangeReportKey)return;
       const key=table.dataset.rangeReportKey,group=rangeReportGroups[key];if(!group)return;
@@ -4657,7 +4672,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const section=table.closest('[data-range-report-section]');
       if(section){const heading=section.querySelector('h3');if(heading)heading.textContent=`${group.title} (${rows.length}${group.rows.length!==rows.length?` of ${group.rows.length}`:''})`;}
       const footer=table.tFoot?.rows[0];
-      if(footer)group.cols.forEach((col,index)=>{const cell=footer.cells[index];if(!cell)return;if(index===0)cell.textContent='Total';else if(group.money.includes(col))cell.textContent=!rows.length?'—':rows.some(row=>row[col]==null)?'Incomplete':formatCurrency(rows.reduce((sum,row)=>sum+(Number(row[col])||0),0));else cell.textContent='';});
+      if(footer)group.cols.forEach((col,index)=>{const cell=footer.cells[index];if(!cell)return;if(index===0)cell.textContent=group.key==='stallionProfitHistory'?'Snapshots (not additive)':'Total';else if(rangeReportSummable(group,col))cell.textContent=!rows.length?'—':rows.some(row=>row[col]==null)?'Incomplete':formatCurrency(rows.reduce((sum,row)=>sum+(Number(row[col])||0),0));else cell.textContent='';});
     }
     function sortRangeReportRows(table,choice) {
       const group=rangeReportGroups[table?.dataset.rangeReportKey];if(!group||!choice)return;
@@ -4729,7 +4744,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           const group=rangeReportGroups[view.key],rows=view.rows;
           const numericColumn=k=>report.money.includes(k)||/%|rate/i.test(k);
           const pageRows=rows.slice(0,RANGE_REPORT_PAGE_SIZE).map(row=>rangeReportRowHtml(group,row)).join('')||`<tr><td colspan="${group.cols.length}" class="range-report-no-match">No rows match these column filters.<button type="button" data-range-clear-all>Clear all filters</button></td></tr>`;
-          const totals=group.cols.map((k,i)=>i===0?'Total':report.money.includes(k)?(!rows.length?'—':rows.some(r=>r[k]==null)?'Incomplete':formatCurrency(rows.reduce((sum,r)=>sum+(Number(r[k])||0),0))):'');
+          const totals=group.cols.map((k,i)=>i===0?(group.key==='stallionProfitHistory'?'Snapshots (not additive)':'Total'):rangeReportSummable(group,k)?(!rows.length?'—':rows.some(r=>r[k]==null)?'Incomplete':formatCurrency(rows.reduce((sum,r)=>sum+(Number(r[k])||0),0))):'');
           const pagination=rows.length>RANGE_REPORT_PAGE_SIZE?`<div class="range-report-pagination" data-range-report-pagination><span data-range-report-count></span><nav class="range-report-page-buttons" data-range-report-pages aria-label="${analyticEscape(group.title)} pages"></nav></div>`:'';
           const open=reportType!=='all'||index===0?' open':'';
           return `<details class="range-report-section" data-range-report-section="${analyticEscape(group.key)}"${open}><summary><h3>${analyticEscape(group.title)} (${rows.length}${group.rows.length!==rows.length?` of ${group.rows.length}`:''})</h3></summary><div class="report-section-body"><div class="table-wrapper"><table data-range-report-key="${analyticEscape(group.key)}"><thead><tr>${group.cols.map(k=>`<th${numericColumn(k)?' class="text-right"':''}>${analyticEscape(k)}</th>`).join('')}</tr></thead><tbody id="range-${analyticEscape(group.key)}">${pageRows}</tbody><tfoot><tr style="font-weight:bold">${totals.map((t,i)=>`<td${numericColumn(group.cols[i])?' class="text-right"':''}>${t}</td>`).join('')}</tr></tfoot></table></div>${pagination}</div></details>`;
@@ -4737,13 +4752,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         output.querySelectorAll('table[data-range-report-key]').forEach(applyRangeReportPagination);
         const filteredGroups=visibleGroups.filter(group=>group.rows.length);
         status.textContent=`${report.start} to ${report.end} · ${recordCount} ${activeFilters?'matching ':''}record${recordCount===1?'':'s'}. Totals are separate for each report; account balances and transactions are not added together. Monthly balance totals are sums of snapshots, not a closing balance.`;
+        const pageStatus=document.getElementById('reportPageStatus');if(pageStatus)pageStatus.textContent=`Report · ${recordCount} ${recordCount===1?'record':'records'}`;
         const exportCount=document.getElementById('rangeReportExportCount');
         if(exportCount)exportCount.textContent=recordCount?`${recordCount} matching ${recordCount===1?'record':'records'} · exports use active filters`:'No matching records';
         document.getElementById('exportRangeReport').disabled=recordCount===0;
         document.getElementById('printRangeReport').disabled=recordCount===0;
         renderRangeReportActiveFilters();
         output.dataset.generated='true';return {...report,groups:filteredGroups,activeFilters};
-      }catch(error){output.innerHTML='';document.getElementById('rangeReportSummary').hidden=true;document.getElementById('rangeReportSummary').innerHTML='';status.textContent=error.message;rangeReportGroups={};rangeReportPages={};document.getElementById('exportRangeReport').disabled=true;document.getElementById('printRangeReport').disabled=true;document.getElementById('rangeReportExportCount').textContent='Generate a valid report to export';renderRangeReportActiveFilters();return null;}
+      }catch(error){const pageStatus=document.getElementById('reportPageStatus');if(pageStatus)pageStatus.textContent='Choose a valid report period';output.innerHTML='';document.getElementById('rangeReportSummary').hidden=true;document.getElementById('rangeReportSummary').innerHTML='';status.textContent=error.message;rangeReportGroups={};rangeReportPages={};document.getElementById('exportRangeReport').disabled=true;document.getElementById('printRangeReport').disabled=true;document.getElementById('rangeReportExportCount').textContent='Generate a valid report to export';renderRangeReportActiveFilters();return null;}
     }
     function rangeReportActiveFilterItems() {
       const items=[];
@@ -4866,6 +4882,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       select.addEventListener('change',()=>{for(const id of ['surplusTrendFinancialYear','stallionProfitTrendFinancialYear'])document.getElementById(id).dataset.preferredYear=select.value;renderCharts();});
       const groups=[['surplusTrendChart','stallionProfitTrendChart','Monthly Surplus','Stallion PMS','trend'],['assetAllocationChart','retirementFundsChart','All Assets','Retirement Only','allocation'],['investmentReturnsChart','familyContributionChart','Returns vs. Invested','Family Split','returns']];
       for(const [first,second,a,b,name] of groups){const cards=[first,second].map(id=>document.getElementById(id).closest('.analytics-card'));cards.forEach((card,index)=>{card.classList.add('analytics-bento-'+name);const controls=document.createElement('div');controls.className='analytics-segmented';controls.setAttribute('aria-label',name+' view');for(const [i,label] of [a,b].entries()){const button=document.createElement('button');button.type='button';button.textContent=label;button.setAttribute('aria-pressed',String(i===index));button.addEventListener('click',()=>{cards.forEach((target,j)=>{target.hidden=j!==i;target.querySelectorAll('.analytics-segmented button').forEach((x,k)=>x.setAttribute('aria-pressed',String(i===k)));});requestAnimationFrame(()=>{for(const id of [first,second])chartInstances[id]?.resize();});});controls.append(button);}card.querySelector('.panel-header').append(controls);card.hidden=index!==0;});}
+      const debtCard=document.getElementById('debtProgressChart').closest('.analytics-card');debtCard.classList.add('analytics-bento-debt');const debtLegend=document.createElement('div');debtLegend.className='analytics-debt-legend';debtLegend.innerHTML='<span><i></i>Paid</span><span><i></i>Remaining</span>';debtCard.querySelector('.panel-header').append(debtLegend);const debtSummary=document.createElement('div');debtSummary.className='analytics-debt-summary';debtSummary.innerHTML='<div><span>Paid</span><strong id="analyticsDebtPaid">₹0</strong><small id="analyticsDebtPaidPercent">—</small></div><div><span>Remaining</span><strong id="analyticsDebtRemaining">₹0</strong><small id="analyticsDebtRemainingPercent">—</small></div>';document.getElementById('debtProgressChart').after(debtSummary);
       for(const card of root.querySelectorAll('.analytics-grid > .analytics-card')){const detail=card.querySelector('[data-analytics-detail-toggle]'),box=card.querySelector('.chart-detail'),note=card.querySelector('.chart-takeaway');if(detail&&box){const wrap=document.createElement('div');wrap.id=box.id+'Panel';wrap.hidden=true;box.before(wrap);if(note)wrap.append(note);wrap.append(box);box.hidden=false;detail.setAttribute('aria-controls',wrap.id);card.querySelector('.panel-header').append(detail);}}
     }
     function updateAnalyticsBento(){
@@ -4964,7 +4981,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const subtleDebtColors=darkTheme?{paid:'#5b9b83',remaining:'#bd7781'}:{paid:'#78B59B',remaining:'#D9848E'};
       cashChart.config.type='bar';
       cashChart.data={labels:['Income','Expenses','Stallion','NPS + PPF','Cash remaining'],datasets:[{label:'Financial year cash flow',data:[t.income,t.expenses,t.stallion,t.retirement,remaining],backgroundColor:[subtleFlowColors[0],subtleFlowColors[1],subtleFlowColors[2],subtleFlowColors[3],remaining>=0?subtleFlowColors[4]:subtleFlowColors[1]],borderRadius:6,borderSkipped:false}]};
-      cashChart.options.scales={y:{beginAtZero:true,ticks:{callback:v=>analyticCompact(v)}}};
+      cashChart.options.scales={y:{beginAtZero:true,ticks:{callback:v=>analyticCompact(v)}}};cashChart.options.plugins.legend.display=false;
       cashChart.$analyticLabels=[[analyticCompact(t.income),analyticPercent(t.expenses,t.income),analyticPercent(t.stallion,t.income),analyticPercent(t.retirement,t.income),analyticPercent(remaining,t.income)]];
       analyticsTable('incomeExpenseChart',['Item','Amount','% of income'],[['Income',formatCurrency(t.income),analyticPercent(t.income,t.income)],['Recorded expenses',formatCurrency(t.expenses),analyticPercent(t.expenses,t.income)],['Stallion contributions',formatCurrency(t.stallion),analyticPercent(t.stallion,t.income)],['NPS + PPF',formatCurrency(t.retirement),analyticPercent(t.retirement,t.income)],['Total outflows',formatCurrency(outflow),analyticPercent(outflow,t.income)],['Income less tracked outflows',formatCurrency(remaining),analyticPercent(remaining,t.income)]],
         `Annual expenses count fully in their recorded month. Recorded expenses use ${analyticPercent(t.expenses,t.income)} of income. Total outflows: ${formatCurrency(outflow)}; ${remaining<0?'income shortfall':'income left after tracked outflows'}: ${formatCurrency(Math.abs(remaining))}. This income comparison is separate from Monthly Surplus Balance, which uses starting balance + income − expenses − Stallion.`);
@@ -4978,7 +4995,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const trendRows=sorted.map(b=>{const prevKey=previousMonthKey(b.month);const value=valueByMonth.get(b.month);const prevValue=valueByMonth.get(prevKey);const consecutive=prevValue!==undefined;return [b.month,formatCurrency(value),consecutive?formatCurrency(value-prevValue):'N/A',consecutive&&prevValue>0?analyticPercent(value-prevValue,prevValue):'N/A'];});
       analyticsTable('surplusTrendChart',['Month','Monthly surplus balance','Change vs prior month','% change'],trendRows,`${financialYearLabel(surplusYear)}. Starting balance + income − expenses − Stallion. Retirement contributions are tracked separately. Changes are shown only when a previous calendar month is recorded; percentage change requires a positive prior balance. ${isCurrentSurplusFY?'Only recorded months through the current month are shown; the current month may be provisional.':'Recorded months for this financial year are shown.'} This is not monthly savings.`);
       const visibleDebts=profileRows(state.debts),principal=visibleDebts.reduce((a,d)=>a+loanTotalPrincipal(d),0),owed=visibleDebts.reduce((a,d)=>a+d.remaining,0),paid=principal-owed;
-      chartInstances.debtProgressChart.$analyticLabels=[[analyticPercent(paid,principal)],[analyticPercent(owed,principal)]];
+      chartInstances.debtProgressChart.options.plugins.analyticLabels={display:false};
+      for(const [id,value] of [['analyticsDebtPaid',formatCurrency(paid)],['analyticsDebtRemaining',formatCurrency(owed)],['analyticsDebtPaidPercent',analyticPercent(paid,principal)],['analyticsDebtRemainingPercent',analyticPercent(owed,principal)]]){const node=document.getElementById(id);if(node)node.textContent=value;}
+
       analyticsTable('debtProgressChart',['Debt status','Amount','% of original principal'],[['Repaid',formatCurrency(paid),analyticPercent(paid,principal)],['Outstanding',formatCurrency(owed),analyticPercent(owed,principal)]],principal>0?`${analyticPercent(paid,principal)} of total borrowed repaid; ${formatCurrency(owed)} remains outstanding.`:'No loan principal recorded.');
       const ret=nps+ppf+pf;analyticsTable('retirementFundsChart',['Fund','Current value','Retirement share'],[['NPS',formatCurrency(nps),analyticPercent(nps,ret)],['PPF',formatCurrency(ppf),analyticPercent(ppf,ret)],['PF',formatCurrency(pf),analyticPercent(pf,ret)]],`Retirement assets: ${formatCurrency(ret)} (${analyticPercent(ret,total)} of total tracked assets).`);
       const selectedInvestments=profileRows(state.investments), investmentMembers=new Map(selectedInvestments.map(row=>[row.id,row.member||'Unassigned']));
@@ -4991,7 +5010,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       family.data={labels:memberRows.map(x=>x.member),datasets:[{label:'NPS',data:memberRows.map(x=>x.n),backgroundColor:palette.brand},{label:'PPF',data:memberRows.map(x=>x.p),backgroundColor:palette.blue},{label:'PF',data:memberRows.map(x=>x.f),backgroundColor:palette.violet},{label:'Stallion',data:memberRows.map(x=>x.st),backgroundColor:palette.amber},{label:'Investments',data:memberRows.map(x=>x.other),backgroundColor:palette.cyan}]};family.options.scales.x={stacked:true};family.options.scales.y.stacked=true;
       analyticsTable('familyContributionChart',['Member','FY recorded contributions','Share of contributions'],memberRows.map(x=>[x.member,formatCurrency(x.total),analyticPercent(x.total,contributionTotal)]),`Recorded contributions for ${financialYearLabel(year)} total ${formatCurrency(contributionTotal)}. PF includes recorded employee and employer amounts and EPS where recorded.`);
 
-      const returns=investmentReturnItems();const returnChart=chartInstances.investmentReturnsChart;const plottedReturns=returnChart?returnChart.data.labels.map((label,index)=>({invested:returnChart.data.datasets[0].data[index],gain:returnChart.data.datasets[1].data[index]})):[];if(returnChart)returnChart.$analyticLabels=[plottedReturns.map(x=>analyticCompact(x.invested)),plottedReturns.map(x=>analyticPercent(x.gain,x.invested))];
+      const returns=investmentReturnItems();const returnChart=chartInstances.investmentReturnsChart;if(returnChart)returnChart.options.plugins.analyticLabels={display:false};
       analyticsTable('investmentReturnsChart',['Investment','Invested','Current value','Gain / loss','Absolute return'],returns.map(x=>[x.name,formatCurrency(x.invested),formatCurrency(x.current),formatCurrency(x.current-x.invested),analyticPercent(x.current-x.invested,x.invested)]),'Gain = current value − invested amount. Includes NPS, PPF, PF and Stallion. Absolute return = gain ÷ invested amount; it is not annualised and does not account for contribution timing.');
       Object.entries(chartInstances).forEach(([id,chart])=>{
         const dark=document.documentElement.getAttribute('data-theme')==='dark';
@@ -5013,7 +5032,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           else if(['assetAllocationChart','retirementFundsChart'].includes(id))base=ctx.dataset.data.reduce((a,b)=>a+b,0);
           else if(id==='debtProgressChart')base=principal;
           else if(id==='familyContributionChart')base=contributionTotal;
-          else if(id==='investmentReturnsChart')base=returns[ctx.dataIndex]?.invested||0;
+          else if(id==='investmentReturnsChart')base=returnChart?.$returnItems?.[ctx.dataIndex]?.invested||0;
           return `${ctx.dataset.label||ctx.label}: ${formatCurrency(v)}${base!==undefined?' ('+analyticPercent(v,base)+(id==='investmentReturnsChart'?' of invested capital':id==='incomeExpenseChart'?' of income':'')+')':''}`;
         }}};
         chart.update('none');
@@ -5115,8 +5134,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
         const allocationTotal=npsTotal+ppfTotal+pfTotal+investTotal+stallionTotal;
         chartInstances['assetAllocationChart'] = new Chart(ctx, {
-          plugins:[{id:'emptyAllocationRing',afterDraw(chart){if(allocationTotal>0)return;const a=chart.chartArea,c=chart.ctx,x=(a.left+a.right)/2,y=(a.top+a.bottom)/2,r=Math.max(16,Math.min(a.right-a.left,a.bottom-a.top)*.34);c.save();c.strokeStyle=darkTheme?'rgba(255,255,255,.08)':'rgba(15,23,42,.10)';c.lineWidth=Math.max(12,r*.25);c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();c.fillStyle=themeColor('text');c.font='500 16px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('₹0 Total',x,y);c.restore();}}],
-          type: 'pie',
+          plugins:[{id:'emptyAllocationRing',afterDraw(chart){const a=chart.chartArea,c=chart.ctx,x=(a.left+a.right)/2,y=(a.top+a.bottom)/2,r=Math.max(16,Math.min(a.right-a.left,a.bottom-a.top)*.34);c.save();if(allocationTotal<=0){c.strokeStyle=darkTheme?'rgba(255,255,255,.08)':'rgba(15,23,42,.10)';c.lineWidth=Math.max(12,r*.25);c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();}c.fillStyle=themeColor('text');c.font='600 14px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(analyticCompact(allocationTotal),x,y-6);c.font='10px sans-serif';c.fillStyle=themeColor('text-light');c.fillText('Total assets',x,y+12);c.restore();}}],
+          type: 'doughnut',
           data: {
             labels: ['NPS', 'PPF', 'PF', 'Investments', 'Stallion PMS'],
             datasets: [{
@@ -5136,8 +5155,10 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           options: {
             responsive: true,
             maintainAspectRatio: true,
+            cutout:'62%',
             plugins: {
-              legend: { position: 'right',display:true },
+              analyticLabels:{display:false},
+              legend: { position: 'right',display:true,labels:{generateLabels(chart){const items=Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart),values=chart.data.datasets[0].data,total=values.reduce((a,b)=>a+(Number(b)||0),0);return items.map((item,i)=>({...item,text:item.text+'  '+(total>0?analyticPercent(Number(values[i])||0,total):'0.0%')}));}} },
               tooltip: {
                 callbacks: {
                   label: (ctx) => '₹' + Math.round(ctx.parsed).toLocaleString('en-IN')
@@ -5283,7 +5304,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           indexAxis: 'y',
           responsive: true,
           maintainAspectRatio: true,
-          plugins: { legend: { position: 'top' } },
+          plugins: { legend: { display:false },analyticLabels:{display:false} },
           scales: { x: { stacked: true, ticks: { callback: (v) => '₹' + (v/100000).toFixed(0) + 'L' } }, y: { stacked: true } }
         }
       });
@@ -5387,12 +5408,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         current: Number(inv.current)||0,
         gain: (Number(inv.current)||0) - (Number(inv.invested)||0)
       })).filter(inv => inv.invested > 0);
-      const chartItems=[];
-      for(const group of ['nps','ppf']) {
-        const accounts=accountItems.filter(item=>item.group===group);
-        if(accounts.length) chartItems.push({name:group.toUpperCase(),invested:accounts.reduce((sum,item)=>sum+item.invested,0),current:accounts.reduce((sum,item)=>sum+item.current,0),gain:accounts.reduce((sum,item)=>sum+item.gain,0)});
-      }
-      chartItems.push(...accountItems.filter(item=>item.group!=='nps'&&item.group!=='ppf'));
+      const chartItems=[...accountItems].sort((a,b)=>b.current-a.current).slice(0,5);
       const labels = chartItems.map(inv => inv.name);
       const invested = chartItems.map(inv => inv.invested);
       const gains = chartItems.map(inv => inv.gain);
@@ -5405,10 +5421,11 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if (!ctx) return;
       const returnsChartInner=document.getElementById('investmentReturnsChartInner');
       if(returnsChartInner)returnsChartInner.style.setProperty('--investment-return-count',String(Math.max(labels.length,1)));
+      const hint=document.querySelector('.investment-returns-swipe-hint');if(hint){hint.textContent=accountItems.length>5?`Showing top 5 of ${accountItems.length} holdings. View Details shows all.`:'Invested and gain / loss by holding';hint.removeAttribute('aria-hidden');}
 
       const scroll=document.getElementById('investmentReturnsChartScroll');let empty=document.getElementById('investmentReturnsEmpty');
       if(!empty){empty=document.createElement('div');empty.id='investmentReturnsEmpty';empty.className='retirement-empty-state';empty.innerHTML='<strong>No investments to compare yet</strong><span>Add your first investment to see Invested vs. Returns.</span>';scroll.after(empty);}
-      const noValues=!chartItems.length||!chartItems.some(r=>r.invested!==0||r.gain!==0);scroll.hidden=noValues;empty.hidden=!noValues;if(noValues)return;
+      const noValues=!chartItems.length||!chartItems.some(r=>r.invested!==0||r.gain!==0);scroll.hidden=noValues;empty.hidden=!noValues;if(hint)hint.hidden=noValues;if(noValues)return;
       chartInstances['investmentReturnsChart'] = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -5421,10 +5438,12 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'top' } },
-          scales: { y: { beginAtZero:true,suggestedMax:Math.max(100000,...invested,...gains.map(Math.abs)),ticks: {maxTicksLimit:5,callback: (v) => analyticCompact(v)} } }
+          indexAxis:'y',
+          plugins: { legend: { position: 'top' },analyticLabels:{display:false} },
+          scales: { x: { beginAtZero:true,ticks:{maxTicksLimit:4,callback:v=>analyticCompact(v)} },y:{ticks:{autoSkip:false,callback:function(v){const label=String(this.getLabelForValue(v));return label.length>20?label.slice(0,19)+'…':label;}}} }
         }
       });
+        chartInstances.investmentReturnsChart.$returnItems=chartItems;
         console.log(' Investment Returns chart: ' + chartItems.length + ' chart categories from ' + accountItems.length + ' account rows');
       } catch (e) {
         console.error(' renderInvestmentReturnsChart error:', e);
@@ -5691,7 +5710,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const monthlyAssets=assets.filter(asset=>asset.kind!=='eps'&&(Number(asset.monthly)>0||(asset.kind==='pf'&&assets.some(row=>row.kind==='eps'&&row.monthly>0))));
       wrap.hidden=!includeMonthlyContributions||!monthlyAssets.length;
       const excluded=state.projectionSettings?.excludedMonthlyContributions||[];
-      list.innerHTML=monthlyAssets.map(asset=>`<label class="growth-exclusion-item"><span class="growth-exclusion-name"><strong>${analyticEscape(asset.name)}</strong><small>${formatCurrency((Number(asset.monthly)||0)+(asset.kind==='pf'?(assets.find(row=>row.kind==='eps')?.monthly||0):0))} per month${asset.kind==='pf'&&assets.some(row=>row.kind==='eps')?' · PF + EPS':''}</small></span><span class="growth-exclusion-control"><span>Exclude</span><span class="growth-switch growth-switch-small"><input type="checkbox" class="growth-monthly-exclude-toggle" data-asset="${analyticEscape(asset.name)}" aria-label="Exclude ${analyticEscape(asset.name)} monthly contribution" ${excluded.includes(asset.name)?'checked':''}><span class="growth-switch-track"></span></span></span></label>`).join('');
+      const activeCount=monthlyAssets.filter(asset=>!excluded.includes(asset.name)).length;
+      document.getElementById('growthContributionHeading').textContent=`Active monthly contributions (${activeCount}/${monthlyAssets.length})`;
+      list.innerHTML=monthlyAssets.map(asset=>{const included=!excluded.includes(asset.name);return `<label class="growth-exclusion-item${included?'':' is-excluded'}"><span class="growth-exclusion-name"><strong>${analyticEscape(asset.name)}</strong><small>${formatCurrency((Number(asset.monthly)||0)+(asset.kind==='pf'?(assets.find(row=>row.kind==='eps')?.monthly||0):0))} per month${asset.kind==='pf'&&assets.some(row=>row.kind==='eps')?' · PF + EPS':''}</small></span><span class="growth-exclusion-control"><span>${included?'Included':'Excluded'}</span><span class="growth-switch growth-switch-small"><input type="checkbox" class="growth-monthly-exclude-toggle" data-asset="${analyticEscape(asset.name)}" aria-label="Include ${analyticEscape(asset.name)} monthly contribution" ${included?'checked':''}><span class="growth-switch-track"></span></span></span></label>`;}).join('');
     }
     function renderGrowthAdjustmentRows(assets) {
       const select=document.getElementById('growthAdjustmentAsset'),previous=select.value;
@@ -5879,7 +5900,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       summary.innerHTML='<h3 class="growth-scenario-heading">'+years+'-year scenario comparison</h3>'+['stress','base','optimistic'].map(scenario=>`<button type="button" data-projection-scenario="${scenario}" class="stat-card growth-projection-stat-card growth-projection-stat-card-${scenario}" aria-pressed="${scenario===selectedScenario}"><span class="stat-label">${labels[scenario]}</span><strong class="stat-value">${formatProjectionLakh(projections[scenario].ending)}</strong></button>`).join('');
 
       const baseRows=projections.base.rows;
-      body.innerHTML=baseRows.map((row,index)=>{const s=projections.stress.rows[index],b=projections.base.rows[index],o=projections.optimistic.rows[index];return `<tr><td>${financialYearLabel(row.fyStart)}</td><td class="text-right">${formatCurrency(row.opening)}</td><td class="text-right">${formatCurrency(row.contributions)}</td><td class="text-right">${formatCurrency(row.additions)}</td><td class="text-right">${formatCurrency(row.withdrawals)}</td><td class="text-right">${formatCurrency(s.growth)}</td><td class="text-right">${formatCurrency(b.growth)}</td><td class="text-right">${formatCurrency(o.growth)}</td><td class="text-right">${formatCurrency(s.closing)}</td><td class="text-right">${formatCurrency(b.closing)}</td><td class="text-right">${formatCurrency(o.closing)}</td></tr>`;}).join('');
+
       const todayLabel=`Today · ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
       const labelsForChart=[todayLabel,...baseRows.map(row=>financialYearLabel(row.fyStart))];
       const chartData={labels:labelsForChart,datasets:['stress','base','optimistic'].map(scenario=>({label:labels[scenario],data:[Math.round(current),...projections[scenario].rows.map(row=>Math.round(row.closing))],borderColor:colors[scenario],backgroundColor:context=>{const a=context.chart.chartArea;if(!a||scenario==='stress')return 'transparent';const g=context.chart.ctx.createLinearGradient(0,a.top,0,a.bottom);g.addColorStop(0,scenario==='base'?'rgba(56,189,248,.24)':'rgba(52,211,153,.20)');g.addColorStop(1,'rgba(0,0,0,0)');return g;},borderDash:scenario==='stress'?[6,5]:[],borderWidth:scenario==='base'?3:2.5,pointRadius:3,pointHoverRadius:7,pointHitRadius:18,tension:.35,fill:scenario==='stress'?false:'origin'}))};
@@ -5892,6 +5913,10 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       function renderScenarioBreakdown(scenario){
       summary.dataset.scenario=scenario;summary.querySelectorAll('[data-projection-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.projectionScenario===scenario)));
       const takeaway=document.getElementById('growthProjectionTakeaway'),base=projections[scenario];
+      const table=document.getElementById('growthProjectionResultsTable');
+      table.querySelector('thead').innerHTML=`<tr><th>Financial year</th><th class="text-right">Opening value</th><th class="text-right">Contributions &amp; changes</th><th class="text-right">${labels[scenario]} growth</th><th class="text-right">${labels[scenario]} closing value</th><th class="text-right">Growth / opening</th></tr>`;
+      const amountCell=(value,description='')=>{const n=Number(value)||0,compact=`${n<0?'−':''}₹${(Math.abs(n)/100000).toFixed(2)}L`,exact=analyticEscape(description||formatCurrency(n));return `<td class="text-right" title="${exact}" aria-label="${exact}">${compact}</td>`;};
+      body.innerHTML=base.rows.map(row=>{const net=row.contributions+row.additions-row.withdrawals,detail=`Net ${formatCurrency(net)}; contributions ${formatCurrency(row.contributions)}, additions ${formatCurrency(row.additions)}, withdrawals ${formatCurrency(row.withdrawals)}`,ratio=row.opening>0?`${(row.growth/row.opening*100).toFixed(1)}%`:'—';return `<tr><td>${financialYearLabel(row.fyStart)}</td>${amountCell(row.opening)}${amountCell(net,detail)}${amountCell(row.growth)}${amountCell(row.closing)}<td class="text-right" title="Growth divided by opening value; not an annualised investment return">${ratio}</td></tr>`;}).join('');
       const flowItems=[
         {label:'Starting value',value:investmentCurrent,operator:''},
         ...(includeGratuityBalance?[{label:'Gratuity balance',value:gratuityCurrent,operator:'+'}]:[]),
@@ -5915,7 +5940,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const asset=toggle.dataset.asset;if(!asset)return;
       state.projectionSettings=state.projectionSettings||{years:5,includeMonthlyContributions:true,excludedMonthlyContributions:[],monthlyContributions:{},returns:{}};
       state.projectionSettings.excludedMonthlyContributions=state.projectionSettings.excludedMonthlyContributions||[];
-      state.projectionSettings.excludedMonthlyContributions=toggle.checked?[...new Set([...state.projectionSettings.excludedMonthlyContributions,asset])]:state.projectionSettings.excludedMonthlyContributions.filter(name=>name!==asset);
+      state.projectionSettings.excludedMonthlyContributions=toggle.checked?state.projectionSettings.excludedMonthlyContributions.filter(name=>name!==asset):[...new Set([...state.projectionSettings.excludedMonthlyContributions,asset])];
       saveData();renderGrowthProjection();
     });
     const growthAssumptionTiles=document.getElementById('growthProjectionAssumptionTiles');
@@ -6488,6 +6513,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       button.textContent=opening?'Hide History':'View History';
     });
 
+    for(const kind of ['income','expense'])document.getElementById(`${kind}HistorySearch`).addEventListener('input',()=>{transactionHistoryPages[kind]=1;kind==='income'?renderIncome():renderExpenses();});
     // Initialize
     console.log(' INITIALIZING APP...');
     document.getElementById('reportStartDate').value = currentMonthKey() + '-01';
@@ -6558,7 +6584,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     document.getElementById('exportRangeReport').addEventListener('click', exportRangeReport);
     document.getElementById('printRangeReport').addEventListener('click',()=>{const report=renderRangeReport();if(!report)return;renderRangeReportPrintView(report);requestAnimationFrame(()=>window.print());});
     document.getElementById('reportFinancialYear').addEventListener('change',()=>{clearReportPresetSelection();applyReportFinancialYear();});
-    ['reportStartDate','reportEndDate'].forEach(id => document.getElementById(id).addEventListener('change',()=>{clearReportPresetSelection();document.getElementById('reportFinancialYear').value='';renderRangeReport(true);}));
+    ['reportStartDate','reportEndDate'].forEach(id => document.getElementById(id).addEventListener('change',()=>{document.getElementById('reportFinancialYear').value='';clearReportPresetSelection();renderRangeReport(true);}));
     document.getElementById('reportType').addEventListener('change',()=>renderRangeReport(true));
     const DASHBOARD_LAYOUT_KEY='familyWealthDashboardLayout';
     const advancedStructureState={income:false,analytics:false,debts:false,growth:false};
@@ -6599,10 +6625,10 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         const original=[...growthPage.children],controls=growthPage.querySelector('#growthProjectionControls'),assumptions=growthPage.querySelector('.growth-assumptions-panel'),chart=growthPage.querySelector('.growth-projection-chart-panel'),summary=growthPage.querySelector('#growthProjectionSummary');
         if(controls&&assumptions&&chart){
           const workspace=document.createElement('section');workspace.className='advanced-growth-workspace';workspace.setAttribute('aria-label','Growth projection simulator');
-          const rail=document.createElement('div');rail.className='advanced-growth-rail';rail.append(controls);const takeaway=chart.querySelector('.growth-projection-takeaway');if(summary){if(takeaway)chart.insertBefore(summary,takeaway);else chart.append(summary);}workspace.append(rail,chart);
+          const rail=document.createElement('div');rail.className='advanced-growth-rail';const exclusions=document.getElementById('growthContributionExclusionsWrap');rail.append(controls);const takeaway=chart.querySelector('.growth-projection-takeaway');const comparison=document.createElement('section');comparison.className='panel growth-scenario-panel';if(summary)comparison.append(summary);if(takeaway)comparison.append(takeaway);workspace.append(rail,chart);
           growthPage.replaceChildren(...original.filter(node=>node!==controls&&node!==assumptions&&node!==chart&&node!==summary));
           const intro=original.find(node=>node.classList.contains('growth-page-intro'));if(intro){intro.after(workspace);}else{growthPage.prepend(workspace);}
-          workspace.after(assumptions);
+          workspace.after(assumptions);if(exclusions){exclusions.classList.add('panel');assumptions.after(exclusions);exclusions.after(comparison);}else assumptions.after(comparison);
           advancedStructureState.growth=true;
         }
       }

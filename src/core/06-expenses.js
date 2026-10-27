@@ -208,6 +208,7 @@
       const newExpense={
         id: generateId(),
         category: cat,
+        ...(document.getElementById('expenseMember').value?{member:document.getElementById('expenseMember').value}:{}),
         subcategory: subcategory || '',
         amount: amt,
         isAnnual: annual,
@@ -248,15 +249,16 @@
       const tbody = document.getElementById('expenseBody');
       const selectedYear = populateHistoryFinancialYear('expenseHistoryFinancialYear', state.expenses.map(row => row.date.slice(0,7)));
       const selectedMonth = populateHistoryMonth('expenseHistoryMonth', state.expenses, selectedYear);
-      const records = sortTransactionHistoryRecords(state.expenses.filter(e => e.date.slice(0, 7) === selectedMonth).sort((a, b) => b.date.localeCompare(a.date)),'expense');
-      renderTransactionHistorySummary('expense',records);
+      const monthRecords=state.expenses.filter(e=>e.date.slice(0,7)===selectedMonth);
+      const records = sortTransactionHistoryRecords(filterTransactionHistory(monthRecords,'expense').sort((a,b)=>b.date.localeCompare(a.date)),'expense');
+      renderTransactionHistorySummary('expense',monthRecords);
       const pageCount=Math.max(1,Math.ceil(records.length/TRANSACTION_HISTORY_PAGE_SIZE));
       transactionHistoryPages.expense=Math.min(Math.max(transactionHistoryPages.expense||1,1),pageCount);
       const pageStart=(transactionHistoryPages.expense-1)*TRANSACTION_HISTORY_PAGE_SIZE;
       const pageRecords=records.slice(pageStart,pageStart+TRANSACTION_HISTORY_PAGE_SIZE);
       if (records.length === 0) {
         const label = selectedMonth ? new Date(selectedMonth + '-01T12:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : financialYearLabel(selectedYear);
-        tbody.innerHTML = `<tr><td colspan="6" class="text-muted">No expenses recorded for ${analyticEscape(label)}.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-muted">${document.getElementById('expenseHistorySearch').value.trim()?'No matching expense transactions.':`No expenses recorded for ${analyticEscape(label)}.`}</td></tr>`;
       } else {
       tbody.innerHTML = pageRecords.map(e => {
         let loanInfo = '';
@@ -274,11 +276,14 @@
           loanInfo = e.notes || '-';
         }
 
+        const typeLabel=e.category==='EMI Payment'?(e.repaymentType==='part-payment'?'Part payment':'EMI'):e.isAnnual?'Annual':'Monthly';
+        const typeClass=e.category==='EMI Payment'?'emi':e.isAnnual?'annual':'monthly';
+        const badge=`<span class="transaction-type-badge transaction-type-${typeClass}"${e.category==='EMI Payment'?` title="Principal: ${analyticEscape(formatCurrency(e.principalPaid ?? e.amount))} · Interest: ${analyticEscape(formatCurrency(e.interestPaid ?? 0))}" tabindex="0"`:''}>${typeLabel}</span>`;
         return `
           <tr data-cash-record="${analyticEscape(e.id)}">
-            <td data-label="Category"><strong>${analyticEscape(e.category)}</strong>${e.category==='EMI Payment'&&e.loanId?`<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</div>`:''}${e.subcategory ? `<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${analyticEscape(e.subcategory)}</div>` : ''}<div class="transaction-mobile-details"><span class="badge ${e.isAnnual ? 'badge-danger' : 'badge-success'}">${e.isAnnual ? 'Annual' : 'Monthly'}</span>${e.category==='EMI Payment'&&e.loanId?`<span class="transaction-mobile-detail">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</span>`:''}${e.subcategory?`<span class="transaction-mobile-detail">${analyticEscape(e.subcategory)}</span>`:''}${loanInfo&&loanInfo!=='-'?`<span class="transaction-mobile-detail">${analyticEscape(loanInfo)}</span>`:''}</div></td>
+            <td data-label="Category"><strong>${analyticEscape(e.category)}</strong>${e.member?`<div class="text-muted transaction-expense-member">${analyticEscape(e.member)}</div>`:''}${e.category==='EMI Payment'&&e.loanId?`<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</div>`:''}${e.subcategory ? `<div class="text-muted transaction-desktop-secondary" style="font-size:11px;margin-top:2px">${analyticEscape(e.subcategory)}</div>` : ''}<div class="transaction-mobile-details">${badge}${e.category==='EMI Payment'&&e.loanId?`<span class="transaction-mobile-detail">${e.repaymentType==='part-payment'?'Part Payment':'Monthly EMI'}</span>`:''}${e.subcategory?`<span class="transaction-mobile-detail">${analyticEscape(e.subcategory)}</span>`:''}${loanInfo&&loanInfo!=='-'?`<span class="transaction-mobile-detail">${analyticEscape(loanInfo)}</span>`:''}</div></td>
             <td class="text-right" data-label="Amount">${formatCurrency(e.amount)}${breakdown}</td>
-            <td data-label="Type"><span class="badge ${e.isAnnual ? 'badge-danger' : 'badge-success'}">${e.isAnnual ? 'Annual' : 'Monthly'}</span></td>
+            <td data-label="Type">${badge}</td>
             <td class="text-muted" data-label="Loan / Notes">${analyticEscape(loanInfo)}</td>
             <td class="text-muted" data-label="Date"><span class="transaction-date-desktop">${calendarDate(e.date).toLocaleDateString('en-IN')}</span><span class="transaction-date-mobile">${calendarDate(e.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span></td>
             <td class="transaction-actions" data-label="Actions">
@@ -298,7 +303,7 @@
       const expense = state.expenses.find(e => e.id === id);
       if (!expense) return;
       const originalRecord=JSON.stringify(expense);
-      const fields=[{key:'amount',label:'Amount ₹',type:'number',min:0.01,value:expense.amount},...(expense.category==='EMI Payment'&&expense.loanId?[{key:'repaymentType',label:'Payment type',value:expense.repaymentType||'emi',options:['emi','part-payment'],optionLabels:{emi:'Monthly EMI','part-payment':'Part Payment'}}]:[]),{key:'date',label:'Expense date',type:'date',value:expense.date},{key:'notes',label:'Notes',type:'textarea',value:expense.notes||''}];
+      const fields=[{key:'member',label:'Family member (optional)',value:expense.member||'',options:Array.from(document.getElementById('expenseMember').options,o=>o.value).filter(Boolean),optional:true,placeholder:'Household / unspecified'},{key:'amount',label:'Amount ₹',type:'number',min:0.01,value:expense.amount},...(expense.category==='EMI Payment'&&expense.loanId?[{key:'repaymentType',label:'Payment type',value:expense.repaymentType||'emi',options:['emi','part-payment'],optionLabels:{emi:'Monthly EMI','part-payment':'Part Payment'}}]:[]),{key:'date',label:'Expense date',type:'date',value:expense.date},{key:'notes',label:'Notes',type:'textarea',value:expense.notes||''}];
       const values=await openRecordEditor('Edit expense',fields,v=>expense.recurringMonth&&v.date.slice(0,7)!==expense.recurringMonth?'Keep this recurring entry in its scheduled month. Adjust its amount or day within that month.':null);
       if(!values)return;
       if(!state.expenses.includes(expense)||JSON.stringify(expense)!==originalRecord){alert('This record changed while editing. Reopen it and try again.');return;}
@@ -327,6 +332,7 @@
       }
       const debtSnapshot=debt?JSON.stringify(debt):null;
       const rowSnapshots=debt?state.expenses.filter(row=>row.category==='EMI Payment'&&row.loanId===debt.id).map(row=>[row,JSON.stringify(row)]):[];
+      if(values.member)expense.member=values.member;else delete expense.member;
       expense.amount = amt;
       expense.date = newDate;
       expense.notes = newNotes;

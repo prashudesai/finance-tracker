@@ -1,3 +1,4 @@
+    for(const kind of ['income','expense'])document.getElementById(`${kind}HistorySearch`).addEventListener('input',()=>{transactionHistoryPages[kind]=1;kind==='income'?renderIncome():renderExpenses();});
     // Initialize
     console.log(' INITIALIZING APP...');
     document.getElementById('reportStartDate').value = currentMonthKey() + '-01';
@@ -68,7 +69,7 @@
     document.getElementById('exportRangeReport').addEventListener('click', exportRangeReport);
     document.getElementById('printRangeReport').addEventListener('click',()=>{const report=renderRangeReport();if(!report)return;renderRangeReportPrintView(report);requestAnimationFrame(()=>window.print());});
     document.getElementById('reportFinancialYear').addEventListener('change',()=>{clearReportPresetSelection();applyReportFinancialYear();});
-    ['reportStartDate','reportEndDate'].forEach(id => document.getElementById(id).addEventListener('change',()=>{clearReportPresetSelection();document.getElementById('reportFinancialYear').value='';renderRangeReport(true);}));
+    ['reportStartDate','reportEndDate'].forEach(id => document.getElementById(id).addEventListener('change',()=>{document.getElementById('reportFinancialYear').value='';clearReportPresetSelection();renderRangeReport(true);}));
     document.getElementById('reportType').addEventListener('change',()=>renderRangeReport(true));
     const DASHBOARD_LAYOUT_KEY='familyWealthDashboardLayout';
     const advancedStructureState={income:false,analytics:false,debts:false,growth:false};
@@ -109,10 +110,10 @@
         const original=[...growthPage.children],controls=growthPage.querySelector('#growthProjectionControls'),assumptions=growthPage.querySelector('.growth-assumptions-panel'),chart=growthPage.querySelector('.growth-projection-chart-panel'),summary=growthPage.querySelector('#growthProjectionSummary');
         if(controls&&assumptions&&chart){
           const workspace=document.createElement('section');workspace.className='advanced-growth-workspace';workspace.setAttribute('aria-label','Growth projection simulator');
-          const rail=document.createElement('div');rail.className='advanced-growth-rail';rail.append(controls);const takeaway=chart.querySelector('.growth-projection-takeaway');if(summary){if(takeaway)chart.insertBefore(summary,takeaway);else chart.append(summary);}workspace.append(rail,chart);
+          const rail=document.createElement('div');rail.className='advanced-growth-rail';const exclusions=document.getElementById('growthContributionExclusionsWrap');rail.append(controls);const takeaway=chart.querySelector('.growth-projection-takeaway');const comparison=document.createElement('section');comparison.className='panel growth-scenario-panel';if(summary)comparison.append(summary);if(takeaway)comparison.append(takeaway);workspace.append(rail,chart);
           growthPage.replaceChildren(...original.filter(node=>node!==controls&&node!==assumptions&&node!==chart&&node!==summary));
           const intro=original.find(node=>node.classList.contains('growth-page-intro'));if(intro){intro.after(workspace);}else{growthPage.prepend(workspace);}
-          workspace.after(assumptions);
+          workspace.after(assumptions);if(exclusions){exclusions.classList.add('panel');assumptions.after(exclusions);exclusions.after(comparison);}else assumptions.after(comparison);
           advancedStructureState.growth=true;
         }
       }

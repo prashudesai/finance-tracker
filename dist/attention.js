@@ -26,7 +26,7 @@ export function installAttention(){
   if(!host.classList.contains('active'))return;
   const visible=Object.fromEntries(['investments','pf','ppf','nps'].map(kind=>[kind,profileRows(state[kind]||[])]));
   const items=attentionItems(state,visible,{valuations:read('valuations'),paymentStatus:read('paymentStatus')},localDateKey(),{blocked:cloudSaveBlocked,dirty:persistenceDirty&&!pendingSaves,reviewProblem:window.financeReviews?.problem()});
-  box.hidden=items.length===0;summary.textContent='Needs attention · '+items.length;list.replaceChildren();
+  box.hidden=items.length===0;const title=document.createElement('span'),hint=document.createElement('span');title.textContent='Needs attention · '+items.length;hint.className='finance-attention-hint';hint.setAttribute('aria-hidden','true');hint.textContent=items.length+' '+(items.length===1?'item':'items')+' to review ›';summary.replaceChildren(title,hint);list.replaceChildren();
   for(const item of items){const row=document.createElement('div');row.className='finance-attention-row';const label=document.createElement('span');label.textContent=item.label;const button=document.createElement('button');button.type='button';button.className='btn-small';button.textContent='Review';button.setAttribute('aria-label','Review: '+item.label);button.onclick=()=>window.financeWorkbench?.[item.action]?.(item.month);row.append(label,button);list.append(row);}
  }
  let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;render();});};

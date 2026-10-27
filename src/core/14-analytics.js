@@ -55,6 +55,7 @@
       select.addEventListener('change',()=>{for(const id of ['surplusTrendFinancialYear','stallionProfitTrendFinancialYear'])document.getElementById(id).dataset.preferredYear=select.value;renderCharts();});
       const groups=[['surplusTrendChart','stallionProfitTrendChart','Monthly Surplus','Stallion PMS','trend'],['assetAllocationChart','retirementFundsChart','All Assets','Retirement Only','allocation'],['investmentReturnsChart','familyContributionChart','Returns vs. Invested','Family Split','returns']];
       for(const [first,second,a,b,name] of groups){const cards=[first,second].map(id=>document.getElementById(id).closest('.analytics-card'));cards.forEach((card,index)=>{card.classList.add('analytics-bento-'+name);const controls=document.createElement('div');controls.className='analytics-segmented';controls.setAttribute('aria-label',name+' view');for(const [i,label] of [a,b].entries()){const button=document.createElement('button');button.type='button';button.textContent=label;button.setAttribute('aria-pressed',String(i===index));button.addEventListener('click',()=>{cards.forEach((target,j)=>{target.hidden=j!==i;target.querySelectorAll('.analytics-segmented button').forEach((x,k)=>x.setAttribute('aria-pressed',String(i===k)));});requestAnimationFrame(()=>{for(const id of [first,second])chartInstances[id]?.resize();});});controls.append(button);}card.querySelector('.panel-header').append(controls);card.hidden=index!==0;});}
+      const debtCard=document.getElementById('debtProgressChart').closest('.analytics-card');debtCard.classList.add('analytics-bento-debt');const debtLegend=document.createElement('div');debtLegend.className='analytics-debt-legend';debtLegend.innerHTML='<span><i></i>Paid</span><span><i></i>Remaining</span>';debtCard.querySelector('.panel-header').append(debtLegend);const debtSummary=document.createElement('div');debtSummary.className='analytics-debt-summary';debtSummary.innerHTML='<div><span>Paid</span><strong id="analyticsDebtPaid">₹0</strong><small id="analyticsDebtPaidPercent">—</small></div><div><span>Remaining</span><strong id="analyticsDebtRemaining">₹0</strong><small id="analyticsDebtRemainingPercent">—</small></div>';document.getElementById('debtProgressChart').after(debtSummary);
       for(const card of root.querySelectorAll('.analytics-grid > .analytics-card')){const detail=card.querySelector('[data-analytics-detail-toggle]'),box=card.querySelector('.chart-detail'),note=card.querySelector('.chart-takeaway');if(detail&&box){const wrap=document.createElement('div');wrap.id=box.id+'Panel';wrap.hidden=true;box.before(wrap);if(note)wrap.append(note);wrap.append(box);box.hidden=false;detail.setAttribute('aria-controls',wrap.id);card.querySelector('.panel-header').append(detail);}}
     }
     function updateAnalyticsBento(){
@@ -153,7 +154,7 @@
       const subtleDebtColors=darkTheme?{paid:'#5b9b83',remaining:'#bd7781'}:{paid:'#78B59B',remaining:'#D9848E'};
       cashChart.config.type='bar';
       cashChart.data={labels:['Income','Expenses','Stallion','NPS + PPF','Cash remaining'],datasets:[{label:'Financial year cash flow',data:[t.income,t.expenses,t.stallion,t.retirement,remaining],backgroundColor:[subtleFlowColors[0],subtleFlowColors[1],subtleFlowColors[2],subtleFlowColors[3],remaining>=0?subtleFlowColors[4]:subtleFlowColors[1]],borderRadius:6,borderSkipped:false}]};
-      cashChart.options.scales={y:{beginAtZero:true,ticks:{callback:v=>analyticCompact(v)}}};
+      cashChart.options.scales={y:{beginAtZero:true,ticks:{callback:v=>analyticCompact(v)}}};cashChart.options.plugins.legend.display=false;
       cashChart.$analyticLabels=[[analyticCompact(t.income),analyticPercent(t.expenses,t.income),analyticPercent(t.stallion,t.income),analyticPercent(t.retirement,t.income),analyticPercent(remaining,t.income)]];
       analyticsTable('incomeExpenseChart',['Item','Amount','% of income'],[['Income',formatCurrency(t.income),analyticPercent(t.income,t.income)],['Recorded expenses',formatCurrency(t.expenses),analyticPercent(t.expenses,t.income)],['Stallion contributions',formatCurrency(t.stallion),analyticPercent(t.stallion,t.income)],['NPS + PPF',formatCurrency(t.retirement),analyticPercent(t.retirement,t.income)],['Total outflows',formatCurrency(outflow),analyticPercent(outflow,t.income)],['Income less tracked outflows',formatCurrency(remaining),analyticPercent(remaining,t.income)]],
         `Annual expenses count fully in their recorded month. Recorded expenses use ${analyticPercent(t.expenses,t.income)} of income. Total outflows: ${formatCurrency(outflow)}; ${remaining<0?'income shortfall':'income left after tracked outflows'}: ${formatCurrency(Math.abs(remaining))}. This income comparison is separate from Monthly Surplus Balance, which uses starting balance + income − expenses − Stallion.`);
@@ -167,7 +168,9 @@
       const trendRows=sorted.map(b=>{const prevKey=previousMonthKey(b.month);const value=valueByMonth.get(b.month);const prevValue=valueByMonth.get(prevKey);const consecutive=prevValue!==undefined;return [b.month,formatCurrency(value),consecutive?formatCurrency(value-prevValue):'N/A',consecutive&&prevValue>0?analyticPercent(value-prevValue,prevValue):'N/A'];});
       analyticsTable('surplusTrendChart',['Month','Monthly surplus balance','Change vs prior month','% change'],trendRows,`${financialYearLabel(surplusYear)}. Starting balance + income − expenses − Stallion. Retirement contributions are tracked separately. Changes are shown only when a previous calendar month is recorded; percentage change requires a positive prior balance. ${isCurrentSurplusFY?'Only recorded months through the current month are shown; the current month may be provisional.':'Recorded months for this financial year are shown.'} This is not monthly savings.`);
       const visibleDebts=profileRows(state.debts),principal=visibleDebts.reduce((a,d)=>a+loanTotalPrincipal(d),0),owed=visibleDebts.reduce((a,d)=>a+d.remaining,0),paid=principal-owed;
-      chartInstances.debtProgressChart.$analyticLabels=[[analyticPercent(paid,principal)],[analyticPercent(owed,principal)]];
+      chartInstances.debtProgressChart.options.plugins.analyticLabels={display:false};
+      for(const [id,value] of [['analyticsDebtPaid',formatCurrency(paid)],['analyticsDebtRemaining',formatCurrency(owed)],['analyticsDebtPaidPercent',analyticPercent(paid,principal)],['analyticsDebtRemainingPercent',analyticPercent(owed,principal)]]){const node=document.getElementById(id);if(node)node.textContent=value;}
+
       analyticsTable('debtProgressChart',['Debt status','Amount','% of original principal'],[['Repaid',formatCurrency(paid),analyticPercent(paid,principal)],['Outstanding',formatCurrency(owed),analyticPercent(owed,principal)]],principal>0?`${analyticPercent(paid,principal)} of total borrowed repaid; ${formatCurrency(owed)} remains outstanding.`:'No loan principal recorded.');
       const ret=nps+ppf+pf;analyticsTable('retirementFundsChart',['Fund','Current value','Retirement share'],[['NPS',formatCurrency(nps),analyticPercent(nps,ret)],['PPF',formatCurrency(ppf),analyticPercent(ppf,ret)],['PF',formatCurrency(pf),analyticPercent(pf,ret)]],`Retirement assets: ${formatCurrency(ret)} (${analyticPercent(ret,total)} of total tracked assets).`);
       const selectedInvestments=profileRows(state.investments), investmentMembers=new Map(selectedInvestments.map(row=>[row.id,row.member||'Unassigned']));
@@ -180,7 +183,7 @@
       family.data={labels:memberRows.map(x=>x.member),datasets:[{label:'NPS',data:memberRows.map(x=>x.n),backgroundColor:palette.brand},{label:'PPF',data:memberRows.map(x=>x.p),backgroundColor:palette.blue},{label:'PF',data:memberRows.map(x=>x.f),backgroundColor:palette.violet},{label:'Stallion',data:memberRows.map(x=>x.st),backgroundColor:palette.amber},{label:'Investments',data:memberRows.map(x=>x.other),backgroundColor:palette.cyan}]};family.options.scales.x={stacked:true};family.options.scales.y.stacked=true;
       analyticsTable('familyContributionChart',['Member','FY recorded contributions','Share of contributions'],memberRows.map(x=>[x.member,formatCurrency(x.total),analyticPercent(x.total,contributionTotal)]),`Recorded contributions for ${financialYearLabel(year)} total ${formatCurrency(contributionTotal)}. PF includes recorded employee and employer amounts and EPS where recorded.`);
 
-      const returns=investmentReturnItems();const returnChart=chartInstances.investmentReturnsChart;const plottedReturns=returnChart?returnChart.data.labels.map((label,index)=>({invested:returnChart.data.datasets[0].data[index],gain:returnChart.data.datasets[1].data[index]})):[];if(returnChart)returnChart.$analyticLabels=[plottedReturns.map(x=>analyticCompact(x.invested)),plottedReturns.map(x=>analyticPercent(x.gain,x.invested))];
+      const returns=investmentReturnItems();const returnChart=chartInstances.investmentReturnsChart;if(returnChart)returnChart.options.plugins.analyticLabels={display:false};
       analyticsTable('investmentReturnsChart',['Investment','Invested','Current value','Gain / loss','Absolute return'],returns.map(x=>[x.name,formatCurrency(x.invested),formatCurrency(x.current),formatCurrency(x.current-x.invested),analyticPercent(x.current-x.invested,x.invested)]),'Gain = current value − invested amount. Includes NPS, PPF, PF and Stallion. Absolute return = gain ÷ invested amount; it is not annualised and does not account for contribution timing.');
       Object.entries(chartInstances).forEach(([id,chart])=>{
         const dark=document.documentElement.getAttribute('data-theme')==='dark';
@@ -202,7 +205,7 @@
           else if(['assetAllocationChart','retirementFundsChart'].includes(id))base=ctx.dataset.data.reduce((a,b)=>a+b,0);
           else if(id==='debtProgressChart')base=principal;
           else if(id==='familyContributionChart')base=contributionTotal;
-          else if(id==='investmentReturnsChart')base=returns[ctx.dataIndex]?.invested||0;
+          else if(id==='investmentReturnsChart')base=returnChart?.$returnItems?.[ctx.dataIndex]?.invested||0;
           return `${ctx.dataset.label||ctx.label}: ${formatCurrency(v)}${base!==undefined?' ('+analyticPercent(v,base)+(id==='investmentReturnsChart'?' of invested capital':id==='incomeExpenseChart'?' of income':'')+')':''}`;
         }}};
         chart.update('none');
@@ -304,8 +307,8 @@
 
         const allocationTotal=npsTotal+ppfTotal+pfTotal+investTotal+stallionTotal;
         chartInstances['assetAllocationChart'] = new Chart(ctx, {
-          plugins:[{id:'emptyAllocationRing',afterDraw(chart){if(allocationTotal>0)return;const a=chart.chartArea,c=chart.ctx,x=(a.left+a.right)/2,y=(a.top+a.bottom)/2,r=Math.max(16,Math.min(a.right-a.left,a.bottom-a.top)*.34);c.save();c.strokeStyle=darkTheme?'rgba(255,255,255,.08)':'rgba(15,23,42,.10)';c.lineWidth=Math.max(12,r*.25);c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();c.fillStyle=themeColor('text');c.font='500 16px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('₹0 Total',x,y);c.restore();}}],
-          type: 'pie',
+          plugins:[{id:'emptyAllocationRing',afterDraw(chart){const a=chart.chartArea,c=chart.ctx,x=(a.left+a.right)/2,y=(a.top+a.bottom)/2,r=Math.max(16,Math.min(a.right-a.left,a.bottom-a.top)*.34);c.save();if(allocationTotal<=0){c.strokeStyle=darkTheme?'rgba(255,255,255,.08)':'rgba(15,23,42,.10)';c.lineWidth=Math.max(12,r*.25);c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();}c.fillStyle=themeColor('text');c.font='600 14px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(analyticCompact(allocationTotal),x,y-6);c.font='10px sans-serif';c.fillStyle=themeColor('text-light');c.fillText('Total assets',x,y+12);c.restore();}}],
+          type: 'doughnut',
           data: {
             labels: ['NPS', 'PPF', 'PF', 'Investments', 'Stallion PMS'],
             datasets: [{
@@ -325,8 +328,10 @@
           options: {
             responsive: true,
             maintainAspectRatio: true,
+            cutout:'62%',
             plugins: {
-              legend: { position: 'right',display:true },
+              analyticLabels:{display:false},
+              legend: { position: 'right',display:true,labels:{generateLabels(chart){const items=Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart),values=chart.data.datasets[0].data,total=values.reduce((a,b)=>a+(Number(b)||0),0);return items.map((item,i)=>({...item,text:item.text+'  '+(total>0?analyticPercent(Number(values[i])||0,total):'0.0%')}));}} },
               tooltip: {
                 callbacks: {
                   label: (ctx) => '₹' + Math.round(ctx.parsed).toLocaleString('en-IN')
@@ -472,7 +477,7 @@
           indexAxis: 'y',
           responsive: true,
           maintainAspectRatio: true,
-          plugins: { legend: { position: 'top' } },
+          plugins: { legend: { display:false },analyticLabels:{display:false} },
           scales: { x: { stacked: true, ticks: { callback: (v) => '₹' + (v/100000).toFixed(0) + 'L' } }, y: { stacked: true } }
         }
       });
@@ -576,12 +581,7 @@
         current: Number(inv.current)||0,
         gain: (Number(inv.current)||0) - (Number(inv.invested)||0)
       })).filter(inv => inv.invested > 0);
-      const chartItems=[];
-      for(const group of ['nps','ppf']) {
-        const accounts=accountItems.filter(item=>item.group===group);
-        if(accounts.length) chartItems.push({name:group.toUpperCase(),invested:accounts.reduce((sum,item)=>sum+item.invested,0),current:accounts.reduce((sum,item)=>sum+item.current,0),gain:accounts.reduce((sum,item)=>sum+item.gain,0)});
-      }
-      chartItems.push(...accountItems.filter(item=>item.group!=='nps'&&item.group!=='ppf'));
+      const chartItems=[...accountItems].sort((a,b)=>b.current-a.current).slice(0,5);
       const labels = chartItems.map(inv => inv.name);
       const invested = chartItems.map(inv => inv.invested);
       const gains = chartItems.map(inv => inv.gain);
@@ -594,10 +594,11 @@
       if (!ctx) return;
       const returnsChartInner=document.getElementById('investmentReturnsChartInner');
       if(returnsChartInner)returnsChartInner.style.setProperty('--investment-return-count',String(Math.max(labels.length,1)));
+      const hint=document.querySelector('.investment-returns-swipe-hint');if(hint){hint.textContent=accountItems.length>5?`Showing top 5 of ${accountItems.length} holdings. View Details shows all.`:'Invested and gain / loss by holding';hint.removeAttribute('aria-hidden');}
 
       const scroll=document.getElementById('investmentReturnsChartScroll');let empty=document.getElementById('investmentReturnsEmpty');
       if(!empty){empty=document.createElement('div');empty.id='investmentReturnsEmpty';empty.className='retirement-empty-state';empty.innerHTML='<strong>No investments to compare yet</strong><span>Add your first investment to see Invested vs. Returns.</span>';scroll.after(empty);}
-      const noValues=!chartItems.length||!chartItems.some(r=>r.invested!==0||r.gain!==0);scroll.hidden=noValues;empty.hidden=!noValues;if(noValues)return;
+      const noValues=!chartItems.length||!chartItems.some(r=>r.invested!==0||r.gain!==0);scroll.hidden=noValues;empty.hidden=!noValues;if(hint)hint.hidden=noValues;if(noValues)return;
       chartInstances['investmentReturnsChart'] = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -610,10 +611,12 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'top' } },
-          scales: { y: { beginAtZero:true,suggestedMax:Math.max(100000,...invested,...gains.map(Math.abs)),ticks: {maxTicksLimit:5,callback: (v) => analyticCompact(v)} } }
+          indexAxis:'y',
+          plugins: { legend: { position: 'top' },analyticLabels:{display:false} },
+          scales: { x: { beginAtZero:true,ticks:{maxTicksLimit:4,callback:v=>analyticCompact(v)} },y:{ticks:{autoSkip:false,callback:function(v){const label=String(this.getLabelForValue(v));return label.length>20?label.slice(0,19)+'…':label;}}} }
         }
       });
+        chartInstances.investmentReturnsChart.$returnItems=chartItems;
         console.log(' Investment Returns chart: ' + chartItems.length + ' chart categories from ' + accountItems.length + ' account rows');
       } catch (e) {
         console.error(' renderInvestmentReturnsChart error:', e);

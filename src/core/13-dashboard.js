@@ -254,11 +254,11 @@
       if(donut){
         const colors=['var(--primary)','#4f78c9','#d18b2c','#c96974','#8069a8','#468b87'],radius=60,circumference=2*Math.PI*radius;
         let offset=0;
-        const segments=slices.map((item,index)=>{const length=total>0?circumference*item.value/total:0,segment=`<circle class="advanced-dashboard-donut-segment" cx="90" cy="90" r="${radius}" stroke="${colors[index%colors.length]}" stroke-dasharray="${length.toFixed(2)} ${(circumference-length).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"><title>${analyticEscape(item.name)}: ${formatCurrency(item.value)} (${analyticPercent(item.value,total)})</title></circle>`;offset+=length;return segment;}).join('');
+        const segments=slices.map((item,index)=>{const length=total>0?circumference*item.value/total:0,color=item.name==='Other'?'#64748b':colors[index%colors.length],segment=`<circle class="advanced-dashboard-donut-segment" cx="90" cy="90" r="${radius}" stroke="${color}" stroke-dasharray="${length.toFixed(2)} ${(circumference-length).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"><title>${analyticEscape(item.name)}: ${formatCurrency(item.value)} (${analyticPercent(item.value,total)})</title></circle>`;offset+=length;return segment;}).join('');
         donut.innerHTML=`<circle class="advanced-dashboard-donut-track" cx="90" cy="90" r="${radius}"/>${segments}<text class="advanced-dashboard-donut-total" x="90" y="87">${total?analyticEscape(analyticCompact(total)):'₹0'}</text><text class="advanced-dashboard-donut-caption" x="90" y="103">PORTFOLIO VALUE</text>`;
         donut.setAttribute('aria-label',total?`Investment portfolio allocation totaling ${formatCurrency(total)}, excluding gratuity. ${slices.map(item=>`${item.name} ${formatCurrency(item.value)}, ${analyticPercent(item.value,total)}`).join('; ')}.`:'No investment balances are recorded; gratuity is excluded.');
       }
-      if(legend)legend.innerHTML=slices.length?slices.map((item,index)=>`<div class="advanced-dashboard-allocation-item" style="--allocation-color:${['var(--primary)','#4f78c9','#d18b2c','#c96974','#8069a8','#468b87'][index%6]}"><i aria-hidden="true"></i><span title="${analyticEscape(item.name)}">${analyticEscape(item.name)}</span><strong>${analyticEscape(analyticCompact(item.value))} · ${analyticPercent(item.value,total)}</strong></div>`).join(''):'<p class="text-muted">Add an investment to see your allocation.</p>';
+      if(legend)legend.innerHTML=slices.length?slices.map((item,index)=>`<div class="advanced-dashboard-allocation-item" style="--allocation-color:${item.name==='Other'?'#64748b':['var(--primary)','#4f78c9','#d18b2c','#c96974','#8069a8','#468b87'][index%6]}"><i aria-hidden="true"></i><span title="${analyticEscape(item.name)}">${analyticEscape(item.name)}</span><strong>${analyticEscape(analyticCompact(item.value))} · ${analyticPercent(item.value,total)}</strong></div>`).join(''):'<p class="text-muted">Add an investment to see your allocation.</p>';
     }
 
     function populateReportFinancialYears() {
@@ -280,8 +280,9 @@
       document.getElementById('reportEndDate').value=`${startYear+1}-03-31`;
       renderRangeReport(true);
     }
-    function clearReportPresetSelection(){document.querySelectorAll('[data-report-preset]').forEach(button=>button.setAttribute('aria-pressed','false'));}
+    function clearReportPresetSelection(){document.querySelectorAll('[data-report-preset]').forEach(button=>button.setAttribute('aria-pressed','false'));if(!document.getElementById('reportFinancialYear').value)document.querySelector('[data-report-preset=custom]')?.setAttribute('aria-pressed','true');}
     function applyReportDatePreset(preset){
+      if(preset==='custom'){document.getElementById('reportFinancialYear').value='';clearReportPresetSelection();document.getElementById('reportStartDate').focus();return;}
       const now=new Date(),today=localDateKey(),year=now.getFullYear(),month=now.getMonth(),fyStart=month>=3?year:year-1;
       const dateKey=date=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
       let start='',end=today;
@@ -294,6 +295,7 @@
       document.getElementById('reportStartDate').value=start;
       document.getElementById('reportEndDate').value=end;
       clearReportPresetSelection();
+      document.querySelector('[data-report-preset=custom]')?.setAttribute('aria-pressed','false');
       document.querySelector(`[data-report-preset="${preset}"]`)?.setAttribute('aria-pressed','true');
       renderRangeReport(true);
     }
@@ -321,7 +323,7 @@
       const totalsByMonth=recalculateHouseExpenses();
       const reportDebts=new Map(allAccounts('debts').map(row=>[row.id,row]));
       const reportInvestments=new Map(allAccounts('investments').map(row=>[row.id,row]));
-      const money=['Amount','Invested','Current value','Monthly scheduled','Employee monthly','Employer monthly','Principal','Remaining principal','EMI','Interest paid','Principal paid','Starting balance','Income','Recorded expenses','PMS SIP','Surplus','House expense','Full expense','Gain / loss'];
+      const money=['Amount','Invested','Current value','Monthly scheduled','Employee monthly','Employer monthly','Principal','Remaining principal','EMI','Interest paid','Principal paid','Starting balance','Income','Recorded expenses','PMS SIP','Surplus','House expense','Full expense','Gain / loss','EPS contribution','Total contribution'];
       const common=r=>({Date:r.date,Member:r.member||'',Notes:r.notes||''});
       const definitions=[
         ['interestCredits','PF / PPF annual interest',r=>({Date:r.date,Member:r.member,Account:r.accountName,Type:r.investmentType.toUpperCase(),'Financial year':r.financialYear,Amount:r.amount})],
@@ -422,6 +424,7 @@
       const cell=(k,v)=>v==null?'Pending / not calculated':group.money.includes(k)?formatCurrency(v):analyticEscape(v);
       return `<tr>${group.cols.map(k=>`<td${numericColumn(k)?' class="text-right"':''}>${cell(k,row[k])}</td>`).join('')}</tr>`;
     }
+    function rangeReportSummable(group,column){if(group.key==='stallionProfitHistory')return false;if(group.key==='monthlyBalances'&&['Starting balance','Surplus'].includes(column))return false;return group.money.includes(column);}
     function applyRangeReportPagination(table) {
       if(!table?.dataset.rangeReportKey)return;
       const key=table.dataset.rangeReportKey,group=rangeReportGroups[key];if(!group)return;
@@ -437,7 +440,7 @@
       const section=table.closest('[data-range-report-section]');
       if(section){const heading=section.querySelector('h3');if(heading)heading.textContent=`${group.title} (${rows.length}${group.rows.length!==rows.length?` of ${group.rows.length}`:''})`;}
       const footer=table.tFoot?.rows[0];
-      if(footer)group.cols.forEach((col,index)=>{const cell=footer.cells[index];if(!cell)return;if(index===0)cell.textContent='Total';else if(group.money.includes(col))cell.textContent=!rows.length?'—':rows.some(row=>row[col]==null)?'Incomplete':formatCurrency(rows.reduce((sum,row)=>sum+(Number(row[col])||0),0));else cell.textContent='';});
+      if(footer)group.cols.forEach((col,index)=>{const cell=footer.cells[index];if(!cell)return;if(index===0)cell.textContent=group.key==='stallionProfitHistory'?'Snapshots (not additive)':'Total';else if(rangeReportSummable(group,col))cell.textContent=!rows.length?'—':rows.some(row=>row[col]==null)?'Incomplete':formatCurrency(rows.reduce((sum,row)=>sum+(Number(row[col])||0),0));else cell.textContent='';});
     }
     function sortRangeReportRows(table,choice) {
       const group=rangeReportGroups[table?.dataset.rangeReportKey];if(!group||!choice)return;
@@ -509,7 +512,7 @@
           const group=rangeReportGroups[view.key],rows=view.rows;
           const numericColumn=k=>report.money.includes(k)||/%|rate/i.test(k);
           const pageRows=rows.slice(0,RANGE_REPORT_PAGE_SIZE).map(row=>rangeReportRowHtml(group,row)).join('')||`<tr><td colspan="${group.cols.length}" class="range-report-no-match">No rows match these column filters.<button type="button" data-range-clear-all>Clear all filters</button></td></tr>`;
-          const totals=group.cols.map((k,i)=>i===0?'Total':report.money.includes(k)?(!rows.length?'—':rows.some(r=>r[k]==null)?'Incomplete':formatCurrency(rows.reduce((sum,r)=>sum+(Number(r[k])||0),0))):'');
+          const totals=group.cols.map((k,i)=>i===0?(group.key==='stallionProfitHistory'?'Snapshots (not additive)':'Total'):rangeReportSummable(group,k)?(!rows.length?'—':rows.some(r=>r[k]==null)?'Incomplete':formatCurrency(rows.reduce((sum,r)=>sum+(Number(r[k])||0),0))):'');
           const pagination=rows.length>RANGE_REPORT_PAGE_SIZE?`<div class="range-report-pagination" data-range-report-pagination><span data-range-report-count></span><nav class="range-report-page-buttons" data-range-report-pages aria-label="${analyticEscape(group.title)} pages"></nav></div>`:'';
           const open=reportType!=='all'||index===0?' open':'';
           return `<details class="range-report-section" data-range-report-section="${analyticEscape(group.key)}"${open}><summary><h3>${analyticEscape(group.title)} (${rows.length}${group.rows.length!==rows.length?` of ${group.rows.length}`:''})</h3></summary><div class="report-section-body"><div class="table-wrapper"><table data-range-report-key="${analyticEscape(group.key)}"><thead><tr>${group.cols.map(k=>`<th${numericColumn(k)?' class="text-right"':''}>${analyticEscape(k)}</th>`).join('')}</tr></thead><tbody id="range-${analyticEscape(group.key)}">${pageRows}</tbody><tfoot><tr style="font-weight:bold">${totals.map((t,i)=>`<td${numericColumn(group.cols[i])?' class="text-right"':''}>${t}</td>`).join('')}</tr></tfoot></table></div>${pagination}</div></details>`;
@@ -517,13 +520,14 @@
         output.querySelectorAll('table[data-range-report-key]').forEach(applyRangeReportPagination);
         const filteredGroups=visibleGroups.filter(group=>group.rows.length);
         status.textContent=`${report.start} to ${report.end} · ${recordCount} ${activeFilters?'matching ':''}record${recordCount===1?'':'s'}. Totals are separate for each report; account balances and transactions are not added together. Monthly balance totals are sums of snapshots, not a closing balance.`;
+        const pageStatus=document.getElementById('reportPageStatus');if(pageStatus)pageStatus.textContent=`Report · ${recordCount} ${recordCount===1?'record':'records'}`;
         const exportCount=document.getElementById('rangeReportExportCount');
         if(exportCount)exportCount.textContent=recordCount?`${recordCount} matching ${recordCount===1?'record':'records'} · exports use active filters`:'No matching records';
         document.getElementById('exportRangeReport').disabled=recordCount===0;
         document.getElementById('printRangeReport').disabled=recordCount===0;
         renderRangeReportActiveFilters();
         output.dataset.generated='true';return {...report,groups:filteredGroups,activeFilters};
-      }catch(error){output.innerHTML='';document.getElementById('rangeReportSummary').hidden=true;document.getElementById('rangeReportSummary').innerHTML='';status.textContent=error.message;rangeReportGroups={};rangeReportPages={};document.getElementById('exportRangeReport').disabled=true;document.getElementById('printRangeReport').disabled=true;document.getElementById('rangeReportExportCount').textContent='Generate a valid report to export';renderRangeReportActiveFilters();return null;}
+      }catch(error){const pageStatus=document.getElementById('reportPageStatus');if(pageStatus)pageStatus.textContent='Choose a valid report period';output.innerHTML='';document.getElementById('rangeReportSummary').hidden=true;document.getElementById('rangeReportSummary').innerHTML='';status.textContent=error.message;rangeReportGroups={};rangeReportPages={};document.getElementById('exportRangeReport').disabled=true;document.getElementById('printRangeReport').disabled=true;document.getElementById('rangeReportExportCount').textContent='Generate a valid report to export';renderRangeReportActiveFilters();return null;}
     }
     function rangeReportActiveFilterItems() {
       const items=[];
