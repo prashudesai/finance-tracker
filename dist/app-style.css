@@ -1212,3 +1212,63 @@ html[data-app-style] body.advanced-layout #income-expenses .history-month-contro
 @media(prefers-reduced-motion:reduce){
  html[data-app-style] body.advanced-layout #income-expenses .transaction-metric{transition:none}
 }
+
+
+/* Issue 11: mobile-first investment and retirement cards.
+   Preserve existing category dialogs, update actions, account details and calculations. */
+@media(max-width:700px){
+ html[data-app-style] body.advanced-layout #investments #investmentListPanel,
+ html[data-app-style] body.advanced-layout #investments .retirement-accounts-section{
+   border-radius:18px;padding:14px!important;
+ }
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels,
+ html[data-app-style] body.advanced-layout #investments #retirementAccountPanels{display:grid;gap:9px}
+ html[data-app-style] body.advanced-layout #investments .investment-category-card,
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card{
+   margin:0!important;padding:12px!important;border-radius:14px!important;
+   background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 7%,var(--card-bg)),var(--card-bg))!important;
+   border:1px solid color-mix(in srgb,var(--primary) 25%,var(--border))!important;
+   box-shadow:none!important;min-width:0;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-card>.panel-header,
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card>.panel-header{
+   display:flex;align-items:center;justify-content:space-between;gap:8px;
+   padding:0 0 8px!important;margin:0!important;border:0!important;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-card>.panel-header h3,
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card>.panel-header h2{
+   font-size:16px!important;line-height:1.3;margin:0!important;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid{
+   display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+   gap:7px 10px!important;padding:9px!important;margin:0!important;
+   border-radius:11px!important;border:1px solid color-mix(in srgb,var(--primary) 15%,var(--border))!important;
+   background:color-mix(in srgb,var(--primary) 3%,var(--card-bg))!important;
+   min-width:0;box-shadow:none!important;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid .investment-summary-value,
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid .investment-summary-metric,
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid .investment-summary-detail{
+   min-width:0!important;padding:0!important;margin:0!important;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid strong{
+   font-size:clamp(14px,4vw,19px)!important;line-height:1.25!important;
+   font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid span>span:first-child{
+   font-size:10px!important;line-height:1.3;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-card .investment-category-summary-grid{
+   cursor:pointer;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-card .investment-category-summary-grid:focus-visible{
+   outline:2px solid var(--primary);outline-offset:2px;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-card .panel-header button,
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card .panel-header button{
+   min-height:40px!important;padding:8px 10px!important;font-size:12px!important;
+   border-radius:10px!important;flex-shrink:0;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-portfolio-title p,
+ html[data-app-style] body.advanced-layout #investments .retirement-accounts-heading p{font-size:12px;line-height:1.4}
+}
