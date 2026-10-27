@@ -225,7 +225,7 @@
       }
 
       document.getElementById('expenseAmount').value = '';
-      document.getElementById('expenseDate').value = '';
+      document.getElementById('expenseDate').value = localDateKey();
       document.getElementById('expenseNotes').value = '';
       document.getElementById('expenseLoan').value = '';
       document.getElementById('expenseRepaymentType').value = 'emi';

@@ -20,7 +20,7 @@ html[data-app-style="modern"] body.advanced-layout>.container>header .header-con
 html[data-app-style="modern"] body.advanced-layout>.container>header .theme-mode-option{border:1px solid var(--border);background:transparent;color:var(--text);width:40px;height:40px;border-radius:50%}
 html[data-app-style="modern"] .pft-style-hero{display:grid;grid-template-columns:1.5fr 1fr;gap:30px;min-height:250px;margin:0 0 25px;padding:10px 0 0;overflow:hidden;position:relative}
 html[data-app-style="modern"] .pft-style-eyebrow{color:var(--primary);font-size:10px;letter-spacing:2px;font-weight:500;margin:0 0 17px}.pft-style-hero h1{font-size:42px;font-weight:400;line-height:1.12;letter-spacing:-1.4px;margin:0 0 16px}.pft-style-hero h1 span{color:var(--primary)}.pft-style-hero p:not(.pft-style-eyebrow){font-size:13px;color:var(--text-light);line-height:1.7;margin:0}.pft-style-privacy{display:block;margin-top:24px;color:var(--text-light);font-size:10px}
-.pft-style-art{position:relative;min-height:210px;background:linear-gradient(120deg,transparent,color-mix(in srgb,var(--primary) 13%,var(--bg)));mask-image:linear-gradient(90deg,transparent,#000 25%)}.pft-style-art i{position:absolute;bottom:-40px;right:20px;width:125px;height:200px;border:1px solid color-mix(in srgb,var(--primary) 37%,var(--border));border-radius:80px 80px 0 0;background:linear-gradient(110deg,color-mix(in srgb,var(--primary) 25%,var(--bg)),var(--bg));box-shadow:-10px 10px 25px #001d1933}.pft-style-art i:nth-child(2){right:135px;bottom:-70px;height:240px;z-index:2}.pft-style-art i:nth-child(3){right:250px;bottom:-100px;height:270px;z-index:3}.pft-style-art>span{position:absolute;right:15px;top:20px;writing-mode:vertical-rl;font-size:9px;letter-spacing:2px;color:var(--text-light)}
+.pft-style-art{position:relative;min-height:210px;background:linear-gradient(120deg,transparent,color-mix(in srgb,var(--primary) 13%,var(--bg)));-webkit-mask-image:linear-gradient(to right,transparent 0%,#000 40%),linear-gradient(to bottom,transparent 0%,#000 28%);-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent 0%,#000 40%),linear-gradient(to bottom,transparent 0%,#000 28%);mask-composite:intersect}.pft-style-art i{position:absolute;bottom:-40px;right:20px;width:125px;height:200px;border:1px solid color-mix(in srgb,var(--primary) 37%,var(--border));border-radius:80px 80px 0 0;background:linear-gradient(110deg,color-mix(in srgb,var(--primary) 25%,var(--bg)),var(--bg));box-shadow:-10px 10px 25px #001d1933}.pft-style-art i:nth-child(2){right:135px;bottom:-70px;height:240px;z-index:2}.pft-style-art i:nth-child(3){right:250px;bottom:-100px;height:270px;z-index:3}.pft-style-art>span{position:absolute;right:15px;top:20px;writing-mode:vertical-rl;font-size:9px;letter-spacing:2px;color:var(--text-light)}
 html[data-app-style="modern"] body.advanced-layout .panel,html[data-app-style="modern"] body.advanced-layout .dashboard-card,html[data-app-style="modern"] body.advanced-layout .transaction-metric,html[data-app-style="modern"] body.advanced-layout .debt-page-stat,html[data-app-style="modern"] body.advanced-layout .investment-overview-card,html[data-app-style="modern"] body.advanced-layout .retirement-account-card,html[data-app-style="modern"] body.advanced-layout .investment-category-card{background:var(--card-bg);border:1px solid var(--border);border-radius:13px;box-shadow:none}
 html[data-app-style="modern"] body.advanced-layout .panel{padding:23px;margin-bottom:20px}
 html[data-app-style="modern"] body.advanced-layout .panel-header h2,html[data-app-style="modern"] body.advanced-layout .panel-header h3{font-size:17px;line-height:1.4;font-weight:500;letter-spacing:-.25px}
@@ -129,21 +129,20 @@ html[data-app-style="modern"] .pft-dashboard-toolbar .tracker-quick-add{margin:0
 @media screen{html[data-app-style="modern"] #recordEditorTitle{color:var(--text)!important}}
 
 @media screen{
-html[data-app-style="modern"] .cloud-account-panel{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"account refresh signout" "updated refresh signout";align-items:center;gap:3px 14px;margin:0 0 20px;padding:10px 0 14px;border:0;border-bottom:1px solid var(--border);border-radius:0;background:transparent;box-shadow:none}
+html[data-app-style="modern"] .cloud-account-panel{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"account refresh signout";align-items:center;gap:3px 14px;margin:0 0 20px;padding:10px 0 14px;border:0;border-bottom:1px solid var(--border);border-radius:0;background:transparent;box-shadow:none}
 html[data-app-style="modern"] .cloud-account-panel>div:first-child{grid-area:account;display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
 html[data-app-style="modern"] .cloud-account-panel #cloudAccountLabel{font-size:12px;line-height:1.5}
 html[data-app-style="modern"] .cloud-account-panel #cloudSyncStatus{margin:0;font-size:11px;line-height:1.5;color:var(--text-light)}
 html[data-app-style="modern"] .cloud-refresh-info{display:contents}
-html[data-app-style="modern"] #cloudLastUpdated{grid-area:updated;font-size:10.5px;line-height:1.5;color:var(--text-light);overflow-wrap:anywhere}
 html[data-app-style="modern"] #cloudRefresh{grid-area:refresh}html[data-app-style="modern"] #cloudSignOut{grid-area:signout}
 html[data-app-style="modern"] :is(#cloudRefresh,#cloudSignOut){min-height:44px;margin:0;padding:8px 10px;background:transparent;border:0;border-radius:8px;font-size:12px;color:var(--text);box-shadow:none}
 html[data-app-style="modern"] :is(#cloudRefresh,#cloudSignOut):hover{background:var(--primary-light)}
 html[data-app-style="modern"] #cloudRefresh::before{display:none}
 @media(max-width:700px){
-html[data-app-style="modern"] .cloud-account-panel{grid-template-columns:minmax(0,1fr) 44px auto;grid-template-areas:"account account account" "updated refresh signout";gap:5px 6px;padding:4px 0 12px;margin-bottom:16px}
+html[data-app-style="modern"] .cloud-account-panel{grid-template-columns:minmax(0,1fr) 44px auto;grid-template-areas:"account account account" ". refresh signout";gap:5px 6px;padding:4px 0 12px;margin-bottom:16px}
 html[data-app-style="modern"] .cloud-account-panel>div:first-child{gap:1px 10px}
 html[data-app-style="modern"] #cloudRefresh{width:44px;padding:0;font-size:0}html[data-app-style="modern"] #cloudRefresh::before{font-size:24px;margin:0}
-html[data-app-style="modern"] #cloudSignOut{font-size:11px;padding:8px}html[data-app-style="modern"] #cloudLastUpdated{font-size:10px}
+html[data-app-style="modern"] #cloudSignOut{font-size:11px;padding:8px}
 }
 }
 
@@ -499,7 +498,7 @@ html body #growth-projection #growthProjectionResultsTable th:first-child,html b
 @media(max-width:700px){html body #growth-projection #growthProjectionSummary .stat-value{font-size:16px}html body #growth-projection #growthProjectionSummary>.growth-projection-stat-card{padding:9px 7px}html body #growth-projection #growthProjectionSummary .stat-label{font-size:11px}html body #growth-projection #growthProjectionSummary .growth-scenario-heading{font-size:15px}}
 @supports(backdrop-filter:blur(18px)){html body #growth-projection .growth-projection-chart-wrap{background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}}
 /* Settings identity and sync are grouped; destructive actions live in Account. */
-html[data-app-style="modern"] body.advanced-layout .cloud-account-panel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"avatar account refresh" "updated updated updated";gap:12px;align-items:center;margin:0 0 20px;padding:16px;border:1px solid var(--border);border-radius:16px;background:var(--card-bg)}
+html[data-app-style="modern"] body.advanced-layout .cloud-account-panel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"avatar account refresh";gap:12px;align-items:center;margin:0 0 20px;padding:16px;border:1px solid var(--border);border-radius:16px;background:var(--card-bg)}
 html[data-app-style="modern"] body.advanced-layout .cloud-account-panel>.settings-profile-avatar{grid-area:avatar;display:grid;place-items:center;flex:none;width:44px;height:44px;overflow:hidden;border:1px solid var(--border);border-radius:50%;background:var(--primary-light);color:var(--primary);font-size:15px}
 .settings-profile-avatar img{width:100%;height:100%;object-fit:cover}
 html[data-app-style="modern"] .cloud-account-panel>.settings-profile-copy{grid-area:account;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
@@ -508,9 +507,6 @@ html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudAc
 html[data-app-style="modern"] body.advanced-layout .cloud-account-panel .cloud-refresh-info{display:contents}
 html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudRefresh{grid-area:refresh;display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto;min-width:44px;min-height:44px;padding:7px 10px;border:1px solid var(--border);border-radius:999px;background:var(--primary-light);color:var(--text);font:inherit;font-size:12px;font-weight:500}
 #cloudRefresh svg{width:18px;height:18px;flex:none}
-html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudLastUpdated{grid-area:updated;display:block;min-width:0;margin:0;font-size:11px;line-height:1.5;color:var(--text-light);overflow-wrap:anywhere}
-.cloud-account-panel #cloudLastUpdated::before{content:"";display:inline-block;width:6px;height:6px;margin-right:7px;border-radius:50%;background:var(--text-light)}
-.cloud-account-panel[data-sync-state="synced"] #cloudLastUpdated::before{background:var(--success)}
 html[data-app-style="modern"] body.advanced-layout #cloudSignOut{min-height:44px;padding:8px 14px;border:1px solid color-mix(in srgb,var(--danger) 35%,transparent);border-radius:999px;background:transparent;color:var(--danger);font:inherit;font-size:13px;margin:12px 0}
 @media(max-width:700px){html[data-app-style="modern"] body.advanced-layout #settings .settings-intro h1{padding-inline-start:10px}html[data-app-style="modern"] body.advanced-layout .cloud-account-panel{padding:14px;gap:10px;grid-template-columns:40px minmax(0,1fr) auto}html[data-app-style="modern"] body.advanced-layout .cloud-account-panel>.settings-profile-avatar{width:40px;height:40px}html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudRefresh{font-size:11px;padding:7px 8px}}
 html[data-layout-style="emerald-flow"] .flow-debts .debt-page-overview{grid-template-columns:minmax(0,1fr)}
@@ -575,3 +571,52 @@ html[data-app-style] body.advanced-layout #debts .debt-list-panel table:has(.deb
 html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudRefresh{display:inline-flex!important;flex-direction:row;align-items:center;justify-content:center;box-sizing:border-box;width:auto;height:auto;min-height:44px;padding:8px 12px!important;border-radius:999px!important;white-space:nowrap;line-height:1.2}
 html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudRefresh svg{display:block;flex:0 0 18px;width:18px;height:18px}
 html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudRefresh span{display:block;white-space:nowrap}
+/* Size the Debt empty-state illustration on desktop as well as mobile. */
+html[data-app-style] body.advanced-layout #debts .debt-empty-state{display:flex;flex-direction:row;align-items:center;gap:12px}
+html[data-app-style] body.advanced-layout #debts .debt-empty-state .account-empty-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:50%;background:color-mix(in srgb,var(--primary) 12%,var(--card-bg));color:var(--primary)}
+html[data-app-style] body.advanced-layout #debts .debt-empty-state .account-empty-icon svg{display:block;flex:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+html[data-app-style] body.advanced-layout #debts .debt-empty-state .account-empty-copy{min-width:0;display:flex;flex-direction:column;gap:4px}
+/* Empty loan lists must fill their panel at every viewport and layout style. */
+html[data-app-style] body.advanced-layout #debts .debt-list-panel table:has(.debt-empty-row),html[data-app-style] body.advanced-layout #debts .debt-list-panel tbody:has(.debt-empty-row){display:block!important;width:100%!important;min-width:0!important;max-width:none!important}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel table:has(.debt-empty-row) thead{display:none!important}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel tbody tr.debt-empty-row{display:block!important;width:100%!important;box-sizing:border-box;padding:0;border:0;background:transparent}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel tbody td.debt-empty-cell{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box;padding:0;border:0}
+
+/* Keep the desktop wealth overview flush with its two-by-two summary grid. */
+@media screen and (min-width:701px){
+html[data-layout-style="emerald-flow"] .flow-summary{grid-template-columns:repeat(12,minmax(0,1fr));align-items:stretch;gap:20px}
+html[data-layout-style="emerald-flow"] .flow-wealth{grid-column:span 5;display:flex;min-width:0}
+html[data-layout-style="emerald-flow"] .flow-wealth .dashboard-net-worth{display:flex;flex:1 1 auto;flex-direction:column;justify-content:space-between;width:100%;height:auto;min-height:100%;box-sizing:border-box}
+html[data-layout-style="emerald-flow"] .flow-stat-grid{grid-column:span 7;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));align-content:stretch}
+}
+
+
+/* Align desktop cash-flow form actions and give Expense notes the full row. */
+@media screen and (min-width:701px){
+html[data-app-style="modern"] body.advanced-layout #income-expenses .advanced-cashflow-entry-card{display:flex;flex-direction:column;justify-content:space-between}
+html[data-app-style="modern"] body.advanced-layout #income-expenses .advanced-cashflow-entry-card>.form-grid{align-content:start}
+html[data-app-style="modern"] body.advanced-layout #income-expenses .advanced-cashflow-entry-card .transaction-submit{margin-top:auto}
+html[data-app-style="modern"] body.advanced-layout #income-expenses .advanced-cashflow-entry-card .expense-notes-field{grid-column:1/-1}
+}
+
+/* Restore a consistent teal chevron after theme backgrounds are applied. */
+html[data-app-style="modern"] select:not(.pft-native-filter){
+  -webkit-appearance:none;appearance:none;padding-right:36px!important;
+  background-image:linear-gradient(45deg,transparent 50%,color-mix(in srgb,var(--primary) 70%,transparent) 50%),linear-gradient(135deg,color-mix(in srgb,var(--primary) 70%,transparent) 50%,transparent 50%)!important;
+  background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%!important;background-size:5px 5px!important;background-repeat:no-repeat!important;
+}
+html[data-app-style="modern"] input[type="date"]{padding-right:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2368d4ba%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Crect x=%273%27 y=%275%27 width=%2718%27 height=%2716%27 rx=%272%27/%3E%3Cpath d=%27M16 3v4M8 3v4M3 10h18%27/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 12px center!important;background-size:16px 16px!important}
+html[data-app-style="modern"] input[type="date"]::-webkit-calendar-picker-indicator{opacity:0;cursor:pointer}
+@media(forced-colors:active){html[data-app-style="modern"] select:not(.pft-native-filter){-webkit-appearance:auto;appearance:auto;padding-right:initial!important;background-image:none!important}}
+html[data-app-style="modern"] body.advanced-layout #income-expenses .transaction-intro{border-left:0!important}
+html[data-app-style="modern"] body.advanced-layout #income-expenses .transaction-intro-copy h1{border-left:4px solid #138b78!important;padding-left:14px!important}
+html[data-app-style="modern"] #cashMonthFilterPopoverTrigger{box-sizing:border-box;min-height:44px;padding:8px 12px;border-color:color-mix(in srgb,var(--primary) 35%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--primary) 10%,var(--card-bg));color:var(--text);font-size:12px;font-weight:600;white-space:nowrap}
+html[data-app-style="modern"] #addIncomeBtn,html[data-app-style="modern"] #addExpenseBtn{min-height:44px;padding:8px 20px!important;border-radius:24px;font-weight:600}
+html[data-app-style="modern"] #addIncomeBtn{border-color:#5eead4!important;background:#5eead4!important;color:#10372f!important}
+html[data-app-style="modern"] #addExpenseBtn{border-color:#e99361!important;background:#e99361!important;color:#382117!important}
+
+/* Match the reference: one softly glowing card owns both the hero copy and the arches. */
+html[data-app-style="modern"] .pft-style-hero{box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);align-items:stretch;gap:24px;min-height:270px;margin:0 0 24px;padding:28px;border:1px solid color-mix(in srgb,var(--primary) 30%,var(--border));border-radius:28px;background:radial-gradient(ellipse at 82% 52%,color-mix(in srgb,var(--primary) 10%,transparent),transparent 52%),linear-gradient(118deg,color-mix(in srgb,var(--card-bg) 74%,var(--bg)),var(--bg) 76%);box-shadow:0 0 36px color-mix(in srgb,var(--primary) 20%,transparent),inset 0 0 26px color-mix(in srgb,var(--primary) 5%,transparent);overflow:hidden}
+html[data-app-style="modern"] .pft-style-hero>div:first-child{position:relative;z-index:2;align-self:center;min-width:0}
+html[data-app-style="modern"] .pft-style-art{display:block;min-width:0;min-height:230px;height:100%;align-self:stretch;background:linear-gradient(120deg,transparent 5%,color-mix(in srgb,var(--primary) 11%,transparent) 76%,transparent);}
+@media screen and (min-width:701px) and (max-width:1200px){html[data-app-style="modern"] .pft-style-hero{grid-template-columns:minmax(0,1.15fr) minmax(220px,.85fr);min-height:250px;padding:22px;gap:16px}html[data-app-style="modern"] .pft-style-art{display:block;min-height:210px}html[data-app-style="modern"] .pft-style-hero h1{font-size:28px}}

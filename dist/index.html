@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="./assets/boot.4733db162475842a.js"></script>
-  <script defer src="./assets/app-info.21d12332df866f7b.js"></script>
+  <script src="./assets/boot.57bb126432f9813a.js"></script>
+  <script defer src="./assets/app-info.a578f1edafe00022.js"></script>
   <script defer src="./assets/loan-ledger.68deb1413e30aa08.js"></script>
   <script defer src="./assets/recurring.21005de2ca263681.js"></script>
   <script defer src="./assets/recurring-ui.7063af9db85dae04.js"></script>
@@ -18,19 +18,19 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.9e1b24ddae720af1.png">
   <link rel="apple-touch-icon" href="./icons/icon-192.9e1b24ddae720af1.png">
-  <link rel="stylesheet" href="./assets/legacy-1.e3b790b2ba002e59.css">
+  <link rel="stylesheet" href="./assets/legacy-1.2de7a35f4d3485dd.css">
   <!-- Bundled Chart.js 3.9.1 (MIT): charts remain available when offline. -->
 
   <script defer src="./assets/bootstrap-2.d146d9c1acc0d967.js"></script>
-  <script type="module" src="./assets/firebase-client.98a161091e23978a.js" onerror="document.body.classList.remove('cloud-loading');document.getElementById('cloudLogin').disabled=true;document.getElementById('cloudMessage').textContent='Unable to load the sign-in service. Connect to the internet and reload.'"></script>
+  <script type="module" src="./assets/firebase-client.64d3745952103f34.js" onerror="document.body.classList.remove('cloud-loading');document.getElementById('cloudLogin').disabled=true;document.getElementById('cloudMessage').textContent='Unable to load the sign-in service. Connect to the internet and reload.'"></script>
   <link rel="stylesheet" href="./assets/legacy-2.2bf3b4402c360219.css">
 
 
   <link rel="stylesheet" href="./assets/legacy-3.da8e96c8d3a1dcce.css">
 <link rel="stylesheet" href="./assets/legacy-4.453862e3306d6301.css">
-  <link rel="stylesheet" href="./assets/app-style.0540d27b10d71832.css">
+  <link rel="stylesheet" href="./assets/app-style.6a6d2e4c06ff464d.css">
   <link rel="stylesheet" href="./assets/workbench.93994155eee5b04f.css">
-  <link rel="stylesheet" href="./assets/cash-flow.59b1d5906de2cacb.css">
+  <link rel="stylesheet" href="./assets/cash-flow.81e5e2243aa91108.css">
   <link rel="stylesheet" href="./assets/print.e13a02846eb11264.css" media="print">
   <script defer src="./assets/app-style.cb54556f50439bf1.js"></script>
 </head>
@@ -421,7 +421,7 @@
             <label>Date</label>
             <input type="date" id="expenseDate">
           </div>
-          <div class="form-group">
+          <div class="form-group expense-notes-field">
             <label>Notes (Optional)</label>
             <input type="text" id="expenseNotes" placeholder="e.g., Medical checkup">
           </div>
@@ -1234,7 +1234,7 @@
         <div><span class="settings-eyebrow">PERSONALIZE YOUR TRACKER</span><h1>Settings</h1><p>Adjust the look, manage the values in your forms, and protect your backup.</p></div>
         <span class="settings-local-note">Private cloud account</span>
       </header>
-      <section class="cloud-account-panel"><div class="settings-profile-avatar" id="settingsProfileAvatar" aria-hidden="true">P</div><div class="settings-profile-copy"><strong id="settingsProfileName">Your account</strong><strong id="cloudAccountLabel"></strong><p id="cloudSyncStatus" role="status">Connecting…</p></div><div class="cloud-refresh-info"><button id="cloudRefresh" aria-label="Refresh cloud records" title="Refresh cloud records" type="button" class="btn-secondary cloud-refresh-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/></svg><span>Sync now</span></button><small id="cloudLastUpdated" role="status">Last sync: checking…</small></div><button id="cloudSignOut" type="button" class="btn-secondary">Sign out</button></section>
+      <section class="cloud-account-panel"><div class="settings-profile-avatar" id="settingsProfileAvatar" aria-hidden="true">P</div><div class="settings-profile-copy"><strong id="settingsProfileName">Your account</strong><strong id="cloudAccountLabel"></strong><p id="cloudSyncStatus" role="status">Connecting…</p></div><div class="cloud-refresh-info"><button id="cloudRefresh" aria-label="Refresh cloud records" title="Refresh cloud records" type="button" class="btn-secondary cloud-refresh-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/></svg><span>Sync now</span></button></div><button id="cloudSignOut" type="button" class="btn-secondary">Sign out</button></section>
       <div class="settings-layout">
       <section class="panel settings-panel" id="familyAccessPanel" style="grid-column:1/-1">
         <h2>Family Access</h2><p id="familyAccessRole">Checking access…</p><div class="family-tile-grid">
@@ -1323,7 +1323,7 @@
   <div id="investmentCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="investmentCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="investmentCategoryDialogTitle"></h2><p id="investmentCategoryDialogSubtitle"></p></div><button type="button" class="investment-category-dialog-close" data-close-investment-category-dialog aria-label="Close investment details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Portfolio summary</h3><div id="investmentCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Holdings and actions</h3><div id="investmentCategoryDialogTable"></div></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-investment-category-dialog>Done</button></footer></div></div>
     <div id="retirementCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="retirementCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="retirementCategoryDialogTitle"></h2><p id="retirementCategoryDialogSubtitle"></p></div><div id="retirementCategoryDialogActions" class="retirement-account-actions"></div><button type="button" class="investment-category-dialog-close" data-close-retirement-category-dialog aria-label="Close retirement account details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Account summary</h3><div id="retirementCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Accounts and actions</h3><div id="retirementCategoryDialogTable"></div><p id="retirementCategoryDialogNote" class="retirement-account-help"></p></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-retirement-category-dialog>Done</button></footer></div></div>
 
-  <script defer src="./assets/app-core.6725e1b7a5b05771.js"></script>
+  <script defer src="./assets/app-core.d899290f6d41d48a.js"></script>
 
 
 </body>

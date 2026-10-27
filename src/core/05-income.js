@@ -1,4 +1,6 @@
     // INCOME
+    document.getElementById('incomeDate').value = localDateKey();
+    document.getElementById('expenseDate').value = localDateKey();
     document.getElementById('addIncomeBtn').addEventListener('click', async () => {
       const member = document.getElementById('incomeMember').value;
       const src = document.getElementById('incomeSource').value;
@@ -27,7 +29,7 @@
       });
 
       document.getElementById('incomeAmount').value = '';
-      document.getElementById('incomeDate').value = '';
+      document.getElementById('incomeDate').value = localDateKey();
       document.getElementById('incomeNotes').value = '';
 
       document.getElementById('incomeHistoryFinancialYear').dataset.preferredYear = String(financialYearStartYearForMonthKey(date.slice(0,7)));

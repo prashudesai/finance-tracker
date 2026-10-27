@@ -58,7 +58,6 @@
       if(value&&!Number.isNaN(Date.parse(value))){try{trackerStorage.setItem('lastCloudUpdated',value);}catch(_){} }
       else {try{value=trackerStorage.getItem('lastCloudUpdated');}catch(_){} }
       const profile=document.querySelector('.cloud-account-panel');if(profile)profile.dataset.syncState=value&&!Number.isNaN(Date.parse(value))&&!syncRecord?.pending&&!cloudSaveBlocked&&!window.financeStartupChecking&&navigator.onLine?'synced':'pending';
-      const label=document.getElementById('cloudLastUpdated');if(label)label.textContent=value&&!Number.isNaN(Date.parse(value))?'Last sync: '+new Date(value).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}) : 'Last sync: not available yet';
     }
     async function syncCloud(){
       if(window.financeStartupChecking||window.financeCloud?.deleting||window.financeCloud?.canEdit===false||window.financeCloud?.accessValid?.()===false||syncBusy||!syncRecord?.pending||!navigator.onLine||cloudSaveBlocked)return;

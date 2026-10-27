@@ -1757,7 +1757,8 @@
 
     /* Income & Expense: cash-flow summary followed by paired income and expense ledgers. */
     body.advanced-layout #income-expenses { --page-accent:#138b78; }
-    body.advanced-layout #income-expenses .transaction-intro { display:flex; align-items:center; justify-content:space-between; gap:20px; border-left:4px solid #138b78; }
+    body.advanced-layout #income-expenses .transaction-intro { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+    body.advanced-layout #income-expenses .transaction-intro-copy h1 { border-left:4px solid #138b78; padding-left:14px; }
     body.advanced-layout #income-expenses .transaction-period { padding:9px 13px; border:1px solid color-mix(in srgb,#138b78 22%,var(--border)); border-radius:10px; background:color-mix(in srgb,#138b78 8%,var(--card-bg)); color:color-mix(in srgb,#138b78 78%,var(--text)); font-size:11px; font-weight:750; white-space:nowrap; }
     body.advanced-layout #income-expenses .transaction-overview { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0; overflow:hidden; border:1px solid var(--border); border-radius:14px; background:var(--card-bg); box-shadow:0 5px 18px rgba(20,42,58,.04); }
     body.advanced-layout #income-expenses .transaction-metric { min-height:83px; padding:16px 18px; border:0; border-right:1px solid var(--border); border-radius:0; box-shadow:none; background:transparent; }

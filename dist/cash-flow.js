@@ -5,7 +5,7 @@ export function installCashFlow(){
  const grid=page.querySelector('.transaction-grid'),overview=page.querySelector('.transaction-overview');
  if(!grid||!overview)return;
  const mobile=matchMedia('(max-width:700px)');let compact=mobile.matches;
- const period=page.querySelector('#transactionOverviewMonth'),monthFilter=make('select','transaction-period');monthFilter.id='cashMonthFilter';monthFilter.setAttribute('aria-label','Cash flow month');period.after(monthFilter);
+ const period=page.querySelector('#transactionOverviewMonth'),monthFilter=make('select','transaction-period pft-native-filter');monthFilter.id='cashMonthFilter';monthFilter.setAttribute('aria-label','Cash flow month');period.after(monthFilter);period.hidden=true;
  function refreshMonthFilter(){const keys=[currentMonthKey(),...(state.income||[]).map(r=>r.date.slice(0,7)),...(state.expenses||[]).map(r=>r.date.slice(0,7)),...(state.monthlyBalances||[]).map(r=>r.month)],years=[...new Set(keys.map(m=>m.slice(0,4)))],months=years.flatMap(year=>Array.from({length:12},(_,i)=>year+'-'+String(i+1).padStart(2,'0'))).filter(m=>/^\d{4}-\d{2}$/.test(m)&&m<=currentMonthKey()).sort().reverse();const chosen=page.dataset.cashMonth||currentMonthKey(),signature=JSON.stringify(months);if(monthFilter.dataset.signature!==signature){monthFilter.replaceChildren(...months.map(month=>{const option=document.createElement('option');option.value=month;option.textContent=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'});return option;}));monthFilter.dataset.signature=signature;}monthFilter.value=months.includes(chosen)?chosen:currentMonthKey();}
  monthFilter.onchange=()=>{page.dataset.cashMonth=monthFilter.value;transactionHistoryPages.income=transactionHistoryPages.expense=1;renderIncome();renderExpenses();renderTransactionOverview();window.financeInsights?.refresh();};
 
@@ -83,7 +83,7 @@ export function installCashFlow(){
   compact=mobile.matches;
   if(!compact&&dialog.open){dialog.close();document.body.classList.remove('cash-entry-open');}
   page.classList.toggle('cash-flow-layout',compact);
-  controls.hidden=bar.hidden=!compact;monthFilter.hidden=!compact;if(compact){page.dataset.cashMonth=page.dataset.cashMonth||currentMonthKey();refreshMonthFilter();}else delete page.dataset.cashMonth;
+  controls.hidden=bar.hidden=!compact;monthFilter.hidden=false;page.dataset.cashMonth=page.dataset.cashMonth||currentMonthKey();refreshMonthFilter();
   page.querySelector('.transaction-intro h1').textContent=compact?'Cash flow':originalTitle;
   overview.querySelector('.transaction-metric-net .transaction-metric-label').textContent=compact?'Balance after expenses':originalNet;
   for(const {node,marker,kind}of moved){if(compact)entries[kind].append(node);else marker.after(node);}

@@ -153,8 +153,9 @@ html body #income-expenses.cash-flow-layout .transaction-metric-expense .transac
 }
 
 #cashMonthFilter[hidden]{display:none!important}
+html body #income-expenses .history-filter-controls{display:none!important}
 @media(max-width:700px){
-html body #income-expenses.cash-flow-layout #transactionOverviewMonth,html body #income-expenses.cash-flow-layout .history-filter-controls{display:none!important}
+html body #income-expenses #transactionOverviewMonth{display:none!important}
 html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout #cashMonthFilter{display:block;box-sizing:border-box;width:auto;max-width:55%;min-height:44px;font:inherit;font-size:12px;font-weight:500;padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--card-bg);color:var(--text)}
 #cashMonthFilter:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 }

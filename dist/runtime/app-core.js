@@ -1254,7 +1254,6 @@
       if(value&&!Number.isNaN(Date.parse(value))){try{trackerStorage.setItem('lastCloudUpdated',value);}catch(_){} }
       else {try{value=trackerStorage.getItem('lastCloudUpdated');}catch(_){} }
       const profile=document.querySelector('.cloud-account-panel');if(profile)profile.dataset.syncState=value&&!Number.isNaN(Date.parse(value))&&!syncRecord?.pending&&!cloudSaveBlocked&&!window.financeStartupChecking&&navigator.onLine?'synced':'pending';
-      const label=document.getElementById('cloudLastUpdated');if(label)label.textContent=value&&!Number.isNaN(Date.parse(value))?'Last sync: '+new Date(value).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}) : 'Last sync: not available yet';
     }
     async function syncCloud(){
       if(window.financeStartupChecking||window.financeCloud?.deleting||window.financeCloud?.canEdit===false||window.financeCloud?.accessValid?.()===false||syncBusy||!syncRecord?.pending||!navigator.onLine||cloudSaveBlocked)return;
@@ -2148,6 +2147,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     }
 
     // INCOME
+    document.getElementById('incomeDate').value = localDateKey();
+    document.getElementById('expenseDate').value = localDateKey();
     document.getElementById('addIncomeBtn').addEventListener('click', async () => {
       const member = document.getElementById('incomeMember').value;
       const src = document.getElementById('incomeSource').value;
@@ -2176,7 +2177,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       });
 
       document.getElementById('incomeAmount').value = '';
-      document.getElementById('incomeDate').value = '';
+      document.getElementById('incomeDate').value = localDateKey();
       document.getElementById('incomeNotes').value = '';
 
       document.getElementById('incomeHistoryFinancialYear').dataset.preferredYear = String(financialYearStartYearForMonthKey(date.slice(0,7)));
@@ -2593,7 +2594,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       }
 
       document.getElementById('expenseAmount').value = '';
-      document.getElementById('expenseDate').value = '';
+      document.getElementById('expenseDate').value = localDateKey();
       document.getElementById('expenseNotes').value = '';
       document.getElementById('expenseLoan').value = '';
       document.getElementById('expenseRepaymentType').value = 'emi';
@@ -4788,15 +4789,17 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       select.value=selected;
       select.onchange=()=>{select.dataset.selectedMonth=select.value;renderDashboardExpenseSnapshot();};
       const balance=state.monthlyBalances.find(r=>r.month===selected),house=balance?.houseExpense;
-      card.hidden=!Number.isFinite(house);
+      const calculated=Number.isFinite(house);
+      card.hidden=!calculated&&window.innerWidth<=700;
       const next=state.monthlyBalances.find(r=>r.month===addMonthsClamped(selected+'-01',1,1).slice(0,7));
       window.PFT_DASHBOARD_SNAPSHOT={previousMonthKey:selected,previousTotals:monthTotals(selected),previousOpening:balance?.startBalance??null,hasOpening:!!next,opening:next?.startBalance??null,houseAmount:house??null,fullExpense:Number.isFinite(house)?house+monthTotals(selected).expenses:null};
-      if(card.hidden)return;
       const name=new Date(selected+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long'});
       document.getElementById('houseExpenseLabel').textContent=name+' House Expense';
       document.getElementById('fullExpenseLabel').textContent=name+' Full Expense';
-      for(const [id,value] of [['lastMonthHouseExpense',house],['lastMonthFullExpense',house+monthTotals(selected).expenses]]){const node=document.getElementById(id);node.textContent=formatCurrency(value);node.style.color=value<0?'var(--danger)':'var(--primary)';}
+      const full=calculated?house+monthTotals(selected).expenses:null;
+      for(const [id,value] of [['lastMonthHouseExpense',calculated?house:null],['lastMonthFullExpense',full]]){const node=document.getElementById(id);node.textContent=value===null?'Pending':formatCurrency(value);node.style.color=value!==null&&value<0?'var(--danger)':'var(--primary)';}
     }
+    window.addEventListener('resize',renderDashboardExpenseSnapshot,{passive:true});
     const chartLibraryCallbacks=new Set();
     let chartLibraryPromise=null;
     function requestChartLibrary(render){

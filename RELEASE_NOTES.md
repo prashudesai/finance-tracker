@@ -1,3 +1,12 @@
+# 2026.10.27.4
+
+- Reworked the header profile and Appearance choices; fixed icon action controls across pages and refined Investment, Retirement and Debt layouts.
+- Added a rounded, softly glowing hero card around the three arches and copy.
+- Made the Cash Flow month pill interactive so it filters the summary totals and both histories on desktop and mobile.
+- Aligned the Income and Expense forms, added teal dropdown and calendar indicators, defaulted entry dates to today, and gave the submit buttons distinct mint/coral colors.
+- Kept pending Monthly Expense Snapshot visible on desktop, aligned Emerald Flow Net Worth with its summary grid, and refined the Debt empty state.
+- Aligned Settings Sync now and removed the duplicate Last sync line while retaining bottom sync status.
+
 # 2026.10.26.9
 
 - Restore proactive Firebase popup resolver initialization for Safari and mobile. The startup optimization had omitted this dependency, delaying auth iframe setup until the sign-in tap.

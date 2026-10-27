@@ -9,6 +9,6 @@ assert.match(match[1],/title="Refresh cloud records"/);
 assert.match(match[1],/cloud-refresh-button/);
 assert.match(match[2],/<svg[^>]*aria-hidden="true"/);
 assert.doesNotMatch(match[2],/Refresh cloud records/,'visible button text is removed');
-assert.match(html,/<small id="cloudLastUpdated"[^>]*>Last sync:/,'last-sync status remains visible');
+assert.doesNotMatch(html,/id="cloudLastUpdated"/,'duplicate last-sync status is removed from Settings');
 assert.match(styles,/html\[data-app-style="modern"\] #cloudRefresh::before\{display:none\}/,'legacy text glyph is hidden');
-console.log('PASS cloud refresh is icon-only, accessible, theme-aware, and retains Last sync');
+console.log('PASS cloud refresh is icon-only, accessible, theme-aware, and removes duplicate Settings timestamp');
