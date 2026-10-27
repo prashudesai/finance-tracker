@@ -616,7 +616,21 @@ html[data-app-style="modern"] #addIncomeBtn{border-color:#5eead4!important;backg
 html[data-app-style="modern"] #addExpenseBtn{border-color:#e99361!important;background:#e99361!important;color:#382117!important}
 
 /* Match the reference: one softly glowing card owns both the hero copy and the arches. */
+@media screen and (min-width:701px){
 html[data-app-style="modern"] .pft-style-hero{box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);align-items:stretch;gap:24px;min-height:270px;margin:0 0 24px;padding:28px;border:1px solid color-mix(in srgb,var(--primary) 30%,var(--border));border-radius:28px;background:radial-gradient(ellipse at 82% 52%,color-mix(in srgb,var(--primary) 10%,transparent),transparent 52%),linear-gradient(118deg,color-mix(in srgb,var(--card-bg) 74%,var(--bg)),var(--bg) 76%);box-shadow:0 0 36px color-mix(in srgb,var(--primary) 20%,transparent),inset 0 0 26px color-mix(in srgb,var(--primary) 5%,transparent);overflow:hidden}
 html[data-app-style="modern"] .pft-style-hero>div:first-child{position:relative;z-index:2;align-self:center;min-width:0}
 html[data-app-style="modern"] .pft-style-art{display:block;min-width:0;min-height:230px;height:100%;align-self:stretch;background:linear-gradient(120deg,transparent 5%,color-mix(in srgb,var(--primary) 11%,transparent) 76%,transparent);}
+}
 @media screen and (min-width:701px) and (max-width:1200px){html[data-app-style="modern"] .pft-style-hero{grid-template-columns:minmax(0,1.15fr) minmax(220px,.85fr);min-height:250px;padding:22px;gap:16px}html[data-app-style="modern"] .pft-style-art{display:block;min-height:210px}html[data-app-style="modern"] .pft-style-hero h1{font-size:28px}}
+
+/* Compact mobile net-worth overview; preserve the real assets/debts breakdown. */
+@media screen and (max-width:700px){
+  html[data-app-style="modern"] body.advanced-layout #dashboard .dashboard-net-worth,
+  html[data-layout-style="emerald-flow"] #dashboard .dashboard-net-worth{padding:20px;border-radius:18px;border:1px solid color-mix(in srgb,var(--primary) 38%,var(--border));background:linear-gradient(145deg,color-mix(in srgb,var(--primary) 9%,var(--card-bg)),var(--card-bg));box-shadow:0 8px 26px color-mix(in srgb,var(--primary) 8%,transparent)}
+  html[data-app-style="modern"] #dashboard .dashboard-net-worth .dashboard-card-heading,
+  html[data-layout-style="emerald-flow"] #dashboard .dashboard-net-worth .dashboard-card-heading{align-items:center}
+  html[data-app-style="modern"] #dashboard .dashboard-net-worth .dashboard-main-value,
+  html[data-layout-style="emerald-flow"] #dashboard .dashboard-net-worth .dashboard-main-value{font-size:clamp(30px,9vw,42px);line-height:1.15;letter-spacing:-1px;margin:14px 0 20px;overflow-wrap:anywhere}
+  html[data-app-style="modern"] #dashboard .dashboard-net-worth .dashboard-position-bar,
+  html[data-layout-style="emerald-flow"] #dashboard .dashboard-net-worth .dashboard-position-bar{height:8px;border-radius:99px;overflow:hidden}
+}

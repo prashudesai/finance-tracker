@@ -1,5 +1,5 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.4",
+  "version": "2026.10.27.5",
   "released": "2026-10-27",
   "releaseNotes": [
     "Use the Google profile photo in the header by default, label it My finances, and keep Black in Appearance.",

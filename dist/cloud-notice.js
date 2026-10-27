@@ -35,14 +35,14 @@ export function installCloudNotice(subscribe) {
   function paint(){
     banner.hidden=!latest;banner.style.display=latest?'flex':'none';
     const pending=Boolean(syncRecord?.pending||cloudSaveBlocked||persistenceDirty||pendingSaves);
-    message.textContent=latest?.error||(pending?'New cloud records found. This device also has changes. Review both versions before replacing anything.':'New records are available from another device. Finish your form before loading them.');
-    load.disabled=busy||pending||Boolean(latest?.error);review.hidden=!pending;backup.hidden=!pending;resolve.hidden=!pending||window.financeCloud?.canManage===false;
+    message.textContent=latest?.error||(pending?'This device and the cloud have different changes. Review them to choose what to keep. Your records are safe until you apply a choice.':'New cloud records are available. Save or close any unfinished form, then load the latest copy.');
+    load.hidden=pending||Boolean(latest?.error);load.disabled=busy;review.hidden=!pending;review.disabled=busy;backup.hidden=!pending;backup.disabled=busy;
   }
   const load=button('Load latest',async()=>{
     if(busy)return;busy=true;paint();
     try{
       await window.financeBridge.settle();
-      if(await window.financeBridge.pendingSync()||window.financeBridge.dirty()){paint();return;}
+      if(await window.financeBridge.pendingSync()||window.financeBridge.dirty()){latest={revision:latest?.revision};paint();return;}
       if(!confirm('Load the latest cloud records? This reloads the tracker and clears unfinished form entries.'))return;
       // Recheck after confirmation; the bridge also protects pending saves in other tabs.
       if(await window.financeBridge.pendingSync()||window.financeBridge.dirty())return;
@@ -50,9 +50,12 @@ export function installCloudNotice(subscribe) {
     }catch(error){latest={error:error.message||'Unable to load cloud records. Try again when connected.'};}
     finally{busy=false;paint();}
   });
-  const review=button('Review differences',()=>window.openTrackerConflictReview?.());
-  const resolve=button('Resolve choices',()=>window.resolveTrackerConflict?.());
-  const backup=button('Export device backup',()=>window.financeBridge.exportUnsaved());
+  const review=button('Review changes',async()=>{
+    const action=window.financeCloud?.canManage===false?window.openTrackerConflictReview:window.resolveTrackerConflict;
+    if(typeof action!=='function'){latest={error:'Review is not ready. Reopen the app and try again; your device records are kept.'};paint();return;}
+    try{await action();}catch(error){latest={error:'Could not open review: '+(error.message||'Try again.')};paint();}
+  });
+  const backup=button('Download device backup',()=>window.financeBridge.exportUnsaved());
   const watcher=watchCloudChanges({subscribe,baseline:()=>syncRecord?.baseRevision||0,
     ownMutation:id=>Boolean(id&&id===syncRecord?.token),
     active:()=>!document.hidden&&navigator.onLine&&window.financeCloud?.accessValid?.()!==false,

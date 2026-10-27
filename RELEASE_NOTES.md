@@ -1,3 +1,8 @@
+# 2026.10.27.5
+
+- Hide the desktop three-arch hero on mobile and refine the mobile Net Worth tile while keeping its real assets/debts figures.
+- Make cloud-change actions clearer and provide a direct review path when device and cloud records differ.
+
 # 2026.10.27.4
 
 - Reworked the header profile and Appearance choices; fixed icon action controls across pages and refined Investment, Retirement and Debt layouts.
