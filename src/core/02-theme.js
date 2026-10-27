@@ -4,6 +4,7 @@
     const htmlElement = document.documentElement;
     const COLOR_THEME_KEY = 'familyWealthColorTheme';
     const COLOR_THEMES = {
+      'obsidian-black': {label:'Obsidian Black', colors:['#000000','#171717','#a3e6cd','#a3a3a3'], darkHeader:['#111111','#000000'], light:['#242424','#000000','#ededed','#18765b'], dark:['#a3e6cd','#c6f3e2','#20352d','#c4b5fd']},
       'navy-emerald': {label:'Navy + Emerald', colors:['#127c70','#1e3346','#d5a85f','#e5f2ef'], darkHeader:['#1e3346','#142638'], light:['#127c70','#1e3346','#e5f2ef','#d5a85f'], dark:['#55c4a0','#bae6d6','#143737','#e0b766']},
       'classic-teal': {label:'Classic Teal', colors:['#0f7c7e','#084b4d','#d4976f','#e8f5f5'], darkHeader:['#0b3f40','#062a2b'], light:['#0f7c7e','#084b4d','#e8f5f5','#d4976f'], dark:['#5eead4','#b5fff0','#173e44','#99f6e4']},
       'ocean-blue': {label:'Ocean Blue', colors:['#2563eb','#1e3a8a','#38bdf8','#dbeafe'], darkHeader:['#102b5c','#071a3b'], light:['#2563eb','#1e3a8a','#eff6ff','#38bdf8'], dark:['#60a5fa','#bfdbfe','#172554','#93c5fd']},
@@ -30,6 +31,7 @@
         'header-from':mode === 'dark' ? theme.darkHeader[0] : primary,'header-to':mode === 'dark' ? theme.darkHeader[1] : primaryDark,
         'button-text':mode === 'dark' ? '#0f172a' : '#ffffff','button-hover':primaryDark,
         'chart-secondary':theme.colors[1],'chart-tertiary':theme.colors[2],'chart-quaternary':theme.colors[3]};
+      if (safeKey === 'obsidian-black') Object.assign(vars,{'chart-secondary':mode==='dark'?'#a7bdf2':'#3157a5','chart-tertiary':mode==='dark'?'#f1c58a':'#945807','chart-quaternary':mode==='dark'?'#d8b4fe':'#7841a5'});
       if (safeKey === 'arctic-glass') vars['card-bg'] = mode === 'dark' ? 'rgba(8, 51, 68, .88)' : 'rgba(255, 255, 255, .88)';
       else htmlElement.style.removeProperty('--card-bg');
       Object.entries(vars).forEach(([name,value]) => htmlElement.style.setProperty(`--${name}`,value));
@@ -77,6 +79,7 @@
     themeOptions?.addEventListener('click', event => {
       const button=event.target.closest('.theme-choice');
       if(!button||!COLOR_THEMES[button.dataset.themeKey])return;
+      if(button.dataset.themeKey==='obsidian-black'){htmlElement.setAttribute('data-theme','dark');try{trackerStorage.setItem('theme','dark');}catch(error){}syncThemeModeSwitch('dark');}
       applyColorTheme(button.dataset.themeKey);
       if(document.getElementById('analytics')?.classList.contains('active'))renderCharts();
     });

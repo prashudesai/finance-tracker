@@ -92,7 +92,7 @@
       set('debtPageOutstanding',formatCurrency(outstanding));
       set('debtPageMonthlyEmi',formatCurrency(monthlyEmi));
       set('debtPageAccountCount',`${active.length} active · ${debts.length} total`);
-      set('debtPageStatus',`${active.length} active ${active.length===1?'account':'accounts'}`);
+      set('debtPageStatus',`${active.length} active · ${debts.length} total`);
       set('debtListCount',`${debts.length} ${debts.length===1?'account':'accounts'}`);
     }
     function renderDebts() {
@@ -102,7 +102,7 @@
       const debts=profileRows(state.debts);
       renderAccountPager('debts','debtsBody',renderDebts);
       if (debts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-muted">No debts recorded yet.</td></tr>';
+        tbody.innerHTML = '<tr class="debt-empty-row"><td colspan="8" class="debt-empty-cell"><div class="retirement-empty-state debt-empty-state"><strong>No debts recorded yet</strong><span>Add a loan to track its outstanding balance, EMI and repayment history.</span></div></td></tr>';
         return;
       }
 

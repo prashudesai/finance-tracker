@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="./assets/boot.c07b5b7e766d172f.js"></script>
-  <script defer src="./assets/app-info.72ffc549f4bbfe7f.js"></script>
+  <script src="./assets/boot.752c1878c196b250.js"></script>
+  <script defer src="./assets/app-info.c625823f6f163f23.js"></script>
   <script defer src="./assets/loan-ledger.68deb1413e30aa08.js"></script>
   <script defer src="./assets/recurring.21005de2ca263681.js"></script>
   <script defer src="./assets/recurring-ui.7063af9db85dae04.js"></script>
   <script defer src="./assets/pwa-client.413a672c4e71a741.js"></script>
-  <script defer src="./assets/tracker-enhancements.d5d4b00e8dd65dd3.js"></script>
+  <script defer src="./assets/tracker-enhancements.f5b1b557c2b63656.js"></script>
   <link rel="stylesheet" href="./assets/tracker-enhancements.2898ff9bcb30e400.css">
   <title>Personal Finance Tracker</title>
   <meta name="theme-color" content="#0d2927">
@@ -22,17 +22,17 @@
   <!-- Bundled Chart.js 3.9.1 (MIT): charts remain available when offline. -->
 
   <script defer src="./assets/bootstrap-2.d146d9c1acc0d967.js"></script>
-  <script type="module" src="./assets/firebase-client.4405249deb9e5dab.js" onerror="document.body.classList.remove('cloud-loading');document.getElementById('cloudLogin').disabled=true;document.getElementById('cloudMessage').textContent='Unable to load the sign-in service. Connect to the internet and reload.'"></script>
+  <script type="module" src="./assets/firebase-client.7011a63b141b5447.js" onerror="document.body.classList.remove('cloud-loading');document.getElementById('cloudLogin').disabled=true;document.getElementById('cloudMessage').textContent='Unable to load the sign-in service. Connect to the internet and reload.'"></script>
   <link rel="stylesheet" href="./assets/legacy-2.2bf3b4402c360219.css">
 
 
   <link rel="stylesheet" href="./assets/legacy-3.da8e96c8d3a1dcce.css">
 <link rel="stylesheet" href="./assets/legacy-4.453862e3306d6301.css">
-  <link rel="stylesheet" href="./assets/app-style.4d2dca3618dfebbc.css">
-  <link rel="stylesheet" href="./assets/workbench.417e500faabd8a06.css">
-  <link rel="stylesheet" href="./assets/cash-flow.9f5e3917bce8663f.css">
-  <link rel="stylesheet" href="./assets/print.c9ce3bcf3a3b7e06.css" media="print">
-  <script defer src="./assets/app-style.bb29c08da70751af.js"></script>
+  <link rel="stylesheet" href="./assets/app-style.42cc718d71719d18.css">
+  <link rel="stylesheet" href="./assets/workbench.93994155eee5b04f.css">
+  <link rel="stylesheet" href="./assets/cash-flow.3a0bf5272ee12ec7.css">
+  <link rel="stylesheet" href="./assets/print.e13a02846eb11264.css" media="print">
+  <script defer src="./assets/app-style.92009f5b7857e33b.js"></script>
 </head>
 <body class="cloud-pending cloud-loading">
   <section id="cloudGate" aria-label="Account access"><span id="cloudLoadingIndicator" role="status" aria-live="polite">Opening your tracker…</span><div class="cloud-login-layout">
@@ -123,12 +123,12 @@
             <div class="dashboard-position-legend"><span><i class="dashboard-legend-dot"></i>Assets <b id="dashboardAssetsShare">0%</b></span><span><i class="dashboard-legend-dot debt"></i>Debts <b id="dashboardDebtsShare">0%</b></span></div>
           </div>
         </section>
-        <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18m-5 5h2"/></svg></span><span class="dashboard-kicker">Total Debts</span></div><div class="dashboard-stat-value" id="totalDebts">₹0</div></article>
+        <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18m-5 5h2"/></svg></span><span class="dashboard-kicker" title="Recorded household expenses this month, including EMIs">Monthly Expenses</span></div><div class="dashboard-stat-value" id="monthlyExpenses">₹0</div></article>
         <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 10 11l4 3 6-8"/><path d="M15 6h5v5"/></svg></span><span class="dashboard-kicker">Monthly Income</span></div><div class="dashboard-stat-value" id="monthlyIncome">₹0</div></article>
         <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="M18 14v4m-1-3h2"/></svg></span><span class="dashboard-kicker">Available Balance</span></div><div class="dashboard-stat-value" id="surplusBalance">₹0</div></article>
         <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8a8 8 0 0 1 13-3l2 2"/><path d="M19 3v4h-4M20 16a8 8 0 0 1-13 3l-2-2"/><path d="M5 21v-4h4"/></svg></span><span class="dashboard-kicker">Monthly Savings</span></div><div class="dashboard-stat-value" id="monthlyContrib">₹0</div></article>
-        <section class="dashboard-card dashboard-wide-card">
-          <div class="dashboard-wide-header"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 3v4m8-4v4M4 9h16"/></svg></span><span class="dashboard-kicker">Monthly Expense Snapshot</span></div><span class="dashboard-period-chip" id="dashboardExpenseMonth">Previous month</span></div>
+        <section class="dashboard-card dashboard-wide-card" id="dashboardExpenseSnapshot" hidden>
+          <div class="dashboard-wide-header"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 3v4m8-4v4M4 9h16"/></svg></span><span class="dashboard-kicker">Monthly Expense Snapshot</span></div><select class="dashboard-period-chip" id="dashboardExpenseMonth" aria-label="Expense snapshot month"><option value="">Previous month</option></select></div>
           <div class="dashboard-expense-row"><span class="dashboard-expense-label" id="houseExpenseLabel">House Expense</span><strong class="dashboard-expense-amount" id="lastMonthHouseExpense">Pending</strong></div>
           <div class="dashboard-expense-row"><span class="dashboard-expense-label" id="fullExpenseLabel">Full Expense</span><strong class="dashboard-expense-amount" id="lastMonthFullExpense">Pending</strong></div>
         </section>
@@ -266,7 +266,7 @@
       </div>
 
       <div class="panel debt-list-panel">
-        <div class="panel-header"><div class="debt-section-title"><span class="debt-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="1"/><circle cx="8" cy="12" r="1"/><circle cx="8" cy="18" r="1"/></svg></span><div><h2>Loan Summary</h2><p>Outstanding balances and recorded EMI history</p></div></div><div class="panel-controls"><span class="debt-list-count" id="debtListCount">0 accounts</span><button type="button" class="btn-primary" id="openAddLoanBtn" onclick="openEntryFormModal('loanAddPanel',this)">+ Add Loan</button></div></div>
+        <div class="panel-header"><div class="debt-section-title"><span class="debt-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="1"/><circle cx="8" cy="12" r="1"/><circle cx="8" cy="18" r="1"/></svg></span><div><h2>Loan Summary</h2><p>Outstanding balances and recorded EMI history</p></div></div><div class="panel-controls"><span class="debt-list-count" id="debtListCount">0 accounts</span><button type="button" class="btn-primary" id="openAddLoanBtn" onclick="openEntryFormModal('loanAddPanel',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Add Loan</span></button></div></div>
         
         <div class="table-wrapper">
           <table>
@@ -698,14 +698,14 @@
 
       <div class="panel" id="investmentListPanel">
         <div class="panel-header">
-          <h2>Investment Portfolio</h2>
-          <div class="investment-add-menu-wrap"><button type="button" class="btn-primary" id="openGeneralInvestmentBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="investmentAddMenu">+ Add Investment</button><div class="retirement-add-menu investment-add-menu" id="investmentAddMenu" role="menu" hidden></div></div>
+          <div class="investment-portfolio-title"><h2>Investment Portfolio</h2><p>Stocks, mutual funds, ETFs, gold and other holdings</p></div>
+          <div class="investment-add-menu-wrap"><button type="button" class="btn-primary" id="openGeneralInvestmentBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="investmentAddMenu">+ Add Investment <span aria-hidden="true">⌄</span></button><div class="retirement-add-menu investment-add-menu" id="investmentAddMenu" role="menu" hidden></div></div>
         </div>
         <div id="investmentCategoryPanels"></div>
       </div>
 
       <section class="retirement-accounts-section" aria-labelledby="retirementAccountsHeading">
-      <div class="retirement-accounts-heading"><div><h2 id="retirementAccountsHeading">Retirement Accounts</h2><p>PF, PPF and NPS balances, plus gratuity estimates and account history</p></div><div class="retirement-add-menu-wrap"><button type="button" class="btn-primary" id="retirementAddBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="retirementAddMenu">+ Add</button><div class="retirement-add-menu" id="retirementAddMenu" role="menu" hidden><button type="button" role="menuitem" data-retirement-add="pf">Provident Fund (PF)</button><button type="button" role="menuitem" data-retirement-add="ppf">Public Provident Fund (PPF)</button><button type="button" role="menuitem" data-retirement-add="nps">National Pension Scheme (NPS)</button><button type="button" role="menuitem" data-retirement-add="gratuity">Gratuity</button></div></div></div>
+      <div class="retirement-accounts-heading"><div><h2 id="retirementAccountsHeading">Retirement Accounts</h2><p>PF, PPF and NPS balances, plus gratuity estimates and account history</p></div><div class="retirement-add-menu-wrap"><button type="button" class="btn-primary" id="retirementAddBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="retirementAddMenu">+ Add <span aria-hidden="true">⌄</span></button><div class="retirement-add-menu" id="retirementAddMenu" role="menu" hidden><button type="button" role="menuitem" data-retirement-add="pf">Provident Fund (PF)</button><button type="button" role="menuitem" data-retirement-add="ppf">Public Provident Fund (PPF)</button><button type="button" role="menuitem" data-retirement-add="nps">National Pension Scheme (NPS)</button><button type="button" role="menuitem" data-retirement-add="gratuity">Gratuity</button></div></div></div>
       <div id="retirementAccountPanels"><div class="retirement-empty-state" id="retirementEmptyState" hidden><strong>No retirement accounts yet</strong><span>Choose PF, PPF, NPS or gratuity from <b>+ Add</b> above. A tile appears here after you save an account.</span></div>
       <div class="panel retirement-account-card" id="pfListPanel" data-retirement-type="pf" hidden>
         <div class="panel-header">
@@ -1046,7 +1046,7 @@
       </div>
       <div class="panel growth-breakdown-panel">
         <div class="panel-header"><h2>Financial Year Breakdown</h2></div>
-        <div class="table-wrapper"><table id="growthProjectionResultsTable"><thead><tr><th>Financial year</th><th class="text-right">Opening value</th><th class="text-right">Contributions</th><th class="text-right">Additions</th><th class="text-right">Withdrawals</th><th class="text-right">Stress growth</th><th class="text-right">Base growth</th><th class="text-right">Optimistic growth</th><th class="text-right">Stress closing value</th><th class="text-right">Base closing value</th><th class="text-right">Optimistic closing value</th></tr></thead><tbody id="growthProjectionResultsBody"></tbody></table></div>
+        <div class="table-wrapper" tabindex="0" role="region" aria-label="Financial year projection breakdown. Scroll horizontally to see all scenarios."><table id="growthProjectionResultsTable"><thead><tr><th>Financial year</th><th class="text-right">Opening value</th><th class="text-right">Contributions</th><th class="text-right">Additions</th><th class="text-right">Withdrawals</th><th class="text-right">Stress growth</th><th class="text-right">Base growth</th><th class="text-right">Optimistic growth</th><th class="text-right">Stress closing value</th><th class="text-right">Base closing value</th><th class="text-right">Optimistic closing value</th></tr></thead><tbody id="growthProjectionResultsBody"></tbody></table></div>
       </div>
     </div>
 
@@ -1234,7 +1234,7 @@
         <div><span class="settings-eyebrow">PERSONALIZE YOUR TRACKER</span><h1>Settings</h1><p>Adjust the look, manage the values in your forms, and protect your backup.</p></div>
         <span class="settings-local-note">Private cloud account</span>
       </header>
-      <section class="cloud-account-panel"><div><strong id="cloudAccountLabel"></strong><p id="cloudSyncStatus" role="status">Connecting…</p></div><div class="cloud-refresh-info"><button id="cloudRefresh" aria-label="Refresh cloud records" title="Refresh cloud records" type="button" class="btn-secondary cloud-refresh-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/></svg></button><small id="cloudLastUpdated" role="status">Last sync: checking…</small></div><button id="cloudSignOut" type="button" class="btn-secondary">Sign out</button></section>
+      <section class="cloud-account-panel"><div class="settings-profile-avatar" id="settingsProfileAvatar" aria-hidden="true">P</div><div class="settings-profile-copy"><strong id="settingsProfileName">Your account</strong><strong id="cloudAccountLabel"></strong><p id="cloudSyncStatus" role="status">Connecting…</p></div><div class="cloud-refresh-info"><button id="cloudRefresh" aria-label="Refresh cloud records" title="Refresh cloud records" type="button" class="btn-secondary cloud-refresh-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/></svg><span>Sync now</span></button><small id="cloudLastUpdated" role="status">Last sync: checking…</small></div><button id="cloudSignOut" type="button" class="btn-secondary">Sign out</button></section>
       <div class="settings-layout">
       <section class="panel settings-panel" id="familyAccessPanel" style="grid-column:1/-1">
         <h2>Family Access</h2><p id="familyAccessRole">Checking access…</p><div class="family-tile-grid">
@@ -1323,7 +1323,7 @@
   <div id="investmentCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="investmentCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="investmentCategoryDialogTitle"></h2><p id="investmentCategoryDialogSubtitle"></p></div><button type="button" class="investment-category-dialog-close" data-close-investment-category-dialog aria-label="Close investment details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Portfolio summary</h3><div id="investmentCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Holdings and actions</h3><div id="investmentCategoryDialogTable"></div></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-investment-category-dialog>Done</button></footer></div></div>
     <div id="retirementCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="retirementCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="retirementCategoryDialogTitle"></h2><p id="retirementCategoryDialogSubtitle"></p></div><div id="retirementCategoryDialogActions" class="retirement-account-actions"></div><button type="button" class="investment-category-dialog-close" data-close-retirement-category-dialog aria-label="Close retirement account details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Account summary</h3><div id="retirementCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Accounts and actions</h3><div id="retirementCategoryDialogTable"></div><p id="retirementCategoryDialogNote" class="retirement-account-help"></p></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-retirement-category-dialog>Done</button></footer></div></div>
 
-  <script defer src="./assets/app-core.16947ffcbeaf1111.js"></script>
+  <script defer src="./assets/app-core.fd87259226ec941d.js"></script>
 
 
 </body>

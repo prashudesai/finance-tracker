@@ -5,6 +5,10 @@ export function installCashFlow(){
  const grid=page.querySelector('.transaction-grid'),overview=page.querySelector('.transaction-overview');
  if(!grid||!overview)return;
  const mobile=matchMedia('(max-width:700px)');let compact=mobile.matches;
+ const period=page.querySelector('#transactionOverviewMonth'),monthFilter=make('select','transaction-period');monthFilter.id='cashMonthFilter';monthFilter.setAttribute('aria-label','Cash flow month');period.after(monthFilter);
+ function refreshMonthFilter(){const keys=[currentMonthKey(),...(state.income||[]).map(r=>r.date.slice(0,7)),...(state.expenses||[]).map(r=>r.date.slice(0,7)),...(state.monthlyBalances||[]).map(r=>r.month)],years=[...new Set(keys.map(m=>m.slice(0,4)))],months=years.flatMap(year=>Array.from({length:12},(_,i)=>year+'-'+String(i+1).padStart(2,'0'))).filter(m=>/^\d{4}-\d{2}$/.test(m)&&m<=currentMonthKey()).sort().reverse();const chosen=page.dataset.cashMonth||currentMonthKey(),signature=JSON.stringify(months);if(monthFilter.dataset.signature!==signature){monthFilter.replaceChildren(...months.map(month=>{const option=document.createElement('option');option.value=month;option.textContent=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'});return option;}));monthFilter.dataset.signature=signature;}monthFilter.value=months.includes(chosen)?chosen:currentMonthKey();}
+ monthFilter.onchange=()=>{page.dataset.cashMonth=monthFilter.value;transactionHistoryPages.income=transactionHistoryPages.expense=1;renderIncome();renderExpenses();renderTransactionOverview();window.financeInsights?.refresh();};
+
  const originalTitle=page.querySelector('.transaction-intro h1').textContent,originalNet=overview.querySelector('.transaction-metric-net .transaction-metric-label').textContent;
  page.classList.add('cash-flow-layout');page.dataset.cashKind='expense';
  page.querySelector('.transaction-intro h1').textContent='Cash flow';
@@ -36,7 +40,7 @@ export function installCashFlow(){
  grid.before(controls);
  const recurring=page.querySelector('.recurring-launch');if(recurring)grid.after(recurring);
  const surplus=page.querySelector('.transaction-surplus'),surplusHome=document.createComment('cash-surplus-home');let tools;if(surplus){surplus.before(surplusHome);tools=make('details','cash-tools');const summary=make('summary','','Monthly surplus & opening balance');surplus.before(tools);tools.append(summary,surplus);}
- function select(kind){if(!histories[kind])return;selectedKind=kind;if(compact)page.dataset.cashKind=kind;for(const name of ['income','expense']){histories[name].hidden=compact&&name!==kind;tabs[name].setAttribute('aria-selected',String(name===kind));tabs[name].tabIndex=name===kind?0:-1;}renderTransactionOverview();}
+ function select(kind){if(!histories[kind])return;if(compact&&page.dataset.cashMonth&&document.getElementById(kind+'HistoryMonth').value!==page.dataset.cashMonth)(kind==='income'?renderIncome:renderExpenses)();selectedKind=kind;if(compact)page.dataset.cashKind=kind;for(const name of ['income','expense']){histories[name].hidden=compact&&name!==kind;tabs[name].setAttribute('aria-selected',String(name===kind));tabs[name].tabIndex=name===kind?0:-1;}renderTransactionOverview();}
  function decorateHistory(kind){if(!compact)return;for(const row of document.getElementById(kind==='income'?'incomeBody':'expenseBody').querySelectorAll('tr[data-cash-record]')){
   const cell=row.querySelector(kind==='income'?'td[data-label=Source]':'td[data-label=Category]');
   if(cell&&!cell.querySelector('.cash-category-icon')){const icon=make('span','cash-category-icon');icon.setAttribute('aria-hidden','true');icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h14l-1 12H6L5 8ZM9 8V6a3 3 0 0 1 6 0v2M9 12v4m6-4v4"/></svg>';cell.prepend(icon);}
@@ -68,7 +72,7 @@ export function installCashFlow(){
    delete pending[kind];submit.textContent='Save '+kind;status.textContent='';
    const changed=Object.entries(baseline).some(([key,value])=>document.getElementById(key)?.value!==value);
    if(!changed)for(const key of [kind+'Amount',kind+'Date',kind+'Notes'])document.getElementById(key).value='';
-   select(kind);const row=document.getElementById(kind==='income'?'incomeBody':'expenseBody')?.querySelector('[data-cash-record="'+CSS.escape(id)+'"]');if(row&&!changed){savedRow=row;row.classList.add('cash-just-saved');setTimeout(()=>row.classList.remove('cash-just-saved'),2500);}
+   if(compact){page.dataset.cashMonth=date.slice(0,7);renderIncome();renderExpenses();}select(kind);const row=document.getElementById(kind==='income'?'incomeBody':'expenseBody')?.querySelector('[data-cash-record="'+CSS.escape(id)+'"]');if(row&&!changed){savedRow=row;row.classList.add('cash-just-saved');setTimeout(()=>row.classList.remove('cash-just-saved'),2500);}
    if(dialog.open&&active===kind&&!changed)dialog.close();else if(changed)status.textContent='Previous entry saved. Your next unfinished entry is still here.';return true;
   });
  }
@@ -79,7 +83,7 @@ export function installCashFlow(){
   compact=mobile.matches;
   if(!compact&&dialog.open){dialog.close();document.body.classList.remove('cash-entry-open');}
   page.classList.toggle('cash-flow-layout',compact);
-  controls.hidden=bar.hidden=!compact;
+  controls.hidden=bar.hidden=!compact;monthFilter.hidden=!compact;if(compact){page.dataset.cashMonth=page.dataset.cashMonth||currentMonthKey();refreshMonthFilter();}else delete page.dataset.cashMonth;
   page.querySelector('.transaction-intro h1').textContent=compact?'Cash flow':originalTitle;
   overview.querySelector('.transaction-metric-net .transaction-metric-label').textContent=compact?'Balance after expenses':originalNet;
   for(const {node,marker,kind}of moved){if(compact)entries[kind].append(node);else marker.after(node);}
@@ -91,7 +95,7 @@ export function installCashFlow(){
   renderTransactionOverview();
  }
  mobile.addEventListener('change',adapt);
- const reset=window.financeBridge.reset;window.financeBridge.reset=function(){mobile.removeEventListener('change',adapt);historyObserver.disconnect();document.removeEventListener('click',closeMenus);document.removeEventListener('click',capture,true);document.removeEventListener('click',onNavigation,true);if(dialog.open)dialog.close();for(const {node,marker}of moved)if(marker.isConnected)marker.replaceWith(node);dialog.remove();controls.remove();bar.remove();delete window.financeCashFlow;return reset.apply(this,arguments);};
- window.financeCashFlow={open,select,updateBar,trackSave:(kind,id,date,operation)=>trackSave(kind,id,date,operation,entries[kind].__cashValues)};
+ const reset=window.financeBridge.reset;window.financeBridge.reset=function(){mobile.removeEventListener('change',adapt);historyObserver.disconnect();document.removeEventListener('click',closeMenus);document.removeEventListener('click',capture,true);document.removeEventListener('click',onNavigation,true);if(dialog.open)dialog.close();for(const {node,marker}of moved)if(marker.isConnected)marker.replaceWith(node);dialog.remove();controls.remove();bar.remove();monthFilter.remove();delete page.dataset.cashMonth;delete window.financeCashFlow;return reset.apply(this,arguments);};
+ window.financeCashFlow={open,select,updateBar,refreshMonthFilter,trackSave:(kind,id,date,operation)=>trackSave(kind,id,date,operation,entries[kind].__cashValues)};
  adapt();
 }

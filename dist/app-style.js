@@ -3,7 +3,7 @@
   'use strict';
   const root=document.documentElement;
   const key='displayStyle';
-  const pages=[['dashboard','Dashboard','Home','<path d="m3 10 9-7 9 7v11H3zM9 21v-8h6v8"/>'],['income-expenses','Income & Expense','Cash flow','<path d="M7 3v17m-4-4 4 4 4-4M17 21V4m-4 4 4-4 4 4"/>'],['investments','Investment','Investments','<path d="M3 20V10h4v10m3 0V5h4v15m3 0V2h4v18"/>'],['debts','Debts','Debts','<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M6 15h4"/>'],['analytics','Analytics & Reports','Reports','<path d="M3 21h18M5 17l5-6 4 2 6-9"/>'],['settings','Settings','Settings','<circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/>']];
+  const pages=[['dashboard','Dashboard','Home','<path d="m3 10 9-7 9 7v11H3zM9 21v-8h6v8"/>'],['income-expenses','Income & Expense','Cash flow','<path d="M7 3v17m-4-4 4 4 4-4M17 21V4m-4 4 4-4 4 4"/>'],['investments','Investment','Investments','<path d="M3 20V10h4v10m3 0V5h4v15m3 0V2h4v18"/>'],['debts','Debts','Debts','<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M6 15h4"/>'],['analytics','Analytics & Reports','Reports','<path d="M3 21h18M5 17l5-6 4 2 6-9"/>'],['settings','Settings','Settings','<path d="M4 3v6m0 4v8M12 3v10m0 4v4M20 3v2m0 4v12M1 9h6M9 17h6M17 5h6"/>']];
   const analyticsPages=new Set(['analytics','reports','growth-projection']);
   let controls,nav;
   function activePage(){return document.querySelector('.nav-tab.active')?.dataset.tab||'dashboard';}
@@ -19,14 +19,14 @@
   }
   function openPage(page){document.querySelector('.nav-tab[data-tab="'+page+'"]')?.click();updateSelection();}
   function applyStyle(value,persist=true){
-    const style=['classic','modern','emerald-flow'].includes(value)?value:'modern';
-    const layoutStyle=style==='classic'?'classic':'modern';
+    const style=['modern','emerald-flow'].includes(value)?value:'modern';
+    const layoutStyle='modern';
     if(typeof closeEntryFormModal==='function'&&!document.getElementById('entryFormModal')?.hidden)closeEntryFormModal();
     root.dataset.appStyle=layoutStyle;
     root.dataset.layoutStyle=style;window.PFTPaint?.remember();
     if(persist){try{window.trackerStorage.setItem(key,style);}catch(_){/* The layout still applies to this session. */}}
     controls?.querySelectorAll('[data-app-style-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.appStyleChoice===style)));
-    const labels={modern:'Style 1 · Modern',classic:'Style 2 · Classic','emerald-flow':'Style 3 · Emerald Flow'};
+    const labels={modern:'Style 1 · Modern','emerald-flow':'Style 2 · Emerald Flow'};
     const status=document.getElementById('appStyleStatus');if(status)status.textContent=labels[style]+' selected. This preference is saved for this account on this device.';
     const familyMenu=document.getElementById('familyProfileMenu');if(familyMenu)familyMenu.hidden=true;window.syncFamilyProfileButtons?.();
     window.setMobileNavHidden?.(false);
@@ -62,16 +62,16 @@
       }
       const intro=section.querySelector(':scope > header,:scope > .growth-page-intro');if(intro)intro.after(tabs);else section.prepend(tabs);
     }
-    const dashboardSlots={totalDebts:'debts',monthlyIncome:'income',surplusBalance:'balance',monthlyContrib:'savings',lastMonthHouseExpense:'expense',fyAvgIncome:'average'};
+    const dashboardSlots={monthlyExpenses:'debts',monthlyIncome:'income',surplusBalance:'balance',monthlyContrib:'savings',lastMonthHouseExpense:'expense',fyAvgIncome:'average'};
     for(const [id,slot] of Object.entries(dashboardSlots))document.getElementById(id)?.closest('.dashboard-stat,.dashboard-wide-card')?.setAttribute('data-layout-slot',slot);
     const panel=document.getElementById('settingsAppearancePanel')||document.querySelector('.settings-appearance-panel');
     controls=document.createElement('section');controls.id='appStyleChoices';controls.className='pft-style-choices';controls.setAttribute('aria-labelledby','appStyleChoicesTitle');
-    controls.innerHTML='<h3 id="appStyleChoicesTitle">Page style</h3><p>Choose the page design and navigation you prefer. All styles use the same tracker records.</p><div class="pft-style-choice-grid"><button type="button" data-app-style-choice="modern" aria-pressed="false"><span class="pft-style-swatch modern" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 1 · Modern <small>Default</small></strong><span>Teal & mint, top navigation and compact mobile pages.</span></button><button type="button" data-app-style-choice="classic" aria-pressed="false"><span class="pft-style-swatch classic" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 2 · Classic</strong><span>The earlier design with its familiar sidebar and page layouts.</span></button><button type="button" data-app-style-choice="emerald-flow" aria-pressed="false"><span class="pft-style-swatch emerald-flow" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 3 · Emerald Flow</strong><span>New page workspaces, interactive graphs, and emerald lighting.</span></button></div><p id="appStyleStatus" role="status"></p>';
+    controls.innerHTML='<h3 id="appStyleChoicesTitle">Page style</h3><p>Choose the page design and navigation you prefer. All styles use the same tracker records.</p><div class="pft-style-choice-grid"><button type="button" data-app-style-choice="modern" aria-pressed="false"><span class="pft-style-swatch modern" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 1 · Modern <small>Default</small></strong><span>Teal & mint, top navigation and compact mobile pages.</span></button><button type="button" data-app-style-choice="emerald-flow" aria-pressed="false"><span class="pft-style-swatch emerald-flow" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 2 · Emerald Flow</strong><span>New page workspaces, interactive graphs, and emerald lighting.</span></button></div><p id="appStyleStatus" role="status"></p>';
     controls.querySelectorAll('[data-app-style-choice]').forEach(b=>b.addEventListener('click',()=>applyStyle(b.dataset.appStyleChoice)));
     panel?.prepend(controls);
     const oldNav=document.querySelector('.nav-tabs');if(oldNav)new MutationObserver(updateSelection).observe(oldNav,{attributes:true,subtree:true,attributeFilter:['class']});
     let saved;try{saved=window.trackerStorage.getItem(key);}catch(_){}
-    applyStyle(saved,false);
+    applyStyle(saved,saved==='classic');
     window.PFT_STYLE={apply:applyStyle,get current(){return root.dataset.layoutStyle||root.dataset.appStyle;}};
   }
   window.addEventListener('pft:before-reveal',install);
@@ -97,7 +97,7 @@
   const home=space('#dashboard','flow-home');
   const title=slot(home,'flow-heading');const copy=slot(title,'');copy.append(el('p','flow-eyebrow','YOUR MONEY AT A GLANCE'),el('h1','','Financial overview'));const actions=slot(title,'flow-actions');
   action(actions,'+ Add income',()=>{open('income-expenses');window.financeCashFlow?.open('income');},true);action(actions,'Add expense',()=>{open('income-expenses');window.financeCashFlow?.open('expense');});
-  const summary=slot(home,'flow-summary');const wealth=slot(summary,'flow-wealth');capture('#dashboard .dashboard-net-worth',wealth);const stats=slot(summary,'flow-stat-grid');for(const id of ['monthlyIncome','surplusBalance','monthlyContrib','totalDebts']){const n=document.getElementById(id)?.closest('.dashboard-stat');if(n){const a=document.createComment('flow-stat');n.before(a);moves.push({node:n,anchor:a,dest:stats});}}
+  const summary=slot(home,'flow-summary');const wealth=slot(summary,'flow-wealth');capture('#dashboard .dashboard-net-worth',wealth);const stats=slot(summary,'flow-stat-grid');for(const id of ['monthlyIncome','surplusBalance','monthlyContrib','monthlyExpenses']){const n=document.getElementById(id)?.closest('.dashboard-stat');if(n){const a=document.createComment('flow-stat');n.before(a);moves.push({node:n,anchor:a,dest:stats});}}
   const insights=slot(home,'flow-insights');const chart=slot(insights,'flow-chart panel');const ch=slot(chart,'flow-chart-heading');const chartCopy=slot(ch,'');chartCopy.append(el('p','flow-eyebrow','CASH FLOW'),el('h2','','Income & spending'));const fy=el('span','flow-period');fy.id='flowPeriod';ch.append(fy);const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.id='flowCashChart';svg.setAttribute('viewBox','0 0 800 300');svg.setAttribute('role','img');chart.append(svg);const tooltip=el('p','flow-chart-tooltip','Select a month to inspect income and expenses.');tooltip.setAttribute('role','status');chart.append(tooltip);svg.addEventListener('click',showChartAmount);svg.addEventListener('focusin',showChartAmount);svg.addEventListener('pointerover',showChartAmount);const legend=slot(chart,'flow-chart-legend');legend.innerHTML='<span><i></i>Income</span><span><i class="expense"></i>Expenses</span><span class="flow-chart-hint">Hover or tap a bar for the amount</span>';const empty=el('p','flow-empty');empty.id='flowCashEmpty';chart.append(empty);
   const allocation=slot(insights,'flow-allocation panel');allocation.append(el('p','flow-eyebrow','PORTFOLIO MIX'),el('h2','','Where your money is invested'));const bars=slot(allocation,'flow-allocation-bars');bars.id='flowAllocationBars';
   const body=slot(home,'flow-home-body');const portfolio=slot(body,'flow-main');capture('#dashboard .dashboard-portfolio-panel',portfolio);const rail=slot(body,'flow-rail');capture('#dashboard .debt-summary-panel',rail);capture('#dashboard [data-layout-slot="expense"]',rail);capture('#dashboard [data-layout-slot="average"]',rail);
@@ -111,7 +111,7 @@
   const debt=space('#debts','flow-debts');const debtRail=slot(debt,'flow-rail');capture('#debts .debt-page-overview',debtRail);const debtMain=slot(debt,'flow-main');capture('#loanAddPanel',debtMain);capture('#debts .debt-list-panel',debtMain);
   const analytics=space('#analytics','flow-analytics panel');analytics.append(el('p','flow-eyebrow','EXPLORE YOUR FINANCES'),el('h2','','Analytics workspace'));const at=tabs(analytics,['Portfolio & returns','Income & expenses','Summary']);$$('#analytics .analytics-grid > .analytics-card').forEach((node,i)=>{const text=$('h2,h3',node)?.textContent||'';const group=/income|expense|cash|spend/i.test(text)?1:/summary|average/i.test(text)?2:0;const anchor=document.createComment('flow-analytics-'+i);node.before(anchor);moves.push({node,anchor,dest:at.panes[group].pane});});
   $$('#analytics .advanced-analytics-overview > .analytics-card').forEach((node,i)=>{const anchor=document.createComment('flow-summary-'+i);node.before(anchor);moves.push({node,anchor,dest:at.panes[2].pane});});
-  const growth=space('#growth-projection','flow-growth');const gr=slot(growth,'flow-rail');capture('#growth-projection .growth-assumptions-panel',gr);capture('#growthProjectionControls',gr);const gm=slot(growth,'flow-main');capture('#growthProjectionSummary',gm);capture('#growth-projection .growth-projection-chart-panel',gm);capture('#growth-projection .growth-breakdown-panel',gm);
+  const growth=space('#growth-projection','flow-growth');const gr=slot(growth,'flow-rail');capture('#growth-projection .growth-assumptions-panel',gr);capture('#growthProjectionControls',gr);const gm=slot(growth,'flow-main');capture('#growth-projection .growth-projection-chart-panel',gm);capture('#growth-projection .growth-breakdown-panel',gm);
   const reports=space('#reports','flow-reports');const reportRail=slot(reports,'flow-rail panel');reportRail.append(el('p','flow-eyebrow','BUILD YOUR REPORT'),el('h2','','Period & filters'));capture('#reports .report-quick-range',reportRail);capture('#reports .report-builder-content > .form-grid',reportRail);capture('#generateRangeReport',reportRail);capture('#reports .report-calculation-note',reportRail);const reportMain=slot(reports,'flow-main panel');reportMain.append(el('p','flow-eyebrow','RESULTS'),el('h2','','Recorded activity'));capture('#reports .report-action-bar',reportMain);for(const id of ['rangeReportStatus','rangeReportActiveFilters','rangeReportSummary','rangeReportResults','rangeReportColumnFilterPopover'])capture('#'+id,reportMain);
   const settings=space('#settings','flow-settings');const sc=slot(settings,'flow-main panel');sc.append(el('p','flow-eyebrow','MAKE IT YOURS'),el('h2','','Settings & preferences'));capture('#settingsQuickTiles',sc);const sr=slot(settings,'flow-rail');capture('#settings .cloud-account-panel',sr);
   new MutationObserver(()=>{if(enabled){styleCharts(true);schedule();}}).observe($('.nav-tabs'),{attributes:true,subtree:true,attributeFilter:['class']});

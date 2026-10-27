@@ -55,6 +55,8 @@
     }
     function populateHistoryFinancialYear(selectId, monthKeys, preferredStartYear) {
       const select = document.getElementById(selectId);
+      const master=['incomeHistoryFinancialYear','expenseHistoryFinancialYear'].includes(selectId)?document.getElementById('income-expenses')?.dataset.cashMonth:null;
+      if(master) preferredStartYear=financialYearStartYearForMonthKey(master);
       const currentYear = currentFinancialYearStartYear();
       const previous = Number(select.dataset.preferredYear || preferredStartYear || select.value || currentYear);
       const years = [...new Set([currentYear, ...monthKeys.map(financialYearStartYearForMonthKey).filter(year => year <= currentYear)])].sort((a,b)=>b-a);
@@ -67,6 +69,9 @@
       const select = document.getElementById(selectId);
       const currentYear = currentFinancialYearStartYear();
       const currentMonth = currentMonthKey();
+      const master=['incomeHistoryMonth','expenseHistoryMonth'].includes(selectId)?document.getElementById('income-expenses')?.dataset.cashMonth:null;
+      if(master){select.replaceChildren(new Option(new Date(master+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}),master));delete select.dataset.preferredMonth;return master;}
+
       const months = [...new Set(records.map(row => row.date.slice(0, 7)))].filter(month => monthKeyInFinancialYear(month, financialYearStart) && (financialYearStart !== currentYear || month <= currentMonth)).sort((a,b)=>b.localeCompare(a));
       if (financialYearStart === currentYear && !months.includes(currentMonth)) months.unshift(currentMonth);
       const previous = select.dataset.preferredMonth || select.value || currentMonth;

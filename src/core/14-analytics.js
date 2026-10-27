@@ -157,7 +157,7 @@
       const contributionTotal=memberRows.reduce((a,x)=>a+x.total,0);const family=chartInstances.familyContributionChart;
       family.data={labels:memberRows.map(x=>x.member),datasets:[{label:'NPS',data:memberRows.map(x=>x.n),backgroundColor:palette.brand,borderRadius:5,borderSkipped:false},{label:'PPF',data:memberRows.map(x=>x.p),backgroundColor:palette.blue,borderRadius:5,borderSkipped:false},{label:'PF (employee + employer)',data:memberRows.map(x=>x.f),backgroundColor:palette.violet,borderRadius:5,borderSkipped:false},{label:'Stallion this month',data:memberRows.map(x=>x.st),backgroundColor:palette.amber,borderRadius:5,borderSkipped:false}]};family.options.scales.x={stacked:true};family.options.scales.y.stacked=true;
       analyticsTable('familyContributionChart',['Member','Monthly contribution','Share of contributions'],memberRows.map(x=>[x.member,formatCurrency(x.total),analyticPercent(x.total,contributionTotal)]),`Total contributions: ${formatCurrency(contributionTotal)}. Includes scheduled NPS/PPF, employee + employer PF, and dated Stallion contributions for this month; PF includes employer money.`);
-      const returns=investmentReturnItems();const returnChart=chartInstances.investmentReturnsChart;const plottedReturns=returnChart.data.labels.map((label,index)=>({invested:returnChart.data.datasets[0].data[index],gain:returnChart.data.datasets[1].data[index]}));returnChart.$analyticLabels=[plottedReturns.map(x=>analyticCompact(x.invested)),plottedReturns.map(x=>analyticPercent(x.gain,x.invested))];
+      const returns=investmentReturnItems();const returnChart=chartInstances.investmentReturnsChart;const plottedReturns=returnChart?returnChart.data.labels.map((label,index)=>({invested:returnChart.data.datasets[0].data[index],gain:returnChart.data.datasets[1].data[index]})):[];if(returnChart)returnChart.$analyticLabels=[plottedReturns.map(x=>analyticCompact(x.invested)),plottedReturns.map(x=>analyticPercent(x.gain,x.invested))];
       analyticsTable('investmentReturnsChart',['Investment','Invested','Current value','Gain / loss','Absolute return'],returns.map(x=>[x.name,formatCurrency(x.invested),formatCurrency(x.current),formatCurrency(x.current-x.invested),analyticPercent(x.current-x.invested,x.invested)]),'Gain = current value − invested amount. Includes NPS, PPF, PF and Stallion. Absolute return = gain ÷ invested amount; it is not annualised and does not account for contribution timing.');
       Object.entries(chartInstances).forEach(([id,chart])=>{
         const dark=document.documentElement.getAttribute('data-theme')==='dark';
@@ -279,7 +279,9 @@
           ? ['#ff8073','#ffd166','#28b7b3','#d3dc79','#ac98e8']
           : ['#f46f63','#f8bf50','#10999d','#c5ce68','#8878c8'];
 
+        const allocationTotal=npsTotal+ppfTotal+pfTotal+investTotal+stallionTotal;
         chartInstances['assetAllocationChart'] = new Chart(ctx, {
+          plugins:[{id:'emptyAllocationRing',afterDraw(chart){if(allocationTotal>0)return;const a=chart.chartArea,c=chart.ctx,x=(a.left+a.right)/2,y=(a.top+a.bottom)/2,r=Math.max(16,Math.min(a.right-a.left,a.bottom-a.top)*.34);c.save();c.strokeStyle=darkTheme?'rgba(255,255,255,.08)':'rgba(15,23,42,.10)';c.lineWidth=Math.max(12,r*.25);c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();c.fillStyle=themeColor('text');c.font='500 16px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('₹0 Total',x,y);c.restore();}}],
           type: 'pie',
           data: {
             labels: ['NPS', 'PPF', 'PF', 'Investments', 'Stallion PMS'],
@@ -301,7 +303,7 @@
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-              legend: { position: 'right' },
+              legend: { position: 'right',display:allocationTotal>0 },
               tooltip: {
                 callbacks: {
                   label: (ctx) => '₹' + Math.round(ctx.parsed).toLocaleString('en-IN')
@@ -569,6 +571,9 @@
       const returnsChartInner=document.getElementById('investmentReturnsChartInner');
       if(returnsChartInner)returnsChartInner.style.setProperty('--investment-return-count',String(Math.max(labels.length,1)));
 
+      const scroll=document.getElementById('investmentReturnsChartScroll');let empty=document.getElementById('investmentReturnsEmpty');
+      if(!empty){empty=document.createElement('div');empty.id='investmentReturnsEmpty';empty.className='retirement-empty-state';empty.innerHTML='<strong>No investments to compare yet</strong><span>Add your first investment to see Invested vs. Returns.</span>';scroll.after(empty);}
+      const noValues=!chartItems.length||!chartItems.some(r=>r.invested!==0||r.gain!==0);scroll.hidden=noValues;empty.hidden=!noValues;if(noValues)return;
       chartInstances['investmentReturnsChart'] = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -582,7 +587,7 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { position: 'top' } },
-          scales: { y: { ticks: { callback: (v) => '₹' + (v/100000).toFixed(1) + 'L' } } }
+          scales: { y: { beginAtZero:true,suggestedMax:Math.max(100000,...invested,...gains.map(Math.abs)),ticks: {maxTicksLimit:5,callback: (v) => analyticCompact(v)} } }
         }
       });
         console.log(' Investment Returns chart: ' + chartItems.length + ' chart categories from ' + accountItems.length + ' account rows');

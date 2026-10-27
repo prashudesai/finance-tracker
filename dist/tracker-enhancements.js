@@ -90,11 +90,11 @@
       content.append(el('p',d.currentMonthStr+' · Household totals remain shared across family profile filters.'),moneyRows([['Opening balance',d.opening],['Income',d.householdMonthlyIncome],['Recorded expenses',d.monthlyExpenses],['PMS contributions',d.stallionPmsExpenses],['Available balance',d.surplusBalance]]),el('p','Opening balance + income − expenses − PMS contributions.'));
       if(!d.hasOpening)content.append(el('p','No opening balance is recorded for this month. The existing calculation uses zero.','tracker-review-warning'));
     }else{
-      const t=d.previousTotals;content.append(el('p',d.previousMonthKey+' · Household totals.'));
-      content.append(moneyRows([['Opening balance',d.previousOpening],['Income',t.income],['Recorded expenses',t.expenses],['PMS contributions',t.stallion],['Next month opening balance',d.hasOpening?d.opening:null],['House expense',d.houseAmount],...(key==='lastMonthFullExpense'?[['Full expense',d.fullExpense]]:[])]));
+      const snapshot=window.PFT_DASHBOARD_SNAPSHOT||d;const t=snapshot.previousTotals;content.append(el('p',snapshot.previousMonthKey+' · Household totals.'));
+      content.append(moneyRows([['Opening balance',snapshot.previousOpening],['Income',t.income],['Recorded expenses',t.expenses],['PMS contributions',t.stallion],['Next month opening balance',snapshot.hasOpening?snapshot.opening:null],['House expense',snapshot.houseAmount],...(key==='lastMonthFullExpense'?[['Full expense',snapshot.fullExpense]]:[])]));
       content.append(el('p','House expense = opening balance + income − recorded expenses − PMS contributions − next month opening balance. Full expense adds recorded expenses back, including annual expenses in full.'));
-      if(d.houseAmount==null)content.append(el('p','Both consecutive months need an opening balance before house expense can be calculated.','tracker-review-warning'));
-      else if(d.houseAmount<0)content.append(el('p','The residual is negative. Review the balances and any missing income.','tracker-review-warning'));
+      if(snapshot.houseAmount==null)content.append(el('p','Both consecutive months need an opening balance before house expense can be calculated.','tracker-review-warning'));
+      else if(snapshot.houseAmount<0)content.append(el('p','The residual is negative. Review the balances and any missing income.','tracker-review-warning'));
     }
     content.append(el('p','These are the same amounts used by the dashboard. Opening this explanation does not change records.'));action(node,'Done',()=>node.close());show(node);
   };
@@ -132,7 +132,7 @@
       }
       details.append(actions);info.querySelector('#appInfoPdfStatus').after(details);
     }
-    const add=el('button','+ Add record','btn-primary tracker-quick-add');add.type='button';add.id='trackerQuickAdd';add.hidden=window.financeCloud.canEdit===false;document.getElementById('dashboard').prepend(add);add.onclick=()=>{
+    const add=el('button','+ Add record','btn-primary tracker-quick-add');add.type='button';add.id='trackerQuickAdd';add.setAttribute('aria-label','Add record');add.title='Add record';add.innerHTML='<span class="quick-add-symbol" aria-hidden="true">+</span><span class="quick-add-label"> Add record</span>';add.hidden=window.financeCloud.canEdit===false;document.getElementById('dashboard').prepend(add);add.onclick=()=>{
       const node=dialog('quickAddDialog','Add a record');node.querySelector('.tracker-review-content').replaceChildren();node.querySelector('footer').replaceChildren();
       for(const [label,tab,target,panel] of [['Income','income-expenses','#incomeAmount'],['Expense or loan payment','income-expenses','#expenseAmount'],['Investment','investments','#openGeneralInvestmentBtn'],['PMS contribution','investments',null,'stallionContributionAddPanel'],['Loan or debt','debts',null,'loanAddPanel']]){
         const b=el('button',label,'btn-secondary');b.type='button';b.onclick=()=>{node.close();document.querySelector('.nav-tab[data-tab="'+tab+'"]').click();requestAnimationFrame(()=>{if(panel){openEntryFormModal(panel,add);return;}const field=target?document.querySelector(target):null;if(field&&field.getClientRects().length){field.scrollIntoView({block:'center',behavior:'smooth'});field.focus({preventScroll:true});if(target==='#openGeneralInvestmentBtn')field.click();}});};node.querySelector('.tracker-review-content').append(b);

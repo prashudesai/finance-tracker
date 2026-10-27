@@ -575,7 +575,7 @@
       const parking=document.createElement('div');parking.id='settingsPanelParking';parking.hidden=true;
       const accountPanel=document.createElement('section');accountPanel.id='settingsAccountPanel';accountPanel.className='panel settings-panel';
       accountPanel.innerHTML='<h2>Account</h2><p>Signed in as <strong id="accountSignedInEmail"></strong></p>';
-      accountPanel.append(document.getElementById('clearTrackerSection'));
+      accountPanel.append(document.getElementById('cloudSignOut'),document.getElementById('clearTrackerSection'));
       parking.append(accountPanel);
       const infoPanel=document.createElement('section');infoPanel.id='settingsInfoPanel';infoPanel.className='panel settings-panel';
       infoPanel.innerHTML='<h2>App info</h2><p>Your family finance tracker: features and calculation guide.</p><button type="button" id="downloadAppInfoPdf">Download PDF</button><p id="appInfoPdfStatus" role="status"></p>';
@@ -584,8 +584,8 @@
       infoPanel.querySelector('button').addEventListener('click',async()=>{const button=infoPanel.querySelector('button');button.disabled=true;document.getElementById('appInfoPdfStatus').textContent='Preparing PDF…';try{await window.downloadTrackerGuide();document.getElementById('appInfoPdfStatus').textContent='PDF downloaded.';}catch(error){document.getElementById('appInfoPdfStatus').textContent=error.message;}finally{button.disabled=false;}});
       const tiles=[
         ['settingsInfoPanel','App info','Features, calculations and PDF guide','<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/>'],
-        ['settingsAccountPanel','Account','Signed-in account and Delete Dashboard','<circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>'],
-        ['familyAccessPanel','Family Access','Invite members and manage permissions','<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5"/>'],
+        ['settingsAccountPanel','Account','Profile details, security and account deletion','<circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>'],
+        ['familyAccessPanel','Family access','Invite members and manage permissions','<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5"/>'],
         ['settingsAppearancePanel','Appearance','Choose colors and display preferences','<path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1-3.7 1.5 1.5 0 0 1 1-2.8h2a4 4 0 0 0 4-4C21 6 17 3 12 3Z"/><path d="M7 10h.01M10 6h.01M15 6h.01M18 10h.01"/>'],
         ['settingsBackupPanel','Data & backup','Export, import and recovery tools','<path d="M5 4h14v16H5zM8 8h8M8 12h5M12 15v6m-3-3 3 3 3-3"/>'],
         ['settingsAppPanel','App & updates','Version '+window.PFT_APP_INFO.version+' · Updates and release notes','<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4M9 9l3-3 3 3m-3-3v8"/>'],
@@ -1101,6 +1101,7 @@
     const htmlElement = document.documentElement;
     const COLOR_THEME_KEY = 'familyWealthColorTheme';
     const COLOR_THEMES = {
+      'obsidian-black': {label:'Obsidian Black', colors:['#000000','#171717','#a3e6cd','#a3a3a3'], darkHeader:['#111111','#000000'], light:['#242424','#000000','#ededed','#18765b'], dark:['#a3e6cd','#c6f3e2','#20352d','#c4b5fd']},
       'navy-emerald': {label:'Navy + Emerald', colors:['#127c70','#1e3346','#d5a85f','#e5f2ef'], darkHeader:['#1e3346','#142638'], light:['#127c70','#1e3346','#e5f2ef','#d5a85f'], dark:['#55c4a0','#bae6d6','#143737','#e0b766']},
       'classic-teal': {label:'Classic Teal', colors:['#0f7c7e','#084b4d','#d4976f','#e8f5f5'], darkHeader:['#0b3f40','#062a2b'], light:['#0f7c7e','#084b4d','#e8f5f5','#d4976f'], dark:['#5eead4','#b5fff0','#173e44','#99f6e4']},
       'ocean-blue': {label:'Ocean Blue', colors:['#2563eb','#1e3a8a','#38bdf8','#dbeafe'], darkHeader:['#102b5c','#071a3b'], light:['#2563eb','#1e3a8a','#eff6ff','#38bdf8'], dark:['#60a5fa','#bfdbfe','#172554','#93c5fd']},
@@ -1127,6 +1128,7 @@
         'header-from':mode === 'dark' ? theme.darkHeader[0] : primary,'header-to':mode === 'dark' ? theme.darkHeader[1] : primaryDark,
         'button-text':mode === 'dark' ? '#0f172a' : '#ffffff','button-hover':primaryDark,
         'chart-secondary':theme.colors[1],'chart-tertiary':theme.colors[2],'chart-quaternary':theme.colors[3]};
+      if (safeKey === 'obsidian-black') Object.assign(vars,{'chart-secondary':mode==='dark'?'#a7bdf2':'#3157a5','chart-tertiary':mode==='dark'?'#f1c58a':'#945807','chart-quaternary':mode==='dark'?'#d8b4fe':'#7841a5'});
       if (safeKey === 'arctic-glass') vars['card-bg'] = mode === 'dark' ? 'rgba(8, 51, 68, .88)' : 'rgba(255, 255, 255, .88)';
       else htmlElement.style.removeProperty('--card-bg');
       Object.entries(vars).forEach(([name,value]) => htmlElement.style.setProperty(`--${name}`,value));
@@ -1174,6 +1176,7 @@
     themeOptions?.addEventListener('click', event => {
       const button=event.target.closest('.theme-choice');
       if(!button||!COLOR_THEMES[button.dataset.themeKey])return;
+      if(button.dataset.themeKey==='obsidian-black'){htmlElement.setAttribute('data-theme','dark');try{trackerStorage.setItem('theme','dark');}catch(error){}syncThemeModeSwitch('dark');}
       applyColorTheme(button.dataset.themeKey);
       if(document.getElementById('analytics')?.classList.contains('active'))renderCharts();
     });
@@ -1237,6 +1240,7 @@
       let value=window.financeCloud?.updatedAt?.()||syncRecord?.lastCloudUpdated||null;
       if(value&&!Number.isNaN(Date.parse(value))){try{trackerStorage.setItem('lastCloudUpdated',value);}catch(_){} }
       else {try{value=trackerStorage.getItem('lastCloudUpdated');}catch(_){} }
+      const profile=document.querySelector('.cloud-account-panel');if(profile)profile.dataset.syncState=value&&!Number.isNaN(Date.parse(value))&&!syncRecord?.pending&&!cloudSaveBlocked&&!window.financeStartupChecking&&navigator.onLine?'synced':'pending';
       const label=document.getElementById('cloudLastUpdated');if(label)label.textContent=value&&!Number.isNaN(Date.parse(value))?'Last sync: '+new Date(value).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}) : 'Last sync: not available yet';
     }
     async function syncCloud(){
@@ -1773,7 +1777,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       set('debtPageOutstanding',formatCurrency(outstanding));
       set('debtPageMonthlyEmi',formatCurrency(monthlyEmi));
       set('debtPageAccountCount',`${active.length} active · ${debts.length} total`);
-      set('debtPageStatus',`${active.length} active ${active.length===1?'account':'accounts'}`);
+      set('debtPageStatus',`${active.length} active · ${debts.length} total`);
       set('debtListCount',`${debts.length} ${debts.length===1?'account':'accounts'}`);
     }
     function renderDebts() {
@@ -1783,7 +1787,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const debts=profileRows(state.debts);
       renderAccountPager('debts','debtsBody',renderDebts);
       if (debts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-muted">No debts recorded yet.</td></tr>';
+        tbody.innerHTML = '<tr class="debt-empty-row"><td colspan="8" class="debt-empty-cell"><div class="retirement-empty-state debt-empty-state"><strong>No debts recorded yet</strong><span>Add a loan to track its outstanding balance, EMI and repayment history.</span></div></td></tr>';
         return;
       }
 
@@ -2187,6 +2191,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     }
     function populateHistoryFinancialYear(selectId, monthKeys, preferredStartYear) {
       const select = document.getElementById(selectId);
+      const master=['incomeHistoryFinancialYear','expenseHistoryFinancialYear'].includes(selectId)?document.getElementById('income-expenses')?.dataset.cashMonth:null;
+      if(master) preferredStartYear=financialYearStartYearForMonthKey(master);
       const currentYear = currentFinancialYearStartYear();
       const previous = Number(select.dataset.preferredYear || preferredStartYear || select.value || currentYear);
       const years = [...new Set([currentYear, ...monthKeys.map(financialYearStartYearForMonthKey).filter(year => year <= currentYear)])].sort((a,b)=>b-a);
@@ -2199,6 +2205,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const select = document.getElementById(selectId);
       const currentYear = currentFinancialYearStartYear();
       const currentMonth = currentMonthKey();
+      const master=['incomeHistoryMonth','expenseHistoryMonth'].includes(selectId)?document.getElementById('income-expenses')?.dataset.cashMonth:null;
+      if(master){select.replaceChildren(new Option(new Date(master+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}),master));delete select.dataset.preferredMonth;return master;}
+
       const months = [...new Set(records.map(row => row.date.slice(0, 7)))].filter(month => monthKeyInFinancialYear(month, financialYearStart) && (financialYearStart !== currentYear || month <= currentMonth)).sort((a,b)=>b.localeCompare(a));
       if (financialYearStart === currentYear && !months.includes(currentMonth)) months.unshift(currentMonth);
       const previous = select.dataset.preferredMonth || select.value || currentMonth;
@@ -3153,7 +3162,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       updateRetirementTilesVisibility();
       setupRetirementAccountDetails();
 
-      if (!categories.length) panels.innerHTML = '<p class="text-muted">No investment holdings yet. Use “+ Add Investment” to get started.</p>';
+      if (!categories.length) panels.innerHTML = '<div class="retirement-empty-state investment-empty-state"><strong>No investment holdings yet</strong><span>Choose a category from <b>+ Add Investment</b> above. Your holdings appear here after you save an investment.</span></div>';
 
       stallionPanel.hidden=!hasStallion;
       const showStallionMonthly=stallionItems.some(inv=>investmentMonthlyAmount(inv)>0);
@@ -4169,7 +4178,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
     function renderTransactionOverview() {
       const cashKind=document.getElementById('income-expenses')?.dataset.cashKind;
-      const month=(cashKind&&document.getElementById(cashKind+'HistoryMonth')?.value)||currentMonthKey();
+      const month=document.getElementById('income-expenses')?.dataset.cashMonth||(cashKind&&document.getElementById(cashKind+'HistoryMonth')?.value)||currentMonthKey();
       const income=profileRows(state.income).filter(row=>inMonth(row.date,month)).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
       const expenses=state.expenses.filter(row=>inMonth(row.date,month)).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
       const net=income-expenses;
@@ -4183,6 +4192,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(expenseTotal) expenseTotal.textContent=formatCurrency(expenses);
       if(netTotal) netTotal.textContent=`${net<0?'−':''}${formatCurrency(Math.abs(net))}`;
       if(netCard) netCard.classList.toggle('is-negative',net<0);
+      window.financeCashFlow?.refreshMonthFilter();
       window.financeCashFlow?.updateBar(income,expenses);
     }
 
@@ -4260,12 +4270,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       document.getElementById('houseExpenseLabel').textContent = `${expenseMonthName} House Expense`;
       document.getElementById('fullExpenseLabel').textContent = `${expenseMonthName} Full Expense`;
       const expenseMonthChip=document.getElementById('dashboardExpenseMonth');
-      if(expenseMonthChip) expenseMonthChip.textContent=expenseMonthName.toLocaleUpperCase();
+
       const previousMonthKey = `${previousDate.getFullYear()}-${String(previousDate.getMonth()+1).padStart(2,'0')}`;
       const previousBalance = state.monthlyBalances.find(b => b.month === previousMonthKey);
       const houseCard = document.getElementById('lastMonthHouseExpense');
       const houseNote = document.getElementById('lastMonthHouseExpenseNote');
       const houseAmount = previousBalance?.houseExpense;
+      const expenseSnapshot=document.getElementById('dashboardExpenseSnapshot');
+      if(expenseSnapshot) expenseSnapshot.hidden=houseAmount==null;
       const monthLabel = previousDate.toLocaleDateString('en-IN', {month:'short', year:'numeric'});
       if (houseCard) {
         houseCard.textContent = houseAmount == null ? 'Pending' : formatCurrency(houseAmount);
@@ -4292,7 +4304,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const els = {
         netWorth: document.getElementById('netWorth'),
         totalAssets: document.getElementById('totalAssets'),
-        totalDebts: document.getElementById('totalDebts'),
+        monthlyExpenses: document.getElementById('monthlyExpenses'),
         monthlyIncome: document.getElementById('monthlyIncome'),
         surplusBalance: document.getElementById('surplusBalance'),
         monthlyContrib: document.getElementById('monthlyContrib'),
@@ -4302,7 +4314,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
       if (els.netWorth) els.netWorth.textContent = formatCurrency(netWorth);
       if (els.totalAssets) els.totalAssets.textContent = formatCurrency(totalAssets);
-      if (els.totalDebts) els.totalDebts.textContent = formatCurrency(totalDebts);
+      if (els.monthlyExpenses) els.monthlyExpenses.textContent = formatCurrency(monthlyExpenses);
       const dashboardAssetsValue=document.getElementById('dashboardAssetsValue');
       const dashboardDebtValue=document.getElementById('dashboardDebtValue');
       const assetsSegment=document.getElementById('dashboardAssetsSegment');
@@ -4339,6 +4351,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       renderAnalyticsAverageSnapshot(fyAverage);
 
       renderDebtSummary();
+
+      renderDashboardExpenseSnapshot();
 
       // Reports
       const totalIncome = viewIncome.reduce((sum, i) => sum + i.amount, 0);
@@ -4748,6 +4762,28 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`wealth-report-${report.start}-to-${report.end}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     }
 
+
+    // Snapshot selection changes presentation only; it never writes financial records.
+    function renderDashboardExpenseSnapshot(){
+      const select=document.getElementById('dashboardExpenseMonth'),card=document.getElementById('dashboardExpenseSnapshot');
+      if(!select||!card)return;
+      const defaultMonth=addMonthsClamped(currentMonthKey()+'-01',-1,1).slice(0,7);
+      const months=[...new Set(state.monthlyBalances.filter(r=>Number.isFinite(r.houseExpense)).map(r=>r.month))].sort().reverse();
+      const selected=months.includes(select.dataset.selectedMonth)?select.dataset.selectedMonth:defaultMonth;
+      const signature=JSON.stringify(months);
+      if(select.dataset.months!==signature){select.replaceChildren(...months.map(month=>{const option=document.createElement('option');option.value=month;option.textContent=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}).toLocaleUpperCase();return option;}));select.dataset.months=signature;}
+      select.value=selected;
+      select.onchange=()=>{select.dataset.selectedMonth=select.value;renderDashboardExpenseSnapshot();};
+      const balance=state.monthlyBalances.find(r=>r.month===selected),house=balance?.houseExpense;
+      card.hidden=!Number.isFinite(house);
+      const next=state.monthlyBalances.find(r=>r.month===addMonthsClamped(selected+'-01',1,1).slice(0,7));
+      window.PFT_DASHBOARD_SNAPSHOT={previousMonthKey:selected,previousTotals:monthTotals(selected),previousOpening:balance?.startBalance??null,hasOpening:!!next,opening:next?.startBalance??null,houseAmount:house??null,fullExpense:Number.isFinite(house)?house+monthTotals(selected).expenses:null};
+      if(card.hidden)return;
+      const name=new Date(selected+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long'});
+      document.getElementById('houseExpenseLabel').textContent=name+' House Expense';
+      document.getElementById('fullExpenseLabel').textContent=name+' Full Expense';
+      for(const [id,value] of [['lastMonthHouseExpense',house],['lastMonthFullExpense',house+monthTotals(selected).expenses]]){const node=document.getElementById(id);node.textContent=formatCurrency(value);node.style.color=value<0?'var(--danger)':'var(--primary)';}
+    }
     const chartLibraryCallbacks=new Set();
     let chartLibraryPromise=null;
     function requestChartLibrary(render){
@@ -4907,7 +4943,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const contributionTotal=memberRows.reduce((a,x)=>a+x.total,0);const family=chartInstances.familyContributionChart;
       family.data={labels:memberRows.map(x=>x.member),datasets:[{label:'NPS',data:memberRows.map(x=>x.n),backgroundColor:palette.brand,borderRadius:5,borderSkipped:false},{label:'PPF',data:memberRows.map(x=>x.p),backgroundColor:palette.blue,borderRadius:5,borderSkipped:false},{label:'PF (employee + employer)',data:memberRows.map(x=>x.f),backgroundColor:palette.violet,borderRadius:5,borderSkipped:false},{label:'Stallion this month',data:memberRows.map(x=>x.st),backgroundColor:palette.amber,borderRadius:5,borderSkipped:false}]};family.options.scales.x={stacked:true};family.options.scales.y.stacked=true;
       analyticsTable('familyContributionChart',['Member','Monthly contribution','Share of contributions'],memberRows.map(x=>[x.member,formatCurrency(x.total),analyticPercent(x.total,contributionTotal)]),`Total contributions: ${formatCurrency(contributionTotal)}. Includes scheduled NPS/PPF, employee + employer PF, and dated Stallion contributions for this month; PF includes employer money.`);
-      const returns=investmentReturnItems();const returnChart=chartInstances.investmentReturnsChart;const plottedReturns=returnChart.data.labels.map((label,index)=>({invested:returnChart.data.datasets[0].data[index],gain:returnChart.data.datasets[1].data[index]}));returnChart.$analyticLabels=[plottedReturns.map(x=>analyticCompact(x.invested)),plottedReturns.map(x=>analyticPercent(x.gain,x.invested))];
+      const returns=investmentReturnItems();const returnChart=chartInstances.investmentReturnsChart;const plottedReturns=returnChart?returnChart.data.labels.map((label,index)=>({invested:returnChart.data.datasets[0].data[index],gain:returnChart.data.datasets[1].data[index]})):[];if(returnChart)returnChart.$analyticLabels=[plottedReturns.map(x=>analyticCompact(x.invested)),plottedReturns.map(x=>analyticPercent(x.gain,x.invested))];
       analyticsTable('investmentReturnsChart',['Investment','Invested','Current value','Gain / loss','Absolute return'],returns.map(x=>[x.name,formatCurrency(x.invested),formatCurrency(x.current),formatCurrency(x.current-x.invested),analyticPercent(x.current-x.invested,x.invested)]),'Gain = current value − invested amount. Includes NPS, PPF, PF and Stallion. Absolute return = gain ÷ invested amount; it is not annualised and does not account for contribution timing.');
       Object.entries(chartInstances).forEach(([id,chart])=>{
         const dark=document.documentElement.getAttribute('data-theme')==='dark';
@@ -5029,7 +5065,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           ? ['#ff8073','#ffd166','#28b7b3','#d3dc79','#ac98e8']
           : ['#f46f63','#f8bf50','#10999d','#c5ce68','#8878c8'];
 
+        const allocationTotal=npsTotal+ppfTotal+pfTotal+investTotal+stallionTotal;
         chartInstances['assetAllocationChart'] = new Chart(ctx, {
+          plugins:[{id:'emptyAllocationRing',afterDraw(chart){if(allocationTotal>0)return;const a=chart.chartArea,c=chart.ctx,x=(a.left+a.right)/2,y=(a.top+a.bottom)/2,r=Math.max(16,Math.min(a.right-a.left,a.bottom-a.top)*.34);c.save();c.strokeStyle=darkTheme?'rgba(255,255,255,.08)':'rgba(15,23,42,.10)';c.lineWidth=Math.max(12,r*.25);c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();c.fillStyle=themeColor('text');c.font='500 16px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('₹0 Total',x,y);c.restore();}}],
           type: 'pie',
           data: {
             labels: ['NPS', 'PPF', 'PF', 'Investments', 'Stallion PMS'],
@@ -5051,7 +5089,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-              legend: { position: 'right' },
+              legend: { position: 'right',display:allocationTotal>0 },
               tooltip: {
                 callbacks: {
                   label: (ctx) => '₹' + Math.round(ctx.parsed).toLocaleString('en-IN')
@@ -5319,6 +5357,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const returnsChartInner=document.getElementById('investmentReturnsChartInner');
       if(returnsChartInner)returnsChartInner.style.setProperty('--investment-return-count',String(Math.max(labels.length,1)));
 
+      const scroll=document.getElementById('investmentReturnsChartScroll');let empty=document.getElementById('investmentReturnsEmpty');
+      if(!empty){empty=document.createElement('div');empty.id='investmentReturnsEmpty';empty.className='retirement-empty-state';empty.innerHTML='<strong>No investments to compare yet</strong><span>Add your first investment to see Invested vs. Returns.</span>';scroll.after(empty);}
+      const noValues=!chartItems.length||!chartItems.some(r=>r.invested!==0||r.gain!==0);scroll.hidden=noValues;empty.hidden=!noValues;if(noValues)return;
       chartInstances['investmentReturnsChart'] = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -5332,7 +5373,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { position: 'top' } },
-          scales: { y: { ticks: { callback: (v) => '₹' + (v/100000).toFixed(1) + 'L' } } }
+          scales: { y: { beginAtZero:true,suggestedMax:Math.max(100000,...invested,...gains.map(Math.abs)),ticks: {maxTicksLimit:5,callback: (v) => analyticCompact(v)} } }
         }
       });
         console.log(' Investment Returns chart: ' + chartItems.length + ' chart categories from ' + accountItems.length + ' account rows');
@@ -5783,35 +5824,43 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       }
       catch(error){summary.innerHTML=`<div class="panel"><strong>Projection needs attention</strong><p>${analyticEscape(error.message)}</p></div>`;body.innerHTML='<tr><td colspan="11" class="text-muted">Adjust the planned withdrawal before viewing projected values.</td></tr>';document.getElementById('growthProjectionTakeaway').textContent='';if(growthProjectionHoverCleanup){growthProjectionHoverCleanup();growthProjectionHoverCleanup=null;}if(growthProjectionChartInstance){growthProjectionChartInstance.destroy();growthProjectionChartInstance=null;}return;}
       const style=getComputedStyle(document.documentElement);
-      const colors={stress:'#d97775',base:'#2563eb',optimistic:'#16856b'};
+      const colors={stress:'#e89497',base:'#38bdf8',optimistic:'#34d399'};
       const labels={stress:'Stress',base:'Base',optimistic:'Optimistic'};
-      summary.innerHTML=['stress','base','optimistic'].map(scenario=>{const result=projections[scenario],investmentGrowth=investmentProjections[scenario].totalGrowth,gratuityGrowth=includeGratuityBalance?result.totalGrowth-investmentGrowth:0;return `<div class="stat-card growth-projection-stat-card growth-projection-stat-card-${scenario}"><div class="stat-label">${labels[scenario]} projection · ${years} ${years===1?'year':'years'}</div><div class="stat-value">${formatCurrency(result.ending)}</div><div class="growth-projection-stat-detail"><span>Investment growth</span><strong>${formatCurrency(investmentGrowth)}</strong></div>${includeGratuityBalance?`<div class="growth-projection-stat-detail"><span>Gratuity growth</span><strong>${formatCurrency(gratuityGrowth)}</strong></div>`:''}<div class="growth-projection-stat-detail"><span>Net new capital</span><strong>${formatCurrency(result.totalContributions+result.totalAdditions-result.totalWithdrawals)}</strong></div></div>`;}).join('');
+      summary.setAttribute('role','group');summary.setAttribute('aria-label',years+' year scenario comparison');
+      const selectedScenario=['stress','base','optimistic'].includes(summary.dataset.scenario)?summary.dataset.scenario:'base';
+      summary.innerHTML='<h3 class="growth-scenario-heading">'+years+'-year scenario comparison</h3>'+['stress','base','optimistic'].map(scenario=>`<button type="button" data-projection-scenario="${scenario}" class="stat-card growth-projection-stat-card growth-projection-stat-card-${scenario}" aria-pressed="${scenario===selectedScenario}"><span class="stat-label">${labels[scenario]}</span><strong class="stat-value">${formatProjectionLakh(projections[scenario].ending)}</strong></button>`).join('');
+
       const baseRows=projections.base.rows;
       body.innerHTML=baseRows.map((row,index)=>{const s=projections.stress.rows[index],b=projections.base.rows[index],o=projections.optimistic.rows[index];return `<tr><td>${financialYearLabel(row.fyStart)}</td><td class="text-right">${formatCurrency(row.opening)}</td><td class="text-right">${formatCurrency(row.contributions)}</td><td class="text-right">${formatCurrency(row.additions)}</td><td class="text-right">${formatCurrency(row.withdrawals)}</td><td class="text-right">${formatCurrency(s.growth)}</td><td class="text-right">${formatCurrency(b.growth)}</td><td class="text-right">${formatCurrency(o.growth)}</td><td class="text-right">${formatCurrency(s.closing)}</td><td class="text-right">${formatCurrency(b.closing)}</td><td class="text-right">${formatCurrency(o.closing)}</td></tr>`;}).join('');
       const todayLabel=`Today · ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
       const labelsForChart=[todayLabel,...baseRows.map(row=>financialYearLabel(row.fyStart))];
-      const chartData={labels:labelsForChart,datasets:['stress','base','optimistic'].map(scenario=>({label:labels[scenario],data:[Math.round(current),...projections[scenario].rows.map(row=>Math.round(row.closing))],borderColor:colors[scenario],backgroundColor:scenario==='base'?'rgba(37,99,235,.10)':'transparent',borderWidth:scenario==='base'?3.25:2.75,pointRadius:3,pointHoverRadius:7,pointHitRadius:18,tension:.35,fill:scenario==='base'?'origin':false}))};
+      const chartData={labels:labelsForChart,datasets:['stress','base','optimistic'].map(scenario=>({label:labels[scenario],data:[Math.round(current),...projections[scenario].rows.map(row=>Math.round(row.closing))],borderColor:colors[scenario],backgroundColor:context=>{const a=context.chart.chartArea;if(!a||scenario==='stress')return 'transparent';const g=context.chart.ctx.createLinearGradient(0,a.top,0,a.bottom);g.addColorStop(0,scenario==='base'?'rgba(56,189,248,.24)':'rgba(52,211,153,.20)');g.addColorStop(1,'rgba(0,0,0,0)');return g;},borderDash:scenario==='stress'?[6,5]:[],borderWidth:scenario==='base'?3:2.5,pointRadius:3,pointHoverRadius:7,pointHitRadius:18,tension:.35,fill:scenario==='stress'?false:'origin'}))};
       if(typeof Chart==='undefined')requestChartLibrary(()=>renderGrowthProjection({preserveAssumptions:true}));
       if(typeof Chart!=='undefined'){
         if(growthProjectionChartInstance)growthProjectionChartInstance.destroy();
-        growthProjectionChartInstance=new Chart(document.getElementById('growthProjectionChart'),{type:'line',data:chartData,plugins:[{id:'growthProjectionLightPlot',beforeDraw(chart){const area=chart.chartArea;if(!area)return;const ctx=chart.ctx;ctx.save();ctx.fillStyle='#ffffff';ctx.fillRect(area.left,area.top,area.right-area.left,area.bottom-area.top);ctx.restore();}}],options:{responsive:true,interaction:{mode:'nearest',intersect:false,axis:'xy'},plugins:{legend:{position:'bottom',labels:{color:'#334155',usePointStyle:true,pointStyle:'line',padding:20,font:{size:12}}},analyticLabels:{display:false},tooltip:{enabled:false}},scales:{x:{title:{display:true,text:'Financial year from today',color:'#475569',padding:{top:6}},ticks:{color:'#475569',maxRotation:0,autoSkip:true},grid:{color:'rgba(100,116,139,.08)',borderDash:[3,6],drawBorder:false}},y:{beginAtZero:false,title:{display:true,text:includeGratuityBalance?'Value incl. gratuity (₹ Lakhs)':'Value (₹ Lakhs)',color:'#475569',padding:{bottom:6}},ticks:{color:'#475569',callback:value=>formatProjectionLakh(value)},grid:{color:'rgba(100,116,139,.16)',borderDash:[5,6],drawBorder:false}}}}});
+        growthProjectionChartInstance=new Chart(document.getElementById('growthProjectionChart'),{type:'line',data:chartData,options:{responsive:true,interaction:{mode:'nearest',intersect:false,axis:'xy'},plugins:{legend:{position:'top',labels:{color:style.getPropertyValue('--text-light').trim()||'#9ca3af',usePointStyle:true,pointStyle:'line',padding:20,font:{size:12}}},analyticLabels:{display:false},tooltip:{enabled:false}},scales:{x:{title:{display:false},ticks:{color:style.getPropertyValue('--text-light').trim()||'#9ca3af',maxRotation:0,autoSkip:true,maxTicksLimit:4,callback:(value,index)=>index===0?'Today':labelsForChart[value]},grid:{color:'rgba(94,234,212,.10)',borderDash:[3,6],drawBorder:false}},y:{beginAtZero:true,suggestedMax:Math.max(100000,...chartData.datasets.flatMap(d=>d.data)),title:{display:false},ticks:{color:style.getPropertyValue('--text-light').trim()||'#9ca3af',maxTicksLimit:5,callback:value=>formatProjectionLakh(value)},grid:{color:'rgba(94,234,212,.10)',borderDash:[5,6],drawBorder:false}}}}});
         bindGrowthProjectionCursorTooltip(growthProjectionChartInstance);
       }
-      const takeaway=document.getElementById('growthProjectionTakeaway'),base=projections.base;
+      function renderScenarioBreakdown(scenario){
+      summary.dataset.scenario=scenario;summary.querySelectorAll('[data-projection-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.projectionScenario===scenario)));
+      const takeaway=document.getElementById('growthProjectionTakeaway'),base=projections[scenario];
       const flowItems=[
         {label:'Starting value',value:investmentCurrent,operator:''},
         ...(includeGratuityBalance?[{label:'Gratuity balance',value:gratuityCurrent,operator:'+'}]:[]),
         {label:'Monthly contributions',value:base.totalContributions,operator:'+'},
         ...(base.totalAdditions>0?[{label:'Planned additions',value:base.totalAdditions,operator:'+'}]:[]),
         ...(base.totalWithdrawals>0?[{label:'Withdrawals',value:base.totalWithdrawals,operator:'−'}]:[]),
-        {label:'Investment growth',value:investmentProjections.base.totalGrowth,operator:'+'},
-        ...(includeGratuityBalance?[{label:'Gratuity growth',value:base.totalGrowth-investmentProjections.base.totalGrowth,operator:'+'}]:[])
+        {label:'Investment growth',value:investmentProjections[scenario].totalGrowth,operator:'+'},
+        ...(includeGratuityBalance?[{label:'Gratuity growth',value:base.totalGrowth-investmentProjections[scenario].totalGrowth,operator:'+'}]:[])
       ];
       const gratuityBreakdownNote=gratuityPresent?(includeGratuityBalance?' Gratuity is estimated separately and is not included in Investment Portfolio balances; its balance and growth are included only in this projection.':' Gratuity balance and projected gratuity growth are excluded from this projection. Gratuity remains separate from Investment Portfolio balances.'):'';
-      const breakdownParts=[`starting value ${formatCurrency(investmentCurrent)}`,...(includeGratuityBalance?[`gratuity balance ${formatCurrency(gratuityCurrent)}`]:[]),`monthly contributions ${formatCurrency(base.totalContributions)}`,`planned additions ${formatCurrency(base.totalAdditions)}`,`withdrawals ${formatCurrency(base.totalWithdrawals)}`,`investment growth ${formatCurrency(investmentProjections.base.totalGrowth)}`,...(includeGratuityBalance?[`gratuity growth ${formatCurrency(base.totalGrowth-investmentProjections.base.totalGrowth)}`]:[])];
-      const breakdownLabel=`Base projection: ${breakdownParts.join(', ')}, projected value ${formatCurrency(base.ending)}.`;
+      const breakdownParts=[`starting value ${formatCurrency(investmentCurrent)}`,...(includeGratuityBalance?[`gratuity balance ${formatCurrency(gratuityCurrent)}`]:[]),`monthly contributions ${formatCurrency(base.totalContributions)}`,`planned additions ${formatCurrency(base.totalAdditions)}`,`withdrawals ${formatCurrency(base.totalWithdrawals)}`,`investment growth ${formatCurrency(investmentProjections[scenario].totalGrowth)}`,...(includeGratuityBalance?[`gratuity growth ${formatCurrency(base.totalGrowth-investmentProjections[scenario].totalGrowth)}`]:[])];
+      const breakdownLabel=`${labels[scenario]} projection: ${breakdownParts.join(', ')}, projected value ${formatCurrency(base.ending)}.`;
       takeaway.setAttribute('aria-label',breakdownLabel);
-      takeaway.innerHTML=flowItems.map(item=>`<span class="growth-takeaway-item" data-operator="${item.operator||''}"><span class="growth-takeaway-label">${item.label}</span><span class="growth-takeaway-value">${formatProjectionLakh(item.value)}</span></span>`).join('')+`<span class="growth-takeaway-item is-projected" data-operator="="><span class="growth-takeaway-label">Projected value</span><span class="growth-takeaway-value">${formatProjectionLakh(base.ending)}</span></span><span class="growth-takeaway-note">Note: Breakdown uses Base scenario values.${gratuityBreakdownNote}</span>`;
+      takeaway.innerHTML=flowItems.map(item=>`<span class="growth-takeaway-item" data-operator="${item.operator||''}"><span class="growth-takeaway-label">${item.label}</span><span class="growth-takeaway-value">${formatProjectionLakh(item.value)}</span></span>`).join('')+`<span class="growth-takeaway-item is-projected" data-operator="="><span class="growth-takeaway-label">Projected value</span><span class="growth-takeaway-value">${formatProjectionLakh(base.ending)}</span></span><span class="growth-takeaway-note">Breakdown uses ${labels[scenario]} scenario values.${gratuityBreakdownNote}</span>`;
+      }
+      summary.querySelectorAll('[data-projection-scenario]').forEach(button=>button.onclick=()=>renderScenarioBreakdown(button.dataset.projectionScenario));
+      renderScenarioBreakdown(selectedScenario);
     }
     document.getElementById('growthContributionExclusions').addEventListener('change',event=>{
       const toggle=event.target.closest('.growth-monthly-exclude-toggle');if(!toggle)return;

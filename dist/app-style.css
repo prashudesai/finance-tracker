@@ -1,5 +1,5 @@
 /* Classic is the unmodified prior layout. Every redesigned page rule is scoped to Modern. */
-.pft-style-brand,.pft-style-navigation,.pft-style-hero,.pft-style-report-tabs{display:none}.pft-style-choices{margin-bottom:24px;padding-bottom:23px;border-bottom:1px solid var(--border);grid-column:1/-1}.pft-style-choices h3{font-size:16px;margin:0 0 8px}.pft-style-choices>p{font-size:12px;color:var(--text-light);line-height:1.6}.pft-style-choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-top:16px}.pft-style-choice-grid>button{display:flex;flex-direction:column;gap:10px;padding:15px;border:1px solid var(--border);border-radius:12px;background:var(--bg);text-align:left;color:var(--text);font:inherit;min-width:0;cursor:pointer}.pft-style-choice-grid>button[aria-pressed="true"]{border:2px solid var(--primary);padding:14px;background:var(--primary-light)}.pft-style-choice-grid>button:focus-visible{outline:3px solid var(--primary);outline-offset:3px}.pft-style-choice-grid strong{font-size:13px}.pft-style-choice-grid strong small{display:inline-block;margin-left:6px;padding:3px 6px;border-radius:10px;background:var(--card-bg);color:var(--text-light);font-size:9px}.pft-style-choice-grid>button>span:last-child{font-size:11px;color:var(--text-light);line-height:1.5}.pft-style-swatch{width:100%;height:72px;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;background:#0d2927;padding:26px 10px 10px;border:1px solid #31514c;border-radius:7px;position:relative}.pft-style-swatch::before{content:'';position:absolute;top:10px;left:10px;right:10px;height:4px;background:#68d4ba;border-radius:3px}.pft-style-swatch i{border:1px solid #416b5b;border-radius:4px;background:#24483e}.pft-style-swatch.classic{background:#102133;border-color:#3b5165;padding:10px 10px 10px 32px}.pft-style-swatch.classic::before{top:0;bottom:0;left:0;right:auto;width:23px;height:auto;background:#233c51}.pft-style-swatch.classic i{background:#263f53;border-color:#4b6376}
+.pft-style-brand,.pft-style-navigation,.pft-style-hero,.pft-style-report-tabs{display:none}.pft-style-choices{margin-bottom:24px;padding-bottom:23px;border-bottom:1px solid var(--border);grid-column:1/-1}.pft-style-choices h3{font-size:16px;margin:0 0 8px}.pft-style-choices>p{font-size:12px;color:var(--text-light);line-height:1.6}.pft-style-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:16px}.pft-style-choice-grid>button{display:flex;flex-direction:column;gap:10px;padding:15px;border:1px solid var(--border);border-radius:12px;background:var(--bg);text-align:left;color:var(--text);font:inherit;min-width:0;cursor:pointer}.pft-style-choice-grid>button[aria-pressed="true"]{border:2px solid var(--primary);padding:14px;background:var(--primary-light)}.pft-style-choice-grid>button:focus-visible{outline:3px solid var(--primary);outline-offset:3px}.pft-style-choice-grid strong{font-size:13px}.pft-style-choice-grid strong small{display:inline-block;margin-left:6px;padding:3px 6px;border-radius:10px;background:var(--card-bg);color:var(--text-light);font-size:9px}.pft-style-choice-grid>button>span:last-child{font-size:11px;color:var(--text-light);line-height:1.5}.pft-style-swatch{width:100%;height:72px;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;background:#0d2927;padding:26px 10px 10px;border:1px solid #31514c;border-radius:7px;position:relative}.pft-style-swatch::before{content:'';position:absolute;top:10px;left:10px;right:10px;height:4px;background:#68d4ba;border-radius:3px}.pft-style-swatch i{border:1px solid #416b5b;border-radius:4px;background:#24483e}
 @media screen {
 html[data-app-style="modern"][data-theme="dark"]{--bg:#0d2927;--bg-dark:#071e1b;--card-bg:#173633;--border:#31514c;--border-dark:#31514c;--text:#eff7f3;--text-light:#aec8bd;--card-shadow:none;--card-shadow-lg:0 12px 32px #00120d33;--success:#83dfb7;--danger:#ffb3a8;--warning:#e0c98d;color-scheme:dark}
 html[data-app-style="modern"][data-theme="light"]{--bg:#f0f6f1;--card-bg:#fff;--border:#c8dcd0;--text:#183b2d;--text-light:#526f60;--card-shadow:none;--success:#147247;color-scheme:light}
@@ -390,3 +390,136 @@ html[data-layout-style="emerald-flow"] body.advanced-layout #dashboard .flow-hom
 html[data-layout-style="emerald-flow"] body.advanced-layout #dashboard .flow-home .portfolio-bar-legend{grid-column:1/-1;margin:0}
 @media(max-width:700px){html[data-layout-style="emerald-flow"] body.advanced-layout #dashboard .flow-home .portfolio-total-summary{grid-template-columns:repeat(2,minmax(0,1fr))}html[data-layout-style="emerald-flow"] body.advanced-layout #dashboard .flow-home .portfolio-total-gain{grid-column:1/-1}}
 html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts .debt-list-panel thead{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;overflow:hidden!important;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap}
+
+/* Obsidian is a palette, shared by every page style. */
+@media screen{
+html:root[data-color-theme="obsidian-black"][data-theme="dark"][data-app-style]{--bg:#000!important;--bg-dark:#000!important;--card-bg:#121212!important;--border:#363636!important;--border-dark:#292929!important;--text:#f5f5f5!important;--text-light:#b8b8b8!important;--primary:#a3e6cd!important;--primary-dark:#c6f3e2!important;--primary-light:#20352d!important;--button-text:#10251d!important;--button-hover:#c6f3e2!important;--success:#a3e6cd;--danger:#ffb4ab;--warning:#efd28a;--flow-coral:#ffb4ab;--flow-shadow:none;--card-shadow:none;--card-shadow-lg:0 8px 24px #0006;color-scheme:dark}
+html:root[data-color-theme="obsidian-black"][data-theme="light"][data-app-style]{--bg:#f5f5f5!important;--card-bg:#fff!important;--border:#d4d4d4!important;--text:#202020!important;--text-light:#595959!important;--primary:#242424!important;--primary-dark:#000!important;--primary-light:#ededed!important;--button-text:#fff!important;--button-hover:#000!important;color-scheme:light}
+}
+
+/* Mobile quick-add: a compact floating control instead of a blank toolbar. */
+@media screen and (max-width:700px){
+html[data-app-style="modern"] .pft-dashboard-toolbar{display:contents}
+html[data-app-style="modern"] .pft-dashboard-caption{display:none}
+html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(84px + env(safe-area-inset-bottom));z-index:41;display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;margin:0;border-radius:50%;box-shadow:0 3px 12px #0003;font-family:inherit;line-height:1}
+html[data-app-style="modern"] #trackerQuickAdd .quick-add-symbol{font-size:26px;font-weight:400;line-height:1}
+html[data-app-style="modern"] #trackerQuickAdd .quick-add-label{display:none}
+html[data-app-style="modern"] body:has(#openRecordSearch.at-page-bottom) #dashboard #trackerQuickAdd{bottom:calc(144px + env(safe-area-inset-bottom))}
+html[data-app-style="modern"] body.cloud-pending #trackerQuickAdd,html[data-app-style="modern"] body:has(dialog[open],.investment-edit-modal:not([hidden]),input:focus,textarea:focus,select:focus) #dashboard #trackerQuickAdd{visibility:hidden;pointer-events:none}
+}
+@media screen and (max-width:700px){
+html[data-app-style="modern"] body.advanced-layout #dashboard.active{animation:none;transform:none}
+html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{transition:background-color .15s,box-shadow .15s;transform:none}
+}
+@media screen and (max-width:700px){
+html[data-layout-style="emerald-flow"] #dashboard>.pft-dashboard-toolbar{display:contents!important}
+html[data-layout-style="emerald-flow"] #dashboard .flow-home>.flow-heading>.flow-actions{display:none}
+}
+@media screen and (max-width:700px){
+html[data-layout-style="emerald-flow"] #dashboard>#trackerQuickAdd:not([hidden]){display:grid!important}
+}
+
+#dashboardExpenseMonth{max-width:100%;min-height:44px;font:inherit;font-size:12px;font-weight:500;border:1px solid var(--border);border-radius:10px;padding:6px 10px;background:var(--card-bg);color:var(--text);cursor:pointer}#dashboardExpenseMonth:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+@media(max-width:700px){#dashboardExpenseMonth{font-size:16px}.dashboard-wide-header:has(#dashboardExpenseMonth){flex-wrap:wrap}}
+
+/* Investment and retirement workspaces share typography and card treatment. */
+html[data-app-style="modern"] body.advanced-layout #investmentListPanel>.panel-header h2,html[data-app-style="modern"] body.advanced-layout #retirementAccountsHeading{font-family:inherit;font-size:16px;font-weight:600;line-height:1.4;letter-spacing:normal;color:var(--text);margin:0}
+html[data-app-style="modern"] .investment-portfolio-title{min-width:0}
+html[data-app-style="modern"] .investment-portfolio-title p,html[data-app-style="modern"] .retirement-accounts-heading p{margin:5px 0 0;font-size:12px;line-height:1.5;color:var(--text-light);font-weight:400}
+html[data-app-style="modern"] #investmentListPanel>.panel-header,html[data-app-style="modern"] .retirement-accounts-heading{align-items:flex-start;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:14px}
+html[data-app-style="modern"] .retirement-accounts-section{box-sizing:border-box;padding:23px;border:1px solid var(--border);border-radius:13px;background:var(--card-bg);margin-bottom:20px;min-width:0}
+html[data-app-style="modern"] .investment-empty-state,html[data-app-style="modern"] #retirementEmptyState{padding:16px;border:1px dashed var(--border);border-radius:12px;gap:6px;font-size:12px;line-height:1.5;background:transparent}
+html[data-app-style="modern"] .investment-empty-state strong,html[data-app-style="modern"] #retirementEmptyState strong{font-size:14px;font-weight:600;color:var(--text)}
+html[data-app-style="modern"] body.advanced-layout #openGeneralInvestmentBtn,html[data-app-style="modern"] body.advanced-layout #retirementAddBtn{min-height:44px;padding:7px 12px;border-radius:999px;font:inherit;font-size:12px;font-weight:500;white-space:nowrap}
+#investmentAddMenu,#retirementAddMenu{border:1px solid var(--border);border-radius:14px;padding:6px;background:var(--card-bg);box-shadow:0 12px 36px #0005}#investmentAddMenu button,#retirementAddMenu button{min-height:44px;font-size:13px;border-radius:9px}
+@supports(backdrop-filter:blur(18px)){#investmentAddMenu,#retirementAddMenu{background:color-mix(in srgb,var(--card-bg) 90%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}}
+@media screen and (max-width:700px){
+html,body{scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
+html[data-app-style="modern"] body.advanced-layout #investments .investment-page-intro h1{padding-inline-start:10px}
+html[data-app-style="modern"] body.advanced-layout #investments .retirement-accounts-section{padding:16px;border-radius:15px}
+html[data-app-style="modern"] body.advanced-layout #investments .investment-overview-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px 12px;padding:16px;border:1px solid var(--border);border-radius:18px;background:var(--card-bg);margin-bottom:18px}
+html[data-app-style="modern"] body.advanced-layout #investments .investment-overview-grid>.investment-overview-card{margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;min-width:0}
+html[data-app-style="modern"] #investments .investment-overview-grid>.investment-overview-card:first-child{grid-column:1;grid-row:1}
+html[data-app-style="modern"] #investments #investmentOverviewCurrent{font-size:30px;line-height:1.2;overflow-wrap:anywhere;white-space:normal}
+html[data-app-style="modern"] #investments #investmentOverviewGainCard{grid-column:2;grid-row:1;align-self:center;justify-self:end;padding:6px 8px;border-radius:10px;background:var(--primary-light);text-align:right}
+html[data-app-style="modern"] #investments #investmentOverviewGainCard>span{display:none}
+html[data-app-style="modern"] #investments #investmentOverviewGain{font-size:15px;line-height:1.4;overflow-wrap:anywhere;white-space:normal}
+html[data-app-style="modern"] #investments #investmentOverviewReturn{display:block;font-size:11px;line-height:1.4}
+html[data-app-style="modern"] #investments .investment-overview-card:nth-child(2){grid-column:1;grid-row:2;border-top:1px solid var(--border);padding-top:10px}
+html[data-app-style="modern"] #investments .investment-overview-card:nth-child(4){grid-column:2;grid-row:2;border-top:1px solid var(--border);padding-top:10px;text-align:right}
+html[data-app-style="modern"] #investments .investment-overview-card:not(#investmentOverviewGainCard)>small{display:none}
+html[data-app-style="modern"] #investments #investmentOverviewInvested,html[data-app-style="modern"] #investments #investmentOverviewMonthly{font-size:21px;line-height:1.3;overflow-wrap:anywhere;white-space:normal}
+}
+
+/* Debt overview follows the same compact card language. */
+html[data-app-style="modern"] #debts .debt-page-stat-count,html[data-app-style="modern"] #debtListCount{display:none}
+html[data-app-style="modern"] #debts .debt-page-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
+html[data-app-style="modern"] #debts .debt-page-stat-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:12px;background:color-mix(in srgb,#d59662 12%,transparent);color:#d59662}
+html[data-app-style="modern"] body.advanced-layout #openAddLoanBtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:7px 14px;border-radius:999px;font:inherit;font-size:12px;font-weight:600;white-space:nowrap}
+#openAddLoanBtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+html[data-app-style="modern"] #debts .debt-empty-row{background:transparent;border:0}
+html[data-app-style="modern"] #debts .debt-empty-cell{padding:0;border:0}
+html[data-app-style="modern"] #debts .debt-empty-state{margin:0;padding:16px;border:1px dashed var(--border);border-radius:12px;background:transparent;font-size:12px;line-height:1.5;gap:6px}
+html[data-app-style="modern"] #debts .debt-empty-state strong{font-size:14px;font-weight:600;color:var(--text)}
+@media screen and (max-width:700px){
+html[data-app-style="modern"] body.advanced-layout #debts>.debt-page-intro{display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:10px;border:0;padding:0;min-height:0}
+html[data-app-style="modern"] #debts>.debt-page-intro>div{min-width:0;flex:1}
+html[data-app-style="modern"] body.advanced-layout #debts>.debt-page-intro h1{margin:0;border-inline-start:3px solid #d59662;padding-inline-start:10px;font-size:20px;line-height:1.25}
+html[data-app-style="modern"] #debts>.debt-page-intro .debt-page-badge{flex:none;font-size:10px;line-height:1.4;padding:6px 8px;margin:0;white-space:nowrap}
+html[data-app-style="modern"] #debts .debt-page-overview{display:grid;grid-template-columns:1fr;gap:0;padding:6px 14px;border:1px solid var(--border);border-radius:18px;background:var(--card-bg)}
+html[data-app-style="modern"] body.advanced-layout #debts .debt-page-overview>.debt-page-stat{display:flex;align-items:center;gap:12px;min-height:0;padding:12px 0;border:0;border-radius:0;background:transparent;box-shadow:none}
+html[data-app-style="modern"] body.advanced-layout #debts .debt-page-overview>.debt-page-stat-count{display:none}
+html[data-app-style="modern"] #debts .debt-page-stat+.debt-page-stat{border-top:1px solid var(--border)!important}
+html[data-app-style="modern"] #debts .debt-list-panel>.panel-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+html[data-app-style="modern"] #debts .debt-list-panel>.panel-header>.panel-controls{width:auto;margin:0;flex:none}
+}
+/* Projection surfaces follow every palette; chart canvas remains transparent. */
+html body #growth-projection .growth-projection-chart-wrap{background:color-mix(in srgb,var(--bg) 60%,var(--card-bg));border:1px solid var(--border);box-shadow:none;min-height:0!important}
+html body #growth-projection #growthProjectionChart{background:transparent;max-height:320px}
+html body #growth-projection .growth-projection-cursor-tooltip{background:var(--card-bg);border-color:var(--border);color:var(--text)}
+html[data-theme="dark"] .growth-planned-additions{background:#10b98126;color:#6ee7b7;border:1px solid #10b98140}
+html[data-theme="dark"] .growth-planned-withdrawals{background:#f43f5e26;color:#fda4af;border:1px solid #f43f5e40}
+html body #growth-projection #growthProjectionSummary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 12px;width:100%;min-width:0}
+html body #growth-projection #growthProjectionSummary .growth-scenario-heading{grid-column:1/-1;margin:0 0 4px;font-size:16px;font-weight:500;color:var(--text)}
+html body #growth-projection #growthProjectionSummary>.growth-projection-stat-card{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;min-height:72px;padding:10px;border-radius:12px;background:var(--card-bg);text-align:left;font:inherit;cursor:pointer}
+html body #growth-projection #growthProjectionSummary>.growth-projection-stat-card[aria-pressed=true]{background:color-mix(in srgb,var(--scenario-accent) 12%,var(--card-bg));outline:1px solid var(--scenario-accent);outline-offset:-1px}
+html body #growth-projection #growthProjectionSummary .stat-label{font-size:12px;line-height:1.4;white-space:normal}
+html body #growth-projection #growthProjectionSummary .stat-value{margin:0;font-size:18px;line-height:1.3;white-space:normal;overflow-wrap:anywhere}
+#growthProjectionSummary button:focus-visible{outline:3px solid var(--primary)!important;outline-offset:2px!important}
+html body #growth-projection #growthProjectionTakeaway{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 0;padding:0;border:0;background:transparent}
+html body #growth-projection #growthProjectionTakeaway .growth-takeaway-item{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:5px;width:auto;min-width:0;padding:12px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--card-bg) 82%,var(--primary-light));margin:0;box-sizing:border-box}
+html body #growth-projection #growthProjectionTakeaway .growth-takeaway-item::before{position:absolute;top:8px;right:8px;left:auto;transform:none;font-size:13px;opacity:.7}
+html body #growth-projection #growthProjectionTakeaway .growth-takeaway-note{grid-column:1/-1;font-size:11px;line-height:1.5}
+html body #growth-projection .growth-breakdown-panel .table-wrapper{position:relative;display:block;overflow:auto!important;max-width:100%;padding-right:20px;box-sizing:border-box;-webkit-overflow-scrolling:touch}
+html body #growth-projection #growthProjectionResultsTable{display:table;min-width:1100px;width:max-content}
+html body #growth-projection #growthProjectionResultsTable tbody{display:table-row-group}
+html body #growth-projection #growthProjectionResultsTable tr{display:table-row}
+html body #growth-projection #growthProjectionResultsTable th,html body #growth-projection #growthProjectionResultsTable td{display:table-cell;padding:12px;white-space:nowrap}
+html body #growth-projection #growthProjectionResultsTable th:first-child,html body #growth-projection #growthProjectionResultsTable td:first-child{position:sticky;left:0;z-index:2;background:var(--card-bg);box-shadow:6px 0 8px #0002}
+@media(max-width:700px){html body #growth-projection #growthProjectionSummary .stat-value{font-size:16px}html body #growth-projection #growthProjectionSummary>.growth-projection-stat-card{padding:9px 7px}html body #growth-projection #growthProjectionSummary .stat-label{font-size:11px}html body #growth-projection #growthProjectionSummary .growth-scenario-heading{font-size:15px}}
+@supports(backdrop-filter:blur(18px)){html body #growth-projection .growth-projection-chart-wrap{background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}}
+/* Settings identity and sync are grouped; destructive actions live in Account. */
+html[data-app-style="modern"] body.advanced-layout .cloud-account-panel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"avatar account refresh" "updated updated updated";gap:12px;align-items:center;margin:0 0 20px;padding:16px;border:1px solid var(--border);border-radius:16px;background:var(--card-bg)}
+html[data-app-style="modern"] body.advanced-layout .cloud-account-panel>.settings-profile-avatar{grid-area:avatar;display:grid;place-items:center;flex:none;width:44px;height:44px;overflow:hidden;border:1px solid var(--border);border-radius:50%;background:var(--primary-light);color:var(--primary);font-size:15px}
+.settings-profile-avatar img{width:100%;height:100%;object-fit:cover}
+html[data-app-style="modern"] .cloud-account-panel>.settings-profile-copy{grid-area:account;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+#settingsProfileName{font-size:14px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudAccountLabel{font-size:12px;font-weight:400;overflow-wrap:anywhere;color:var(--text-light)}
+html[data-app-style="modern"] body.advanced-layout .cloud-account-panel .cloud-refresh-info{display:contents}
+html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudRefresh{grid-area:refresh;display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto;min-width:44px;min-height:44px;padding:7px 10px;border:1px solid var(--border);border-radius:999px;background:var(--primary-light);color:var(--text);font:inherit;font-size:12px;font-weight:500}
+#cloudRefresh svg{width:18px;height:18px;flex:none}
+html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudLastUpdated{grid-area:updated;display:block;min-width:0;margin:0;font-size:11px;line-height:1.5;color:var(--text-light);overflow-wrap:anywhere}
+.cloud-account-panel #cloudLastUpdated::before{content:"";display:inline-block;width:6px;height:6px;margin-right:7px;border-radius:50%;background:var(--text-light)}
+.cloud-account-panel[data-sync-state="synced"] #cloudLastUpdated::before{background:var(--success)}
+html[data-app-style="modern"] body.advanced-layout #cloudSignOut{min-height:44px;padding:8px 14px;border:1px solid color-mix(in srgb,var(--danger) 35%,transparent);border-radius:999px;background:transparent;color:var(--danger);font:inherit;font-size:13px;margin:12px 0}
+@media(max-width:700px){html[data-app-style="modern"] body.advanced-layout #settings .settings-intro h1{padding-inline-start:10px}html[data-app-style="modern"] body.advanced-layout .cloud-account-panel{padding:14px;gap:10px;grid-template-columns:40px minmax(0,1fr) auto}html[data-app-style="modern"] body.advanced-layout .cloud-account-panel>.settings-profile-avatar{width:40px;height:40px}html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudRefresh{font-size:11px;padding:7px 8px}}
+html[data-layout-style="emerald-flow"] .flow-debts .debt-page-overview{grid-template-columns:minmax(0,1fr)}
+html[data-app-style="modern"] #debts .debt-page-stat-copy{min-width:0}
+html[data-app-style="modern"] #debts .debt-page-stat-value{white-space:normal;overflow-wrap:anywhere}
+html[data-app-style="modern"] #debts .debt-empty-cell{white-space:normal!important;min-width:0!important;grid-area:auto!important}
+@media(max-width:700px){html[data-app-style="modern"] #debts .debt-empty-row{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important}html[data-app-style="modern"] #debts .debt-section-title{min-width:0}html[data-app-style="modern"] #debts .debt-section-title>div{min-width:0}}
+html body #growth-projection #growthProjectionSummary>.growth-projection-stat-card:hover{transform:none}
+/* Outrank the older simulator/sidebar breakpoints in both supported styles. */
+html[data-app-style] body.advanced-layout #growth-projection .growth-projection-chart-panel #growthProjectionSummary{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts .debt-page-overview{grid-template-columns:minmax(0,1fr)!important}
+html body #growth-projection #growthProjectionTakeaway .growth-takeaway-label{white-space:normal;overflow-wrap:anywhere;padding-right:14px;line-height:1.4;font-size:10px;font-weight:500}

@@ -72,12 +72,14 @@
       document.getElementById('houseExpenseLabel').textContent = `${expenseMonthName} House Expense`;
       document.getElementById('fullExpenseLabel').textContent = `${expenseMonthName} Full Expense`;
       const expenseMonthChip=document.getElementById('dashboardExpenseMonth');
-      if(expenseMonthChip) expenseMonthChip.textContent=expenseMonthName.toLocaleUpperCase();
+
       const previousMonthKey = `${previousDate.getFullYear()}-${String(previousDate.getMonth()+1).padStart(2,'0')}`;
       const previousBalance = state.monthlyBalances.find(b => b.month === previousMonthKey);
       const houseCard = document.getElementById('lastMonthHouseExpense');
       const houseNote = document.getElementById('lastMonthHouseExpenseNote');
       const houseAmount = previousBalance?.houseExpense;
+      const expenseSnapshot=document.getElementById('dashboardExpenseSnapshot');
+      if(expenseSnapshot) expenseSnapshot.hidden=houseAmount==null;
       const monthLabel = previousDate.toLocaleDateString('en-IN', {month:'short', year:'numeric'});
       if (houseCard) {
         houseCard.textContent = houseAmount == null ? 'Pending' : formatCurrency(houseAmount);
@@ -104,7 +106,7 @@
       const els = {
         netWorth: document.getElementById('netWorth'),
         totalAssets: document.getElementById('totalAssets'),
-        totalDebts: document.getElementById('totalDebts'),
+        monthlyExpenses: document.getElementById('monthlyExpenses'),
         monthlyIncome: document.getElementById('monthlyIncome'),
         surplusBalance: document.getElementById('surplusBalance'),
         monthlyContrib: document.getElementById('monthlyContrib'),
@@ -114,7 +116,7 @@
 
       if (els.netWorth) els.netWorth.textContent = formatCurrency(netWorth);
       if (els.totalAssets) els.totalAssets.textContent = formatCurrency(totalAssets);
-      if (els.totalDebts) els.totalDebts.textContent = formatCurrency(totalDebts);
+      if (els.monthlyExpenses) els.monthlyExpenses.textContent = formatCurrency(monthlyExpenses);
       const dashboardAssetsValue=document.getElementById('dashboardAssetsValue');
       const dashboardDebtValue=document.getElementById('dashboardDebtValue');
       const assetsSegment=document.getElementById('dashboardAssetsSegment');
@@ -151,6 +153,8 @@
       renderAnalyticsAverageSnapshot(fyAverage);
 
       renderDebtSummary();
+
+      renderDashboardExpenseSnapshot();
 
       // Reports
       const totalIncome = viewIncome.reduce((sum, i) => sum + i.amount, 0);
@@ -560,3 +564,25 @@
       const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`wealth-report-${report.start}-to-${report.end}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     }
 
+
+    // Snapshot selection changes presentation only; it never writes financial records.
+    function renderDashboardExpenseSnapshot(){
+      const select=document.getElementById('dashboardExpenseMonth'),card=document.getElementById('dashboardExpenseSnapshot');
+      if(!select||!card)return;
+      const defaultMonth=addMonthsClamped(currentMonthKey()+'-01',-1,1).slice(0,7);
+      const months=[...new Set(state.monthlyBalances.filter(r=>Number.isFinite(r.houseExpense)).map(r=>r.month))].sort().reverse();
+      const selected=months.includes(select.dataset.selectedMonth)?select.dataset.selectedMonth:defaultMonth;
+      const signature=JSON.stringify(months);
+      if(select.dataset.months!==signature){select.replaceChildren(...months.map(month=>{const option=document.createElement('option');option.value=month;option.textContent=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}).toLocaleUpperCase();return option;}));select.dataset.months=signature;}
+      select.value=selected;
+      select.onchange=()=>{select.dataset.selectedMonth=select.value;renderDashboardExpenseSnapshot();};
+      const balance=state.monthlyBalances.find(r=>r.month===selected),house=balance?.houseExpense;
+      card.hidden=!Number.isFinite(house);
+      const next=state.monthlyBalances.find(r=>r.month===addMonthsClamped(selected+'-01',1,1).slice(0,7));
+      window.PFT_DASHBOARD_SNAPSHOT={previousMonthKey:selected,previousTotals:monthTotals(selected),previousOpening:balance?.startBalance??null,hasOpening:!!next,opening:next?.startBalance??null,houseAmount:house??null,fullExpense:Number.isFinite(house)?house+monthTotals(selected).expenses:null};
+      if(card.hidden)return;
+      const name=new Date(selected+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long'});
+      document.getElementById('houseExpenseLabel').textContent=name+' House Expense';
+      document.getElementById('fullExpenseLabel').textContent=name+' Full Expense';
+      for(const [id,value] of [['lastMonthHouseExpense',house],['lastMonthFullExpense',house+monthTotals(selected).expenses]]){const node=document.getElementById(id);node.textContent=formatCurrency(value);node.style.color=value<0?'var(--danger)':'var(--primary)';}
+    }

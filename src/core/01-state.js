@@ -44,7 +44,7 @@
       const parking=document.createElement('div');parking.id='settingsPanelParking';parking.hidden=true;
       const accountPanel=document.createElement('section');accountPanel.id='settingsAccountPanel';accountPanel.className='panel settings-panel';
       accountPanel.innerHTML='<h2>Account</h2><p>Signed in as <strong id="accountSignedInEmail"></strong></p>';
-      accountPanel.append(document.getElementById('clearTrackerSection'));
+      accountPanel.append(document.getElementById('cloudSignOut'),document.getElementById('clearTrackerSection'));
       parking.append(accountPanel);
       const infoPanel=document.createElement('section');infoPanel.id='settingsInfoPanel';infoPanel.className='panel settings-panel';
       infoPanel.innerHTML='<h2>App info</h2><p>Your family finance tracker: features and calculation guide.</p><button type="button" id="downloadAppInfoPdf">Download PDF</button><p id="appInfoPdfStatus" role="status"></p>';
@@ -53,8 +53,8 @@
       infoPanel.querySelector('button').addEventListener('click',async()=>{const button=infoPanel.querySelector('button');button.disabled=true;document.getElementById('appInfoPdfStatus').textContent='Preparing PDF…';try{await window.downloadTrackerGuide();document.getElementById('appInfoPdfStatus').textContent='PDF downloaded.';}catch(error){document.getElementById('appInfoPdfStatus').textContent=error.message;}finally{button.disabled=false;}});
       const tiles=[
         ['settingsInfoPanel','App info','Features, calculations and PDF guide','<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/>'],
-        ['settingsAccountPanel','Account','Signed-in account and Delete Dashboard','<circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>'],
-        ['familyAccessPanel','Family Access','Invite members and manage permissions','<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5"/>'],
+        ['settingsAccountPanel','Account','Profile details, security and account deletion','<circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>'],
+        ['familyAccessPanel','Family access','Invite members and manage permissions','<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5"/>'],
         ['settingsAppearancePanel','Appearance','Choose colors and display preferences','<path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1-3.7 1.5 1.5 0 0 1 1-2.8h2a4 4 0 0 0 4-4C21 6 17 3 12 3Z"/><path d="M7 10h.01M10 6h.01M15 6h.01M18 10h.01"/>'],
         ['settingsBackupPanel','Data & backup','Export, import and recovery tools','<path d="M5 4h14v16H5zM8 8h8M8 12h5M12 15v6m-3-3 3 3 3-3"/>'],
         ['settingsAppPanel','App & updates','Version '+window.PFT_APP_INFO.version+' · Updates and release notes','<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4M9 9l3-3 3 3m-3-3v8"/>'],

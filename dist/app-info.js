@@ -1,10 +1,19 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.26.12",
-  "released": "2026-10-26",
+  "version": "2026.10.27.1",
+  "released": "2026-10-27",
   "releaseNotes": [
-  "Use consistent medium-weight fonts for insight headings, review sections and Cash Flow toggles.",
-  "Align sync status and Search on one bottom row, visible only at the page bottom.",
-  "Remove the Dashboard Backup & record checks shortcut; backup tools remain in Settings."
+  "Add Obsidian Black in Appearance and remove Classic, migrating saved Classic choices to Modern.",
+  "Replace mobile Home Add record row with a small floating +; show borderless sync time at the page bottom beside Search.",
+  "Replace the duplicate Home debt tile with Monthly Expenses; hide pending Expense Snapshots and add a month selector for calculated snapshots.",
+  "Use one mobile Cash Flow month filter for both histories, summary and breakdown; remove duplicate visible history filters.",
+  "Fix mobile record overlap and clipped Edit/Delete menus; combine recurring settings with the commitments header.",
+  "Slim Cash Flow toggles, align recorded expenses and add SVG accordion chevrons.",
+  "Add shared glass filter popovers with keyboard controls, focus return and solid-background fallback.",
+  "Unify Investment and Retirement cards, empty states and Add menus; compact mobile portfolio metrics into one hero.",
+  "Simplify Debt overview and account counts, fix title/icon spacing, and match its Add button and empty state.",
+  "Use a transparent themed projection chart with area gradients and an interactive three-scenario breakdown.",
+  "Fix zero-value analytics charts, add a muted allocation ring, tint planned changes and make the FY table scrollable with a sticky first column.",
+  "Group Settings identity and sync in a profile card, move Sign out into Account, and use a distinct Settings navigation icon."
 ],
   "sections": [
     [
@@ -97,7 +106,7 @@ window.PFT_APP_INFO = {
     ],
     [
       "17. Cloud status, refreshing and offline use",
-      "Changes save on the device and queue for cloud sync while the app is open. Last cloud update shows the most recent successful cloud snapshot time, displayed in this device local time; a pending or failed save does not advance it. If no timestamp is known, the app says it is not available yet.\nRefresh cloud records reloads the latest cloud snapshot and preserves the selected page. A browser refresh also returns to the selected page for this signed-in tracker. Pending changes require review before being replaced. Concurrent changes are detected by revision; there is no automatic merge of financial edits. Export a backup before resolving a conflict. App & updates shows the installed version, online latest-version check and expandable release notes.\nCloud status and the last successful cloud update are shown in Settings. Review differences is available there when another device has newer changes. The header and footer do not repeat the sync timestamp."
+      "Changes save on the device and queue for cloud sync while the app is open. Last cloud update shows the most recent successful cloud snapshot time, displayed in this device local time; a pending or failed save does not advance it. If no timestamp is known, the app says it is not available yet.\nRefresh cloud records reloads the latest cloud snapshot and preserves the selected page. A browser refresh also returns to the selected page for this signed-in tracker. Pending changes require review before being replaced. Concurrent changes are detected by revision; there is no automatic merge of financial edits. Export a backup before resolving a conflict. App & updates shows the installed version, online latest-version check and expandable release notes.\nCloud status and the last successful cloud update are shown in Settings. Review differences is available there when another device has newer changes. A compact sync status and last successful sync time appear only when the page bottom is reached, beside Search. Detailed controls remain in Settings."
     ],
     [
       "18. Account and deletion",
@@ -109,7 +118,7 @@ window.PFT_APP_INFO = {
     ],
     [
       "20. Page styles and appearance",
-      "Settings > Appearance > Page style offers Style 1 \u00b7 Modern (default) and Style 2 \u00b7 Classic (the earlier design). Modern uses top navigation on desktop and six main tabs on mobile. Analytics & Reports includes Analytics, Growth Projection and Date range reports. Classic keeps the earlier navigation and page layout. Both use the same records, calculations, forms, cloud sync and permissions. The selected style is saved per signed-in tracker context on this device. It is independent of light/dark mode and colour selection. Switching styles keeps the current page and any unfinished form entries."
+      "Settings > Appearance > Page style offers Modern (default) and Emerald Flow. Obsidian Black is available as a color palette. Saved Classic preferences switch to Modern. Modern uses top navigation on desktop and six main tabs on mobile. Analytics & Reports includes Analytics, Growth Projection and Date range reports. Both use the same records, calculations, forms, cloud sync and permissions. The selected style is saved per signed-in tracker context on this device. It is independent of light/dark mode and colour selection. Switching styles keeps the current page and any unfinished form entries."
     ],
     [
       "Complete backup and payment review",

@@ -6,7 +6,7 @@ window.PFT_ASSETS=/*APP_ASSETS*/{};
  const times={boot:performance.now()},loads=new Map();
  window.PFTPerformance={mark(name){times[name]=performance.now();try{performance.mark('pft:'+name);}catch(_){}},snapshot(){return {...times};}};
  window.PFTPaint={remember(){try{const r=document.documentElement;localStorage.setItem('pft:lastAppearance',JSON.stringify({theme:r.dataset.theme,style:r.dataset.layoutStyle,color:r.dataset.colorTheme}));}catch(_){} }};
- try{const saved=JSON.parse(localStorage.getItem('pft:lastAppearance')||'null'),r=document.documentElement;if(saved){if(['dark','light'].includes(saved.theme))r.dataset.theme=saved.theme;if(['modern','classic','emerald-flow'].includes(saved.style)){r.dataset.layoutStyle=saved.style;r.dataset.appStyle=saved.style==='classic'?'classic':'modern';}}}catch(_){}
+ try{const saved=JSON.parse(localStorage.getItem('pft:lastAppearance')||'null'),r=document.documentElement;if(saved){if(['dark','light'].includes(saved.theme))r.dataset.theme=saved.theme;if(['modern','classic','emerald-flow'].includes(saved.style)){r.dataset.layoutStyle=saved.style==='classic'?'modern':saved.style;r.dataset.appStyle='modern';}}}catch(_){}
  window.PFTLoadScript=function(kind){
   if(kind==='chart'&&window.Chart||kind==='pdf'&&window.jspdf?.jsPDF)return Promise.resolve();
   if(loads.has(kind))return loads.get(kind);

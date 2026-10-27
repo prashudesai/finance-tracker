@@ -35,11 +35,40 @@ body:has(>#financeBottomSync){padding-bottom:130px}
 #cashBalanceBreakdown{padding:4px 0 0;margin-top:8px}
 @media(max-width:700px){.finance-insight-card:not(.finance-automatic-prompt){padding:4px 12px}.finance-insight-card>summary{min-height:44px;font-size:14px}#cashBalanceBreakdown{padding:0;margin-top:8px}}
 
-/* Search and sync share one bottom row, without covering the last records. */
-#financeBottomTools{position:fixed;left:max(20px,env(safe-area-inset-left));right:max(20px,env(safe-area-inset-right));bottom:20px;z-index:40;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch;pointer-events:none}
-#financeBottomTools #financeBottomSync,#financeBottomTools #openRecordSearch{position:static;transform:none;width:auto;max-width:100%;min-width:0;min-height:48px;margin:0;font-family:inherit;font-weight:500}
-#financeBottomTools #financeBottomSync{grid-column:2;justify-self:center;overflow-wrap:anywhere}
-#financeBottomTools #openRecordSearch{grid-column:3;justify-self:end}
+/* Quiet centred status follows Search's bottom-only visibility. */
+#financeBottomTools{position:fixed;left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));bottom:20px;z-index:40;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;pointer-events:none}
+#financeBottomTools #financeBottomSync{position:static;transform:none;grid-column:2;justify-self:center;width:max-content;max-width:calc(100vw - 272px);min-height:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;color:var(--text-light,var(--text));font-family:inherit;font-size:11px;font-weight:400;line-height:1.4;text-align:center;overflow-wrap:anywhere;pointer-events:none}
+#financeBottomTools #openRecordSearch{position:static;transform:none;grid-column:3;justify-self:end;margin:0;min-width:0;font-family:inherit;font-weight:500}
 body:has(>#financeBottomTools){padding-bottom:76px}
-@media(max-width:700px){#financeBottomTools{left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));grid-template-columns:minmax(0,1fr) auto}html[data-app-style="modern"] #financeBottomTools{bottom:calc(84px + env(safe-area-inset-bottom))}#financeBottomTools #financeBottomSync{grid-column:1}#financeBottomTools #openRecordSearch{grid-column:2}}
+@media(max-width:700px){#financeBottomTools{bottom:calc(16px + env(safe-area-inset-bottom))}html[data-app-style="modern"] #financeBottomTools{bottom:calc(84px + env(safe-area-inset-bottom))}#financeBottomTools #financeBottomSync{max-width:calc(100vw - 224px);font-size:10px}#financeBottomTools #openRecordSearch{font-size:12px;gap:5px;padding:10px;min-height:48px}#financeBottomTools #openRecordSearch svg{width:16px;height:16px}}
 @media print{#financeBottomTools{display:none!important}}
+
+/* Recurring settings share the commitments card without nesting controls in summary. */
+.finance-commitment-card{position:relative;margin:0 0 10px;padding:4px 12px;border:1px solid var(--border);border-radius:12px;background:var(--card-bg);min-width:0}
+.finance-commitment-card #cashCommitments{margin:0;padding:0;border:0;background:transparent}
+.finance-commitment-card #cashCommitments>summary{padding-right:105px;min-height:44px;box-sizing:border-box}
+html body #income-expenses .finance-commitment-card #cashRecurringShortcut{position:absolute;top:4px;right:8px;display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:0;padding:6px 8px;border:0;border-radius:8px;background:transparent;box-shadow:none;color:var(--primary);font:inherit;font-size:12px;font-weight:500;line-height:1.4;white-space:nowrap}
+#cashRecurringShortcut:hover{background:var(--primary-light)!important}#cashRecurringShortcut:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+/* SVG disclosure chevrons follow Appearance colours and native keyboard behaviour. */
+#cashBalanceBreakdown>summary,#cashCommitments>summary{list-style:none}
+#cashBalanceBreakdown>summary::-webkit-details-marker,#cashCommitments>summary::-webkit-details-marker{display:none}
+#cashBalanceBreakdown>summary::before,#cashCommitments>summary::before{content:"";display:inline-block;width:16px;height:16px;margin-right:6px;vertical-align:-2px;background:var(--primary);opacity:.8;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 5 7 7-7 7' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;transition:transform .15s}
+#cashBalanceBreakdown[open]>summary::before,#cashCommitments[open]>summary::before{transform:rotate(90deg)}
+
+/* Shared native-backed filters: custom top-layer menus cannot be clipped by cards. */
+.pft-native-filter{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;border:0!important;clip-path:inset(50%);overflow:hidden;white-space:nowrap;pointer-events:none}
+.pft-filter-trigger{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;max-width:100%;min-width:0;min-height:44px;padding:7px 11px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--card-bg) 88%,transparent);color:var(--text);font:inherit;font-size:12px;font-weight:500;cursor:pointer}
+.pft-filter-trigger span{min-width:0;overflow-wrap:anywhere;text-align:left}.pft-filter-trigger svg{width:15px;height:15px;flex:none;fill:none;stroke:var(--primary);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pft-filter-trigger[hidden]{display:none!important}.pft-filter-trigger:disabled{opacity:.5;cursor:default}.pft-filter-trigger:focus-visible,.pft-glass-popover button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+.pft-glass-popover{position:fixed;inset:auto;margin:0;box-sizing:border-box;overflow:auto;padding:10px;border:1px solid var(--border);border-radius:16px;color:var(--text);background:var(--card-bg);box-shadow:0 12px 36px #0005;font-family:inherit}
+@supports(backdrop-filter:blur(18px)){.pft-glass-popover{background:color-mix(in srgb,var(--card-bg) 88%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}}
+.pft-glass-popover::backdrop{background:transparent}.pft-filter-title{font-size:11px;font-weight:500;margin:4px 8px 8px;color:var(--text-light)}
+.pft-filter-options{display:grid;gap:4px}.pft-filter-options>button{width:100%;min-height:44px;padding:8px 11px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.pft-filter-options>button[aria-selected=true]{background:var(--primary-light);border-color:var(--primary);color:var(--text)}.pft-filter-options>button:hover{background:var(--primary-light)}.pft-filter-options>button:disabled{opacity:.45;cursor:default}
+#quickAddDialog{border:1px solid var(--border);border-radius:18px;background:var(--card-bg);box-shadow:0 12px 36px #0005}#quickAddDialog .tracker-review-content{display:grid;gap:6px}#quickAddDialog .tracker-review-content>button{margin:0;min-height:44px;text-align:left;font:inherit;font-size:14px;border-radius:10px}
+@supports(backdrop-filter:blur(18px)){#quickAddDialog{background:color-mix(in srgb,var(--card-bg) 90%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}}
+@media(max-width:700px){#income-expenses.cash-flow-layout #cashMonthFilterPopoverTrigger{max-width:55%;flex:none;font-size:12px}#income-expenses.cash-flow-layout #transactionOverviewMonth{display:none!important}}
+@media print{.pft-glass-popover,.pft-filter-trigger{display:none!important}}
+/* Existing specialised menus retain their handlers and gain the shared surface. */
+.family-profile-menu,.range-report-filter-popover,.cash-record-actions{border-color:var(--border);border-radius:14px;background:var(--card-bg);box-shadow:0 12px 36px #0004;color:var(--text)}
+@supports(backdrop-filter:blur(18px)){.family-profile-menu,.range-report-filter-popover,.cash-record-actions{background:color-mix(in srgb,var(--card-bg) 90%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}}

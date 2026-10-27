@@ -1,3 +1,4 @@
+import {installFilterPopovers} from './filter-popovers.js';
 import {installFinanceInsights} from './finance-insights.js';
 import {installCashFlow} from './cash-flow.js?v=86';
 import {initializeApp} from './vendor/firebase-app.js';
@@ -96,6 +97,7 @@ onAuthStateChanged(auth,async user=>{
       try{await signOut(auth);location.reload();}catch(error){lock(error);}
     }
   };
+  const profileName=document.getElementById('settingsProfileName'),profileAvatar=document.getElementById('settingsProfileAvatar');if(profileName)profileName.textContent=user.displayName||'Your account';if(profileAvatar){const initials=(user.displayName||user.email||'P').split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase();profileAvatar.textContent=initials;if(user.photoURL){const img=document.createElement('img');img.alt='';img.referrerPolicy='no-referrer';img.src=user.photoURL;img.onerror=()=>profileAvatar.textContent=initials;profileAvatar.replaceChildren(img);}}
   accountLabel.textContent=(user.email||'Google account')+(family.role==='owner'?'':' · '+family.role+' · '+family.ownerEmail+'’s tracker');
   document.getElementById('cloudSignOut').addEventListener('click',()=>window.financeCloud.logout().catch(error=>alert(friendly(error))));
   document.getElementById('cloudSaveRetry').addEventListener('click',()=>window.financeBridge?.retry());
@@ -133,7 +135,7 @@ onAuthStateChanged(auth,async user=>{
   }
   const reviewApi={subscribe:(next,error)=>onSnapshot(reviewRef,{includeMetadataChanges:true},snapshot=>{try{next(decodeReviews(snapshot));}catch(e){error(e);}},error),load:async()=>decodeReviews(await getDocFromServer(reviewRef)),save:saveReviews,reset:resetReviews};
   window.financeCloudResolve();
-  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();installCashFlow();installFinanceInsights();}).catch(error=>console.warn('Workbench unavailable',error));
+  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();installCashFlow();installFinanceInsights();installFilterPopovers();}).catch(error=>console.warn('Workbench unavailable',error));
   Promise.resolve(window.trackerReady).then(installRecordRecovery).catch(error=>console.warn('Record recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(installWorkProtection).catch(error=>console.warn('Draft recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>installCloudNotice((next,error)=>onSnapshot(doc(db,'users/'+family.ownerUid+'/tracker/current'),snapshot=>next(snapshot.exists()?snapshot.data():null),error))).catch(error=>console.warn('Live cloud notice unavailable',error));
