@@ -205,7 +205,7 @@
   "tests/auth-preload-browser.cjs": "a81b1bd293f773bc5f951c3577095cb08f0e2b2b2ab8c1cde2186af267758003",
   "tests/browser-fixtures.cjs": "b48377966f8b43125ac22a42f2f4725d89afd2b9b03b09f77da14aa5ef327a4c",
   "tests/build-layout.cjs": "e186363e170a4c17e029e557c5426d0c3cd7560df98523bcd82fc1da37b322bd",
-  "tests/cash-flow-browser.cjs": "873b056a2558fc6d79c7ef3aa6f24e5ca8b32b84a73dc9a6af79223ac63bf029",
+  "tests/cash-flow-browser.cjs": "1ce236dff66462b73f7983766b2839720a7edd6b578d0210caed57447f0ead4b",
   "tests/cloud-notice.cjs": "d5ef9b63f5e61e3bee6a56ae849ef0becdd7fc1afcbde5b13d9dc48bd503e87a",
   "tests/cloud-refresh-icon.cjs": "a5e93c76ae97d736962ac0ff80251c8fd80a83d293df35d112a48e1823db1937",
   "tests/cloud-store.cjs": "1b5fa9bb052327bf0b808835b4a3ef8d617ef9a8e78f95a0842f6feca9b9784d",
