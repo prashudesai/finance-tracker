@@ -109,6 +109,25 @@ export function installFinanceWorkbench(){
   add(dialog,'p',issues.length?'Review: '+issues.join(', '):'Monthly cash-flow helpers, house-expense balances and available dashboard totals reconcile.');button(dialog,'Run full record health checks',()=>{dialog.close();runDataHealth();});
  }
  function tools(host,title,actions){if(!host)return;const details=add(host,'details');details.className='finance-workbench-tools';const summary=add(details,'summary');add(summary,'span',title);if(title==='Month review'){const hint=add(summary,'span','Review available');hint.className='month-review-hint';}for(const [label,fn]of actions)button(details,label,fn);}
+ function refreshCommitmentsPreview(){
+  const host=document.getElementById('cashFlowCommitmentsPreview');if(!host)return;
+  host.replaceChildren();
+  const today=localDateKey(),end=new Date(today+'T12:00:00');
+  end.setDate(end.getDate()+60);
+  const until=[end.getFullYear(),String(end.getMonth()+1).padStart(2,'0'),String(end.getDate()).padStart(2,'0')].join('-');
+  const rules=new Map((state.recurringRules||[]).map(rule=>[rule.id,rule]));
+  let due;
+  try{due=PFT_RECURRING.pending(state,until).filter(row=>row.date>=today&&!row.existing).sort((a,b)=>a.date.localeCompare(b.date));}
+  catch(error){add(host,'p','Upcoming commitments are temporarily unavailable.');return;}
+  if(!due.length){add(host,'p','No unrecorded recurring commitments scheduled in the next 60 days.');return;}
+  const list=add(host,'ul');list.className='cash-flow-commitment-list';
+  for(const row of due.slice(0,3)){
+   const item=add(list,'li'),label=add(item,'span'),rule=rules.get(row.ruleId);
+   add(label,'strong',rule?.name||'Recurring commitment');add(label,'small',row.date);
+   add(item,'b',Number.isFinite(row.amount)?formatCurrency(row.amount):'Schedule-based');
+  }
+  if(due.length>3)add(host,'p',`+${due.length-3} more commitments in the next 60 days`);
+ }
  // Immediate actions complement the collapsible detailed month-review tools.
  const cashIntro=document.querySelector('#income-expenses .transaction-intro');
  if(cashIntro){
@@ -118,10 +137,18 @@ export function installFinanceWorkbench(){
   const upcoming=button(shortcuts,'Upcoming commitments',commitments);
   upcoming.setAttribute('aria-label','View upcoming recorded recurring commitments');
  }
+ const previewHost=document.querySelector('#income-expenses .cash-flow-trend-panel');
+ if(previewHost){
+  const preview=document.createElement('section');preview.id='cashFlowCommitmentsPanel';preview.className='cash-flow-commitments-panel panel';
+  const heading=add(preview,'div');heading.className='cash-flow-commitments-heading';
+  add(heading,'h2','Upcoming commitments');button(heading,'View all',commitments);
+  const content=add(preview,'div');content.id='cashFlowCommitmentsPreview';content.setAttribute('aria-live','polite');
+  previewHost.after(preview);refreshCommitmentsPreview();
+ }
  tools(document.getElementById('income-expenses'),'Month review',[['Review month',monthly],['Upcoming commitments',commitments]]);
  tools(document.getElementById('investments'),'Record freshness',[['Review valuation dates',valuations]]);
  tools(document.getElementById('growth-projection'),'Goal planning',[['Portfolio goal planner',planning]]);
  tools(document.getElementById('settingsRecordsPanel'),'Calculation checks',[['Check financial totals',audit],['Sync details',syncDetails]]);
- window.financeWorkbench={automatic:month=>monthly(month,{automaticOnly:true}),monthly,valuations,planning,audit,commitments,syncDetails,isReviewEditing,saveAndReturn};
+ window.financeWorkbench={refreshCommitmentsPreview,automatic:month=>monthly(month,{automaticOnly:true}),monthly,valuations,planning,audit,commitments,syncDetails,isReviewEditing,saveAndReturn};
  const reset=window.financeBridge.reset;window.financeBridge.reset=function(){document.removeEventListener('click',cancelReviewEdit,true);document.removeEventListener('keydown',cancelReviewEdit,true);contributionEdit=null;if(dialog.open)dialog.close();dialog.remove();return reset.apply(this,arguments);};
 }
