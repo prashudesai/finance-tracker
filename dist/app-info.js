@@ -1,7 +1,9 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.8",
+  "version": "2026.10.27.9",
   "released": "2026-10-27",
   "releaseNotes": [
+    "Balance investment and retirement holding layouts and unify valuation controls.",
+    "Improve valuation status indicators and asset allocation legend scrolling.",
     "Refine Dashboard, Investments, Analytics, Growth Projection and Date Range Reports.",
     "Add optional expense ownership, transaction search and clearer cash-flow histories.",
     "Redesign Analytics with a financial-year filter, compact chart views and clear empty states.",

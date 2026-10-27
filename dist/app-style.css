@@ -864,3 +864,22 @@ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels
 #investments .investment-allocation-legend { align-self:flex-start; max-height:220px; overflow-y:auto; scrollbar-width:thin; }
 #investments .investment-allocation-item:first-child { margin-top:0; }
 @media(max-width:390px) { #investments :is(.investment-category-card,.retirement-account-card) .investment-category-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+/* Flow holdings in balanced rows while retaining their category headings. */
+@media(min-width:1024px) {
+ html[data-app-style] body.advanced-layout #investments .investment-holdings-grid { grid-template-columns:minmax(0,1fr); gap:24px; align-items:start; }
+}
+@media(min-width:701px) {
+ html[data-app-style] body.advanced-layout #investments :is(#investmentCategoryPanels,#retirementAccountPanels) { grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)); gap:16px; align-items:start; }
+ #investments :is(.investment-empty-state,.retirement-empty-state) { grid-column:1/-1; }
+}
+#investments .finance-valuation-review { flex:none; padding:7px 10px; border:1px solid var(--border); border-radius:8px; background:color-mix(in srgb,var(--primary) 8%,var(--card-bg)); color:var(--text); cursor:pointer; font-size:11px; }
+#investments #openNpsBalanceUpdate { display:none; }
+#investments .finance-valuation-footer > div { justify-content:flex-start; }
+#investments .finance-valuation-footer > div > .finance-valuation-status { flex:0 1 auto; display:inline-block; padding:3px 8px; border-radius:999px; background:color-mix(in srgb,var(--success) 11%,var(--card-bg)); color:var(--text-light); font-size:11px; }
+#investments .finance-valuation-footer .finance-valuation-due > .finance-valuation-status { background:color-mix(in srgb,#d99b35 14%,var(--card-bg)); color:var(--text-light); }
+#investments .finance-valuation-status:before { content:'✓'; margin-right:5px; color:var(--success); }
+#investments .finance-valuation-due .finance-valuation-status:before { content:'●'; color:#d99b35; }
+#investments .investment-allocation-legend { max-height:220px; overflow-y:auto; align-self:flex-start; }
+
+#investments .finance-valuation-estimate:before { content:'≈'; color:var(--text-light); }

@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.27.8",
+  "version": "2026.10.27.9",
   "released": "2026-10-27",
   "releaseNotes": [
-    "Refine the Dashboard, Investments, Analytics, Growth Projection and Date Range Reports.",
-    "Add optional expense ownership, transaction search and clearer Income & Expense histories."
+    "Balance investment and retirement holding layouts and unify valuation controls.",
+    "Improve valuation status indicators and asset allocation legend scrolling."
   ]
 }
