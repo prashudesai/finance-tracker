@@ -883,3 +883,30 @@ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels
 #investments .investment-allocation-legend { max-height:220px; overflow-y:auto; align-self:flex-start; }
 
 #investments .finance-valuation-estimate:before { content:'≈'; color:var(--text-light); }
+
+
+/* Mobile density: keep 44px touch targets while returning vertical space to records. */
+@media screen and (max-width:700px){
+html[data-app-style="modern"] body.advanced-layout>.container{padding-left:14px;padding-right:14px}
+html[data-app-style="modern"] body.advanced-layout>.container>header{margin-left:-14px;margin-right:-14px;margin-bottom:14px;padding-left:14px;padding-right:14px;min-height:60px}
+html[data-app-style="modern"] .pft-dashboard-toolbar{display:contents}
+html[data-app-style="modern"] .pft-dashboard-caption{display:none}
+html[data-app-style="modern"] body.advanced-layout #dashboard .dashboard{gap:8px}
+html[data-app-style="modern"] body.advanced-layout #dashboard .dashboard-net-worth{padding:14px 15px}
+html[data-app-style="modern"] body.advanced-layout .dashboard-main-value{margin:9px 0;font-size:30px}
+html[data-app-style="modern"] body.advanced-layout #dashboard .dashboard-stat{padding:11px 10px;min-height:92px}
+html[data-app-style="modern"] body.advanced-layout .dashboard-wide-card{padding:12px 13px}
+html[data-app-style="modern"] body.advanced-layout .panel{padding:13px;margin-bottom:11px}
+html[data-app-style="modern"] body.advanced-layout .tab-content>:is(.transaction-intro,.investment-page-intro,.debt-page-intro,.growth-page-intro,.analytics-intro,.settings-intro){margin:7px 0 11px;gap:6px}
+html[data-app-style="modern"] body.advanced-layout .tab-content>:is(.transaction-intro,.investment-page-intro,.debt-page-intro,.growth-page-intro,.analytics-intro,.settings-intro) h1{font-size:19px;line-height:1.2}
+html[data-app-style="modern"] body.advanced-layout :is(.investment-overview-card,.debt-page-stat,.transaction-metric){padding:11px 10px}
+html[data-app-style="modern"] body.advanced-layout .transaction-overview,
+html[data-app-style="modern"] body.advanced-layout #investments .investment-overview-grid{gap:8px}
+html[data-app-style="modern"] .pft-style-report-tabs{margin-bottom:12px;gap:18px}
+html[data-app-style="modern"] #settingsQuickTiles{gap:8px}
+html[data-app-style="modern"] #settingsQuickTiles .settings-quick-tile{min-height:118px;padding:12px 10px}
+html[data-app-style="modern"] .cloud-account-panel{margin-bottom:11px;padding-bottom:9px}
+html[data-app-style="modern"] .finance-insight-card{margin-bottom:11px;padding:13px}
+html[data-app-style="modern"] .investment-portfolio-title p,
+html[data-app-style="modern"] .retirement-accounts-heading p{margin-top:3px}
+}
