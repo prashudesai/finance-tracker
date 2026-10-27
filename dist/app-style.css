@@ -1272,3 +1272,93 @@ html[data-app-style] body.advanced-layout #income-expenses .history-month-contro
  html[data-app-style] body.advanced-layout #investments .investment-portfolio-title p,
  html[data-app-style] body.advanced-layout #investments .retirement-accounts-heading p{font-size:12px;line-height:1.4}
 }
+
+
+/* Issue 11B: investment/retirement detail sheets, compact on phones.
+   Desktop tables remain unchanged; all existing table buttons stay functional. */
+@media(max-width:700px){
+ #investmentCategoryDialog .investment-category-dialog-shell,
+ #retirementCategoryDialog .investment-category-dialog-shell{
+   width:min(100%,560px)!important;max-width:100%!important;max-height:calc(100dvh - 20px)!important;
+   margin:auto auto 0!important;border-radius:22px 22px 0 0!important;
+   overflow-y:auto!important;overscroll-behavior:contain;
+   background:var(--card-bg)!important;color:var(--text)!important;
+   border:1px solid color-mix(in srgb,var(--primary) 32%,var(--border))!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-header,
+ #retirementCategoryDialog .investment-category-dialog-header{
+   display:flex!important;align-items:center!important;gap:10px!important;
+   min-height:76px!important;padding:17px 16px!important;
+   background:linear-gradient(130deg,color-mix(in srgb,var(--primary) 13%,var(--card-bg)),var(--card-bg))!important;
+   border-bottom:1px solid var(--border)!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-header>div:first-child,
+ #retirementCategoryDialog .investment-category-dialog-header>div:first-child{flex:1 1 100%;min-width:0}
+ #investmentCategoryDialog .investment-category-dialog-header h2,
+ #retirementCategoryDialog .investment-category-dialog-header h2{font-size:21px!important;line-height:1.25!important;margin:0!important}
+ #investmentCategoryDialog .investment-category-dialog-header p,
+ #retirementCategoryDialog .investment-category-dialog-header p{font-size:12px!important;margin:4px 0 0!important}
+ #retirementCategoryDialog .investment-category-dialog-header .retirement-account-actions{
+   order:3;flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;
+ }
+ #retirementCategoryDialog .investment-category-dialog-header{flex-wrap:wrap}
+ #investmentCategoryDialog .investment-category-dialog-close,
+ #retirementCategoryDialog .investment-category-dialog-close{flex:0 0 44px!important;width:44px!important;height:44px!important;order:2}
+ #investmentCategoryDialog .investment-category-dialog-content,
+ #retirementCategoryDialog .investment-category-dialog-content{padding:15px!important;overflow:visible!important}
+ #investmentCategoryDialog .investment-category-dialog-content h3,
+ #retirementCategoryDialog .investment-category-dialog-content h3{font-size:12px!important;letter-spacing:.07em!important;text-transform:uppercase;color:var(--text-light)!important;margin:10px 0!important}
+ #investmentCategoryDialog .investment-category-dialog-summary,
+ #retirementCategoryDialog .investment-category-dialog-summary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ #investmentCategoryDialog .investment-category-dialog-summary>span,
+ #retirementCategoryDialog .investment-category-dialog-summary>span{
+   min-width:0!important;margin:0!important;padding:11px!important;
+   border:1px solid var(--border)!important;border-radius:12px!important;
+   background:color-mix(in srgb,var(--primary) 5%,var(--card-bg))!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-summary strong,
+ #retirementCategoryDialog .investment-category-dialog-summary strong{
+   font-size:clamp(15px,4vw,20px)!important;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;
+ }
+ #investmentCategoryDialog .investment-category-dialog-table,
+ #retirementCategoryDialog .investment-category-dialog-table{
+   overflow:visible!important;max-width:100%!important;min-width:0!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-table table,
+ #retirementCategoryDialog .investment-category-dialog-table table{
+   display:block!important;width:100%!important;min-width:0!important;border:0!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-table thead,
+ #retirementCategoryDialog .investment-category-dialog-table thead{display:none!important}
+ #investmentCategoryDialog .investment-category-dialog-table tbody,
+ #retirementCategoryDialog .investment-category-dialog-table tbody{
+   display:grid!important;gap:10px!important;width:100%!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-table tbody tr,
+ #retirementCategoryDialog .investment-category-dialog-table tbody tr{
+   display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+   gap:12px 8px!important;padding:13px!important;min-width:0!important;
+   border:1px solid color-mix(in srgb,var(--primary) 25%,var(--border))!important;
+   border-radius:14px!important;background:color-mix(in srgb,var(--primary) 4%,var(--card-bg))!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-table tbody td,
+ #retirementCategoryDialog .investment-category-dialog-table tbody td{
+   display:flex!important;flex-direction:column;align-items:flex-start!important;justify-content:flex-start!important;
+   gap:5px!important;min-width:0!important;max-width:100%!important;
+   width:auto!important;padding:0!important;border:0!important;
+   white-space:normal!important;overflow-wrap:anywhere!important;text-align:left!important;
+   font-variant-numeric:tabular-nums;
+ }
+ #investmentCategoryDialog .investment-category-dialog-table tbody td::before,
+ #retirementCategoryDialog .investment-category-dialog-table tbody td::before{
+   content:attr(data-mobile-label);display:block;font-size:10px;font-weight:700;
+   letter-spacing:.035em;text-transform:uppercase;color:var(--text-light);
+ }
+ #investmentCategoryDialog .investment-category-dialog-table tbody td:has(button),
+ #retirementCategoryDialog .investment-category-dialog-table tbody td:has(button){grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center!important}
+ #investmentCategoryDialog .investment-category-dialog-table tbody td button,
+ #retirementCategoryDialog .investment-category-dialog-table tbody td button{min-height:40px!important;white-space:normal!important}
+ #investmentCategoryDialog .investment-category-dialog-footer,
+ #retirementCategoryDialog .investment-category-dialog-footer{display:none!important}
+ #retirementCategoryDialog .retirement-account-help{font-size:12px!important;line-height:1.5!important}
+}
