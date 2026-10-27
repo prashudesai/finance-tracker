@@ -109,6 +109,15 @@ export function installFinanceWorkbench(){
   add(dialog,'p',issues.length?'Review: '+issues.join(', '):'Monthly cash-flow helpers, house-expense balances and available dashboard totals reconcile.');button(dialog,'Run full record health checks',()=>{dialog.close();runDataHealth();});
  }
  function tools(host,title,actions){if(!host)return;const details=add(host,'details');details.className='finance-workbench-tools';const summary=add(details,'summary');add(summary,'span',title);if(title==='Month review'){const hint=add(summary,'span','Review available');hint.className='month-review-hint';}for(const [label,fn]of actions)button(details,label,fn);}
+ // Immediate actions complement the collapsible detailed month-review tools.
+ const cashIntro=document.querySelector('#income-expenses .transaction-intro');
+ if(cashIntro){
+  const shortcuts=add(cashIntro,'div');shortcuts.className='cash-flow-quick-actions';
+  const review=button(shortcuts,'Review this month',()=>monthly());
+  review.setAttribute('aria-label','Review current month cash flow');
+  const upcoming=button(shortcuts,'Upcoming commitments',commitments);
+  upcoming.setAttribute('aria-label','View upcoming recorded recurring commitments');
+ }
  tools(document.getElementById('income-expenses'),'Month review',[['Review month',monthly],['Upcoming commitments',commitments]]);
  tools(document.getElementById('investments'),'Record freshness',[['Review valuation dates',valuations]]);
  tools(document.getElementById('growth-projection'),'Goal planning',[['Portfolio goal planner',planning]]);
