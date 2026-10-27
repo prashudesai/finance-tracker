@@ -925,3 +925,34 @@ html[data-app-style="modern"] .retirement-accounts-heading p{margin-top:3px}
  html[data-layout-style="emerald-flow"] #dashboard .flow-stat-grid .dashboard-stat { min-height:84px; padding:10px 12px; gap:8px; }
  html[data-layout-style="emerald-flow"] #dashboard .flow-summary { gap:8px; }
 }
+
+
+/* Mobile review fixes: compact cards, stable columns, and one scenario palette. */
+:root{--projection-stress:#e89497;--projection-base:#38bdf8;--projection-optimistic:#34d399}
+html body #growth-projection .growth-projection-stat-card-stress{--scenario-accent:var(--projection-stress)}
+html body #growth-projection .growth-projection-stat-card-base{--scenario-accent:var(--projection-base)}
+html body #growth-projection .growth-projection-stat-card-optimistic{--scenario-accent:var(--projection-optimistic)}
+html body :is(.growth-assumption-return-stress,.growth-assumption-scenario-row-stress,.growth-rate-control-stress){--growth-accent:var(--projection-stress)}
+html body :is(.growth-assumption-return-base,.growth-assumption-scenario-row-base,.growth-rate-control-base){--growth-accent:var(--projection-base)}
+html body :is(.growth-assumption-return-optimistic,.growth-assumption-scenario-row-optimistic,.growth-rate-control-optimistic){--growth-accent:var(--projection-optimistic)}
+html body .growth-assumption-slider{accent-color:var(--growth-accent)}
+html body .growth-assumption-slider::-webkit-slider-thumb{background:var(--growth-accent);box-shadow:0 0 0 1px var(--growth-accent)}
+html body .growth-assumption-slider::-moz-range-thumb{background:var(--growth-accent);box-shadow:0 0 0 1px var(--growth-accent)}
+#investments .finance-stale-dot{display:inline-block;flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#e3ad39;margin-left:auto}
+#investments .finance-valuation-review{min-height:44px;margin:0;font:inherit;font-size:11px;padding:6px 9px;white-space:nowrap}
+@media(max-width:700px){
+ html[data-app-style] body.advanced-layout #investments :is(.investment-category-card,.retirement-account-card){padding:12px;margin:0;border-radius:12px}
+ html[data-app-style] body.advanced-layout #investments :is(.investment-category-card,.retirement-account-card)>.panel-header{display:flex;flex-direction:row;align-items:center;flex-wrap:nowrap;gap:8px;min-height:44px;padding:0 0 8px;margin:0;border-bottom:1px solid var(--border)}
+ #investments :is(.investment-category-card,.retirement-account-card)>.panel-header>div{flex:1;min-width:0}
+ #investments :is(.investment-category-card,.retirement-account-card)>.panel-header :is(h2,h3){margin:0;font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+ html[data-app-style] body.advanced-layout #investments :is(#investmentCategoryPanels,#retirementAccountPanels){gap:10px}
+ html[data-app-style] body.advanced-layout #investments :is(.investment-category-card,.retirement-account-card) .investment-category-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;padding:10px 20px 2px 0;min-height:0}
+ #investments .investment-category-summary-grid strong{font-size:16px;line-height:1.35}
+ html[data-app-style] body.advanced-layout #debts .debt-page-overview>.debt-page-stat:not(.debt-page-stat-count){display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:12px;min-width:0}
+ html body #debts .debt-page-stat-icon{width:32px;height:32px;min-width:32px;flex:none;margin:0}
+ html body #debts .debt-page-stat-copy{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0;text-align:left}
+ html body #debts .debt-page-stat-value{margin:0;line-height:1.3;overflow-wrap:anywhere}
+ html body #debts .debt-summary-card-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start}
+ html body #debts .debt-summary-card-amount{display:grid;grid-template-columns:minmax(0,1fr);gap:3px}
+ html body #debts .debt-summary-type{min-width:0;overflow-wrap:anywhere}
+}

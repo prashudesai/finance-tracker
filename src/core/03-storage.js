@@ -290,7 +290,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       for(const row of state.reconciliations||[]){if(!allAccounts(row.kind).some(a=>a.id===row.accountId))findings.push({level:'Information',text:`Statement check ${row.id} refers to a deleted account; the historical comparison is retained.`});}
       const target=document.getElementById('dataHealthResults');target.innerHTML=`<p><strong>${valid?'Structural validation passed.':'Structural validation needs attention.'}</strong> ${findings.length} finding(s). No data was changed.</p>`+findings.slice(0,100).map(f=>`<p><strong>${analyticEscape(f.level)}</strong> · ${analyticEscape(f.text)}</p>`).join('')+(findings.length>100?'<p>Showing the first 100 findings. Review entries, then run the check again.</p>':'');return{valid,findings};
     }
-    function openRecordEditor(title,fields,validate){
+    function openRecordEditor(title,fields,validate,deleteRecord){
       const dialog=document.getElementById('recordEditorDialog'),form=document.getElementById('recordEditorForm');
       if(dialog.open)return Promise.resolve(null);
       document.getElementById('recordEditorTitle').textContent=title;document.getElementById('recordEditorError').textContent='';
@@ -315,9 +315,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           select.value=names[0];select.closest('.form-group').hidden=true;
         }
       }
-      const previousFocus=document.activeElement;dialog.showModal();
+      const previousFocus=document.activeElement;
+      dialog.querySelector('[data-record-delete]')?.remove();
+      const remove=deleteRecord?document.createElement('button'):null;
+      if(remove){remove.type='button';remove.className='btn-small btn-danger';remove.dataset.recordDelete='';remove.textContent='Delete transaction';form.append(remove);}
+      dialog.showModal();
       return new Promise(resolve=>{
-        const finish=value=>{form.onsubmit=null;dialog.oncancel=null;document.getElementById('cancelRecordEditor').onclick=null;dialog.close();previousFocus?.focus();resolve(value);};
+        const finish=value=>{remove?.remove();form.onsubmit=null;dialog.oncancel=null;document.getElementById('cancelRecordEditor').onclick=null;dialog.close();previousFocus?.focus();resolve(value);};
+        if(remove)remove.onclick=()=>{finish(null);deleteRecord();};
         document.getElementById('cancelRecordEditor').onclick=()=>finish(null);dialog.oncancel=event=>{event.preventDefault();finish(null);};
         form.onsubmit=event=>{event.preventDefault();if(!form.reportValidity())return;const values=Object.fromEntries(new FormData(form));for(const f of fields){if(f.type==='date'&&!(f.required===false&&values[f.key]==='')&&!validCalendarDate(values[f.key])){document.getElementById('recordEditorError').textContent='Enter a valid calendar date.';return;}}
           const error=validate?.(values);if(error){document.getElementById('recordEditorError').textContent=error;return;}finish(values);};
@@ -497,5 +502,6 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const display=value=>calendarDate(value).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
       return confirm(`This Monthly EMI is dated ${display(paymentDate)}, after its scheduled due date (${display(dueDate)}). Recorded part payments are prorated within the EMI interval; late-payment fees are not added. Continue with this date?`);
     }
+
 
 

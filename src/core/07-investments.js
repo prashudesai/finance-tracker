@@ -228,6 +228,7 @@
         name: name,
         invested: invested,
         current: current,
+        valuationDate:localDateKey(),
         monthly: monthly,
         autoMonthlyContribution:automaticMonthly,
         monthlyContributionDate:automaticMonthly?monthlyContributionDate:'',
@@ -496,4 +497,5 @@
         updateDashboard();
       }
     }
+
 

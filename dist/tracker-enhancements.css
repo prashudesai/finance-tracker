@@ -28,3 +28,15 @@ html[data-theme="light"] body.advanced-layout .mobile-nav-page{color:var(--text-
 html[data-theme="light"] body.advanced-layout .mobile-nav-page:active:not(:disabled){color:var(--primary-dark);background:var(--primary-light);}
 html[data-theme="light"] body.advanced-layout .mobile-nav-page:focus-visible{outline-color:var(--primary);}
 html[data-theme="light"] body.advanced-layout .mobile-nav-reveal{color:var(--text);background:var(--card-bg);border-color:var(--border);box-shadow:0 2px 9px rgba(15,35,50,.12);}
+
+
+#syncReviewDialog>header{padding:12px 16px}#syncReviewDialog h2{font-size:18px}
+#syncReviewDialog .tracker-review-content{padding:12px 16px;font-size:13px}
+#syncReviewDialog .tracker-review-content>p{margin:0 0 10px;line-height:1.45}
+#syncReviewDialog .tracker-conflict-count{font-weight:600;color:var(--primary)}
+#syncReviewDialog .tracker-review-table :is(th,td){padding:8px 6px;font-size:12px}
+#syncReviewDialog>footer{padding:12px 16px}
+#recordRecoveryDialog .recovery-choice{padding:10px 0;border-bottom:1px solid var(--border)}
+#recordRecoveryDialog .recovery-choice h3{font-size:14px;margin:0 0 6px}
+#recordRecoveryDialog .recovery-choice :is(summary,label,p){font-size:13px;line-height:1.5;margin:6px 0}
+#recordRecoveryDialog .recovery-choice select{min-height:44px;max-width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);color:var(--text);font:inherit}

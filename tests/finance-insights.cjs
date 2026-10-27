@@ -7,7 +7,12 @@ assert.equal(m.monthClose(data,'2026-10').available,850);assert.equal(m.monthClo
 assert.equal(m.automaticEntries(data,visible,'2026-10').length,2);assert.equal(m.automaticEntries(data,{},'2026-10').length,0);
 let changes=m.monthlyChanges(data,visible,'2026-10');assert.equal(changes.contributions,70);assert.equal(changes.principal,120);assert.equal(changes.spendingChange,100);assert.equal(changes.pmsGain,20);
 assert.equal(m.monthlyChanges({...data,stallionProfitHistory:[]},visible,'2026-10').pmsGain,null);assert.equal(m.monthlyChanges({...data,expenses:[]},visible,'2026-10').spendingChange,null);
-assert(m.freshness('pf',{current:100},{date:'2026-02-31',value:100},'2026-10-31').due);assert(m.freshness('pf',{current:101},{date:'2026-10-01',value:100},'2026-10-31').due);assert(!m.freshness('pf',{current:100},{date:'2026-01-01',value:100},'2026-10-31').due);assert(m.freshness('nps',{current:100},{date:'2026-01-01',value:100},'2026-10-31').due);
+for(const kind of ['pf','ppf'])assert.equal(m.freshness(kind,{valuationDate:'2025-01-01'},null,'2026-10-31').due,false);
+for(const growth of ['fixed','no-return'])assert.equal(m.freshness('investments',{valuationDate:'2025-01-01'},null,'2026-10-31',growth).due,false);
+assert.equal(m.freshness('nps',{valuationDate:'2026-10-01'},null,'2026-10-31').due,false);
+assert.equal(m.freshness('nps',{valuationDate:'2026-09-30'},null,'2026-10-31').due,true);
+for(const date of [undefined,'2026-02-31','2026-11-01'])assert.equal(m.freshness('nps',{valuationDate:date},null,'2026-10-31').due,false);
+assert.equal(m.freshness('investments',{valuationDate:'2026-09-01',current:100},{date:'2026-10-31',value:100},'2026-10-31').due,true);
 const candidates=[{kind:'expense',date:'2026-10-27',amount:100},{kind:'income',date:'2026-11-01',amount:9999},{kind:'expense',date:'2026-11-01',amount:300}];let plan=m.commitmentPlan(data,'2026-10-26',candidates);assert.equal(plan.total,100);assert.equal(plan.remaining,750); // Expected salary not added; same-day payments are outside before-income period.
 assert.equal(m.commitmentPlan({...data,monthlyBalances:[]},'2026-10-26',candidates).remaining,null);assert.equal(m.commitmentPlan(data,'2026-10-26',[...candidates,{kind:'emi',date:'2026-10-28',amount:null}]).remaining,null);assert.equal(JSON.stringify(data),before);
 console.log('PASS financial insights: reconciliation, month-end gating, payroll deduplication, profile scope, gain snapshots, freshness and uncertain commitments');

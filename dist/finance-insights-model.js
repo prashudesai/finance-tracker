@@ -10,11 +10,12 @@ export function automaticEntries(data,visible,month,payments={}){
  const incomeIds=new Set((visible.income||[]).map(r=>r.id));const recurring=[...(data.income||[]).filter(r=>incomeIds.has(r.id)),...(data.expenses||[])].filter(r=>r.recurringRuleId&&inMonth(r,month));
  return [...contributions,...recurring].map(row=>{const p=payments[automaticCheckKey(row)];return {row,confirmed:p?.status==='paid'&&p.amount===row.amount&&(p.epsAmount||0)===(row.epsAmount||0)};});
 }
-export function freshness(kind,row,stamp,today){
- const date=stamp?.date,valid=typeof date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(date)&&Number.isFinite(Date.parse(date+'T00:00:00Z'))&&new Date(date+'T00:00:00Z').toISOString().slice(0,10)===date;
- if(!valid||stamp.value!==row.current||date>today)return {due:true,label:'Value not confirmed',date:null};
- const days=Math.floor((Date.parse(today+'T00:00:00Z')-Date.parse(date+'T00:00:00Z'))/86400000),limit=['pf','ppf'].includes(kind)?366:45;
- return {due:days>limit,label:'Last valued '+date+(days>limit?' · Review due':''),date};
+export function freshness(kind,row,stamp,today,growthType='market'){
+ const market=kind==='nps'||kind==='investments'&&growthType==='market';
+ const date=row.valuationDate,valid=typeof date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(date)&&Number.isFinite(Date.parse(date+'T00:00:00Z'))&&new Date(date+'T00:00:00Z').toISOString().slice(0,10)===date&&date<=today;
+ if(!market||!valid)return {due:false,label:market?'Valuation date not recorded':'Fixed or non-market value',date:null};
+ const days=Math.floor((Date.parse(today+'T00:00:00Z')-Date.parse(date+'T00:00:00Z'))/86400000);
+ return {due:days>30,label:'Last value update '+date+(days>30?' · Over 30 days old':''),date};
 }
 export function monthlyChanges(data,visible,month){
  const ids=new Set(Object.values(visible).flat().map(r=>r.id)),investmentIds=new Set((visible.investments||[]).map(r=>r.id));
@@ -33,3 +34,4 @@ export function commitmentPlan(data,today,candidates){
  const known=items.filter(r=>Number.isFinite(r.amount)&&r.amount>=0),unknown=items.length-known.length,total=sum(known),balance=monthClose({...data,...Object.fromEntries(['income','expenses','stallionContributions'].map(k=>[k,(data[k]||[]).filter(r=>r.date<=today)]))},today.slice(0,7));
  return {until,nextIncome,items,total,unknown,balance,remaining:balance.opening===null||unknown?null:balance.available-total};
 }
+

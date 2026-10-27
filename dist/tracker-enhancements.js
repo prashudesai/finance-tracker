@@ -29,10 +29,10 @@
   }
   function show(node){node._returnFocus=document.activeElement;node.showModal();node.querySelector('header button').focus();}
   function action(node,text,fn,primary=false){const button=el('button',text,primary?'btn-primary':'btn-secondary');button.type='button';button.onclick=fn;node.querySelector('footer').append(button);return button;}
-  function summaryTable(model,incomingLabel='Backup'){
+  function summaryTable(model,incomingLabel='Backup',onlyDifferences=false){
     const wrap=el('div',undefined,'tracker-review-table'),table=el('table'),head=el('thead'),row=el('tr');
     ['Records','Now',incomingLabel,'Add','Change','Remove'].forEach(text=>row.append(el('th',text)));head.append(row);table.append(head);
-    const body=el('tbody');for(const group of model.groups.filter(g=>g.current||g.incoming)){const tr=el('tr');[group.label,group.current,group.incoming,group.added.length,group.changed.length,group.removed.length].forEach(value=>tr.append(el('td',String(value))));body.append(tr);}table.append(body);wrap.append(table);return wrap;
+    const body=el('tbody');for(const group of model.groups.filter(g=>onlyDifferences?g.added.length||g.changed.length||g.removed.length:g.current||g.incoming)){const tr=el('tr');[group.label,group.current,group.incoming,group.added.length,group.changed.length,group.removed.length].forEach(value=>tr.append(el('td',String(value))));body.append(tr);}table.append(body);wrap.append(table);return wrap;
   }
   function recordName(row){return [row?.date||row?.month,row?.member,row?.source||row?.category||row?.account||row?.type||row?.scheme,row?.amount!==undefined?formatCurrency(row.amount):null].filter(Boolean).join(' · ');}
   function diffDetails(model){
@@ -64,15 +64,18 @@
     show(node);return new Promise(resolve=>node.addEventListener('close',()=>resolve(node.returnValue==='confirm'),{once:true}));
   };
   window.openTrackerConflictReview=async()=>{
-    const node=dialog('syncReviewDialog','Review device and cloud records'),content=node.querySelector('.tracker-review-content');content.replaceChildren(el('p','Loading the latest cloud copy for comparison…'));node.querySelector('footer').replaceChildren();action(node,'Close',()=>node.close());show(node);
+    const node=dialog('syncReviewDialog','Review data conflict'),content=node.querySelector('.tracker-review-content');content.replaceChildren(el('p','Loading the latest cloud copy for comparison…'));node.querySelector('footer').replaceChildren();action(node,'Close',()=>node.close());show(node);
     if(!navigator.onLine){content.replaceChildren(el('p','Connect to the internet to compare with the cloud. Your device’s changes remain on this device.'));return;}
     try{
       const local=JSON.parse(JSON.stringify(state)),cloud=await window.financeCloud.inspect();
       if(!node.open)return;
       if(!cloud?.data)throw Error('No cloud snapshot is available.');
       const incoming=validateBackup(cloud.data),model=compareRecords(local,incoming);
-      content.replaceChildren(el('p','This is a read-only comparison. “Now” is this device; “Cloud” is the latest cloud copy. Counts describe what replacing this device with that copy would change.'),summaryTable(model,'Cloud'),diffDetails(model));
-      content.append(el('p','Keep a backup from this device before using Refresh cloud records. Automatic merging is not enabled.'));
+      const differences=model.groups.reduce((n,g)=>n+g.added.length+g.changed.length+g.removed.length,0);
+      content.replaceChildren(el('p',differences+' record difference(s) · '+model.settings.length+' setting group(s)', 'tracker-conflict-count'));
+      content.append(el('p','Device is your saved copy. Cloud is the latest shared copy. Review and download a backup before replacing either copy.'));
+      if(differences)content.append(summaryTable(model,'Cloud',true));
+      const details=el('details');details.append(el('summary','Inspect changed records'),diffDetails(model));content.append(details);
       const message=el('p');message.setAttribute('role','status');content.append(message);
       action(node,'Download this device’s backup',()=>{document.getElementById('exportBtn').click();message.textContent='Download requested. Check that the file was saved. Then close this comparison to use the existing cloud-refresh action.';});
     }catch(error){if(node.open)content.replaceChildren(el('p','Comparison unavailable: '+error.message+'. No records were replaced.'));}
@@ -144,3 +147,4 @@
   window.PFT_REVIEW_TOOLS={compareRecords};
   Promise.resolve(window.trackerReady).then(()=>{if(window.financeCloud&&!storageLoadFailed)install();}).catch(()=>{});
 })();
+

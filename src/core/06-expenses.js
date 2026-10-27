@@ -304,7 +304,7 @@
       if (!expense) return;
       const originalRecord=JSON.stringify(expense);
       const fields=[{key:'member',label:'Family member (optional)',value:expense.member||'',options:Array.from(document.getElementById('expenseMember').options,o=>o.value).filter(Boolean),optional:true,placeholder:'Household / unspecified'},{key:'amount',label:'Amount ₹',type:'number',min:0.01,value:expense.amount},...(expense.category==='EMI Payment'&&expense.loanId?[{key:'repaymentType',label:'Payment type',value:expense.repaymentType||'emi',options:['emi','part-payment'],optionLabels:{emi:'Monthly EMI','part-payment':'Part Payment'}}]:[]),{key:'date',label:'Expense date',type:'date',value:expense.date},{key:'notes',label:'Notes',type:'textarea',value:expense.notes||''}];
-      const values=await openRecordEditor('Edit expense',fields,v=>expense.recurringMonth&&v.date.slice(0,7)!==expense.recurringMonth?'Keep this recurring entry in its scheduled month. Adjust its amount or day within that month.':null);
+      const values=await openRecordEditor('Edit expense',fields,v=>expense.recurringMonth&&v.date.slice(0,7)!==expense.recurringMonth?'Keep this recurring entry in its scheduled month. Adjust its amount or day within that month.':null,()=>deleteExpense(id));
       if(!values)return;
       if(!state.expenses.includes(expense)||JSON.stringify(expense)!==originalRecord){alert('This record changed while editing. Reopen it and try again.');return;}
       const newAmt = values.amount;
@@ -367,4 +367,5 @@
         updateDashboard();
       }
     }
+
 

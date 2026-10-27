@@ -215,6 +215,7 @@
         account: account,
         invested: invested,
         current: current,
+        valuationDate:localDateKey(),
         date: date,
         scheme: scheme,
         monthly: monthly,
@@ -342,7 +343,7 @@
         if(invested+difference<0||current+difference<0){alert('This correction would make the invested or current balance negative. Update the account balance before correcting this contribution.');return;}
         record.invested=invested+difference;record.current=current+difference;contribution.amount=value;contribution.date=newDate;
         document.getElementById('retirementContributionHistoryFinancialYear').dataset.preferredYear=String(financialYearStartYearForMonthKey(month));
-      } else if(mode==='nps-current') record.current=value;
+      } else if(mode==='nps-current'){record.current=value;record.valuationDate=localDateKey();}
       else return;
       const finish=()=>{closeAccountUpdateModal();if(kind==='pf')renderPf();else if(kind==='ppf'){renderInvestments();renderPpf();}else if(kind==='nps')renderNps();updateDashboard();},saving=saveData();
       if(typeof window!=='undefined'&&window.financeWorkbench?.isReviewEditing('retirement'))return window.financeWorkbench.saveAndReturn(saving,finish);
@@ -404,4 +405,5 @@
         updateDashboard();
       }
     }
+
 

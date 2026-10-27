@@ -121,6 +121,7 @@
           // Current value = Total Invested (including contributions) + Profit
           // Invested amount in stallionPms already includes all contributions
           investment.current = stallion.invested + stallion.profit;
+          investment.valuationDate=latest.date;
         }
         
         document.getElementById('stallionProfitAmount').value = '';
@@ -187,4 +188,5 @@
         updateDashboard();
       }
     }
+
 

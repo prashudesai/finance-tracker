@@ -337,7 +337,7 @@
       }
       catch(error){summary.innerHTML=`<div class="panel"><strong>Projection needs attention</strong><p>${analyticEscape(error.message)}</p></div>`;body.innerHTML='<tr><td colspan="11" class="text-muted">Adjust the planned withdrawal before viewing projected values.</td></tr>';document.getElementById('growthProjectionTakeaway').textContent='';if(growthProjectionHoverCleanup){growthProjectionHoverCleanup();growthProjectionHoverCleanup=null;}if(growthProjectionChartInstance){growthProjectionChartInstance.destroy();growthProjectionChartInstance=null;}return;}
       const style=getComputedStyle(document.documentElement);
-      const colors={stress:'#e89497',base:'#38bdf8',optimistic:'#34d399'};
+      const colors=Object.fromEntries(['stress','base','optimistic'].map(s=>[s,style.getPropertyValue('--projection-'+s).trim()||({stress:'#e89497',base:'#38bdf8',optimistic:'#34d399'})[s]]));
       const labels={stress:'Stress',base:'Base',optimistic:'Optimistic'};
       summary.setAttribute('role','group');summary.setAttribute('aria-label',years+' year scenario comparison');
       const selectedScenario=['stress','base','optimistic'].includes(summary.dataset.scenario)?summary.dataset.scenario:'base';
@@ -452,3 +452,4 @@
     document.getElementById('growthProjectionYears').addEventListener('change',event=>{state.projectionSettings.years=Number(event.target.value);saveData();renderGrowthProjection();});
     document.getElementById('growthIncludeMonthlyContributions').addEventListener('change',event=>{state.projectionSettings=state.projectionSettings||{years:5,monthlyContributions:{},returns:{}};state.projectionSettings.includeMonthlyContributions=event.target.checked;saveData();renderGrowthProjection();});
     document.getElementById('growthIncludeGratuityBalance').addEventListener('change',event=>{state.projectionSettings=state.projectionSettings||{years:5,monthlyContributions:{},returns:{}};state.projectionSettings.includeGratuityBalance=event.target.checked;saveData();renderGrowthProjection();});
+

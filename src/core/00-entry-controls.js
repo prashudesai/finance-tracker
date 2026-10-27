@@ -75,7 +75,7 @@
       const profit=Number(values.profit);if(!validCalendarDate(values.date)||values.date<portfolio.date||!Number.isFinite(profit)||portfolio.invested+profit<0||state.stallionProfitHistory.some(item=>item.id!==id&&item.stallionId===row.stallionId&&item.date===values.date)){alert('Enter a unique valid snapshot date and gain / loss.');return;}
       Object.assign(row,{date:values.date,profit});
       const latest=state.stallionProfitHistory.filter(item=>item.stallionId===row.stallionId).sort((a,b)=>b.date.localeCompare(a.date))[0],pms=state.stallionPms.find(item=>item.id===row.stallionId);
-      portfolio.current=portfolio.invested+latest.profit;if(pms)pms.profit=latest.profit;
+      portfolio.current=portfolio.invested+latest.profit;portfolio.valuationDate=latest.date;if(pms)pms.profit=latest.profit;
       await saveData('Edited PMS gain / loss snapshot');renderInvestments();updateDashboard();
     }
     function setupModernModals() {
@@ -369,6 +369,7 @@
         for (const row of data[key]) {
           if (!row || typeof row !== 'object' || Array.isArray(row) || typeof row.id!=='string' || !/^[a-zA-Z0-9_-]+$/.test(row.id) || ids.has(row.id)) throw new Error(key+': invalid or duplicate record ID');
           ids.add(row.id);
+          if(['investments','nps'].includes(key)&&row.valuationDate!==undefined&&!dateOK(row.valuationDate))throw new Error(key+': invalid valuation date');
           if (key==='investments' && row.monthly===undefined) row.monthly=0;
           if (key==='investments' && row.autoMonthlyContribution!==undefined && typeof row.autoMonthlyContribution!=='boolean') throw new Error('investments: automatic monthly contribution must be true or false');
           if (key==='investments' && row.monthlyContributionDate!==undefined && row.monthlyContributionDate!=='' && !dateOK(row.monthlyContributionDate)) throw new Error('investments: invalid monthly contribution date');
@@ -528,4 +529,5 @@
       data.schemaVersion=2;
       return data;
     }
+
 

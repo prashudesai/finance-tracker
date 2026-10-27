@@ -174,7 +174,7 @@
       const income = state.income.find(i => i.id === id);
       if (!income) return;
       const originalRecord=JSON.stringify(income);
-      const values=await openRecordEditor('Edit income',[{key:'member',label:'Family member',value:income.member||'',options:Array.from(document.getElementById('incomeMember').options,o=>o.value)},{key:'amount',label:'Amount ₹',type:'number',min:0.01,value:income.amount},{key:'date',label:'Receipt date',type:'date',value:income.date},{key:'notes',label:'Notes',type:'textarea',value:income.notes||''}],v=>income.recurringMonth&&v.date.slice(0,7)!==income.recurringMonth?'Keep this recurring entry in its scheduled month. Adjust its amount or day within that month.':null);
+      const values=await openRecordEditor('Edit income',[{key:'member',label:'Family member',value:income.member||'',options:Array.from(document.getElementById('incomeMember').options,o=>o.value)},{key:'amount',label:'Amount ₹',type:'number',min:0.01,value:income.amount},{key:'date',label:'Receipt date',type:'date',value:income.date},{key:'notes',label:'Notes',type:'textarea',value:income.notes||''}],v=>income.recurringMonth&&v.date.slice(0,7)!==income.recurringMonth?'Keep this recurring entry in its scheduled month. Adjust its amount or day within that month.':null,()=>deleteIncome(id));
       if(!values)return;
       if(!state.income.includes(income)||JSON.stringify(income)!==originalRecord){alert('This record changed while editing. Reopen it and try again.');return;}
 
@@ -224,4 +224,5 @@
         updateDashboard();
       }
     }
+
 

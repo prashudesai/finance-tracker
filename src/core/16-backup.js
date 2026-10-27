@@ -430,6 +430,7 @@
         if(datedContributions.some(r=>r.date<values.date)||datedContributions.reduce((sum,r)=>sum+r.amount,0)>values.invested+0.01){alert('The start date and invested amount must include all recorded contributions.');return;}
         values.monthlyContributionNextDate=nextContributionDate;
         if(!investmentUsesInterestRate(values.type))delete record.rate;
+        if(values.current!==record.current)values.valuationDate=localDateKey();
         Object.assign(record,values);
         if(willBeStallion){let pms=state.stallionPms.find(x=>x.id===id);if(!pms){pms={id,member:record.member,name:record.name,invested:record.invested,profit:record.current-record.invested,createdDate:record.date};state.stallionPms.push(pms);}else Object.assign(pms,{member:record.member,name:record.name,invested:record.invested,profit:record.current-record.invested,createdDate:record.date});}
         else if(wasStallion)state.stallionPms=state.stallionPms.filter(x=>x.id!==id);
@@ -442,6 +443,7 @@
           entries.forEach(r=>{r.member=values.member;r.accountName=values.account||values.scheme||kind.toUpperCase();});
         }
         if(kind==='pf'){if(Number(values.epsMonthly??record.epsMonthly??0)>Number(values.employer??record.employer)){alert('EPS portion cannot exceed employer total.');return;}recordPfEpsBalanceUpdate(record,Number(values.epsCurrent??record.epsCurrent??0));}
+        if(kind==='nps'&&values.current!==record.current)values.valuationDate=localDateKey();
         Object.assign(record,values);
       }
       const finish=()=>{closeInvestmentEditModal();renderInvestments();renderNps();renderPpf();renderPf();renderStallionContributions();populateStallionDropdowns();updateDashboard();},saving=saveData();
@@ -502,4 +504,5 @@
       content.hidden=!opening;
       button.textContent=opening?'Hide History':'View History';
     });
+
 

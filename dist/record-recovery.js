@@ -82,10 +82,16 @@ export function installRecordRecovery(){
    const incoming=await window.financeCloud.inspectVersion();
    const cloud=validateBackup(incoming.envelope?.data||createEmptyState()),rows=recoveryRows(local,cloud),choices=[];
    if(!rows.length){add('p','Device and cloud records match.');return;}
+   add('p',rows.length+' differences · Choose which version to keep for each record.');
    for(const [i,row]of rows.entries()){
-    const item=add('details','');add('summary',row.key+(row.id?' · '+row.id:''),item);
-    add('pre',JSON.stringify({device:row.local??'(absent)',cloud:row.cloud??'(absent)'},null,2),item).style.cssText='white-space:pre-wrap;overflow-wrap:anywhere';
-    const label=add('label','Version to keep ',item),select=document.createElement('select');select.setAttribute('aria-label','Version for '+row.key+' '+(row.id||''));label.append(select);
+    const record=row.local||row.cloud,item=add('section','');item.className='recovery-choice';
+    add('h3',[record?.name||record?.source||record?.category||record?.account||row.key,record?.date].filter(Boolean).join(' · '),item);
+    const detail=add('details','',item);add('summary','Compare changes',detail);
+    if(row.local&&row.cloud&&typeof row.local==='object'&&typeof row.cloud==='object'&&!Array.isArray(row.local)&&!Array.isArray(row.cloud)){
+     for(const field of new Set([...Object.keys(row.local),...Object.keys(row.cloud)]))if(JSON.stringify(row.local[field])!==JSON.stringify(row.cloud[field]))add('p',field+': '+JSON.stringify(row.local[field]??'—')+' → '+JSON.stringify(row.cloud[field]??'—'),detail);
+    }else add('p',row.local===undefined?'Only in cloud':row.cloud===undefined?'Only on this device':'Different settings',detail);
+    const raw=add('details','',detail);add('summary','Full record data',raw);add('pre',JSON.stringify({device:row.local??'(absent)',cloud:row.cloud??'(absent)'},null,2),raw).style.cssText='white-space:pre-wrap;overflow-wrap:anywhere';
+    const label=add('label','Keep ',item),select=document.createElement('select');select.setAttribute('aria-label','Version for '+row.key+' '+(row.id||''));label.append(select);
     for(const [value,text]of [['','Choose a version'],['local','This device'],['cloud','Cloud']]){const option=add('option',text,select);option.value=value;}
     select.onchange=()=>choices[i]=select.value;
    }
@@ -96,3 +102,4 @@ export function installRecordRecovery(){
  window.resolveTrackerConflict=conflictReview;
  const reset=window.financeBridge.reset;window.financeBridge.reset=function(){if(dialog.open)dialog.close();dialog.remove();return reset.apply(this,arguments);};
 }
+

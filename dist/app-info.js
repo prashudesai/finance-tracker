@@ -1,7 +1,9 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.10",
+  "version": "2026.10.27.11",
   "released": "2026-10-27",
   "releaseNotes": [
+    "Improve mobile transaction search, history filters and tap-to-edit actions.",
+    "Refine investment and debt cards, valuation reminders, projections and conflict review.",
     "Give mobile pages more usable width and make the Dashboard more compact.",
     "Keep mobile controls accessible with streamlined spacing.",
     "Balance investment and retirement holding layouts and unify valuation controls.",

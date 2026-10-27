@@ -75,7 +75,7 @@
       const profit=Number(values.profit);if(!validCalendarDate(values.date)||values.date<portfolio.date||!Number.isFinite(profit)||portfolio.invested+profit<0||state.stallionProfitHistory.some(item=>item.id!==id&&item.stallionId===row.stallionId&&item.date===values.date)){alert('Enter a unique valid snapshot date and gain / loss.');return;}
       Object.assign(row,{date:values.date,profit});
       const latest=state.stallionProfitHistory.filter(item=>item.stallionId===row.stallionId).sort((a,b)=>b.date.localeCompare(a.date))[0],pms=state.stallionPms.find(item=>item.id===row.stallionId);
-      portfolio.current=portfolio.invested+latest.profit;if(pms)pms.profit=latest.profit;
+      portfolio.current=portfolio.invested+latest.profit;portfolio.valuationDate=latest.date;if(pms)pms.profit=latest.profit;
       await saveData('Edited PMS gain / loss snapshot');renderInvestments();updateDashboard();
     }
     function setupModernModals() {
@@ -369,6 +369,7 @@
         for (const row of data[key]) {
           if (!row || typeof row !== 'object' || Array.isArray(row) || typeof row.id!=='string' || !/^[a-zA-Z0-9_-]+$/.test(row.id) || ids.has(row.id)) throw new Error(key+': invalid or duplicate record ID');
           ids.add(row.id);
+          if(['investments','nps'].includes(key)&&row.valuationDate!==undefined&&!dateOK(row.valuationDate))throw new Error(key+': invalid valuation date');
           if (key==='investments' && row.monthly===undefined) row.monthly=0;
           if (key==='investments' && row.autoMonthlyContribution!==undefined && typeof row.autoMonthlyContribution!=='boolean') throw new Error('investments: automatic monthly contribution must be true or false');
           if (key==='investments' && row.monthlyContributionDate!==undefined && row.monthlyContributionDate!=='' && !dateOK(row.monthlyContributionDate)) throw new Error('investments: invalid monthly contribution date');
@@ -528,6 +529,7 @@
       data.schemaVersion=2;
       return data;
     }
+
 
     // State Management
     function familyMutationControl(element){
@@ -1486,7 +1488,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       for(const row of state.reconciliations||[]){if(!allAccounts(row.kind).some(a=>a.id===row.accountId))findings.push({level:'Information',text:`Statement check ${row.id} refers to a deleted account; the historical comparison is retained.`});}
       const target=document.getElementById('dataHealthResults');target.innerHTML=`<p><strong>${valid?'Structural validation passed.':'Structural validation needs attention.'}</strong> ${findings.length} finding(s). No data was changed.</p>`+findings.slice(0,100).map(f=>`<p><strong>${analyticEscape(f.level)}</strong> · ${analyticEscape(f.text)}</p>`).join('')+(findings.length>100?'<p>Showing the first 100 findings. Review entries, then run the check again.</p>':'');return{valid,findings};
     }
-    function openRecordEditor(title,fields,validate){
+    function openRecordEditor(title,fields,validate,deleteRecord){
       const dialog=document.getElementById('recordEditorDialog'),form=document.getElementById('recordEditorForm');
       if(dialog.open)return Promise.resolve(null);
       document.getElementById('recordEditorTitle').textContent=title;document.getElementById('recordEditorError').textContent='';
@@ -1511,9 +1513,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           select.value=names[0];select.closest('.form-group').hidden=true;
         }
       }
-      const previousFocus=document.activeElement;dialog.showModal();
+      const previousFocus=document.activeElement;
+      dialog.querySelector('[data-record-delete]')?.remove();
+      const remove=deleteRecord?document.createElement('button'):null;
+      if(remove){remove.type='button';remove.className='btn-small btn-danger';remove.dataset.recordDelete='';remove.textContent='Delete transaction';form.append(remove);}
+      dialog.showModal();
       return new Promise(resolve=>{
-        const finish=value=>{form.onsubmit=null;dialog.oncancel=null;document.getElementById('cancelRecordEditor').onclick=null;dialog.close();previousFocus?.focus();resolve(value);};
+        const finish=value=>{remove?.remove();form.onsubmit=null;dialog.oncancel=null;document.getElementById('cancelRecordEditor').onclick=null;dialog.close();previousFocus?.focus();resolve(value);};
+        if(remove)remove.onclick=()=>{finish(null);deleteRecord();};
         document.getElementById('cancelRecordEditor').onclick=()=>finish(null);dialog.oncancel=event=>{event.preventDefault();finish(null);};
         form.onsubmit=event=>{event.preventDefault();if(!form.reportValidity())return;const values=Object.fromEntries(new FormData(form));for(const f of fields){if(f.type==='date'&&!(f.required===false&&values[f.key]==='')&&!validCalendarDate(values[f.key])){document.getElementById('recordEditorError').textContent='Enter a valid calendar date.';return;}}
           const error=validate?.(values);if(error){document.getElementById('recordEditorError').textContent=error;return;}finish(values);};
@@ -1693,6 +1700,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const display=value=>calendarDate(value).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
       return confirm(`This Monthly EMI is dated ${display(paymentDate)}, after its scheduled due date (${display(dueDate)}). Recorded part payments are prorated within the EMI interval; late-payment fees are not added. Continue with this date?`);
     }
+
 
 
     // DEBTS
@@ -2322,7 +2330,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const income = state.income.find(i => i.id === id);
       if (!income) return;
       const originalRecord=JSON.stringify(income);
-      const values=await openRecordEditor('Edit income',[{key:'member',label:'Family member',value:income.member||'',options:Array.from(document.getElementById('incomeMember').options,o=>o.value)},{key:'amount',label:'Amount ₹',type:'number',min:0.01,value:income.amount},{key:'date',label:'Receipt date',type:'date',value:income.date},{key:'notes',label:'Notes',type:'textarea',value:income.notes||''}],v=>income.recurringMonth&&v.date.slice(0,7)!==income.recurringMonth?'Keep this recurring entry in its scheduled month. Adjust its amount or day within that month.':null);
+      const values=await openRecordEditor('Edit income',[{key:'member',label:'Family member',value:income.member||'',options:Array.from(document.getElementById('incomeMember').options,o=>o.value)},{key:'amount',label:'Amount ₹',type:'number',min:0.01,value:income.amount},{key:'date',label:'Receipt date',type:'date',value:income.date},{key:'notes',label:'Notes',type:'textarea',value:income.notes||''}],v=>income.recurringMonth&&v.date.slice(0,7)!==income.recurringMonth?'Keep this recurring entry in its scheduled month. Adjust its amount or day within that month.':null,()=>deleteIncome(id));
       if(!values)return;
       if(!state.income.includes(income)||JSON.stringify(income)!==originalRecord){alert('This record changed while editing. Reopen it and try again.');return;}
 
@@ -2372,6 +2380,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         updateDashboard();
       }
     }
+
 
     // EXPENSES
     const EXPENSE_SUBCATEGORY_OPTIONS = {
@@ -2679,7 +2688,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if (!expense) return;
       const originalRecord=JSON.stringify(expense);
       const fields=[{key:'member',label:'Family member (optional)',value:expense.member||'',options:Array.from(document.getElementById('expenseMember').options,o=>o.value).filter(Boolean),optional:true,placeholder:'Household / unspecified'},{key:'amount',label:'Amount ₹',type:'number',min:0.01,value:expense.amount},...(expense.category==='EMI Payment'&&expense.loanId?[{key:'repaymentType',label:'Payment type',value:expense.repaymentType||'emi',options:['emi','part-payment'],optionLabels:{emi:'Monthly EMI','part-payment':'Part Payment'}}]:[]),{key:'date',label:'Expense date',type:'date',value:expense.date},{key:'notes',label:'Notes',type:'textarea',value:expense.notes||''}];
-      const values=await openRecordEditor('Edit expense',fields,v=>expense.recurringMonth&&v.date.slice(0,7)!==expense.recurringMonth?'Keep this recurring entry in its scheduled month. Adjust its amount or day within that month.':null);
+      const values=await openRecordEditor('Edit expense',fields,v=>expense.recurringMonth&&v.date.slice(0,7)!==expense.recurringMonth?'Keep this recurring entry in its scheduled month. Adjust its amount or day within that month.':null,()=>deleteExpense(id));
       if(!values)return;
       if(!state.expenses.includes(expense)||JSON.stringify(expense)!==originalRecord){alert('This record changed while editing. Reopen it and try again.');return;}
       const newAmt = values.amount;
@@ -2742,6 +2751,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         updateDashboard();
       }
     }
+
 
     // INVESTMENTS
     function customInvestmentProfile(type){return state.customInvestmentProfiles?.[String(type||'').trim()]||null;}
@@ -2973,6 +2983,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         name: name,
         invested: invested,
         current: current,
+        valuationDate:localDateKey(),
         monthly: monthly,
         autoMonthlyContribution:automaticMonthly,
         monthlyContributionDate:automaticMonthly?monthlyContributionDate:'',
@@ -3242,6 +3253,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       }
     }
 
+
     // NPS Management
     function calculateXirr(cashflows) {
       const flows=cashflows.filter(flow=>validCalendarDate(flow.date)&&Number.isFinite(flow.amount)&&flow.amount!==0);
@@ -3459,6 +3471,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         account: account,
         invested: invested,
         current: current,
+        valuationDate:localDateKey(),
         date: date,
         scheme: scheme,
         monthly: monthly,
@@ -3586,7 +3599,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         if(invested+difference<0||current+difference<0){alert('This correction would make the invested or current balance negative. Update the account balance before correcting this contribution.');return;}
         record.invested=invested+difference;record.current=current+difference;contribution.amount=value;contribution.date=newDate;
         document.getElementById('retirementContributionHistoryFinancialYear').dataset.preferredYear=String(financialYearStartYearForMonthKey(month));
-      } else if(mode==='nps-current') record.current=value;
+      } else if(mode==='nps-current'){record.current=value;record.valuationDate=localDateKey();}
       else return;
       const finish=()=>{closeAccountUpdateModal();if(kind==='pf')renderPf();else if(kind==='ppf'){renderInvestments();renderPpf();}else if(kind==='nps')renderNps();updateDashboard();},saving=saveData();
       if(typeof window!=='undefined'&&window.financeWorkbench?.isReviewEditing('retirement'))return window.financeWorkbench.saveAndReturn(saving,finish);
@@ -3648,6 +3661,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         updateDashboard();
       }
     }
+
 
     // PPF Management
     document.getElementById('addPpfBtn').addEventListener('click', () => {
@@ -4068,6 +4082,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           // Current value = Total Invested (including contributions) + Profit
           // Invested amount in stallionPms already includes all contributions
           investment.current = stallion.invested + stallion.profit;
+          investment.valuationDate=latest.date;
         }
         
         document.getElementById('stallionProfitAmount').value = '';
@@ -4134,6 +4149,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         updateDashboard();
       }
     }
+
 
     // MONTHLY BALANCE TRACKING
     document.getElementById('toggleBalanceForm').addEventListener('click', () => {
@@ -5893,7 +5909,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       }
       catch(error){summary.innerHTML=`<div class="panel"><strong>Projection needs attention</strong><p>${analyticEscape(error.message)}</p></div>`;body.innerHTML='<tr><td colspan="11" class="text-muted">Adjust the planned withdrawal before viewing projected values.</td></tr>';document.getElementById('growthProjectionTakeaway').textContent='';if(growthProjectionHoverCleanup){growthProjectionHoverCleanup();growthProjectionHoverCleanup=null;}if(growthProjectionChartInstance){growthProjectionChartInstance.destroy();growthProjectionChartInstance=null;}return;}
       const style=getComputedStyle(document.documentElement);
-      const colors={stress:'#e89497',base:'#38bdf8',optimistic:'#34d399'};
+      const colors=Object.fromEntries(['stress','base','optimistic'].map(s=>[s,style.getPropertyValue('--projection-'+s).trim()||({stress:'#e89497',base:'#38bdf8',optimistic:'#34d399'})[s]]));
       const labels={stress:'Stress',base:'Base',optimistic:'Optimistic'};
       summary.setAttribute('role','group');summary.setAttribute('aria-label',years+' year scenario comparison');
       const selectedScenario=['stress','base','optimistic'].includes(summary.dataset.scenario)?summary.dataset.scenario:'base';
@@ -6008,6 +6024,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     document.getElementById('growthProjectionYears').addEventListener('change',event=>{state.projectionSettings.years=Number(event.target.value);saveData();renderGrowthProjection();});
     document.getElementById('growthIncludeMonthlyContributions').addEventListener('change',event=>{state.projectionSettings=state.projectionSettings||{years:5,monthlyContributions:{},returns:{}};state.projectionSettings.includeMonthlyContributions=event.target.checked;saveData();renderGrowthProjection();});
     document.getElementById('growthIncludeGratuityBalance').addEventListener('change',event=>{state.projectionSettings=state.projectionSettings||{years:5,monthlyContributions:{},returns:{}};state.projectionSettings.includeGratuityBalance=event.target.checked;saveData();renderGrowthProjection();});
+
     // EXPORT/IMPORT
     function backupIdentity(){return {exportedAt:new Date().toISOString(),appVersion:window.PFT_APP_INFO.version,ownerUid:window.financeCloud.ownerUid,ownerEmail:window.financeCloud.ownerEmail||window.financeCloud.email,exportedBy:window.financeCloud.email};}
     function makeDeviceRecoveryBackup(){return {...state,backupFormat:'finance-tracker',backupVersion:1,backupKind:'device-recovery',reviewMetadata:window.financeReviews?{format:1,values:window.financeReviews.export()}:null,backupMetadata:backupIdentity()};}
@@ -6440,6 +6457,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         if(datedContributions.some(r=>r.date<values.date)||datedContributions.reduce((sum,r)=>sum+r.amount,0)>values.invested+0.01){alert('The start date and invested amount must include all recorded contributions.');return;}
         values.monthlyContributionNextDate=nextContributionDate;
         if(!investmentUsesInterestRate(values.type))delete record.rate;
+        if(values.current!==record.current)values.valuationDate=localDateKey();
         Object.assign(record,values);
         if(willBeStallion){let pms=state.stallionPms.find(x=>x.id===id);if(!pms){pms={id,member:record.member,name:record.name,invested:record.invested,profit:record.current-record.invested,createdDate:record.date};state.stallionPms.push(pms);}else Object.assign(pms,{member:record.member,name:record.name,invested:record.invested,profit:record.current-record.invested,createdDate:record.date});}
         else if(wasStallion)state.stallionPms=state.stallionPms.filter(x=>x.id!==id);
@@ -6452,6 +6470,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           entries.forEach(r=>{r.member=values.member;r.accountName=values.account||values.scheme||kind.toUpperCase();});
         }
         if(kind==='pf'){if(Number(values.epsMonthly??record.epsMonthly??0)>Number(values.employer??record.employer)){alert('EPS portion cannot exceed employer total.');return;}recordPfEpsBalanceUpdate(record,Number(values.epsCurrent??record.epsCurrent??0));}
+        if(kind==='nps'&&values.current!==record.current)values.valuationDate=localDateKey();
         Object.assign(record,values);
       }
       const finish=()=>{closeInvestmentEditModal();renderInvestments();renderNps();renderPpf();renderPf();renderStallionContributions();populateStallionDropdowns();updateDashboard();},saving=saveData();
@@ -6512,6 +6531,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       content.hidden=!opening;
       button.textContent=opening?'Hide History':'View History';
     });
+
 
     for(const kind of ['income','expense'])document.getElementById(`${kind}HistorySearch`).addEventListener('input',()=>{transactionHistoryPages[kind]=1;kind==='income'?renderIncome():renderExpenses();});
     // Initialize

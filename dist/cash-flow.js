@@ -44,12 +44,27 @@ export function installCashFlow(){
  function decorateHistory(kind){if(!compact)return;for(const row of document.getElementById(kind==='income'?'incomeBody':'expenseBody').querySelectorAll('tr[data-cash-record]')){
   const cell=row.querySelector(kind==='income'?'td[data-label=Source]':'td[data-label=Category]');
   if(cell&&!cell.querySelector('.cash-category-icon')){const icon=make('span','cash-category-icon');icon.setAttribute('aria-hidden','true');icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h14l-1 12H6L5 8ZM9 8V6a3 3 0 0 1 6 0v2M9 12v4m6-4v4"/></svg>';cell.prepend(icon);}
-  const actions=row.querySelector('.transaction-actions');if(actions&&!actions.querySelector('details')){const menu=make('details','cash-record-menu'),summary=make('summary','','•••'),items=make('div','cash-record-actions');summary.setAttribute('aria-label','Record actions');for(const button of [...actions.querySelectorAll('button')])items.append(button);menu.append(summary,items);actions.append(menu);}
+  row.classList.add('cash-editable-record');row.tabIndex=0;row.setAttribute('aria-label','Edit '+kind+' · '+cell?.textContent.trim());
  }}
  const historyObserver=new MutationObserver(()=>{decorateHistory('income');decorateHistory('expense');});
  for(const kind of ['income','expense'])historyObserver.observe(document.getElementById(kind==='income'?'incomeBody':'expenseBody'),{childList:true});
  decorateHistory('income');decorateHistory('expense');
- const closeMenus=e=>{for(const menu of page.querySelectorAll('.cash-record-menu[open]'))if(!menu.contains(e.target)||e.target.closest('button'))menu.open=false;};document.addEventListener('click',closeMenus);
+ const editRow=event=>{
+  if(!compact)return;
+  const row=event.target.closest('tr[data-cash-record]');if(!row)return;
+  const interactive=event.target.closest('button,a,input,select,textarea,[tabindex="0"]:not(tr)');if(interactive&&row.contains(interactive))return;
+  if(event.type==='keydown'&&!['Enter',' '].includes(event.key))return;
+  if(event.type==='keydown')event.preventDefault();
+  if(window.getSelection()?.toString())return;
+  row.querySelector('button[aria-label^="Edit"]')?.click();
+ };
+ page.addEventListener('click',editRow);page.addEventListener('keydown',editRow);
+ const historyFilterChange=event=>{
+  if(!event.target.matches('#incomeHistoryMonth,#expenseHistoryMonth,#incomeHistoryFinancialYear,#expenseHistoryFinancialYear'))return;
+  delete page.dataset.cashMonth;
+  queueMicrotask(()=>{const kind=event.target.id.startsWith('income')?'income':'expense';page.dataset.cashMonth=document.getElementById(kind+'HistoryMonth').value;renderIncome();renderExpenses();refreshMonthFilter();renderTransactionOverview();window.financeInsights?.refresh();});
+ };
+ page.addEventListener('change',historyFilterChange,true);
  function close(){if(active&&pending[active]?.busy)return;dialog.close();}
  back.onclick=close;dialog.addEventListener('cancel',e=>{if(active&&pending[active]?.busy)e.preventDefault();});
  dialog.addEventListener('close',()=>{if(dialog.open)return;document.body.classList.remove('cash-entry-open');active=null;window.scrollTo({top:scroll,behavior:'instant'});trigger?.focus({preventScroll:true});savedRow?.scrollIntoView({block:'nearest',behavior:'instant'});savedRow=null;});
@@ -89,13 +104,14 @@ export function installCashFlow(){
   for(const {node,marker,kind}of moved){if(compact)entries[kind].append(node);else marker.after(node);}
   for(const node of page.querySelectorAll('.cash-add,.cash-cancel'))node.hidden=!compact;
   if(tools){tools.hidden=!compact;if(compact)tools.append(surplus);else surplusHome.after(surplus);}
-  if(!compact){delete page.dataset.cashKind;for(const h of Object.values(histories))h.hidden=false;for(const menu of page.querySelectorAll('.cash-record-menu')){const actions=menu.parentNode;for(const b of menu.querySelectorAll('button'))actions.append(b);menu.remove();}for(const icon of page.querySelectorAll('.cash-category-icon'))icon.remove();}
+  if(!compact){delete page.dataset.cashKind;for(const h of Object.values(histories))h.hidden=false;for(const menu of page.querySelectorAll('.cash-record-menu')){const actions=menu.parentNode;for(const b of menu.querySelectorAll('button'))actions.append(b);menu.remove();}for(const icon of page.querySelectorAll('.cash-category-icon'))icon.remove();for(const row of page.querySelectorAll('.cash-editable-record')){row.classList.remove('cash-editable-record');row.removeAttribute('tabindex');row.removeAttribute('aria-label');}}
   else {select(selectedKind);decorateHistory('income');decorateHistory('expense');}
   for(const kind of ['income','expense'])if(!pending[kind])document.getElementById(kind==='income'?'addIncomeBtn':'addExpenseBtn').textContent=(compact?'Save ':'Add ')+kind;
   renderTransactionOverview();
  }
  mobile.addEventListener('change',adapt);
- const reset=window.financeBridge.reset;window.financeBridge.reset=function(){mobile.removeEventListener('change',adapt);historyObserver.disconnect();document.removeEventListener('click',closeMenus);document.removeEventListener('click',capture,true);document.removeEventListener('click',onNavigation,true);if(dialog.open)dialog.close();for(const {node,marker}of moved)if(marker.isConnected)marker.replaceWith(node);dialog.remove();controls.remove();bar.remove();monthFilter.remove();delete page.dataset.cashMonth;delete window.financeCashFlow;return reset.apply(this,arguments);};
+ const reset=window.financeBridge.reset;window.financeBridge.reset=function(){mobile.removeEventListener('change',adapt);historyObserver.disconnect();page.removeEventListener('click',editRow);page.removeEventListener('keydown',editRow);page.removeEventListener('change',historyFilterChange,true);document.removeEventListener('click',capture,true);document.removeEventListener('click',onNavigation,true);if(dialog.open)dialog.close();for(const {node,marker}of moved)if(marker.isConnected)marker.replaceWith(node);dialog.remove();controls.remove();bar.remove();monthFilter.remove();delete page.dataset.cashMonth;delete window.financeCashFlow;return reset.apply(this,arguments);};
  window.financeCashFlow={open,select,updateBar,refreshMonthFilter,trackSave:(kind,id,date,operation)=>trackSave(kind,id,date,operation,entries[kind].__cashValues)};
  adapt();
 }
+
