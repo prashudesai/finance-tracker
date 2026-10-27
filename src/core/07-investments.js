@@ -65,10 +65,21 @@
       [...(sourceSummary?.children||[])].filter(item=>!item.classList.contains('investment-summary-chevron')).forEach(item=>(()=>{const clone=item.cloneNode(true);clone.removeAttribute?.('id');clone.querySelectorAll?.('[id]').forEach(element=>element.removeAttribute('id'));summary.appendChild(clone);})());
       const tableSource=card.querySelector('.investment-category-dialog-source .table-wrapper');
       table.replaceChildren();
-      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');table.appendChild(clone);}
+      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');table.appendChild(clone);labelInvestmentDialogCells(table);}
       else table.textContent='No holdings available.';
       dialog.dataset.investmentType=type;
       if(show&&dialog.hidden){dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();}
+    }
+    // Preserve the original account table and its actions while presenting rows as cards on phones.
+    function labelInvestmentDialogCells(container) {
+      container.querySelectorAll('table').forEach(table=>{
+        const labels=[...table.querySelectorAll('thead th')].map(cell=>cell.textContent.trim().replace(/[↕▲▼]/g,'').trim());
+        table.querySelectorAll('tbody tr').forEach(row=>{
+          [...row.children].forEach((cell,index)=>{
+            if(cell.matches('td,th'))cell.dataset.mobileLabel=labels[index]||'Details';
+          });
+        });
+      });
     }
     function refreshInvestmentCategoryDialog() {
       const dialog=document.getElementById('investmentCategoryDialog');
@@ -90,7 +101,7 @@
       const summary=document.getElementById('retirementCategoryDialogSummary');summary.replaceChildren();
       [...(summarySource?.children||[])].filter(item=>!item.classList.contains('investment-summary-chevron')).forEach(item=>(()=>{const clone=item.cloneNode(true);clone.removeAttribute?.('id');clone.querySelectorAll?.('[id]').forEach(element=>element.removeAttribute('id'));summary.appendChild(clone);})());
       const table=document.getElementById('retirementCategoryDialogTable');table.replaceChildren();
-      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));table.appendChild(clone);}
+      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));table.appendChild(clone);labelInvestmentDialogCells(table);}
       else table.textContent='No account details available.';
       const pagerSource=card.querySelector(`#accountPager-${type}`);
       if(pagerSource){const pager=pagerSource.cloneNode(true);pager.removeAttribute('id');pager.onclick=event=>{const button=event.target.closest('[data-direction]');if(!button)return;accountPages[type]=Math.max(0,(accountPages[type]||0)+Number(button.dataset.direction));({pf:renderPf,ppf:renderPpf,nps:renderNps}[type]||(()=>{}))();};table.appendChild(pager);}
