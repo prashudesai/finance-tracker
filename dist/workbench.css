@@ -94,3 +94,32 @@ html[data-app-style="modern"] body:has(>#openRecordSearch){padding-bottom:0}
 #recordSearchDialog input,#recordSearchDialog select{width:100%;font:inherit;font-size:16px;margin-top:6px;box-sizing:border-box;border-color:var(--border)}
 #recordSearchDialog .finance-search-result{padding:12px 0;gap:12px}
 #recordSearchDialog .finance-search-action button{margin:0}
+
+
+/* Staged release: monthly review is a short, readable decision flow. */
+.finance-workbench-dialog:has(.month-review-body){width:min(520px,calc(100vw - 24px));max-height:min(86dvh,760px);padding:18px;border-radius:20px;overscroll-behavior:contain}
+.finance-workbench-dialog:has(.month-review-body)>h2{margin:0 72px 12px 0;font-size:21px;line-height:1.25}
+.finance-workbench-dialog:has(.month-review-body)>button:first-of-type{position:absolute;right:16px;top:12px;margin:0;padding:7px 12px;min-height:40px;border:1px solid var(--border);border-radius:999px;background:transparent;color:var(--text)}
+.finance-workbench-dialog:has(.month-review-body)>label{margin:0 0 12px;font-size:12px;color:var(--text-light)}
+.finance-workbench-dialog:has(.month-review-body)>label input{margin-top:5px;border-radius:12px}
+.month-review-body{display:grid;gap:12px;min-width:0}
+.finance-workbench-dialog .month-review-body>section,.finance-workbench-dialog .month-review-body>div{margin:0}
+.month-review-summary{padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--primary) 7%,var(--card-bg))}
+.month-review-summary h3{margin:0 0 7px;font-size:16px}
+.month-review-status{margin:0;color:var(--text-light);font-size:13px;line-height:1.5}
+.month-review-status.is-warning{color:#e5b46a}
+.month-review-status.is-ready{color:var(--primary)}
+.month-review-figures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.month-review-figure{display:grid;gap:6px;padding:12px;border:1px solid var(--border);border-radius:12px;min-width:0;background:color-mix(in srgb,var(--primary) 4%,var(--card-bg))}
+.month-review-figure:last-child{grid-column:1/-1}
+.month-review-figure span{font-size:12px;line-height:1.4;color:var(--text-light)}
+.month-review-figure strong{font-size:clamp(17px,4.5vw,22px);overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.month-review-help{margin:0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,#c78d43 10%,var(--card-bg));font-size:13px;line-height:1.5}
+.month-review-actions{display:grid;gap:8px}
+.finance-workbench-dialog .month-review-actions button{margin:0;width:100%;min-height:48px;border-radius:12px;white-space:normal}
+.finance-workbench-dialog .month-review-actions .month-review-primary{background:var(--primary);color:var(--card-bg);font-weight:600}
+.finance-workbench-dialog .month-review-actions button:disabled{opacity:.65;cursor:default}
+.month-review-details{border-top:1px solid var(--border);padding-top:10px;font-size:13px}
+.month-review-details>summary{cursor:pointer;min-height:44px;align-content:center;color:var(--text-light)}
+.month-review-details .finance-workbench-values{gap:8px 12px}
+@media(max-width:600px){.finance-workbench-dialog:has(.month-review-body){padding:16px;max-height:calc(100dvh - 28px)}.month-review-figure{padding:10px}.month-review-details .finance-workbench-values{grid-template-columns:minmax(0,1fr) auto}.month-review-details .finance-workbench-values dd{text-align:right;margin:0}}
