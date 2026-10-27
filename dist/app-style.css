@@ -634,3 +634,101 @@ html[data-app-style="modern"] .pft-style-art{display:block;min-width:0;min-heigh
   html[data-app-style="modern"] #dashboard .dashboard-net-worth .dashboard-position-bar,
   html[data-layout-style="emerald-flow"] #dashboard .dashboard-net-worth .dashboard-position-bar{height:8px;border-radius:99px;overflow:hidden}
 }
+
+/* Keep holdings and retirement cards compact on wide screens. */
+@media (min-width: 1024px) {
+  #investments .investment-holdings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+  #investments .investment-holdings-grid > #investmentListPanel,
+  #investments .investment-holdings-grid > .retirement-accounts-section { min-width: 0; margin: 0; }
+}
+
+/* Align all investment heading text away from the accent bar. */
+html[data-app-style="modern"] body.advanced-layout #investments .investment-page-intro > div { padding-inline-start: 14px; }
+html[data-app-style="modern"] body.advanced-layout #investments .investment-page-intro h1 { padding-inline-start: 0; }
+@media (min-width: 1024px) {
+  html[data-app-style] body.advanced-layout #investments .investment-holdings-grid > .retirement-accounts-section { margin: 0; }
+}
+
+/* Investment overview: current totals and allocation, without invented history. */
+html[data-app-style] body.advanced-layout #investments .investment-overview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; overflow:visible; border:0; border-radius:0; background:transparent; box-shadow:none; }
+.investment-summary-hero,.investment-allocation-card { box-sizing:border-box; min-width:0; padding:24px; border:1px solid var(--border); border-radius:16px; background:var(--card-bg); box-shadow:var(--card-shadow); }
+.investment-summary-hero { background:linear-gradient(145deg,color-mix(in srgb,var(--primary) 15%,var(--card-bg)),var(--card-bg) 65%); }
+.investment-hero-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+.investment-metric-label { display:block; color:var(--text-light); font-size:13px; line-height:1.4; }
+.investment-hero-top strong { display:block; color:var(--text); font-size:clamp(26px,3vw,36px); margin-top:8px; overflow-wrap:anywhere; }
+.investment-gain-badge { flex:none; padding:6px 10px; border-radius:999px; color:var(--success); background:color-mix(in srgb,var(--success) 15%,var(--card-bg)); font-size:12px; font-weight:600; }
+.investment-gain-badge.is-negative { color:var(--danger); background:color-mix(in srgb,var(--danger) 15%,var(--card-bg)); }
+.investment-hero-description,.investment-allocation-note { color:var(--text-light); font-size:12px; margin:10px 0 0; }
+.investment-hero-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:28px; padding-top:20px; border-top:1px solid var(--border); }
+.investment-hero-metrics > div+div { padding-left:16px; border-left:1px solid var(--border); }
+.investment-hero-metrics strong { display:block; margin-top:6px; font-size:22px; color:var(--text); overflow-wrap:anywhere; }
+.investment-allocation-card h2 { margin:0; font-size:18px; color:var(--text); }
+.investment-allocation-content { display:flex; align-items:center; justify-content:center; gap:24px; margin-top:18px; }
+.investment-allocation-ring { width:150px; height:150px; flex:0 0 150px; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb,var(--text-light) 18%,var(--card-bg)); }
+.investment-allocation-center { width:68%; height:68%; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--card-bg); color:var(--text-light); font-size:10px; }
+.investment-allocation-center strong { color:var(--text); font-size:13px; max-width:90%; overflow-wrap:anywhere; }
+.investment-allocation-legend { min-width:0; flex:1; max-height:180px; overflow:auto; }
+.investment-allocation-legend p { color:var(--text-light); font-size:13px; }
+.investment-allocation-item { display:grid; grid-template-columns:10px minmax(0,1fr) auto; align-items:center; gap:8px; margin:7px 0; font-size:12px; color:var(--text); }
+.investment-allocation-item i { width:10px; height:10px; border-radius:3px; }
+.investment-allocation-item span { overflow-wrap:anywhere; }
+.investment-allocation-item strong { font-size:11px; color:var(--text-light); }
+@media(max-width:700px) { html[data-app-style] body.advanced-layout #investments .investment-overview-grid { grid-template-columns:minmax(0,1fr); gap:12px; } .investment-summary-hero,.investment-allocation-card { padding:16px; } .investment-allocation-content { gap:16px; } .investment-allocation-ring { width:120px; height:120px; flex-basis:120px; } }
+@media(max-width:350px) { .investment-allocation-content { flex-wrap:wrap; } .investment-allocation-legend { flex-basis:100%; } }
+
+/* Compact desktop pills; retain comfortable touch targets on smaller screens. */
+@media(min-width:701px) { html[data-app-style] body.advanced-layout #investments :is(#openGeneralInvestmentBtn,#retirementAddBtn) { display:inline-flex; align-items:center; gap:6px; min-height:0; padding:6px 14px; border-radius:999px; } }
+html[data-app-style] body.advanced-layout #investments :is(#openGeneralInvestmentBtn,#retirementAddBtn) > span { margin-left:2px; }
+
+/* The shared wrapper keeps every tab aligned at the same width. */
+@media(min-width:701px) { html[data-app-style="modern"] body.advanced-layout>.container, html[data-layout-style="emerald-flow"] body.advanced-layout>.container { box-sizing:border-box; width:100%; max-width:1280px; margin-inline:auto; padding-left:24px; padding-right:24px; } html[data-app-style="modern"] body.advanced-layout>.container>header, html[data-layout-style="emerald-flow"] body.advanced-layout>.container>header { margin-left:-24px; margin-right:-24px; padding-left:24px; padding-right:24px; } }
+@media(min-width:1024px) { html[data-app-style="modern"] body.advanced-layout>.container, html[data-layout-style="emerald-flow"] body.advanced-layout>.container { padding-left:32px; padding-right:32px; } html[data-app-style="modern"] body.advanced-layout>.container>header, html[data-layout-style="emerald-flow"] body.advanced-layout>.container>header { margin-left:-32px; margin-right:-32px; padding-left:32px; padding-right:32px; } }
+@media(max-width:700px) {
+  html[data-app-style="modern"] body.advanced-layout>.container, html[data-layout-style="emerald-flow"] body.advanced-layout>.container { box-sizing:border-box; width:100%; max-width:1280px; margin-inline:auto; padding-left:24px; padding-right:24px; }
+  html[data-app-style="modern"] body.advanced-layout>.container>header, html[data-layout-style="emerald-flow"] body.advanced-layout>.container>header { margin-left:-24px; margin-right:-24px; padding-left:24px; padding-right:24px; }
+}
+
+/* Analytics executive summary alignment. */
+html[data-app-style="modern"] body.advanced-layout #analytics .analytics-intro-copy { padding-inline-start:14px; }
+html[data-app-style="modern"] body.advanced-layout #analytics .analytics-intro-copy h1 { padding-inline-start:0; }
+html[data-app-style] body.advanced-layout #analytics .advanced-analytics-overview { grid-template-columns:repeat(2,minmax(0,1fr)); }
+html[data-app-style] body.advanced-layout #analytics .advanced-analytics-overview > .analytics-card { border-top:3px solid var(--primary); }
+@media(max-width:900px) { html[data-app-style] body.advanced-layout #analytics .advanced-analytics-overview { grid-template-columns:minmax(0,1fr); } }
+/* Analytics bento: responsive, equal-width rows with expandable content. */
+html[data-app-style] body.advanced-layout #analytics .analytics-intro { border-left:4px solid var(--primary); }
+html[data-app-style] body.advanced-layout #analytics .analytics-intro-copy::before { display:none; }
+.analytics-period-filter { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-light); }
+.analytics-period-filter select { border:1px solid var(--border); border-radius:999px; padding:8px 12px; background:var(--card-bg); color:var(--text); }
+html[data-app-style] body.advanced-layout #analytics .analytics-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:16px; }
+html[data-app-style] body.advanced-layout #analytics .analytics-grid > .analytics-card { grid-column:span 2; min-width:0; min-height:260px; margin:0; border-top:3px solid var(--primary); }
+html[data-app-style] body.advanced-layout #analytics .analytics-grid > .analytics-card:has(#incomeExpenseChart),html[data-app-style] body.advanced-layout #analytics .analytics-grid > .analytics-bento-trend { grid-column:span 3; }
+html[data-app-style] body.advanced-layout #analytics .analytics-grid > .analytics-card:has(#incomeExpenseChart) { order:1; }
+html[data-app-style] body.advanced-layout #analytics .analytics-grid > .analytics-bento-trend { order:2; }
+html[data-app-style] body.advanced-layout #analytics .analytics-grid > .analytics-bento-allocation { order:3; }
+html[data-app-style] body.advanced-layout #analytics .analytics-grid > .analytics-bento-returns { order:4; }
+html[data-app-style] body.advanced-layout #analytics .analytics-grid > .analytics-card:has(#debtProgressChart) { order:5; }
+html[data-app-style] body.advanced-layout #analytics .analytics-card[hidden],.analytics-empty-chart[hidden],#analytics canvas[hidden],#investmentReturnsChartScroll[hidden] { display:none!important; }
+#analytics .analytics-card .panel-header { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
+#analytics .analytics-card .panel-header h2::before { display:none; }
+#analytics .analytics-card .panel-header h2 { margin:0; font-size:16px; }
+#analytics .analytics-segmented { display:flex; flex-wrap:wrap; border:1px solid var(--border); border-radius:999px; padding:3px; gap:2px; }
+#analytics .analytics-segmented button { border:0; border-radius:999px; padding:6px 9px; background:transparent; color:var(--text-light); cursor:pointer; font-size:11px; }
+#analytics .analytics-segmented button[aria-pressed="true"] { background:var(--primary); color:var(--card-bg); }
+#analytics .analytics-view-details { margin:0 0 0 auto; }
+#analytics .history-month-control:has(#stallionProfitTrendFinancialYear),#analytics .history-month-control:has(#surplusTrendFinancialYear) { display:none; }
+#analytics .analytics-empty-chart { min-height:140px; display:grid; place-items:center; padding:16px; border:1px dashed var(--border); border-radius:12px; text-align:center; color:var(--text-light); font-size:13px; }
+#analytics .financial-summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+#analytics .analytics-networth-bar { grid-column:1/-1; border:1px solid var(--border); border-radius:10px; padding:12px; color:var(--text-light); font-size:12px; }
+#analytics .analytics-networth-bar > div:first-child { display:flex; justify-content:space-between; gap:12px; }
+#analytics .analytics-networth-bar strong { color:var(--text); }
+#analytics .analytics-networth-track { height:7px; margin:10px 0; border-radius:999px; background:color-mix(in srgb,var(--text-light) 20%,var(--card-bg)); overflow:hidden; }
+#analytics .analytics-networth-track i { display:block; height:100%; background:var(--primary); }
+#analytics .analytics-networth-labels { display:flex; justify-content:space-between; gap:10px; }
+#analytics .analytics-average-note { font-size:11px; }
+@media(max-width:1000px) { html[data-app-style] body.advanced-layout #analytics .analytics-grid > .analytics-card { grid-column:span 3!important; } }
+@media(max-width:700px) { html[data-app-style] body.advanced-layout #analytics .analytics-grid { grid-template-columns:minmax(0,1fr); } html[data-app-style] body.advanced-layout #analytics .analytics-grid > .analytics-card { grid-column:1!important; } #analytics .financial-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+#analytics #investmentReturnsChartScroll[hidden] + .investment-returns-swipe-hint { display:none; }
+#analytics #debtProgressChartEmpty::before { content:""; display:block; width:min(100%,280px); height:7px; border-radius:999px; background:color-mix(in srgb,var(--text-light) 20%,var(--card-bg)); }
+html[data-app-style] body.advanced-layout #analytics .analytics-eyebrow::before { display:none; }
+html[data-app-style] body.advanced-layout #analytics .financial-summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+@media(max-width:700px) { html[data-app-style] body.advanced-layout #analytics .financial-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }

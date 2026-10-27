@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.27.6",
+  "version": "2026.10.27.7",
   "released": "2026-10-27",
   "releaseNotes": [
-    "Make the three-arch hero desktop-only and polish the mobile Net Worth tile using real assets and debts.",
-    "Simplify the cloud-change notice with clear review and backup actions; preserve existing data unless the user applies a reviewed choice."
+    "Redesign Analytics with a financial-year filter, compact chart views and clear empty states.",
+    "Refresh the Investments overview and improve the cash-entry focus behavior."
   ]
 }

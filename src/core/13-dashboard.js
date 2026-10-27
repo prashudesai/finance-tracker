@@ -150,7 +150,8 @@
       if(fyIncome) fyIncome.textContent=formatCurrency(fyAverage.averageIncome);
       if(fyExpense) fyExpense.textContent=formatCurrency(fyAverage.averageExpense);
       if(fyNote) fyNote.textContent=`April–${fyAverage.through}; income avg uses ${fyAverage.incomeMonths} reported month${fyAverage.incomeMonths===1?'':'s'}, expense avg uses ${fyAverage.expenseMonths} reported month${fyAverage.expenseMonths===1?'':'s'}`;
-      renderAnalyticsAverageSnapshot(fyAverage);
+      const analyticsYear=Number(document.getElementById('analyticsFinancialYear')?.value)||fyAverage.startYear;
+      renderAnalyticsAverageSnapshot(analyticsYear===fyAverage.startYear?fyAverage:financialYearAverages(new Date(analyticsYear+1,2,31)));
 
       renderDebtSummary();
 

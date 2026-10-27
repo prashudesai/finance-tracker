@@ -134,9 +134,9 @@
       period.textContent=`FY ${String(average.startYear).slice(-2)}–${String(average.endYear).slice(-2)} · Apr–${shortMonth}`;
       const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
       const compactAverage=value=>Math.abs(value)>=100000?`₹${(Math.abs(value)/100000).toFixed(2)}L`:formatCurrency(value);
-      setText('analyticsAverageIncome',average.incomeMonths?compactAverage(average.averageIncome):'—');
-      setText('analyticsAverageExpenses',average.expenseMonths?compactAverage(average.averageExpense):'—');
-      setText('analyticsAverageContributions',average.contributionMonths?compactAverage(average.averageContribution):'—');
+      setText('analyticsAverageIncome',average.incomeMonths?compactAverage(average.averageIncome):formatCurrency(0));
+      setText('analyticsAverageExpenses',average.expenseMonths?compactAverage(average.averageExpense):formatCurrency(0));
+      setText('analyticsAverageContributions',average.contributionMonths?compactAverage(average.averageContribution):formatCurrency(0));
       setText('analyticsAverageExpenseRatio',average.expenseIncomeRatio===null?'—':`${average.expenseIncomeRatio.toFixed(1)}%`);
       setText('analyticsAverageIncomeCount',average.incomeMonths?`Across ${average.incomeMonths} month${average.incomeMonths===1?'':'s'} with income entries`:'No income entries recorded');
       setText('analyticsAverageExpenseCount',average.expenseMonths?`Across ${average.expenseMonths} month${average.expenseMonths===1?'':'s'} with expense entries`:'No expense entries recorded');
@@ -2209,7 +2209,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(master) preferredStartYear=financialYearStartYearForMonthKey(master);
       const currentYear = currentFinancialYearStartYear();
       const previous = Number(select.dataset.preferredYear || preferredStartYear || select.value || currentYear);
-      const years = [...new Set([currentYear, ...monthKeys.map(financialYearStartYearForMonthKey).filter(year => year <= currentYear)])].sort((a,b)=>b-a);
+      const years = [...new Set([currentYear, ...(['surplusTrendFinancialYear','stallionProfitTrendFinancialYear'].includes(selectId) && preferredStartYear ? [preferredStartYear] : []), ...monthKeys.map(financialYearStartYearForMonthKey).filter(year => year <= currentYear)])].sort((a,b)=>b-a);
       select.innerHTML = years.map(year => `<option value="${year}">${financialYearLabel(year)}</option>`).join('');
       select.value = years.includes(previous) ? String(previous) : String(currentYear);
       delete select.dataset.preferredYear;
@@ -2905,6 +2905,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(returnNode)returnNode.textContent=`${returnRate>=0?'+':''}${(returnRate*100).toFixed(1)}% return`;
       if(gainCard){gainCard.classList.toggle('is-positive',gain>=0);gainCard.classList.toggle('is-negative',gain<0);}
       if(monthlyNode)monthlyNode.textContent=formatCurrency(monthly);
+      const allocation=new Map();
+      for(const row of investments){const amount=Number(row.current)||0;if(amount>0){const name=row.type||'Other';allocation.set(name,(allocation.get(name)||0)+amount);}}
+      for(const [name,rows] of [['PF',pf],['PPF',ppf],['NPS',nps]]){const value=rows.reduce((sum,row)=>sum+(Number(row.current)||0),0);if(value>0)allocation.set(name,(allocation.get(name)||0)+value);}
+      const slices=[...allocation].sort((a,b)=>b[1]-a[1]),total=slices.reduce((sum,item)=>sum+item[1],0),colors=['#71d9bd','#4da88f','#367c6c','#76a9a2','#587b80','#a0b5a4'];
+      const ring=document.getElementById('investmentAllocationRing'),legend=document.getElementById('investmentAllocationLegend'),totalNode=document.getElementById('investmentAllocationTotal');
+      if(totalNode)totalNode.textContent=formatCurrency(total);
+      if(ring){let offset=0;const stops=slices.map(([,value],index)=>{const start=offset;offset+=value/total*100;return `${colors[index%colors.length]} ${start}% ${offset}%`;});ring.style.background=stops.length?`conic-gradient(${stops.join(',')})`:'';ring.setAttribute('aria-label',total?`Asset allocation: ${slices.map(([name,value])=>`${name} ${formatCurrency(value)}, ${(value/total*100).toFixed(1)}%`).join('; ')}. Excludes gratuity.`:'No investment balances recorded; gratuity is excluded.');}
+      if(legend){legend.replaceChildren();if(!slices.length){const empty=document.createElement('p');empty.textContent='No assets added yet';legend.append(empty);}else for(const [index,[name,value]] of slices.entries()){const row=document.createElement('div'),dot=document.createElement('i'),label=document.createElement('span'),amount=document.createElement('strong');row.className='investment-allocation-item';dot.setAttribute('aria-hidden','true');dot.style.backgroundColor=colors[index%colors.length];label.textContent=name;amount.textContent=`${(value/total*100).toFixed(1)}%`;row.append(dot,label,amount);legend.append(row);}}
     }
     function syncCustomFixedInvestmentCurrent(resetManual=false){
         const type=document.getElementById('investType')?.value,current=document.getElementById('investCurrent'),invested=document.getElementById('investAmount');
@@ -4362,7 +4370,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(fyIncome) fyIncome.textContent=formatCurrency(fyAverage.averageIncome);
       if(fyExpense) fyExpense.textContent=formatCurrency(fyAverage.averageExpense);
       if(fyNote) fyNote.textContent=`April–${fyAverage.through}; income avg uses ${fyAverage.incomeMonths} reported month${fyAverage.incomeMonths===1?'':'s'}, expense avg uses ${fyAverage.expenseMonths} reported month${fyAverage.expenseMonths===1?'':'s'}`;
-      renderAnalyticsAverageSnapshot(fyAverage);
+      const analyticsYear=Number(document.getElementById('analyticsFinancialYear')?.value)||fyAverage.startYear;
+      renderAnalyticsAverageSnapshot(analyticsYear===fyAverage.startYear?fyAverage:financialYearAverages(new Date(analyticsYear+1,2,31)));
 
       renderDebtSummary();
 
@@ -4829,6 +4838,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           return;
         }
         
+        setupAnalyticsBento();
         Chart.register(analyticLabels);
         console.log(' renderCharts called - Chart.js available, Processing analytics data...');
         renderIncomeExpenseChart();
@@ -4841,12 +4851,31 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         renderInvestmentReturnsChart();
         enhanceAnalytics();
         updateFinancialSummary();
+        updateAnalyticsBento();
         console.log(' All charts rendered successfully');
       } catch (e) {
         console.error(' Error rendering charts:', e);
       }
     }
 
+
+    function analyticsSelectedYear(){return Number(document.getElementById('analyticsFinancialYear')?.value)||currentFinancialYearStartYear();}
+    function setupAnalyticsBento(){
+      const root=document.getElementById('analytics');if(root.dataset.bentoReady)return;root.dataset.bentoReady='yes';
+      const select=document.getElementById('analyticsFinancialYear');
+      select.addEventListener('change',()=>{for(const id of ['surplusTrendFinancialYear','stallionProfitTrendFinancialYear'])document.getElementById(id).dataset.preferredYear=select.value;renderCharts();});
+      const groups=[['surplusTrendChart','stallionProfitTrendChart','Monthly Surplus','Stallion PMS','trend'],['assetAllocationChart','retirementFundsChart','All Assets','Retirement Only','allocation'],['investmentReturnsChart','familyContributionChart','Returns vs. Invested','Family Split','returns']];
+      for(const [first,second,a,b,name] of groups){const cards=[first,second].map(id=>document.getElementById(id).closest('.analytics-card'));cards.forEach((card,index)=>{card.classList.add('analytics-bento-'+name);const controls=document.createElement('div');controls.className='analytics-segmented';controls.setAttribute('aria-label',name+' view');for(const [i,label] of [a,b].entries()){const button=document.createElement('button');button.type='button';button.textContent=label;button.setAttribute('aria-pressed',String(i===index));button.addEventListener('click',()=>{cards.forEach((target,j)=>{target.hidden=j!==i;target.querySelectorAll('.analytics-segmented button').forEach((x,k)=>x.setAttribute('aria-pressed',String(i===k)));});requestAnimationFrame(()=>{for(const id of [first,second])chartInstances[id]?.resize();});});controls.append(button);}card.querySelector('.panel-header').append(controls);card.hidden=index!==0;});}
+      for(const card of root.querySelectorAll('.analytics-grid > .analytics-card')){const detail=card.querySelector('[data-analytics-detail-toggle]'),box=card.querySelector('.chart-detail'),note=card.querySelector('.chart-takeaway');if(detail&&box){const wrap=document.createElement('div');wrap.id=box.id+'Panel';wrap.hidden=true;box.before(wrap);if(note)wrap.append(note);wrap.append(box);box.hidden=false;detail.setAttribute('aria-controls',wrap.id);card.querySelector('.panel-header').append(detail);}}
+    }
+    function updateAnalyticsBento(){
+      const current=currentFinancialYearStartYear(),select=document.getElementById('analyticsFinancialYear'),old=Number(select.value)||current;
+      const months=[...(state.income||[]).map(x=>x.date),...(state.expenses||[]).map(x=>x.date),...(state.monthlyBalances||[]).map(x=>x.month),...(state.retirementContributions||[]).map(x=>x.date),...(state.investmentContributions||[]).map(x=>x.date),...(state.stallionContributions||[]).map(x=>x.date),...(state.stallionProfitHistory||[]).map(x=>x.date)].filter(x=>typeof x==='string'&&/^\d{4}-\d{2}/.test(x)).map(x=>x.slice(0,7));
+      const years=[...new Set([current,old,...months.map(financialYearStartYearForMonthKey)])].filter(y=>y<=current).sort((a,b)=>b-a);select.replaceChildren(...years.map(y=>new Option(financialYearLabel(y)+(y===current?' · Apr–'+new Date().toLocaleDateString('en-IN',{month:'short'}):' · Apr–Mar'),String(y))));select.value=String(old);
+      const average=financialYearAverages(old===current?new Date():new Date(old+1,2,31));renderAnalyticsAverageSnapshot(average);
+      const empty={incomeExpenseChart:'No cash outflows recorded for this period',surplusTrendChart:'No monthly surplus records for this period',stallionProfitTrendChart:'No Stallion PMS profit snapshots for this period',investmentReturnsChart:'No investment data yet',familyContributionChart:'No family contributions recorded',debtProgressChart:'No active loan principal recorded'};
+      for(const [id,message] of Object.entries(empty)){const canvas=document.getElementById(id),chart=chartInstances[id];if(!canvas||!chart)continue;const hasData=chart.data.datasets.some(ds=>(ds.data||[]).some(v=>v!==null&&Number.isFinite(Number(v))&&Number(v)!==0));const holder=id==='investmentReturnsChart'?document.getElementById('investmentReturnsChartScroll'):canvas;let placeholder=document.getElementById(id+'Empty');if(!placeholder){placeholder=document.createElement('p');placeholder.id=id+'Empty';placeholder.className='analytics-empty-chart';holder.after(placeholder);}holder.hidden=!hasData;placeholder.hidden=hasData;placeholder.textContent=id==='debtProgressChart'?'₹0 Paid / ₹0 Remaining · '+message:message;}
+    }
 
     function analyticPercent(value, base) { return base > 0 ? `${(value/base*100).toFixed(1)}%` : 'N/A'; }
     function analyticCompact(value) {
@@ -4916,10 +4945,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       return gradient;
     }
     function enhanceAnalytics() {
-      const householdTotals=monthTotals(currentMonthKey()),viewIncome=profileRows(state.income).filter(row=>inMonth(row.date,currentMonthKey())).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+      const year=analyticsSelectedYear(),inPeriod=row=>typeof row.date==='string'&&monthKeyInFinancialYear(row.date.slice(0,7),year)&&(year!==currentFinancialYearStartYear()||row.date.slice(0,7)<=currentMonthKey());
       const visibleIds=new Set(profileRows(state.investments).map(row=>row.id));
-      const t={...householdTotals,income:viewIncome,expenses:householdTotals.expenses,stallion:(state.stallionContributions||[]).filter(row=>visibleIds.has(row.stallionId)&&inMonth(row.date,currentMonthKey())).reduce((sum,row)=>sum+(Number(row.amount)||0),0)};
-      t.retirement=profileRows(state.retirementContributions).filter(row=>inMonth(row.date,currentMonthKey())).reduce((sum,row)=>sum+(Number(row.amount)||0)+(Number(row.epsAmount)||0),0);
+      const t={income:profileRows(state.income).filter(inPeriod).reduce((sum,row)=>sum+(Number(row.amount)||0),0),expenses:state.expenses.filter(inPeriod).reduce((sum,row)=>sum+(Number(row.amount)||0),0),stallion:(state.stallionContributions||[]).filter(row=>visibleIds.has(row.stallionId)&&inPeriod(row)).reduce((sum,row)=>sum+(Number(row.amount)||0),0),retirement:profileRows(state.retirementContributions).filter(inPeriod).reduce((sum,row)=>sum+(Number(row.amount)||0)+(Number(row.epsAmount)||0),0)};
       const outflow=t.expenses+t.stallion+t.retirement;const remaining=t.income-outflow;
       // Stallion is shown as its own allocation slice below; exclude it here
       // so the portfolio total and percentages count it exactly once.
@@ -4935,7 +4963,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         : ['#79B7A7','#D98F91','#D5AE70','#8EAAD2','#79A8B0'];
       const subtleDebtColors=darkTheme?{paid:'#5b9b83',remaining:'#bd7781'}:{paid:'#78B59B',remaining:'#D9848E'};
       cashChart.config.type='bar';
-      cashChart.data={labels:['Income','Expenses','Stallion','NPS + PPF','Cash remaining'],datasets:[{label:'Monthly cash flow',data:[t.income,t.expenses,t.stallion,t.retirement,remaining],backgroundColor:[subtleFlowColors[0],subtleFlowColors[1],subtleFlowColors[2],subtleFlowColors[3],remaining>=0?subtleFlowColors[4]:subtleFlowColors[1]],borderRadius:6,borderSkipped:false}]};
+      cashChart.data={labels:['Income','Expenses','Stallion','NPS + PPF','Cash remaining'],datasets:[{label:'Financial year cash flow',data:[t.income,t.expenses,t.stallion,t.retirement,remaining],backgroundColor:[subtleFlowColors[0],subtleFlowColors[1],subtleFlowColors[2],subtleFlowColors[3],remaining>=0?subtleFlowColors[4]:subtleFlowColors[1]],borderRadius:6,borderSkipped:false}]};
       cashChart.options.scales={y:{beginAtZero:true,ticks:{callback:v=>analyticCompact(v)}}};
       cashChart.$analyticLabels=[[analyticCompact(t.income),analyticPercent(t.expenses,t.income),analyticPercent(t.stallion,t.income),analyticPercent(t.retirement,t.income),analyticPercent(remaining,t.income)]];
       analyticsTable('incomeExpenseChart',['Item','Amount','% of income'],[['Income',formatCurrency(t.income),analyticPercent(t.income,t.income)],['Recorded expenses',formatCurrency(t.expenses),analyticPercent(t.expenses,t.income)],['Stallion contributions',formatCurrency(t.stallion),analyticPercent(t.stallion,t.income)],['NPS + PPF',formatCurrency(t.retirement),analyticPercent(t.retirement,t.income)],['Total outflows',formatCurrency(outflow),analyticPercent(outflow,t.income)],['Income less tracked outflows',formatCurrency(remaining),analyticPercent(remaining,t.income)]],
@@ -4953,12 +4981,16 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       chartInstances.debtProgressChart.$analyticLabels=[[analyticPercent(paid,principal)],[analyticPercent(owed,principal)]];
       analyticsTable('debtProgressChart',['Debt status','Amount','% of original principal'],[['Repaid',formatCurrency(paid),analyticPercent(paid,principal)],['Outstanding',formatCurrency(owed),analyticPercent(owed,principal)]],principal>0?`${analyticPercent(paid,principal)} of total borrowed repaid; ${formatCurrency(owed)} remains outstanding.`:'No loan principal recorded.');
       const ret=nps+ppf+pf;analyticsTable('retirementFundsChart',['Fund','Current value','Retirement share'],[['NPS',formatCurrency(nps),analyticPercent(nps,ret)],['PPF',formatCurrency(ppf),analyticPercent(ppf,ret)],['PF',formatCurrency(pf),analyticPercent(pf,ret)]],`Retirement assets: ${formatCurrency(ret)} (${analyticPercent(ret,total)} of total tracked assets).`);
-      const visibleNps=profileRows(state.nps),visiblePpf=profileRows(state.ppf),visiblePf=profileRows(state.pf),visiblePms=profileRows(state.investments.filter(x=>x.type==='Stallion PMS'));
-      const members=isCombinedFamilyProfile()?[...new Set([...visibleNps,...visiblePpf,...visiblePf,...visiblePms].map(x=>x.member||'Unassigned'))]:[activeFamilyProfile];
-      const memberRows=members.map(member=>{const n=visibleNps.filter(x=>x.member===member).reduce((a,x)=>a+retirementMonthlyAmount(x,'nps'),0);const p=visiblePpf.filter(x=>x.member===member).reduce((a,x)=>a+retirementMonthlyAmount(x,'ppf'),0);const f=visiblePf.filter(x=>x.member===member).reduce((a,x)=>a+retirementMonthlyAmount(x,'pf'),0);const ids=visiblePms.filter(x=>x.member===member&&x.type==='Stallion PMS').map(x=>x.id);const st=state.stallionContributions.filter(x=>ids.includes(x.stallionId)&&inMonth(x.date,currentMonthKey())).reduce((a,x)=>a+x.amount,0);return {member,n,p,f,st,total:n+p+f+st};});
+      const selectedInvestments=profileRows(state.investments), investmentMembers=new Map(selectedInvestments.map(row=>[row.id,row.member||'Unassigned']));
+      const rowsByMember=new Map();const addContribution=(member,kind,amount)=>{if(!rowsByMember.has(member))rowsByMember.set(member,{member,n:0,p:0,f:0,st:0,other:0});rowsByMember.get(member)[kind]+=Number(amount)||0;};
+      for(const row of profileRows(state.retirementContributions||[]).filter(inPeriod)){const kind={nps:'n',ppf:'p',pf:'f'}[row.investmentType];if(kind)addContribution(row.member||'Unassigned',kind,(Number(row.amount)||0)+(Number(row.epsAmount)||0));}
+      for(const row of (state.stallionContributions||[]).filter(inPeriod))if(investmentMembers.has(row.stallionId))addContribution(investmentMembers.get(row.stallionId),'st',row.amount);
+      for(const row of (state.investmentContributions||[]).filter(inPeriod))if(investmentMembers.has(row.investmentId))addContribution(investmentMembers.get(row.investmentId),'other',row.amount);
+      const memberRows=[...rowsByMember.values()].map(row=>({...row,total:row.n+row.p+row.f+row.st+row.other}));
       const contributionTotal=memberRows.reduce((a,x)=>a+x.total,0);const family=chartInstances.familyContributionChart;
-      family.data={labels:memberRows.map(x=>x.member),datasets:[{label:'NPS',data:memberRows.map(x=>x.n),backgroundColor:palette.brand,borderRadius:5,borderSkipped:false},{label:'PPF',data:memberRows.map(x=>x.p),backgroundColor:palette.blue,borderRadius:5,borderSkipped:false},{label:'PF (employee + employer)',data:memberRows.map(x=>x.f),backgroundColor:palette.violet,borderRadius:5,borderSkipped:false},{label:'Stallion this month',data:memberRows.map(x=>x.st),backgroundColor:palette.amber,borderRadius:5,borderSkipped:false}]};family.options.scales.x={stacked:true};family.options.scales.y.stacked=true;
-      analyticsTable('familyContributionChart',['Member','Monthly contribution','Share of contributions'],memberRows.map(x=>[x.member,formatCurrency(x.total),analyticPercent(x.total,contributionTotal)]),`Total contributions: ${formatCurrency(contributionTotal)}. Includes scheduled NPS/PPF, employee + employer PF, and dated Stallion contributions for this month; PF includes employer money.`);
+      family.data={labels:memberRows.map(x=>x.member),datasets:[{label:'NPS',data:memberRows.map(x=>x.n),backgroundColor:palette.brand},{label:'PPF',data:memberRows.map(x=>x.p),backgroundColor:palette.blue},{label:'PF',data:memberRows.map(x=>x.f),backgroundColor:palette.violet},{label:'Stallion',data:memberRows.map(x=>x.st),backgroundColor:palette.amber},{label:'Investments',data:memberRows.map(x=>x.other),backgroundColor:palette.cyan}]};family.options.scales.x={stacked:true};family.options.scales.y.stacked=true;
+      analyticsTable('familyContributionChart',['Member','FY recorded contributions','Share of contributions'],memberRows.map(x=>[x.member,formatCurrency(x.total),analyticPercent(x.total,contributionTotal)]),`Recorded contributions for ${financialYearLabel(year)} total ${formatCurrency(contributionTotal)}. PF includes recorded employee and employer amounts and EPS where recorded.`);
+
       const returns=investmentReturnItems();const returnChart=chartInstances.investmentReturnsChart;const plottedReturns=returnChart?returnChart.data.labels.map((label,index)=>({invested:returnChart.data.datasets[0].data[index],gain:returnChart.data.datasets[1].data[index]})):[];if(returnChart)returnChart.$analyticLabels=[plottedReturns.map(x=>analyticCompact(x.invested)),plottedReturns.map(x=>analyticPercent(x.gain,x.invested))];
       analyticsTable('investmentReturnsChart',['Investment','Invested','Current value','Gain / loss','Absolute return'],returns.map(x=>[x.name,formatCurrency(x.invested),formatCurrency(x.current),formatCurrency(x.current-x.invested),analyticPercent(x.current-x.invested,x.invested)]),'Gain = current value − invested amount. Includes NPS, PPF, PF and Stallion. Absolute return = gain ÷ invested amount; it is not annualised and does not account for contribution timing.');
       Object.entries(chartInstances).forEach(([id,chart])=>{
@@ -5105,7 +5137,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-              legend: { position: 'right',display:allocationTotal>0 },
+              legend: { position: 'right',display:true },
               tooltip: {
                 callbacks: {
                   label: (ctx) => '₹' + Math.round(ctx.parsed).toLocaleString('en-IN')
@@ -5123,7 +5155,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     function renderSurplusTrendChart() {
       try {
         destroyChart('surplusTrendChart');
-        const selectedYear=populateHistoryFinancialYear('surplusTrendFinancialYear',state.monthlyBalances.map(row=>row.month));
+        const selectedYear=populateHistoryFinancialYear('surplusTrendFinancialYear',state.monthlyBalances.map(row=>row.month),analyticsSelectedYear());
         const isCurrentTrendYear=selectedYear===currentFinancialYearStartYear();
         const sortedBalances = [...state.monthlyBalances].filter(b=>financialYearStartYearForMonthKey(b.month)===selectedYear&&(!isCurrentTrendYear||b.month<=currentMonthKey())).sort((a, b) => new Date(a.month) - new Date(b.month));
       
@@ -5186,7 +5218,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     function renderStallionProfitTrendChart() {
       try {
         destroyChart('stallionProfitTrendChart');
-        const selectedYear=populateHistoryFinancialYear('stallionProfitTrendFinancialYear',(state.stallionProfitHistory||[]).map(row=>row.date.slice(0,7)));
+        const selectedYear=populateHistoryFinancialYear('stallionProfitTrendFinancialYear',(state.stallionProfitHistory||[]).map(row=>row.date.slice(0,7)),analyticsSelectedYear());
         const visiblePmsIds=new Set(profileRows(state.investments.filter(row=>row.type==='Stallion PMS')).map(row=>row.id));
         const history = [...(state.stallionProfitHistory || [])].filter(row=>visiblePmsIds.has(row.stallionId)&&financialYearStartYearForMonthKey(row.date.slice(0,7))===selectedYear).sort((a,b)=>a.date.localeCompare(b.date));
         const dates = [...new Set(history.map(row=>row.date))].sort();
@@ -5273,6 +5305,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
       chartInstances['retirementFundsChart'] = new Chart(ctx, {
         type: 'doughnut',
+        plugins:[{id:'emptyRetirementRing',afterDraw(chart){if(npsTotal+ppfTotal+pfTotal>0)return;const a=chart.chartArea,c=chart.ctx,x=(a.left+a.right)/2,y=(a.top+a.bottom)/2,r=Math.max(12,Math.min(a.right-a.left,a.bottom-a.top)*.34);c.save();c.strokeStyle='rgba(148,163,184,.2)';c.lineWidth=Math.max(10,r*.25);c.beginPath();c.arc(x,y,r,0,2*Math.PI);c.stroke();c.fillStyle=themeColor('text');c.font='500 14px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('₹0 Total',x,y);c.restore();}}],
         data: {
           labels: ['NPS', 'PPF', 'PF'],
           datasets: [{
@@ -5400,15 +5433,12 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
     function updateFinancialSummary() {
       try {
-      const monthlyIncome = profileRows(state.income).filter(i => inMonth(i.date, currentMonthKey())).reduce((sum, i) => sum + i.amount, 0);
-      const householdIncome=state.income.filter(i=>inMonth(i.date,currentMonthKey())).reduce((sum,i)=>sum+(Number(i.amount)||0),0);
-      const monthlyExpenses = state.expenses.filter(e => inMonth(e.date, currentMonthKey())).reduce((sum, e) => sum + e.amount, 0);
-
-      const currentDate = new Date();
-      const currentMonthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-      const currentMonthBalance = state.monthlyBalances.find(b => b.month === currentMonthStr);
-      const stallionPMS = state.stallionContributions.filter(c => inMonth(c.date, currentMonthKey())).reduce((sum, c) => sum + (c.amount || 0), 0);
-      const surplus = currentMonthBalance ? currentMonthBalance.startBalance + householdIncome - monthlyExpenses - stallionPMS : householdIncome - monthlyExpenses - stallionPMS;
+      const year=analyticsSelectedYear(),inPeriod=row=>typeof row.date==='string'&&monthKeyInFinancialYear(row.date.slice(0,7),year)&&(year!==currentFinancialYearStartYear()||row.date.slice(0,7)<=currentMonthKey());
+      const monthlyIncome=profileRows(state.income).filter(inPeriod).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+      const monthlyExpenses=state.expenses.filter(inPeriod).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+      const householdIncome=state.income.filter(inPeriod).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+      const stallionPMS=state.stallionContributions.filter(inPeriod).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+      const surplus=householdIncome-monthlyExpenses-stallionPMS;
 
       const viewNps=profileRows(state.nps),viewPpf=profileRows(state.ppf),viewPf=profileRows(state.pf),viewInvestments=profileRows(state.investments);
       const npsTotal = viewNps.reduce((sum, nps) => sum + nps.current, 0);
@@ -5438,12 +5468,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         summaryRetirement: document.getElementById('summaryRetirement')
       };
 
+      const contributionSummary=document.getElementById('summaryContributions');if(contributionSummary)contributionSummary.textContent=formatCurrency(financialYearAverages(year===currentFinancialYearStartYear()?new Date():new Date(year+1,2,31)).contributionTotal);
       if (summary.summaryIncome) summary.summaryIncome.textContent = formatCurrency(monthlyIncome);
       if (summary.summaryExpenses) summary.summaryExpenses.textContent = formatCurrency(monthlyExpenses);
       if (summary.summarySurplus) summary.summarySurplus.textContent = formatCurrency(surplus);
       if (summary.summaryAssets) summary.summaryAssets.textContent = formatCurrency(totalAssets);
       if (summary.summaryDebts) summary.summaryDebts.textContent = formatCurrency(totalDebts);
       if (summary.summaryNetWorth) summary.summaryNetWorth.textContent = formatCurrency(netWorth);
+      const position=document.getElementById('analyticsNetworthAssets');if(position)position.style.width=(totalAssets+totalDebts>0?Math.max(0,Math.min(100,totalAssets/(totalAssets+totalDebts)*100)):0)+'%';
       if (summary.summaryReturns) summary.summaryReturns.textContent = formatCurrency(totalReturns);
       if (summary.summaryRetirement) summary.summaryRetirement.textContent = formatCurrency(npsTotal + ppfTotal + pfTotal);
       console.log(' Financial Summary updated');

@@ -172,6 +172,14 @@
       if(returnNode)returnNode.textContent=`${returnRate>=0?'+':''}${(returnRate*100).toFixed(1)}% return`;
       if(gainCard){gainCard.classList.toggle('is-positive',gain>=0);gainCard.classList.toggle('is-negative',gain<0);}
       if(monthlyNode)monthlyNode.textContent=formatCurrency(monthly);
+      const allocation=new Map();
+      for(const row of investments){const amount=Number(row.current)||0;if(amount>0){const name=row.type||'Other';allocation.set(name,(allocation.get(name)||0)+amount);}}
+      for(const [name,rows] of [['PF',pf],['PPF',ppf],['NPS',nps]]){const value=rows.reduce((sum,row)=>sum+(Number(row.current)||0),0);if(value>0)allocation.set(name,(allocation.get(name)||0)+value);}
+      const slices=[...allocation].sort((a,b)=>b[1]-a[1]),total=slices.reduce((sum,item)=>sum+item[1],0),colors=['#71d9bd','#4da88f','#367c6c','#76a9a2','#587b80','#a0b5a4'];
+      const ring=document.getElementById('investmentAllocationRing'),legend=document.getElementById('investmentAllocationLegend'),totalNode=document.getElementById('investmentAllocationTotal');
+      if(totalNode)totalNode.textContent=formatCurrency(total);
+      if(ring){let offset=0;const stops=slices.map(([,value],index)=>{const start=offset;offset+=value/total*100;return `${colors[index%colors.length]} ${start}% ${offset}%`;});ring.style.background=stops.length?`conic-gradient(${stops.join(',')})`:'';ring.setAttribute('aria-label',total?`Asset allocation: ${slices.map(([name,value])=>`${name} ${formatCurrency(value)}, ${(value/total*100).toFixed(1)}%`).join('; ')}. Excludes gratuity.`:'No investment balances recorded; gratuity is excluded.');}
+      if(legend){legend.replaceChildren();if(!slices.length){const empty=document.createElement('p');empty.textContent='No assets added yet';legend.append(empty);}else for(const [index,[name,value]] of slices.entries()){const row=document.createElement('div'),dot=document.createElement('i'),label=document.createElement('span'),amount=document.createElement('strong');row.className='investment-allocation-item';dot.setAttribute('aria-hidden','true');dot.style.backgroundColor=colors[index%colors.length];label.textContent=name;amount.textContent=`${(value/total*100).toFixed(1)}%`;row.append(dot,label,amount);legend.append(row);}}
     }
     function syncCustomFixedInvestmentCurrent(resetManual=false){
         const type=document.getElementById('investType')?.value,current=document.getElementById('investCurrent'),invested=document.getElementById('investAmount');

@@ -134,9 +134,9 @@
       period.textContent=`FY ${String(average.startYear).slice(-2)}–${String(average.endYear).slice(-2)} · Apr–${shortMonth}`;
       const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
       const compactAverage=value=>Math.abs(value)>=100000?`₹${(Math.abs(value)/100000).toFixed(2)}L`:formatCurrency(value);
-      setText('analyticsAverageIncome',average.incomeMonths?compactAverage(average.averageIncome):'—');
-      setText('analyticsAverageExpenses',average.expenseMonths?compactAverage(average.averageExpense):'—');
-      setText('analyticsAverageContributions',average.contributionMonths?compactAverage(average.averageContribution):'—');
+      setText('analyticsAverageIncome',average.incomeMonths?compactAverage(average.averageIncome):formatCurrency(0));
+      setText('analyticsAverageExpenses',average.expenseMonths?compactAverage(average.averageExpense):formatCurrency(0));
+      setText('analyticsAverageContributions',average.contributionMonths?compactAverage(average.averageContribution):formatCurrency(0));
       setText('analyticsAverageExpenseRatio',average.expenseIncomeRatio===null?'—':`${average.expenseIncomeRatio.toFixed(1)}%`);
       setText('analyticsAverageIncomeCount',average.incomeMonths?`Across ${average.incomeMonths} month${average.incomeMonths===1?'':'s'} with income entries`:'No income entries recorded');
       setText('analyticsAverageExpenseCount',average.expenseMonths?`Across ${average.expenseMonths} month${average.expenseMonths===1?'':'s'} with expense entries`:'No expense entries recorded');

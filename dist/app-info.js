@@ -1,7 +1,9 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.6",
+  "version": "2026.10.27.7",
   "released": "2026-10-27",
   "releaseNotes": [
+    "Redesign Analytics with a financial-year filter, compact chart views and clear empty states.",
+    "Refresh the Investments overview and improve the cash-entry focus behavior.",
     "Use the Google profile photo in the header by default, label it My finances, and keep Black in Appearance.",
     "Repair icon-only record actions throughout the pages; improve the mobile Investment, Retirement and Debt cards and empty states.",
     "Make the Cash Flow top month pill open the glass popover and filter all three totals plus both history tables on desktop and mobile.",

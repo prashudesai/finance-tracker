@@ -61,7 +61,7 @@
       if(master) preferredStartYear=financialYearStartYearForMonthKey(master);
       const currentYear = currentFinancialYearStartYear();
       const previous = Number(select.dataset.preferredYear || preferredStartYear || select.value || currentYear);
-      const years = [...new Set([currentYear, ...monthKeys.map(financialYearStartYearForMonthKey).filter(year => year <= currentYear)])].sort((a,b)=>b-a);
+      const years = [...new Set([currentYear, ...(['surplusTrendFinancialYear','stallionProfitTrendFinancialYear'].includes(selectId) && preferredStartYear ? [preferredStartYear] : []), ...monthKeys.map(financialYearStartYearForMonthKey).filter(year => year <= currentYear)])].sort((a,b)=>b-a);
       select.innerHTML = years.map(year => `<option value="${year}">${financialYearLabel(year)}</option>`).join('');
       select.value = years.includes(previous) ? String(previous) : String(currentYear);
       delete select.dataset.preferredYear;

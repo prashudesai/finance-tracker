@@ -1,3 +1,8 @@
+# 2026.10.27.7
+
+- Refresh Investment overview and Analytics layouts with responsive cards, shared financial-year controls and clear empty states.
+- Prevent delayed focus from interrupting cash entry.
+
 # 2026.10.27.6
 
 - Hide the desktop three-arch hero on mobile and refine the mobile Net Worth tile while keeping its real assets/debts figures.
