@@ -738,3 +738,11 @@ html[data-app-style] body.advanced-layout #analytics .financial-summary-grid { g
   .debt-summary-type { flex:1 1 135px; overflow-wrap:anywhere; }
   .debt-summary-card-amount strong,.debt-summary-card-amount span { min-width:0; white-space:normal; overflow-wrap:anywhere; }
 }
+@media(max-width:350px) {
+  html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-intro h1 { white-space:nowrap; font-size:19px; }
+  html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout .transaction-intro { gap:6px; }
+  html[data-app-style] body.advanced-layout #income-expenses #cashMonthFilterPopoverTrigger { padding-inline:8px; font-size:11px; }
+}
+@media(max-width:350px) {
+  html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout > .transaction-intro .transaction-intro-copy h1 { font-size:19px; white-space:nowrap; }
+}
