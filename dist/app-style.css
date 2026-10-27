@@ -1096,3 +1096,21 @@ html[data-app-style] body.advanced-layout #dashboard > .dashboard-page-intro h1 
 @media screen and (min-width:701px){
   html[data-app-style] body.advanced-layout .advanced-header-context .advanced-header-eyebrow{display:none}
 }
+
+
+/* Staged release Issue 7: concise, accessible monthly highlights. */
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-insight-body{display:grid;gap:12px}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-intro{margin:0;color:var(--text-light);font-size:12px;line-height:1.5}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight{display:flex;flex-direction:column;gap:7px;min-width:0;padding:15px;border:1px solid color-mix(in srgb,var(--primary) 23%,var(--border));border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--primary) 9%,var(--card-bg)),var(--card-bg))}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-label{color:var(--text-light);font-size:12px;line-height:1.35}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-value{color:var(--text);font-size:clamp(17px,2.4vw,24px);line-height:1.2;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-caption{margin-top:auto;color:var(--text-light);font-size:11px;line-height:1.45}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-positive .finance-highlight-value{color:#7ddbbd}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-negative .finance-highlight-value{color:#f1a69e}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-pms{border-color:color-mix(in srgb,#9389d8 35%,var(--border))}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain{border-top:1px solid var(--border);padding-top:5px;color:var(--text-light)}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain>summary{cursor:pointer;min-height:44px;align-content:center;font-size:13px;color:var(--text)}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain .finance-insight-note{font-size:12px;line-height:1.55}
+@media(max-width:450px){html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight{padding:12px;gap:6px}html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-value{font-size:17px}html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-grid{gap:8px}}
+@media(max-width:330px){html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-grid{grid-template-columns:minmax(0,1fr)}}
