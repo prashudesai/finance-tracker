@@ -4,7 +4,7 @@
       const button = document.getElementById('toggleBalanceForm');
       const opening = form.hidden;
       form.hidden = !opening;
-      button.textContent = opening ? 'Cancel' : '+ Add Monthly Surplus';
+      button.textContent = opening ? 'Cancel' : '+ Add opening balance';
       button.setAttribute('aria-expanded', String(opening));
       if (opening) {
         if (!document.getElementById('balanceMonth').value) document.getElementById('balanceMonth').value = currentMonthKey();
@@ -16,14 +16,14 @@
       const startBalance = Number(document.getElementById('balanceStartAmount').value);
 
       if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || document.getElementById('balanceStartAmount').value.trim() === '' || !Number.isFinite(startBalance) || startBalance < 0) {
-        alert('Please enter month and valid start balance');
+        alert('Please select a month and enter a valid opening balance');
         return;
       }
 
       // Check if record already exists for this month
       const existingIndex = state.monthlyBalances.findIndex(b => b.month === month);
       if (existingIndex !== -1) {
-        if (confirm('Record already exists for this month. Replace it?')) {
+        if (confirm('An opening balance already exists for this month. Replace its value?')) {
           state.monthlyBalances[existingIndex].startBalance = startBalance;
         } else {
           return;
@@ -42,7 +42,7 @@
       document.getElementById('balanceMonth').value = currentMonthKey();
       document.getElementById('balanceStartAmount').value = '';
       document.getElementById('balanceEntryForm').hidden = true;
-      document.getElementById('toggleBalanceForm').textContent = '+ Add Monthly Surplus';
+      document.getElementById('toggleBalanceForm').textContent = '+ Add opening balance';
       document.getElementById('toggleBalanceForm').setAttribute('aria-expanded', 'false');
 
       saveData();
