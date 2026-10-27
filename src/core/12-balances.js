@@ -91,6 +91,16 @@
         const found=byMonth.get(String(row.date||'').slice(0,7));
         if(found)found.expenses+=Number(row.amount)||0;
       }
+      const hasRecords=months.some(row=>row.income!==0||row.expenses!==0);
+      if(!hasRecords){
+        host.replaceChildren();
+        const note=document.createElement('p');
+        note.className='cash-flow-trend-empty';
+        note.textContent='No income or expenses recorded across these six months.';
+        host.append(note);
+        host.setAttribute('aria-label',note.textContent);
+        return;
+      }
       const maximum=Math.max(1,...months.flatMap(row=>[row.income,row.expenses]));
       const x=index=>34+index*52;
       const y=value=>126-Math.max(0,value)/maximum*100;
