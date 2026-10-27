@@ -1013,3 +1013,27 @@ html[data-app-style] body.advanced-layout #dashboard > .dashboard-page-intro h1 
   html[data-app-style] body.advanced-layout #dashboard > .dashboard-page-intro { margin:7px 0 11px; }
   html[data-app-style] body.advanced-layout #dashboard > .dashboard-page-intro h1 { font-size:19px; }
 }
+
+/* Dashboard snapshot: restrained frosted-glass month picker.
+   The native select remains available to assistive technology. */
+#dashboardExpenseSnapshot .dashboard-month-picker{position:relative;flex:0 0 auto;min-width:0}
+#dashboardExpenseSnapshot .dashboard-month-native{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;opacity:0!important;overflow:hidden!important;clip-path:inset(50%)!important;pointer-events:none!important}
+#dashboardExpenseSnapshot .dashboard-month-trigger{display:inline-flex;align-items:center;justify-content:space-between;gap:12px;max-width:100%;min-height:44px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--text-light) 30%,transparent);border-radius:13px;background:linear-gradient(145deg,color-mix(in srgb,var(--card-bg) 78%,transparent),color-mix(in srgb,var(--primary) 9%,var(--card-bg)));color:var(--text);font:inherit;font-size:12px;font-weight:500;letter-spacing:0;white-space:nowrap;box-shadow:inset 0 1px rgba(255,255,255,.07),0 3px 14px rgba(0,0,0,.06);cursor:pointer;transition:border-color .15s ease,background .15s ease}
+#dashboardExpenseSnapshot .dashboard-month-trigger:hover,#dashboardExpenseSnapshot .dashboard-month-trigger[aria-expanded="true"]{border-color:color-mix(in srgb,var(--primary) 50%,var(--border));background:color-mix(in srgb,var(--primary) 10%,var(--card-bg))}
+#dashboardExpenseSnapshot .dashboard-month-trigger:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+#dashboardExpenseSnapshot .dashboard-month-chevron{color:var(--primary);font-size:19px;line-height:1;transition:transform .15s ease}
+#dashboardExpenseSnapshot .dashboard-month-trigger[aria-expanded="true"] .dashboard-month-chevron{transform:rotate(180deg)}
+#dashboardExpenseSnapshot .dashboard-month-menu{z-index:1100;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;padding:6px;border:1px solid color-mix(in srgb,var(--primary) 27%,var(--border));border-radius:15px;background:color-mix(in srgb,var(--card-bg) 92%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:0 14px 36px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.08);scrollbar-width:thin}
+#dashboardExpenseSnapshot .dashboard-month-menu[hidden]{display:none!important}
+#dashboardExpenseSnapshot .dashboard-month-option{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--text);font:inherit;font-size:12px;text-align:left;cursor:pointer}
+#dashboardExpenseSnapshot .dashboard-month-option:hover,#dashboardExpenseSnapshot .dashboard-month-option:focus-visible{outline:none;background:color-mix(in srgb,var(--primary) 12%,var(--card-bg))}
+#dashboardExpenseSnapshot .dashboard-month-option[aria-selected="true"]{background:color-mix(in srgb,var(--primary) 17%,var(--card-bg));font-weight:600}
+#dashboardExpenseSnapshot .dashboard-month-check{color:var(--primary);font-size:15px}
+@media(max-width:700px){
+ #dashboardExpenseSnapshot .dashboard-wide-header{display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
+ #dashboardExpenseSnapshot .dashboard-wide-header>.dashboard-card-heading{min-width:0;flex:1}
+ #dashboardExpenseSnapshot .dashboard-wide-header .dashboard-kicker{line-height:1.35}
+ #dashboardExpenseSnapshot .dashboard-month-trigger{font-size:12px;gap:7px;padding:7px 10px}
+}
+@media(max-width:360px){#dashboardExpenseSnapshot .dashboard-wide-header{flex-wrap:wrap}#dashboardExpenseSnapshot .dashboard-month-picker{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){#dashboardExpenseSnapshot .dashboard-month-trigger,#dashboardExpenseSnapshot .dashboard-month-chevron{transition:none}}
