@@ -211,7 +211,7 @@
   "tests/cloud-store.cjs": "1b5fa9bb052327bf0b808835b4a3ef8d617ef9a8e78f95a0842f6feca9b9784d",
   "tests/daily-interest-visibility.cjs": "179a2a4ab5a2e9cfe0b88e1fffc4a9bdbb744252a820a62c32b186def32b0fc2",
   "tests/delete-account.cjs": "ec9da2a9a9b91fb55ebf4fbe0d7e52de098ca6c2ad975f2267f4c33f4a718acb",
-  "tests/emerald-flow-browser.cjs": "2716b6efd7e0b244fbebd8b5d3bc9829949a1b7b9dbab7d8c24073e55f9a18a9",
+  "tests/emerald-flow-browser.cjs": "5c7f261daeaa6eb7ddb4710afd13985c7963490e333108cbc55626f62c0925ab",
   "tests/family-policy.cjs": "942afc176b8c0746ebf4a11e3be6ed02ac28ce087569964e8bae0d5a5d710b7f",
   "tests/family-rules.py": "4fbaee664545a3d23f276bc52cbf38ca79b86b89184171ef1fc45c4d58b280b6",
   "tests/family-tiles.cjs": "22fa0f2e8e40e6dc1959503c81d193010ff8acb1fb3be284a978789d86ebf36f",
