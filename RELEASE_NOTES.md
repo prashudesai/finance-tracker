@@ -1,4 +1,4 @@
-# 2026.10.27.5
+# 2026.10.27.6
 
 - Hide the desktop three-arch hero on mobile and refine the mobile Net Worth tile while keeping its real assets/debts figures.
 - Make cloud-change actions clearer and provide a direct review path when device and cloud records differ.
