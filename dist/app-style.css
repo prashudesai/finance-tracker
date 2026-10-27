@@ -593,7 +593,7 @@ html[data-layout-style="emerald-flow"] .flow-stat-grid{grid-column:span 7;grid-t
 
 /* Align desktop cash-flow form actions and give Expense notes the full row. */
 @media screen and (min-width:701px){
-html[data-app-style="modern"] body.advanced-layout #income-expenses .advanced-cashflow-entry-card{display:flex;flex-direction:column;justify-content:space-between}
+html[data-app-style="modern"] body.advanced-layout #income-expenses .advanced-cashflow-entry-card{display:flex;flex-direction:column;justify-content:space-between}\nhtml[data-app-style="modern"] body.advanced-layout #income-expenses .advanced-cashflow-entry-card:hover{transform:none}
 html[data-app-style="modern"] body.advanced-layout #income-expenses .advanced-cashflow-entry-card>.form-grid{align-content:start}
 html[data-app-style="modern"] body.advanced-layout #income-expenses .advanced-cashflow-entry-card .transaction-submit{margin-top:auto}
 html[data-app-style="modern"] body.advanced-layout #income-expenses .advanced-cashflow-entry-card .expense-notes-field{grid-column:1/-1}
