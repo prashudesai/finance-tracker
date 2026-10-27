@@ -128,6 +128,7 @@
       if(netTotal) netTotal.textContent=`${net<0?'−':''}${formatCurrency(Math.abs(net))}`;
       if(netCard) netCard.classList.toggle('is-negative',net<0);
       renderCashFlowTrend(month);
+      window.financeWorkbench?.refreshCommitmentsPreview?.();
       window.financeCashFlow?.refreshMonthFilter();
       window.financeCashFlow?.updateBar(income,expenses);
     }
