@@ -1,7 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.1",
+  "version": "2026.10.27.2",
   "released": "2026-10-27",
   "releaseNotes": [
+    "Fix mobile Cash Flow record actions with accessible Edit and Delete icons.",
   "Add Obsidian Black in Appearance and remove Classic, migrating saved Classic choices to Modern.",
   "Replace mobile Home Add record row with a small floating +; show borderless sync time at the page bottom beside Search.",
   "Replace the duplicate Home debt tile with Monthly Expenses; hide pending Expense Snapshots and add a month selector for calculated snapshots.",

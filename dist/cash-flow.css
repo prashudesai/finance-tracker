@@ -135,11 +135,12 @@ html body #income-expenses.cash-flow-layout [data-cash-history-kind] .history-se
  html body #income-expenses.cash-flow-layout tbody tr[data-cash-record]>td.transaction-actions:has(.cash-record-menu[open]){grid-column:1/-1;grid-row:4}
  html body #income-expenses.cash-flow-layout .cash-record-menu[open]{width:100%}
  html body #income-expenses.cash-flow-layout .cash-record-menu[open]>summary{margin-left:auto}
- html body #income-expenses.cash-flow-layout .cash-record-actions{position:static;display:flex;justify-content:flex-end;flex-wrap:wrap;min-width:0;margin-top:4px;box-shadow:none}
+ html body #income-expenses.cash-flow-layout .cash-record-actions{position:static;display:flex;justify-content:flex-end;flex-wrap:nowrap;width:max-content;max-width:100%;min-width:0;margin:4px 0 0 auto;padding:6px;box-shadow:none}
 }
 @media(max-width:700px){
- html body #income-expenses.cash-flow-layout .cash-record-actions button[data-action-icon]{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto;padding:8px 12px;font:inherit;font-size:12px;color:var(--text)}
- html body #income-expenses.cash-flow-layout .cash-record-actions button[data-action-icon]::after{content:attr(aria-label)}
+ html body #income-expenses.cash-flow-layout .cash-record-actions button[data-action-icon]{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;padding:10px;font:inherit;color:var(--text)}
+ html body #income-expenses.cash-flow-layout .cash-record-actions button[data-action-icon]::after{content:none}
+ html body #income-expenses.cash-flow-layout .cash-record-actions button[data-action-icon] svg{display:block;flex:none;width:20px;height:20px}
  html body #income-expenses.cash-flow-layout .cash-record-actions button.is-danger{color:var(--danger)}
 }
 /* Compact segmented track; invisible hit area preserves a 44px tap height. */
