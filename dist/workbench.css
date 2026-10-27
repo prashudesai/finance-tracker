@@ -72,3 +72,11 @@ html body #income-expenses .finance-commitment-card #cashRecurringShortcut{posit
 /* Existing specialised menus retain their handlers and gain the shared surface. */
 .family-profile-menu,.range-report-filter-popover,.cash-record-actions{border-color:var(--border);border-radius:14px;background:var(--card-bg);box-shadow:0 12px 36px #0004;color:var(--text)}
 @supports(backdrop-filter:blur(18px)){.family-profile-menu,.range-report-filter-popover,.cash-record-actions{background:color-mix(in srgb,var(--card-bg) 90%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}}
+
+
+/* Mobile search stays reachable without covering a card-sized area. */
+@media(max-width:700px){
+html[data-app-style="modern"] #openRecordSearch{right:max(16px,env(safe-area-inset-right));bottom:calc(84px + env(safe-area-inset-bottom));width:44px;height:44px;min-height:44px;padding:0;gap:0;border-radius:50%;font-size:0}
+html[data-app-style="modern"] #openRecordSearch svg{width:20px;height:20px}
+html[data-app-style="modern"] body:has(>#openRecordSearch){padding-bottom:0}
+}
