@@ -32,7 +32,36 @@ export function installFinanceInsights(){
  }
  function renderCommitments(){const today=localDateKey(),plan=commitmentPlan(state,today,scheduledCandidates(today)),signature=JSON.stringify([today,pageMonth(),plan]);if(commitments.body.dataset.signature===signature)return;commitments.body.dataset.signature=signature;commitments.body.replaceChildren();commitments.d.hidden=false;commitments.d.querySelector('summary').textContent=plan.nextIncome?'Before next planned income':'Upcoming recorded commitments';note(commitments.body,plan.nextIncome?'Next planned income: '+plan.until+' · expected':'Next 30 days · no upcoming income schedule recorded');rows(commitments.body,[['Estimated available from recorded cash flow',plan.balance.opening===null?'Opening balance needed':money(plan.balance.available)],['Known planned payments',money(plan.total)],['After known planned payments',plan.remaining===null?'More information needed':money(plan.remaining)]]);if(plan.unknown)note(commitments.body,plan.unknown+' payment amount(s) need review.');if(!plan.items.length)note(commitments.body,'No unposted payments scheduled in this period.');for(const r of plan.items.slice(0,6))rows(commitments.body,[[r.name+' · '+r.date+(r.date<today?' · Overdue / unrecorded':''),r.amount===null?'Amount needs review':money(r.amount)]]);if(plan.items.length>6)note(commitments.body,(plan.items.length-6)+' more scheduled payments.');note(commitments.body,'Estimate from household records and configured schedules, not a live bank balance. Expected income is not added. Unscheduled bills, unscheduled investment transfers and unrecorded spending are excluded. PF/NPS payroll deductions are not counted again.');action(commitments.body,'See scheduled payments',()=>window.financeWorkbench.commitments());}
  function renderAutomatic(){const today=localDateKey(),month=pageMonth(),entries=automaticEntries(state,visible(),month,read('paymentStatus')),count=entries.filter(e=>!e.confirmed).length,signature=JSON.stringify([today,month,count]);if(review.dataset.signature===signature)return;review.dataset.signature=signature;review.hidden=!(month===today.slice(0,7)&&monthEnd(today)&&count);review.replaceChildren();if(review.hidden)return;append(review,'strong','Review '+new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long'})+' automatic entries');note(review,count+' existing entries to check · confirmation never posts them again');action(review,'Review automatic entries',()=>window.financeWorkbench.automatic(month));}
- function renderChanges(){const month=currentMonthKey(),r=monthlyChanges(state,visible(),month),signature=JSON.stringify([month,r]);placeChanges();if(changes.body.dataset.signature===signature)return;changes.body.dataset.signature=signature;changes.body.replaceChildren();changes.d.querySelector('summary').textContent='What changed in '+new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long'});rows(changes.body,[['Recorded contributions',money(r.contributions)],['Debt principal repaid',money(r.principal)],['Recorded spending vs '+previousMonth(month),r.spendingChange===null?'Comparison not available':(r.spendingChange>=0?'+ ':'− ')+money(Math.abs(r.spendingChange))],['PMS recorded gain change',r.pmsGain===null?'Dated snapshots needed':(r.pmsGain>=0?'+ ':'− ')+money(Math.abs(r.pmsGain))]]);note(changes.body,'Contributions and debt follow the selected profile; expenses are household-wide. Spending compares recorded month totals, including an incomplete current month.');note(changes.body,r.pmsGain===null?'Monthly investment gains need opening and closing dated values. Current balances alone cannot show a monthly gain.':'PMS gain change covers '+r.pmsCovered+' of '+r.pmsTotal+' PMS holdings with dated profit snapshots. Other asset gains are not inferred.');action(changes.body,'View cash-flow details',()=>{document.querySelector('.nav-tab[data-tab="income-expenses"]').click();breakdown.d.open=true;breakdown.d.scrollIntoView({block:'nearest'});});placeChanges();}
+ function renderChanges(){
+  const month=currentMonthKey(),r=monthlyChanges(state,visible(),month),signature=JSON.stringify([month,r]);
+  placeChanges();if(changes.body.dataset.signature===signature)return;
+  changes.body.dataset.signature=signature;changes.body.replaceChildren();
+  const monthLabel=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long'});
+  const previousLabel=new Date(previousMonth(month)+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long yyyy'});
+  changes.d.querySelector('summary').textContent='What changed in '+monthLabel;
+  const heading=append(changes.body,'p','Key recorded changes · '+monthLabel+' compared with '+previousLabel,'finance-highlights-intro');
+  const grid=append(changes.body,'div',undefined,'finance-highlights-grid');
+  const card=(title,value,kind,caption)=>{
+   const item=append(grid,'div',undefined,'finance-highlight finance-highlight-'+kind);
+   append(item,'span',title,'finance-highlight-label');
+   append(item,'strong',value,'finance-highlight-value');
+   append(item,'span',caption,'finance-highlight-caption');
+   return item;
+  };
+  card('Recorded contributions',money(r.contributions),'contributions','Recorded transfers · selected profile');
+  card('Debt principal repaid',money(r.principal),'debt','Principal only · selected profile');
+  const spending=r.spendingChange;
+  const spendingValue=spending===null?'Comparison unavailable':money(Math.abs(spending))+(spending<0?' less':spending>0?' more':' · unchanged');
+  card('Recorded spending',spendingValue,spending===null?'neutral':spending<0?'positive':spending>0?'negative':'neutral','Compared with '+previousLabel+' · household-wide');
+  const pmsValue=r.pmsGain===null?'Dated snapshots needed':(r.pmsGain>=0?'+ ':'− ')+money(Math.abs(r.pmsGain));
+  card('PMS gain change',pmsValue,'pms',r.pmsGain===null?'Opening and closing valuations required':'Based on '+r.pmsCovered+' of '+r.pmsTotal+' holdings');
+  const explain=append(changes.body,'details',undefined,'finance-highlights-explain');
+  append(explain,'summary','How these figures are calculated');
+  note(explain,'Contributions and debt follow the selected profile; expenses are household-wide. Spending compares recorded month totals, including an incomplete current month.');
+  note(explain,r.pmsGain===null?'Monthly investment gains need opening and closing dated values. Current balances alone cannot show a monthly gain.':'PMS gain change covers '+r.pmsCovered+' of '+r.pmsTotal+' PMS holdings with dated profit snapshots. Other asset gains are not inferred.');
+  action(changes.body,'View cash-flow details',()=>{document.querySelector('.nav-tab[data-tab="income-expenses"]').click();breakdown.d.open=true;breakdown.d.scrollIntoView({block:'nearest'});});
+  placeChanges();
+ }
  function placeChanges(){const flow=dashboard.querySelector('.flow-home:not([hidden]) .flow-summary');const target=flow||dashboard.querySelector('.dashboard');if(target&&changes.d.previousElementSibling!==target)target.after(changes.d);}
  function valuationFooter(host,accounts){
   host.querySelector(':scope > .finance-valuation-footer')?.remove();
