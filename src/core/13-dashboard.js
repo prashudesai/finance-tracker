@@ -581,6 +581,79 @@
       if(select.dataset.months!==signature){select.replaceChildren(...months.map(month=>{const option=document.createElement('option');option.value=month;option.textContent=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}).toLocaleUpperCase();return option;}));select.dataset.months=signature;}
       select.value=selected;
       select.onchange=()=>{select.dataset.selectedMonth=select.value;renderDashboardExpenseSnapshot();};
+      const trigger=document.getElementById('dashboardExpenseMonthTrigger');
+      const menu=document.getElementById('dashboardExpenseMonthMenu');
+      const label=document.getElementById('dashboardExpenseMonthLabel');
+      if(trigger&&menu&&label){
+        const selectedOption=Array.from(select.options).find(option=>option.value===selected);
+        label.textContent=selectedOption?.textContent||'Previous month';
+        const closeMenu=(returnFocus=false)=>{
+          menu.hidden=true;
+          trigger.setAttribute('aria-expanded','false');
+          if(returnFocus)trigger.focus();
+        };
+        const placeMenu=()=>{
+          const rect=trigger.getBoundingClientRect();
+          const availableBelow=window.innerHeight-rect.bottom-12;
+          const availableAbove=rect.top-12;
+          const openAbove=availableBelow<230&&availableAbove>availableBelow;
+          const height=Math.min(290,Math.max(100,openAbove?availableAbove:availableBelow));
+          menu.style.position='fixed';
+          menu.style.width=Math.max(190,Math.min(270,window.innerWidth-24))+'px';
+          menu.style.left=Math.max(12,Math.min(rect.right-menu.getBoundingClientRect().width,window.innerWidth-menu.getBoundingClientRect().width-12))+'px';
+          menu.style.maxHeight=height+'px';
+          menu.style.top=openAbove?'auto':Math.min(window.innerHeight-12,rect.bottom+7)+'px';
+          menu.style.bottom=openAbove?(window.innerHeight-rect.top+7)+'px':'auto';
+        };
+        if(!trigger.dataset.monthPickerReady){
+          trigger.dataset.monthPickerReady='true';
+          trigger.addEventListener('click',()=>{
+            if(!menu.hidden){closeMenu();return;}
+            menu.hidden=false;
+            trigger.setAttribute('aria-expanded','true');
+            placeMenu();
+            menu.querySelector('[aria-selected="true"]')?.scrollIntoView({block:'nearest'});
+          });
+          menu.addEventListener('click',event=>{
+            const option=event.target.closest('[data-month]');
+            if(!option||!menu.contains(option))return;
+            select.value=option.dataset.month;
+            select.dispatchEvent(new Event('change',{bubbles:true}));
+            closeMenu(true);
+          });
+          document.addEventListener('pointerdown',event=>{
+            if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))closeMenu();
+          });
+          document.addEventListener('keydown',event=>{
+            if(menu.hidden)return;
+            if(event.key==='Escape'){event.preventDefault();closeMenu(true);}
+            if(event.key==='ArrowDown'||event.key==='ArrowUp'){
+              event.preventDefault();
+              const options=Array.from(menu.querySelectorAll('[role="option"]'));
+              const current=options.indexOf(document.activeElement);
+              const index=current<0?options.findIndex(node=>node.getAttribute('aria-selected')==='true'):current;
+              options[(index+(event.key==='ArrowDown'?1:-1)+options.length)%options.length]?.focus();
+            }
+            if(event.key==='Tab')closeMenu();
+          });
+          window.addEventListener('resize',()=>{if(!menu.hidden)placeMenu();},{passive:true});
+          window.addEventListener('scroll',()=>{if(!menu.hidden)placeMenu();},{passive:true,capture:true});
+        }
+        menu.replaceChildren(...Array.from(select.options).map(option=>{
+          const button=document.createElement('button');
+          button.type='button';
+          button.setAttribute('role','option');
+          button.setAttribute('aria-selected',String(option.value===selected));
+          button.dataset.month=option.value;
+          button.className='dashboard-month-option';
+          const name=document.createElement('span');
+          name.textContent=option.textContent;
+          button.append(name);
+          if(option.value===selected){const check=document.createElement('span');check.className='dashboard-month-check';check.textContent='✓';check.setAttribute('aria-hidden','true');button.append(check);}
+          return button;
+        }));
+        if(!menu.hidden)placeMenu();
+      }
       const balance=state.monthlyBalances.find(r=>r.month===selected),house=balance?.houseExpense;
       const calculated=Number.isFinite(house);
       card.hidden=!calculated&&window.innerWidth<=700;
