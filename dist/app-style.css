@@ -1463,3 +1463,31 @@ html[data-app-style] body.advanced-layout #income-expenses .history-month-contro
  #income-expenses .cash-flow-commitments-panel{padding:13px 12px}
  #income-expenses .cash-flow-commitment-list b{white-space:normal}
 }
+
+
+/* Fix narrow-phone Cash Flow overflow without changing desktop flow. */
+@media(max-width:700px){
+  html body #income-expenses.cash-flow-layout{
+    box-sizing:border-box;min-width:0;max-width:100%;width:100%;
+  }
+  html body #income-expenses.cash-flow-layout .transaction-intro,
+  html body #income-expenses.cash-flow-layout .transaction-overview,
+  html body #income-expenses.cash-flow-layout .cash-flow-trend-panel,
+  html body #income-expenses.cash-flow-layout .cash-flow-commitments-panel,
+  html body #income-expenses.cash-flow-layout .cash-controls,
+  html body #income-expenses.cash-flow-layout .transaction-grid,
+  html body #income-expenses.cash-flow-layout .cash-tools,
+  html body #income-expenses.cash-flow-layout .cash-flow-quick-actions{
+    box-sizing:border-box;min-width:0;max-width:100%;width:100%;
+  }
+  html body #income-expenses.cash-flow-layout .transaction-intro-copy,
+  html body #income-expenses.cash-flow-layout .transaction-period,
+  html body #income-expenses.cash-flow-layout #cashMonthFilter,
+  html body #income-expenses.cash-flow-layout .cash-flow-trend-chart,
+  html body #income-expenses.cash-flow-layout #cashFlowCommitmentsPreview{
+    box-sizing:border-box;min-width:0;max-width:100%;
+  }
+  html body #income-expenses.cash-flow-layout .cash-flow-trend-chart svg{
+    display:block;width:100%;max-width:100%;overflow:hidden;
+  }
+}
