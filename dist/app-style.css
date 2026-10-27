@@ -732,3 +732,9 @@ html[data-app-style] body.advanced-layout #analytics .analytics-card[hidden],.an
 html[data-app-style] body.advanced-layout #analytics .analytics-eyebrow::before { display:none; }
 html[data-app-style] body.advanced-layout #analytics .financial-summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
 @media(max-width:700px) { html[data-app-style] body.advanced-layout #analytics .financial-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+/* Long debt names and values remain readable in narrow dashboard cards. */
+@media(max-width:700px) {
+  .debt-summary-card-top,.debt-summary-card-amount { flex-wrap:wrap; gap:6px 10px; }
+  .debt-summary-type { flex:1 1 135px; overflow-wrap:anywhere; }
+  .debt-summary-card-amount strong,.debt-summary-card-amount span { min-width:0; white-space:normal; overflow-wrap:anywhere; }
+}
