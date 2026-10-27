@@ -1060,3 +1060,39 @@ html[data-app-style] body.advanced-layout #dashboard > .dashboard-page-intro h1 
 .month-review-details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--text);min-height:28px}
 .month-review-details .finance-workbench-values{margin-top:12px}
 @media(max-width:700px){.finance-workbench-dialog:has(.month-review-body){padding:16px;max-height:calc(100dvh - 85px)}.month-review-figures{gap:8px}}
+
+
+/* Staged release: restrained emerald-glass identity in the mobile header.
+   Profile name and avatar remain owned by the existing family-profile UI. */
+@media screen and (max-width:700px){
+  html[data-app-style] body.advanced-layout .container>header{
+    position:relative;
+    isolation:isolate;
+    min-height:100px;
+    padding-block:12px 14px;
+    background:linear-gradient(115deg,color-mix(in srgb,var(--primary) 8%,transparent),transparent 72%);
+  }
+  html[data-app-style] body.advanced-layout .container>header::after{
+    content:"";position:absolute;left:18px;right:18px;bottom:0;height:1px;
+    background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--primary) 45%,transparent),transparent);
+    pointer-events:none;
+  }
+  html[data-app-style] body.advanced-layout .family-profile-mobile-trigger{
+    border-radius:50%;
+    box-shadow:0 0 0 2px color-mix(in srgb,var(--primary) 36%,transparent),0 0 18px color-mix(in srgb,var(--primary) 12%,transparent);
+  }
+  html[data-app-style] body.advanced-layout .advanced-header-context{gap:2px;min-width:0}
+  html[data-app-style] body.advanced-layout .advanced-header-context .advanced-header-eyebrow{
+    display:block;font-size:11px;font-weight:400;line-height:1.25;
+    color:var(--text-light,var(--text));letter-spacing:.01em;
+  }
+  html[data-app-style] body.advanced-layout .advanced-header-context #layoutPageTitle{
+    font-size:clamp(16px,4.5vw,20px);font-weight:650;line-height:1.2;
+    color:var(--text);
+  }
+  html[data-app-style] body.advanced-layout .advanced-header-context .advanced-header-subtitle{display:none}
+  html[data-app-style] body.advanced-layout #dashboard>.dashboard-page-intro{margin:9px 0 13px}
+}
+@media screen and (min-width:701px){
+  html[data-app-style] body.advanced-layout .advanced-header-context .advanced-header-eyebrow{display:none}
+}
