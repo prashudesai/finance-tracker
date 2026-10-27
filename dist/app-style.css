@@ -1114,3 +1114,39 @@ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-ex
 html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain .finance-insight-note{font-size:12px;line-height:1.55}
 @media(max-width:450px){html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight{padding:12px;gap:6px}html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-value{font-size:17px}html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-grid{gap:8px}}
 @media(max-width:330px){html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-grid{grid-template-columns:minmax(0,1fr)}}
+
+
+/* Issue 8: one portfolio composition view, not two competing allocation panels.
+   Keep the existing full category list and its sorting/expansion functionality. */
+html[data-app-style] body.advanced-layout #dashboard .advanced-dashboard-insights>.advanced-dashboard-chart-panel:has(#advancedDashboardAllocationChart){display:none}
+html[data-app-style] body.advanced-layout #dashboard .advanced-dashboard-insights{grid-template-columns:minmax(0,1fr)}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-panel{
+  overflow:hidden;border-radius:18px;
+  border:1px solid color-mix(in srgb,var(--primary) 35%,var(--border));
+  background:linear-gradient(155deg,color-mix(in srgb,var(--primary) 7%,var(--card-bg)),var(--card-bg) 64%);
+}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-heading{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;
+}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-title{flex:1 1 190px;min-width:0}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-title h2{margin:0;font-size:clamp(18px,2.2vw,23px)}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-title p{margin:4px 0 0;color:var(--text-light);font-size:12px;line-height:1.4}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-view-all{flex:0 0 auto;min-height:40px}
+html[data-app-style] body.advanced-layout #dashboard .portfolio-total-summary{
+  border-radius:14px;padding:14px;
+  border:1px solid color-mix(in srgb,var(--primary) 18%,var(--border));
+  background:color-mix(in srgb,var(--primary) 6%,var(--card-bg));
+}
+html[data-app-style] body.advanced-layout #dashboard .portfolio-total-item strong{font-variant-numeric:tabular-nums}
+html[data-app-style] body.advanced-layout #dashboard .portfolio-category-row{
+  border-radius:12px;min-height:56px;transition:background-color .15s ease;
+}
+html[data-app-style] body.advanced-layout #dashboard .portfolio-category-row:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+@media(max-width:700px){
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-panel{padding:14px;border-radius:16px}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-heading{gap:9px}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-title{flex-basis:100%}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-view-all{font-size:12px}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-sort-control{margin-left:auto}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-total-summary{padding:11px;gap:9px}
+}
