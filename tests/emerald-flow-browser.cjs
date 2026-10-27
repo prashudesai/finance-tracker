@@ -55,8 +55,9 @@ const server=http.createServer(async(req,res)=>{try{
    assert.equal(await page.evaluate(()=>window.__noticePageMarker),true);
    assert.equal(await page.locator('[data-notice-draft=yes]').inputValue(),'321');
    await page.evaluate(()=>{window.__noticePending=syncRecord;syncRecord={...syncRecord,pending:true};});
-   await page.waitForFunction(()=>document.querySelector('#cloudChangeNotice button').disabled);
-   assert.equal(await page.getByRole('button',{name:'Review differences',exact:true}).isVisible(),true);
+   await page.waitForFunction(()=>document.querySelector('#cloudChangeNotice button').hidden);
+   assert.equal(await page.getByRole('button',{name:'Review changes',exact:true}).isVisible(),true);
+   assert.equal(await page.getByRole('button',{name:'Download device backup',exact:true}).isVisible(),true);
    await page.evaluate(()=>{syncRecord=window.__noticePending;document.querySelector('[data-notice-draft=yes]').value='';});
    if(original)db.set(pointer,original);else db.delete(pointer);
    await page.waitForSelector('#cloudChangeNotice',{state:'hidden'});
