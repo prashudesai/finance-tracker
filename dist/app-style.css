@@ -884,7 +884,6 @@ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels
 
 #investments .finance-valuation-estimate:before { content:'≈'; color:var(--text-light); }
 
-
 /* Mobile density: keep 44px touch targets while returning vertical space to records. */
 @media screen and (max-width:700px){
 html[data-app-style="modern"] body.advanced-layout>.container{padding-left:14px;padding-right:14px}
@@ -909,4 +908,20 @@ html[data-app-style="modern"] .cloud-account-panel{margin-bottom:11px;padding-bo
 html[data-app-style="modern"] .finance-insight-card{margin-bottom:11px;padding:13px}
 html[data-app-style="modern"] .investment-portfolio-title p,
 html[data-app-style="modern"] .retirement-accounts-heading p{margin-top:3px}
+}
+
+/* Restore more usable space on the mobile dashboard. */
+@media (max-width:700px) {
+ html[data-app-style="modern"] body.advanced-layout > .container,
+ html[data-layout-style="emerald-flow"] body.advanced-layout > .container { padding-inline:16px; }
+ html[data-app-style="modern"] body.advanced-layout > .container > header,
+ html[data-layout-style="emerald-flow"] body.advanced-layout > .container > header { margin-inline:-16px; padding-inline:16px; }
+ html[data-app-style="modern"] body.advanced-layout #dashboard .dashboard { gap:8px; }
+ html[data-app-style="modern"] body.advanced-layout #dashboard .dashboard-stat { min-height:84px; padding:10px 12px; }
+ html[data-app-style="modern"] body.advanced-layout #dashboard .dashboard-net-worth,
+ html[data-layout-style="emerald-flow"] #dashboard .dashboard-net-worth { padding:14px; }
+ html[data-app-style="modern"] #dashboard .dashboard-net-worth .dashboard-main-value,
+ html[data-layout-style="emerald-flow"] #dashboard .dashboard-net-worth .dashboard-main-value { margin:10px 0 12px; }
+ html[data-layout-style="emerald-flow"] #dashboard .flow-stat-grid .dashboard-stat { min-height:84px; padding:10px 12px; gap:8px; }
+ html[data-layout-style="emerald-flow"] #dashboard .flow-summary { gap:8px; }
 }

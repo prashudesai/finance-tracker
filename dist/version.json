@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.27.9",
+  "version": "2026.10.27.10",
   "released": "2026-10-27",
   "releaseNotes": [
-    "Balance investment and retirement holding layouts and unify valuation controls.",
-    "Improve valuation status indicators and asset allocation legend scrolling."
+    "Give mobile pages more usable width and make the Dashboard more compact.",
+    "Keep mobile controls accessible with streamlined spacing."
   ]
 }

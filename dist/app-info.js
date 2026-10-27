@@ -1,7 +1,9 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.9",
+  "version": "2026.10.27.10",
   "released": "2026-10-27",
   "releaseNotes": [
+    "Give mobile pages more usable width and make the Dashboard more compact.",
+    "Keep mobile controls accessible with streamlined spacing.",
     "Balance investment and retirement holding layouts and unify valuation controls.",
     "Improve valuation status indicators and asset allocation legend scrolling.",
     "Refine Dashboard, Investments, Analytics, Growth Projection and Date Range Reports.",
