@@ -115,6 +115,13 @@
       };
 
       if (els.netWorth) els.netWorth.textContent = formatCurrency(netWorth);
+      // A point-in-time ratio, not a historical growth figure; avoids implying return data we do not have.
+      const netWorthRatio=document.getElementById('dashboardNetWorthRatio');
+      if(netWorthRatio){
+        const ratio=totalAssets>0?netWorth/totalAssets*100:null;
+        netWorthRatio.textContent=ratio===null?'Net worth as a share of assets: not available':`Net worth as a share of assets: ${ratio.toFixed(1)}%`;
+        netWorthRatio.title='Current net worth divided by current assets; not investment performance or month-on-month growth.';
+      }
       if (els.totalAssets) els.totalAssets.textContent = formatCurrency(totalAssets);
       if (els.monthlyExpenses) els.monthlyExpenses.textContent = formatCurrency(monthlyExpenses);
       const dashboardAssetsValue=document.getElementById('dashboardAssetsValue');
