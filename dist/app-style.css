@@ -1414,3 +1414,25 @@ html[data-app-style] body.advanced-layout #income-expenses .history-month-contro
   border-radius:999px;background:color-mix(in srgb,var(--primary) 9%,var(--card-bg));
   font-size:12px;font-weight:600;line-height:1.4;color:inherit;
 }
+
+
+/* Six-month trend: plotted only from recorded financial transactions. */
+#income-expenses .cash-flow-trend-panel{margin:13px 0 19px;padding:16px;border-radius:19px;min-width:0}
+#income-expenses .cash-flow-trend-heading{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+#income-expenses .cash-flow-trend-heading h2{margin:0;font-size:17px;font-weight:750}
+#income-expenses .cash-flow-trend-heading p{margin:5px 0 0;color:var(--text-light);font-size:12px;line-height:1.5}
+#income-expenses .cash-flow-trend-legend{display:flex;gap:13px;font-size:11px;font-weight:700}
+#income-expenses .cash-flow-trend-legend span{display:inline-flex;align-items:center;gap:5px}
+#income-expenses .cash-flow-trend-legend span::before{content:'';width:9px;height:9px;border-radius:50%;background:var(--primary)}
+#income-expenses .cash-flow-trend-legend span.expense::before{background:var(--danger,#df7e70)}
+#income-expenses .cash-flow-trend-chart{width:100%;margin:12px auto 0;min-width:0;max-width:660px}
+#income-expenses .cash-flow-trend-chart svg{display:block;width:100%;height:auto;max-height:210px;overflow:visible}
+#income-expenses .cash-flow-trend-chart text{font-size:11px;fill:var(--text-light)}
+#income-expenses .cash-flow-trend-grid{stroke:var(--border);stroke-width:.8;stroke-dasharray:3 4}
+#income-expenses .cash-flow-trend-income,#income-expenses .cash-flow-trend-expense{fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+#income-expenses .cash-flow-trend-income{stroke:var(--primary)}
+#income-expenses .cash-flow-trend-expense{stroke:var(--danger,#df7e70)}
+@media(max-width:700px){
+ #income-expenses .cash-flow-trend-panel{padding:14px 12px;margin:12px 0}
+ #income-expenses .cash-flow-trend-heading p{font-size:11px}
+}
