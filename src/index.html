@@ -305,6 +305,13 @@
         <article class="transaction-metric transaction-metric-expense"><span class="transaction-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14m6-6-6 6-6-6"/><path d="M4 4h16"/></svg></span><span class="transaction-metric-copy"><span class="transaction-metric-label">Expenses recorded</span><strong class="transaction-metric-value" id="transactionExpenseTotal">₹0</strong></span></article>
         <article class="transaction-metric transaction-metric-net" id="transactionNetCard"><span class="transaction-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 9 12l3 3 8-9"/><path d="M15 6h5v5"/></svg></span><span class="transaction-metric-copy"><span class="transaction-metric-label">Income after expenses</span><strong class="transaction-metric-value" id="transactionNetTotal">₹0</strong></span></article>
       </section>
+      <section class="cash-flow-trend-panel panel" aria-labelledby="cashFlowTrendTitle">
+        <div class="cash-flow-trend-heading">
+          <div><h2 id="cashFlowTrendTitle">Cash flow trend</h2><p>Recorded income and expenses over the past six months, including the selected month.</p></div>
+          <div class="cash-flow-trend-legend" aria-hidden="true"><span class="income">Income</span><span class="expense">Expenses</span></div>
+        </div>
+        <div id="cashFlowTrendChart" class="cash-flow-trend-chart" role="img" aria-label="Six-month recorded income and expenses trend."></div>
+      </section>
       <div class="transaction-grid">
       <div class="panel transaction-panel transaction-panel-income">
         <div class="panel-header"><div class="transaction-section-heading"><span class="transaction-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/><path d="M4 20h16"/></svg></span><div><h2>Add Income</h2><p>Log a salary, rental receipt, or other income</p></div></div></div>
