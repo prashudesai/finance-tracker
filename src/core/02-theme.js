@@ -18,7 +18,7 @@
 
     function renderThemeOptions() {
       if (!themeOptions) return;
-      themeOptions.innerHTML = Object.entries(COLOR_THEMES).map(([key,theme]) => `<button type="button" class="theme-choice" data-theme-key="${key}" aria-pressed="false" aria-label="Apply ${theme.label} theme"><span class="theme-choice-colors" aria-hidden="true">${theme.colors.map(color=>`<span style="background:${color}"></span>`).join('')}</span><span class="theme-choice-name">${theme.label}</span></button>`).join('');
+      themeOptions.innerHTML = Object.entries(COLOR_THEMES).filter(([key])=>key!=='obsidian-black').map(([key,theme]) => `<button type="button" class="theme-choice" data-theme-key="${key}" aria-pressed="false" aria-label="Apply ${theme.label} theme"><span class="theme-choice-colors" aria-hidden="true">${theme.colors.map(color=>`<span style="background:${color}"></span>`).join('')}</span><span class="theme-choice-name">${theme.label}</span></button>`).join('');
     }
     renderThemeOptions();
 
@@ -65,6 +65,20 @@
       applyColorTheme(savedColors,!Object.prototype.hasOwnProperty.call(COLOR_THEMES,savedColors));
     }
 
+    window.PFTBlackTheme = {
+      select() {
+        const old=htmlElement.getAttribute('data-color-theme');
+        if(old&&old!=='obsidian-black'){try{trackerStorage.setItem('pft:colorBeforeBlack',old);trackerStorage.setItem('pft:modeBeforeBlack',htmlElement.getAttribute('data-theme')||'dark');}catch(_){}}
+        htmlElement.setAttribute('data-theme','dark');try{trackerStorage.setItem('theme','dark');}catch(_){}syncThemeModeSwitch('dark');applyColorTheme('obsidian-black');
+      },
+      leave() {
+        if(htmlElement.getAttribute('data-color-theme')!=='obsidian-black')return;
+        let old='navy-emerald',mode='dark';try{old=trackerStorage.getItem('pft:colorBeforeBlack')||old;mode=trackerStorage.getItem('pft:modeBeforeBlack')||mode;}catch(_){}
+        if(old==='obsidian-black'||!COLOR_THEMES[old])old='navy-emerald';if(!['dark','light'].includes(mode))mode='dark';
+        htmlElement.setAttribute('data-theme',mode);try{trackerStorage.setItem('theme',mode);}catch(_){}syncThemeModeSwitch(mode);applyColorTheme(old);
+      }
+    };
+
     themeToggle.addEventListener('click', event => {
       const option=event.target.closest('[data-mode]');
       if(!option)return;
@@ -79,7 +93,7 @@
     themeOptions?.addEventListener('click', event => {
       const button=event.target.closest('.theme-choice');
       if(!button||!COLOR_THEMES[button.dataset.themeKey])return;
-      if(button.dataset.themeKey==='obsidian-black'){htmlElement.setAttribute('data-theme','dark');try{trackerStorage.setItem('theme','dark');}catch(error){}syncThemeModeSwitch('dark');}
+      if(htmlElement.getAttribute('data-color-theme')==='obsidian-black')window.PFT_STYLE?.apply('modern');
       applyColorTheme(button.dataset.themeKey);
       if(document.getElementById('analytics')?.classList.contains('active'))renderCharts();
     });

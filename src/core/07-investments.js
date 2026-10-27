@@ -443,7 +443,7 @@
       updateRetirementTilesVisibility();
       setupRetirementAccountDetails();
 
-      if (!categories.length) panels.innerHTML = '<div class="retirement-empty-state investment-empty-state"><strong>No investment holdings yet</strong><span>Choose a category from <b>+ Add Investment</b> above. Your holdings appear here after you save an investment.</span></div>';
+      if (!categories.length) panels.innerHTML = '<div class="retirement-empty-state investment-empty-state"><span class="account-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18v-5M12 18V9M19 18V5"/></svg></span><div class="account-empty-copy"><strong>No investment holdings yet</strong><span>Add an investment to see your holdings here.</span></div></div>';
 
       stallionPanel.hidden=!hasStallion;
       const showStallionMonthly=stallionItems.some(inv=>investmentMonthlyAmount(inv)>0);

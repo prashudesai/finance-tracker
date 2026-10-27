@@ -19,14 +19,15 @@
   }
   function openPage(page){document.querySelector('.nav-tab[data-tab="'+page+'"]')?.click();updateSelection();}
   function applyStyle(value,persist=true){
-    const style=['modern','emerald-flow'].includes(value)?value:'modern';
+    const style=['modern','emerald-flow','obsidian-black'].includes(value)?value:'modern';
+    if(style==='obsidian-black')window.PFTBlackTheme?.select();else window.PFTBlackTheme?.leave();
     const layoutStyle='modern';
     if(typeof closeEntryFormModal==='function'&&!document.getElementById('entryFormModal')?.hidden)closeEntryFormModal();
     root.dataset.appStyle=layoutStyle;
-    root.dataset.layoutStyle=style;window.PFTPaint?.remember();
+    root.dataset.layoutStyle=style==='obsidian-black'?'modern':style;root.dataset.appearanceChoice=style;window.PFTPaint?.remember();
     if(persist){try{window.trackerStorage.setItem(key,style);}catch(_){/* The layout still applies to this session. */}}
     controls?.querySelectorAll('[data-app-style-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.appStyleChoice===style)));
-    const labels={modern:'Style 1 · Modern','emerald-flow':'Style 2 · Emerald Flow'};
+    const labels={modern:'Style 1 · Modern','emerald-flow':'Style 2 · Emerald Flow','obsidian-black':'Style 3 · Obsidian Black'};
     const status=document.getElementById('appStyleStatus');if(status)status.textContent=labels[style]+' selected. This preference is saved for this account on this device.';
     const familyMenu=document.getElementById('familyProfileMenu');if(familyMenu)familyMenu.hidden=true;window.syncFamilyProfileButtons?.();
     window.setMobileNavHidden?.(false);
@@ -36,7 +37,7 @@
   function install(){
     if(document.getElementById('appStyleChoices'))return;
     const header=document.querySelector('.container > header');
-    const brand=document.createElement('div');brand.className='pft-style-brand';brand.innerHTML='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="20" cy="20" r="14"/><path d="m8 29 9-11 7 4 10-16M26 6h8v8"/><path d="M15 26h10"/></svg><span>Personal Finance<br>Tracker</span>';
+    const brand=document.createElement('div');brand.className='pft-style-brand';brand.innerHTML='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="20" cy="20" r="14"/><path d="m8 29 9-11 7 4 10-16M26 6h8v8"/><path d="M15 26h10"/></svg><span>My finances</span>';
     header.children[0].after(brand);
     nav=document.createElement('nav');nav.className='pft-style-navigation';nav.setAttribute('aria-label','Main tracker pages');
     for(const [id,label,short,path] of pages){
@@ -66,13 +67,14 @@
     for(const [id,slot] of Object.entries(dashboardSlots))document.getElementById(id)?.closest('.dashboard-stat,.dashboard-wide-card')?.setAttribute('data-layout-slot',slot);
     const panel=document.getElementById('settingsAppearancePanel')||document.querySelector('.settings-appearance-panel');
     controls=document.createElement('section');controls.id='appStyleChoices';controls.className='pft-style-choices';controls.setAttribute('aria-labelledby','appStyleChoicesTitle');
-    controls.innerHTML='<h3 id="appStyleChoicesTitle">Page style</h3><p>Choose the page design and navigation you prefer. All styles use the same tracker records.</p><div class="pft-style-choice-grid"><button type="button" data-app-style-choice="modern" aria-pressed="false"><span class="pft-style-swatch modern" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 1 · Modern <small>Default</small></strong><span>Teal & mint, top navigation and compact mobile pages.</span></button><button type="button" data-app-style-choice="emerald-flow" aria-pressed="false"><span class="pft-style-swatch emerald-flow" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 2 · Emerald Flow</strong><span>New page workspaces, interactive graphs, and emerald lighting.</span></button></div><p id="appStyleStatus" role="status"></p>';
+    controls.innerHTML='<h3 id="appStyleChoicesTitle">Page style</h3><p>Choose the page design and navigation you prefer. All styles use the same tracker records.</p><div class="pft-style-choice-grid"><button type="button" data-app-style-choice="modern" aria-pressed="false"><span class="pft-style-swatch modern" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 1 · Modern <small>Default</small></strong><span>Teal & mint, top navigation and compact mobile pages.</span></button><button type="button" data-app-style-choice="emerald-flow" aria-pressed="false"><span class="pft-style-swatch emerald-flow" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 2 · Emerald Flow</strong><span>New page workspaces, interactive graphs, and emerald lighting.</span></button><button type="button" data-app-style-choice="obsidian-black" aria-pressed="false"><span class="pft-style-swatch obsidian-black" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 3 · Obsidian Black</strong><span>Black surfaces with mint accents and the modern layout.</span></button></div><p id="appStyleStatus" role="status"></p>';
     controls.querySelectorAll('[data-app-style-choice]').forEach(b=>b.addEventListener('click',()=>applyStyle(b.dataset.appStyleChoice)));
     panel?.prepend(controls);
     const oldNav=document.querySelector('.nav-tabs');if(oldNav)new MutationObserver(updateSelection).observe(oldNav,{attributes:true,subtree:true,attributeFilter:['class']});
     let saved;try{saved=window.trackerStorage.getItem(key);}catch(_){}
-    applyStyle(saved,saved==='classic');
-    window.PFT_STYLE={apply:applyStyle,get current(){return root.dataset.layoutStyle||root.dataset.appStyle;}};
+    const legacyBlack=root.dataset.colorTheme==='obsidian-black'&&saved!=='obsidian-black';
+    applyStyle(legacyBlack?'obsidian-black':saved,saved==='classic'||legacyBlack);
+    window.PFT_STYLE={apply:applyStyle,get current(){return root.dataset.appearanceChoice||root.dataset.layoutStyle||root.dataset.appStyle;}};
   }
   window.addEventListener('pft:before-reveal',install);
   Promise.resolve(window.trackerReady).then(()=>{if(window.financeCloud)install();}).catch(()=>{});

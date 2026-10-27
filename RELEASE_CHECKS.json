@@ -1,14 +1,19 @@
 {
-  "version": "2026.10.27.2",
+  "version": "2026.10.27.3",
   "physicalPhoneTested": false,
   "realGoogleFirebaseUserFlowTested": false,
   "notes": "Local browser suites use Chromium with mocked Firebase. Full CI including PWA and Firestore security remains required before Hosting deployment. Projection equations, auth and security rules are unchanged.",
   "releaseNotes": [
-    "Fix mobile Cash Flow Edit and Delete actions as accessible, touch-sized icons."
+    "Align the investment and retirement cards with Option A icon-led empty states.",
+    "Move Obsidian Black from colour palettes into Appearance styles, preserving previous choices.",
+    "Compact the mobile Debt overview and Loan Summary with an icon-led empty state.",
+    "Align the Settings Sync now icon and label within its button.",
+    "Use the Google profile photo as the default header image, with custom photo override.",
+    "Shorten the header title to My finances."
   ],
   "unitSuites": 45,
   "projectionParityComparisons": 360,
-  "validationStatus": "Mobile action layout and interaction checks run locally; complete GitHub Actions checks are required before deployment.",
+  "validationStatus": "Local unit and browser regression passed; synthetic backup import and totals passed. Offline and reconnect checks passed; local bundled Chromium timed out on update activation twice. Full CI PWA and Firestore tests remain required before deployment.",
   "fullBrowserChecks": 137,
   "cashFlowBrowserChecks": 22,
   "startupPerformanceBrowserChecks": 7,

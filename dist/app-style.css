@@ -523,3 +523,55 @@ html body #growth-projection #growthProjectionSummary>.growth-projection-stat-ca
 html[data-app-style] body.advanced-layout #growth-projection .growth-projection-chart-panel #growthProjectionSummary{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts .debt-page-overview{grid-template-columns:minmax(0,1fr)!important}
 html body #growth-projection #growthProjectionTakeaway .growth-takeaway-label{white-space:normal;overflow-wrap:anywhere;padding-right:14px;line-height:1.4;font-size:10px;font-weight:500}
+
+/* Match the mobile investment and retirement card headers and empty states. */
+@media screen and (max-width:700px){
+html[data-app-style] body.advanced-layout #investments #investmentListPanel,html[data-app-style] body.advanced-layout #investments .retirement-accounts-section{box-sizing:border-box;padding:16px;border-radius:15px}
+html[data-app-style] body.advanced-layout #investments #investmentListPanel>.panel-header,html[data-app-style] body.advanced-layout #investments .retirement-accounts-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;gap:5px 10px;margin:0 0 12px;padding:0 0 12px}
+html[data-app-style] body.advanced-layout #investments .investment-portfolio-title,html[data-app-style] body.advanced-layout #investments .retirement-accounts-heading>div:first-child{display:contents}
+html[data-app-style] body.advanced-layout #investments .investment-portfolio-title h2,html[data-app-style] body.advanced-layout #investments #retirementAccountsHeading{grid-column:1;grid-row:1;min-width:0;margin:0;font-size:16px;line-height:1.3}
+html[data-app-style] body.advanced-layout #investments .investment-portfolio-title p,html[data-app-style] body.advanced-layout #investments .retirement-accounts-heading p{grid-column:1/-1;grid-row:2;margin:0;font-size:12px;line-height:1.45}
+html[data-app-style] body.advanced-layout #investments .investment-add-menu-wrap,html[data-app-style] body.advanced-layout #investments .retirement-add-menu-wrap{grid-column:2;grid-row:1;justify-self:end}
+html[data-app-style] body.advanced-layout #investments #openGeneralInvestmentBtn,html[data-app-style] body.advanced-layout #investments #retirementAddBtn{min-height:44px;padding:8px 13px;white-space:nowrap}
+html[data-app-style] body.advanced-layout #investments .investment-empty-state,html[data-app-style] body.advanced-layout #investments #retirementEmptyState{gap:4px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:12px;line-height:1.45}
+html[data-app-style] body.advanced-layout #investments .investment-empty-state strong,html[data-app-style] body.advanced-layout #investments #retirementEmptyState strong{font-size:13px;line-height:1.35}
+}
+
+/* Empty states use a quiet icon and left-aligned copy on both cards. */
+html[data-app-style] body.advanced-layout #investments :is(.investment-empty-state,#retirementEmptyState){display:flex;flex-direction:row;align-items:center;gap:12px}
+html[data-app-style] body.advanced-layout #investments .account-empty-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:50%;background:color-mix(in srgb,var(--primary) 12%,var(--card-bg));color:var(--primary)}
+html[data-app-style] body.advanced-layout #investments .account-empty-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+html[data-app-style] body.advanced-layout #investments .account-empty-copy{min-width:0;display:flex;flex-direction:column;gap:4px}
+
+.pft-style-swatch.obsidian-black{background:#080808;border-color:#424242}.pft-style-swatch.obsidian-black::before{background:#a3e6cd}.pft-style-swatch.obsidian-black i{background:#1b1b1b;border-color:#454545}
+
+/* Compact Debt overview and loan header on mobile. */
+@media screen and (max-width:700px){
+html[data-app-style] body.advanced-layout #debts .debt-page-overview{grid-template-columns:repeat(2,minmax(0,1fr));gap:0;padding:12px;border-radius:15px}
+html[data-app-style] body.advanced-layout #debts .debt-page-overview>.debt-page-stat{align-items:flex-start;gap:8px;min-width:0;padding:4px 8px;border:0!important}
+html[data-app-style] body.advanced-layout #debts .debt-page-overview>.debt-page-stat-emi{border-left:1px solid var(--border)!important}
+html[data-app-style] body.advanced-layout #debts .debt-page-stat::after{display:none}
+html[data-app-style] body.advanced-layout #debts .debt-page-stat-value{white-space:normal;overflow:visible;overflow-wrap:anywhere;line-height:1.25}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel>.panel-header{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;gap:5px 10px;padding:14px}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel .debt-section-title,html[data-app-style] body.advanced-layout #debts .debt-list-panel .debt-section-title>div{display:contents}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel .debt-section-icon{display:none}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel h2{grid-column:1;grid-row:1;margin:0;font-size:16px;line-height:1.3;min-width:0}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel .debt-section-title p{grid-column:1/-1;grid-row:2;margin:0;font-size:12px;line-height:1.45}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel>.panel-header>.panel-controls{grid-column:2;grid-row:1;width:auto;margin:0}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel .debt-empty-state{display:flex;flex-direction:row;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:10px}
+html[data-app-style] body.advanced-layout #debts .debt-empty-state .account-empty-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:50%;background:color-mix(in srgb,var(--primary) 12%,var(--card-bg));color:var(--primary)}
+html[data-app-style] body.advanced-layout #debts .debt-empty-state .account-empty-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+html[data-app-style] body.advanced-layout #debts .debt-empty-state .account-empty-copy{min-width:0;display:flex;flex-direction:column;gap:4px}
+}
+@media screen and (max-width:700px){
+html[data-app-style] body.advanced-layout #debts .debt-list-panel tbody tr.debt-empty-row{display:block!important;width:100%;min-width:0;padding:0;border:0;background:transparent}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel tbody td.debt-empty-cell{display:block!important;box-sizing:border-box;width:100%!important;max-width:none;min-width:0!important;padding:0;border:0}
+}
+@media screen and (max-width:700px){
+html[data-app-style] body.advanced-layout #debts .debt-list-panel table:has(.debt-empty-row),html[data-app-style] body.advanced-layout #debts .debt-list-panel tbody:has(.debt-empty-row){display:block!important;width:100%!important;min-width:0!important}
+html[data-app-style] body.advanced-layout #debts .debt-list-panel table:has(.debt-empty-row) thead{display:none!important}
+}
+/* Keep the sync icon and label together inside the Settings button. */
+html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudRefresh{display:inline-flex!important;flex-direction:row;align-items:center;justify-content:center;box-sizing:border-box;width:auto;height:auto;min-height:44px;padding:8px 12px!important;border-radius:999px!important;white-space:nowrap;line-height:1.2}
+html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudRefresh svg{display:block;flex:0 0 18px;width:18px;height:18px}
+html[data-app-style="modern"] body.advanced-layout .cloud-account-panel #cloudRefresh span{display:block;white-space:nowrap}

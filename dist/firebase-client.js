@@ -141,6 +141,7 @@ onAuthStateChanged(auth,async user=>{
   Promise.resolve(window.trackerReady).then(()=>installCloudNotice((next,error)=>onSnapshot(doc(db,'users/'+family.ownerUid+'/tracker/current'),snapshot=>next(snapshot.exists()?snapshot.data():null),error))).catch(error=>console.warn('Live cloud notice unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>initializeAccountPhoto({
     uid:user.uid,
+    googlePhotoURL:user.photoURL || '',
     load:async()=>{const snapshot=await getDocFromServer(doc(db,'users/'+user.uid+'/profile/photo'));return snapshot.exists()?snapshot.data().image:'';},
     save:async image=>{if(auth.currentUser?.uid!==user.uid)throw new Error('The signed-in account changed. Reload.');const batch=writeBatch(db);batch.set(doc(db,'users/'+user.uid+'/profile/photo'),{image});await batch.commit();}
   })).catch(()=>{});

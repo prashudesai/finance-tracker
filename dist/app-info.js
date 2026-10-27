@@ -1,7 +1,13 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.2",
+  "version": "2026.10.27.3",
   "released": "2026-10-27",
   "releaseNotes": [
+    "Shorten the header title to My finances.",
+    "Show your Google profile photo in the header by default; a custom photo takes precedence.",
+    "Align the Settings Sync now button icon and text.",
+    "Compact the mobile Debt overview and Loan Summary, with an icon-led empty state.",
+    "Move Obsidian Black into Appearance as a page style, retaining existing selections.",
+    "Align investment and retirement card headings, Add buttons, and empty states on mobile.",
     "Fix mobile Cash Flow record actions with accessible Edit and Delete icons.",
   "Add Obsidian Black in Appearance and remove Classic, migrating saved Classic choices to Modern.",
   "Replace mobile Home Add record row with a small floating +; show borderless sync time at the page bottom beside Search.",
@@ -35,7 +41,7 @@ window.PFT_APP_INFO = {
     ],
     [
       "Adding dropdown options and account photos",
-      "Use + Add new in income source, expense category, debt type or investment type while entering a record. The form keeps its draft; the saved option is selected automatically. New investment types require a market-linked, fixed-return or no-return calculation. Add family member names in Settings > Family Access; adding a name does not grant account access. Settings > Account provides Add, Change and Remove photo for the signed-in account only. Photos are cropped to a square, compressed and privately stored separately from financial backups. They do not change your Google profile. The header photo still opens the family-profile selector. A saved device copy is shown offline; changing the photo requires an internet connection."
+      "Use + Add new in income source, expense category, debt type or investment type while entering a record. The form keeps its draft; the saved option is selected automatically. New investment types require a market-linked, fixed-return or no-return calculation. Add family member names in Settings > Family Access; adding a name does not grant account access. Settings > Account provides Add, Change and Remove photo for the signed-in account only. Photos are cropped to a square, compressed and privately stored separately from financial backups. They do not change your Google profile. The header uses your Google photo by default; a custom photo takes precedence. Removing a custom photo restores the Google photo when available. The header photo opens the family-profile selector when multiple profiles are available. A saved device copy is shown offline; changing the photo requires an internet connection."
     ],
     [
       "Loan rate changes and top-ups",

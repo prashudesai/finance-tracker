@@ -102,7 +102,7 @@
       const debts=profileRows(state.debts);
       renderAccountPager('debts','debtsBody',renderDebts);
       if (debts.length === 0) {
-        tbody.innerHTML = '<tr class="debt-empty-row"><td colspan="8" class="debt-empty-cell"><div class="retirement-empty-state debt-empty-state"><strong>No debts recorded yet</strong><span>Add a loan to track its outstanding balance, EMI and repayment history.</span></div></td></tr>';
+        tbody.innerHTML = '<tr class="debt-empty-row"><td colspan="8" class="debt-empty-cell"><div class="retirement-empty-state debt-empty-state"><span class="account-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg></span><div class="account-empty-copy"><strong>No debts recorded yet</strong><span>Add a loan to track balances and repayments.</span></div></div></td></tr>';
         return;
       }
 

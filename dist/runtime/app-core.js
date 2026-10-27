@@ -843,8 +843,7 @@
 
       document.querySelectorAll('[data-family-profile-trigger]').forEach(button=>{button.dataset.householdIcon=HOUSEHOLD_PROFILE_ICON;button.dataset.personalIcon=PERSONAL_PROFILE_ICON;
         button.dataset.familyProfileView=multiple&&isCombinedFamilyProfile()?'combined':'personal';
-        if(button.dataset.familyProfileView==='combined'){button.innerHTML=HOUSEHOLD_PROFILE_ICON;button.classList.remove('has-account-photo');}
-        else if(!button.classList.contains('has-account-photo'))button.innerHTML=PERSONAL_PROFILE_ICON;
+        if(!button.classList.contains('has-account-photo'))button.innerHTML=button.dataset.familyProfileView==='combined'?HOUSEHOLD_PROFILE_ICON:PERSONAL_PROFILE_ICON;
         button.disabled=!multiple;button.style.cursor=multiple?'pointer':'default';button.setAttribute('aria-haspopup',String(multiple));button.setAttribute('aria-expanded',String(multiple&&!document.getElementById('familyProfileMenu')?.hidden));button.setAttribute('aria-label',multiple?`Choose family profile. Current: ${profileLabel()}`:`Profile: ${profileMemberNames()[0]||'Your account'}`);button.title=`Profile: ${profileLabel()}`;});
       window.dispatchEvent(new Event('pft-profile-view-change'));
       const sidebarLabel=document.getElementById('familyProfileSidebarLabel');if(sidebarLabel){const combined=isCombinedFamilyProfile();sidebarLabel.hidden=combined;sidebarLabel.textContent=combined?'':activeFamilyProfile;}
@@ -1115,7 +1114,7 @@
 
     function renderThemeOptions() {
       if (!themeOptions) return;
-      themeOptions.innerHTML = Object.entries(COLOR_THEMES).map(([key,theme]) => `<button type="button" class="theme-choice" data-theme-key="${key}" aria-pressed="false" aria-label="Apply ${theme.label} theme"><span class="theme-choice-colors" aria-hidden="true">${theme.colors.map(color=>`<span style="background:${color}"></span>`).join('')}</span><span class="theme-choice-name">${theme.label}</span></button>`).join('');
+      themeOptions.innerHTML = Object.entries(COLOR_THEMES).filter(([key])=>key!=='obsidian-black').map(([key,theme]) => `<button type="button" class="theme-choice" data-theme-key="${key}" aria-pressed="false" aria-label="Apply ${theme.label} theme"><span class="theme-choice-colors" aria-hidden="true">${theme.colors.map(color=>`<span style="background:${color}"></span>`).join('')}</span><span class="theme-choice-name">${theme.label}</span></button>`).join('');
     }
     renderThemeOptions();
 
@@ -1162,6 +1161,20 @@
       applyColorTheme(savedColors,!Object.prototype.hasOwnProperty.call(COLOR_THEMES,savedColors));
     }
 
+    window.PFTBlackTheme = {
+      select() {
+        const old=htmlElement.getAttribute('data-color-theme');
+        if(old&&old!=='obsidian-black'){try{trackerStorage.setItem('pft:colorBeforeBlack',old);trackerStorage.setItem('pft:modeBeforeBlack',htmlElement.getAttribute('data-theme')||'dark');}catch(_){}}
+        htmlElement.setAttribute('data-theme','dark');try{trackerStorage.setItem('theme','dark');}catch(_){}syncThemeModeSwitch('dark');applyColorTheme('obsidian-black');
+      },
+      leave() {
+        if(htmlElement.getAttribute('data-color-theme')!=='obsidian-black')return;
+        let old='navy-emerald',mode='dark';try{old=trackerStorage.getItem('pft:colorBeforeBlack')||old;mode=trackerStorage.getItem('pft:modeBeforeBlack')||mode;}catch(_){}
+        if(old==='obsidian-black'||!COLOR_THEMES[old])old='navy-emerald';if(!['dark','light'].includes(mode))mode='dark';
+        htmlElement.setAttribute('data-theme',mode);try{trackerStorage.setItem('theme',mode);}catch(_){}syncThemeModeSwitch(mode);applyColorTheme(old);
+      }
+    };
+
     themeToggle.addEventListener('click', event => {
       const option=event.target.closest('[data-mode]');
       if(!option)return;
@@ -1176,7 +1189,7 @@
     themeOptions?.addEventListener('click', event => {
       const button=event.target.closest('.theme-choice');
       if(!button||!COLOR_THEMES[button.dataset.themeKey])return;
-      if(button.dataset.themeKey==='obsidian-black'){htmlElement.setAttribute('data-theme','dark');try{trackerStorage.setItem('theme','dark');}catch(error){}syncThemeModeSwitch('dark');}
+      if(htmlElement.getAttribute('data-color-theme')==='obsidian-black')window.PFT_STYLE?.apply('modern');
       applyColorTheme(button.dataset.themeKey);
       if(document.getElementById('analytics')?.classList.contains('active'))renderCharts();
     });
@@ -1787,7 +1800,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const debts=profileRows(state.debts);
       renderAccountPager('debts','debtsBody',renderDebts);
       if (debts.length === 0) {
-        tbody.innerHTML = '<tr class="debt-empty-row"><td colspan="8" class="debt-empty-cell"><div class="retirement-empty-state debt-empty-state"><strong>No debts recorded yet</strong><span>Add a loan to track its outstanding balance, EMI and repayment history.</span></div></td></tr>';
+        tbody.innerHTML = '<tr class="debt-empty-row"><td colspan="8" class="debt-empty-cell"><div class="retirement-empty-state debt-empty-state"><span class="account-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg></span><div class="account-empty-copy"><strong>No debts recorded yet</strong><span>Add a loan to track balances and repayments.</span></div></div></td></tr>';
         return;
       }
 
@@ -3162,7 +3175,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       updateRetirementTilesVisibility();
       setupRetirementAccountDetails();
 
-      if (!categories.length) panels.innerHTML = '<div class="retirement-empty-state investment-empty-state"><strong>No investment holdings yet</strong><span>Choose a category from <b>+ Add Investment</b> above. Your holdings appear here after you save an investment.</span></div>';
+      if (!categories.length) panels.innerHTML = '<div class="retirement-empty-state investment-empty-state"><span class="account-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18v-5M12 18V9M19 18V5"/></svg></span><div class="account-empty-copy"><strong>No investment holdings yet</strong><span>Add an investment to see your holdings here.</span></div></div>';
 
       stallionPanel.hidden=!hasStallion;
       const showStallionMonthly=stallionItems.some(inv=>investmentMonthlyAmount(inv)>0);

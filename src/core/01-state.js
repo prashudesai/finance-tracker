@@ -312,8 +312,7 @@
 
       document.querySelectorAll('[data-family-profile-trigger]').forEach(button=>{button.dataset.householdIcon=HOUSEHOLD_PROFILE_ICON;button.dataset.personalIcon=PERSONAL_PROFILE_ICON;
         button.dataset.familyProfileView=multiple&&isCombinedFamilyProfile()?'combined':'personal';
-        if(button.dataset.familyProfileView==='combined'){button.innerHTML=HOUSEHOLD_PROFILE_ICON;button.classList.remove('has-account-photo');}
-        else if(!button.classList.contains('has-account-photo'))button.innerHTML=PERSONAL_PROFILE_ICON;
+        if(!button.classList.contains('has-account-photo'))button.innerHTML=button.dataset.familyProfileView==='combined'?HOUSEHOLD_PROFILE_ICON:PERSONAL_PROFILE_ICON;
         button.disabled=!multiple;button.style.cursor=multiple?'pointer':'default';button.setAttribute('aria-haspopup',String(multiple));button.setAttribute('aria-expanded',String(multiple&&!document.getElementById('familyProfileMenu')?.hidden));button.setAttribute('aria-label',multiple?`Choose family profile. Current: ${profileLabel()}`:`Profile: ${profileMemberNames()[0]||'Your account'}`);button.title=`Profile: ${profileLabel()}`;});
       window.dispatchEvent(new Event('pft-profile-view-change'));
       const sidebarLabel=document.getElementById('familyProfileSidebarLabel');if(sidebarLabel){const combined=isCombinedFamilyProfile();sidebarLabel.hidden=combined;sidebarLabel.textContent=combined?'':activeFamilyProfile;}
