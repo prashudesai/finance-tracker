@@ -215,7 +215,7 @@
   "tests/family-policy.cjs": "942afc176b8c0746ebf4a11e3be6ed02ac28ce087569964e8bae0d5a5d710b7f",
   "tests/family-rules.py": "4fbaee664545a3d23f276bc52cbf38ca79b86b89184171ef1fc45c4d58b280b6",
   "tests/family-tiles.cjs": "22fa0f2e8e40e6dc1959503c81d193010ff8acb1fb3be284a978789d86ebf36f",
-  "tests/finance-insights-browser.cjs": "045add01f3286bd5e5020a902af00bf02d6b22a0ba1b1d71c00667f9a9f92d43",
+  "tests/finance-insights-browser.cjs": "a1e6e40c53dbcd06d92f61b4766ecc0b4e65b5128b2e7609056429fe3c789be9",
   "tests/finance-insights.cjs": "53a543f86324113879fbe14f6ab9487a505d6de9f73913279300cf72d095b715",
   "tests/finance-model.cjs": "d793f2935d72206c9c06366ac338e99e63dcfe3fd7c3615effd8cf09b1e68ad7",
   "tests/first-emi.cjs": "68afb04268ba13e99029e715960d59e0b86a8afac6e7fd0dc9309dc21317d275",
