@@ -1150,3 +1150,65 @@ html[data-app-style] body.advanced-layout #dashboard .portfolio-category-row:foc
   html[data-app-style] body.advanced-layout #dashboard .portfolio-sort-control{margin-left:auto}
   html[data-app-style] body.advanced-layout #dashboard .portfolio-total-summary{padding:11px;gap:9px}
 }
+
+
+/* Issue 9: premium but restrained Cash Flow presentation. Existing data and forms remain authoritative. */
+html[data-app-style] body.advanced-layout #income-expenses .transaction-intro{
+  position:relative;isolation:isolate;gap:12px;
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-intro-copy h1{
+  font-size:clamp(24px,5.5vw,32px);line-height:1.16;letter-spacing:-.025em;
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-intro-copy p{
+  font-size:13px;line-height:1.5;color:var(--text-light);
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-overview{
+  border:1px solid color-mix(in srgb,var(--primary) 42%,var(--border));
+  border-radius:20px;padding:16px;
+  background:linear-gradient(130deg,color-mix(in srgb,var(--primary) 12%,var(--card-bg)),color-mix(in srgb,var(--primary) 3%,var(--card-bg)) 75%);
+  box-shadow:0 12px 34px color-mix(in srgb,#000 10%,transparent),inset 0 1px color-mix(in srgb,var(--primary) 14%,transparent);
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-metric{
+  border-radius:15px;border:1px solid color-mix(in srgb,var(--primary) 20%,var(--border));
+  background:color-mix(in srgb,var(--primary) 5%,var(--card-bg));
+  box-shadow:none;min-width:0;
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-metric-net{
+  border-color:color-mix(in srgb,var(--primary) 36%,var(--border));
+  background:linear-gradient(115deg,color-mix(in srgb,var(--primary) 13%,var(--card-bg)),color-mix(in srgb,var(--primary) 4%,var(--card-bg)));
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-metric-value{
+  font-variant-numeric:tabular-nums;letter-spacing:-.025em;
+}
+html[data-app-style] body.advanced-layout #income-expenses .recurring-launch button{
+  min-height:44px;border-radius:13px;
+  background:color-mix(in srgb,var(--primary) 7%,var(--card-bg));
+  border:1px solid color-mix(in srgb,var(--primary) 24%,var(--border));
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-panel,
+html[data-app-style] body.advanced-layout #income-expenses .transaction-surplus{
+  border-radius:18px;
+  border-color:color-mix(in srgb,var(--primary) 21%,var(--border));
+  background:linear-gradient(155deg,color-mix(in srgb,var(--primary) 5%,var(--card-bg)),var(--card-bg) 65%);
+}
+html[data-app-style] body.advanced-layout #income-expenses .history-section{
+  border-radius:15px;
+}
+html[data-app-style] body.advanced-layout #income-expenses .history-section .panel-header h2{
+  font-size:clamp(18px,4.6vw,22px);letter-spacing:-.015em;
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-search input,
+html[data-app-style] body.advanced-layout #income-expenses .history-month-control select{
+  border-radius:12px;min-height:44px;
+}
+@media(max-width:700px){
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-intro{margin-bottom:12px}
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-overview{padding:12px;border-radius:17px;gap:9px}
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-metric{padding:12px;border-radius:13px}
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-metric-value{font-size:clamp(19px,5.5vw,28px);overflow-wrap:anywhere}
+ html[data-app-style] body.advanced-layout #income-expenses .history-filter-controls{gap:8px}
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-panel{border-radius:16px}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-metric{transition:none}
+}
