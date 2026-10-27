@@ -469,40 +469,40 @@
 
       <div class="panel monthly-surplus-panel transaction-surplus">
         <div class="panel-header">
-          <h2>Monthly Surplus</h2>
+          <h2>Monthly balances</h2>
           <div class="panel-header-actions">
-            <button type="button" class="btn-secondary" id="toggleBalanceHistory" aria-expanded="false" aria-controls="balanceHistoryContent">View History</button>
-            <button type="button" class="btn-primary" id="toggleBalanceForm" aria-expanded="false" aria-controls="balanceEntryForm">+ Add Monthly Surplus</button>
+            <button type="button" class="btn-secondary" id="toggleBalanceHistory" aria-expanded="false" aria-controls="balanceHistoryContent">View balance history</button>
+            <button type="button" class="btn-primary" id="toggleBalanceForm" aria-expanded="false" aria-controls="balanceEntryForm">+ Add opening balance</button>
           </div>
         </div>
         <div id="balanceEntryForm" hidden>
           <div class="form-grid">
             <div class="form-group">
-              <label>Month & Year</label>
+              <label for="balanceMonth">Month</label>
               <input type="month" id="balanceMonth">
             </div>
             <div class="form-group">
-              <label>Start Balance (₹) - Balance at month start</label>
+              <label for="balanceStartAmount">Opening balance (₹)</label>
               <input type="number" id="balanceStartAmount" placeholder="50000" min="0">
             </div>
           </div>
-          <button class="btn-primary" id="addBalanceBtn">Record Start Balance</button>
+          <button class="btn-primary" id="addBalanceBtn">Save opening balance</button>
           <div class="info-box">
-             <strong>Surplus Calculation:</strong>
+             <strong>How is the monthly balance calculated?</strong>
             <div style="margin-top: 8px; font-size: 12px;">
-            Monthly surplus balance = Start Balance + Income − Expenses − Stallion PMS
+            Calculated balance = Opening balance + recorded income − recorded expenses − Stallion PMS contributions
             <br><br>
-             <strong>Reduces Surplus:</strong> Recorded expenses + Stallion PMS contributions
+             <strong>Deducted:</strong> Recorded expenses and Stallion PMS contributions
             <br>
-             <strong>Does NOT Reduce:</strong> NPS, PPF and PF (tracked separately; not deducted in this balance calculation)
+             <strong>Tracked separately:</strong> NPS, PPF and PF contributions are not deducted in this calculation
             <br><br>
-            Enter the next calendar month's opening balance to calculate and record this month's house expense. Avoid entering the same household costs again as expenses.
+            Record the opening balance for the selected month. When you record the following month's opening balance, the app can reconcile the previous month's remaining household spending. Do not enter the same expenses twice.
             </div>
           </div>
         </div>
         <div id="balanceHistoryContent" class="surplus-history-content" hidden>
           <div class="panel-header surplus-history-header">
-            <h2>Monthly Surplus History</h2>
+            <h2>Balance history</h2>
             <label class="history-month-control">Financial year
               <select id="balanceHistoryFinancialYear" aria-label="View surplus history financial year"></select>
             </label>
