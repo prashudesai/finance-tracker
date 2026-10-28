@@ -1994,3 +1994,60 @@ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions[hidden]{dis
   grid-column:1/-1!important;
  }
 }
+
+/* Mobile investment follow-ups: visible iOS valuation dates and retirement toolbar separation. */
+#financeWorkbenchDialog .valuation-date-control{
+ position:relative;display:block;box-sizing:border-box;width:100%;min-width:0;
+}
+#financeWorkbenchDialog .valuation-date-control input[type="date"]{
+ box-sizing:border-box;display:block;width:100%!important;max-width:100%!important;
+ min-height:46px!important;margin:0!important;padding:9px 45px 9px 12px!important;
+ color:transparent!important;-webkit-text-fill-color:transparent!important;
+ caret-color:transparent!important;font-size:16px!important;
+ border:1px solid var(--border)!important;border-radius:10px!important;
+ background-color:var(--card-bg)!important;
+}
+#financeWorkbenchDialog .valuation-date-control input[type="date"]::-webkit-datetime-edit{
+ color:transparent!important;-webkit-text-fill-color:transparent!important;
+}
+#financeWorkbenchDialog .valuation-date-control .valuation-date-display{
+ box-sizing:border-box;position:absolute;pointer-events:none;
+ z-index:1;left:12px;right:44px;top:50%;transform:translateY(-50%);
+ color:var(--text)!important;font-size:14px;font-weight:600;line-height:1.3;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#financeWorkbenchDialog .valuation-account-date{display:grid;gap:6px}
+#retirementCategoryDialog .investment-category-dialog-content>#retirementCategoryDialogActions{
+ display:flex;flex-direction:row;align-items:center;justify-content:flex-end;
+ flex-wrap:wrap;gap:8px;box-sizing:border-box;width:100%;min-width:0;
+ margin:0 0 12px!important;padding:0!important;
+}
+#retirementCategoryDialog .investment-category-dialog-content>#retirementCategoryDialogActions:empty{
+ display:none!important;
+}
+#retirementCategoryDialog .investment-category-dialog-content>#retirementCategoryDialogActions button{
+ max-width:100%;min-height:42px;margin:0!important;white-space:normal;
+}
+@media(max-width:700px){
+ #retirementCategoryDialog .investment-category-dialog-header{
+  grid-template-rows:auto!important;min-height:0!important;
+ }
+ #retirementCategoryDialog .investment-category-dialog-content>#retirementCategoryDialogActions{
+  justify-content:flex-start!important;padding:0 0 12px!important;
+  margin:0 0 14px!important;border-bottom:1px solid var(--border);
+ }
+ #retirementCategoryDialog .investment-category-dialog-content>#retirementCategoryDialogActions button{
+  min-height:42px!important;padding:8px 12px!important;font-size:12px!important;
+  border-radius:12px!important;
+ }
+ #retirementCategoryDialogTable .pf-holdings-table .pf-actions-grid{
+  display:flex!important;gap:6px!important;flex-wrap:wrap!important;
+  width:100%!important;max-width:100%!important;
+ }
+ #retirementCategoryDialogTable .pf-holdings-table .pf-actions-grid>button{
+  min-width:40px!important;min-height:40px!important;
+ }
+ #financeWorkbenchDialog .valuation-account-actions button{
+  min-height:44px!important;padding:9px 7px!important;
+ }
+}
