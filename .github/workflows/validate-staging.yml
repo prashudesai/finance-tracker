@@ -29,6 +29,8 @@ jobs:
         run: npm run build
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      - name: Cash Flow mobile smoke test
+        run: npm run test:cash-flow
       - name: Browser regression suite
         run: npm run test:emerald
       - name: PWA browser and offline tests
