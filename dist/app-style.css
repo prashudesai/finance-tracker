@@ -1573,14 +1573,14 @@ html[data-app-style] body.advanced-layout #income-expenses .history-month-contro
  }
 }
 /* Single page-level Cash Flow month; retain hidden backing selectors for rendering. */
-#income-expenses.cash-flow-layout [data-cash-history-kind] .history-filter-controls,
-#income-expenses.cash-flow-layout [data-cash-history-kind] .transaction-search{
+#income-expenses [data-cash-history-kind] .history-filter-controls,
+#income-expenses [data-cash-history-kind] .transaction-search{
  display:none!important;
 }
-#income-expenses.cash-flow-layout [data-cash-history-kind] .transaction-history-toolbar{
+#income-expenses [data-cash-history-kind] .transaction-history-toolbar{
  display:block!important;margin:7px 0 11px!important;
 }
-#income-expenses.cash-flow-layout [data-cash-history-kind] .transaction-history-summary{
+#income-expenses [data-cash-history-kind] .transaction-history-summary{
  width:100%!important;max-width:none!important;margin:0!important;
 }
 /* Unified mobile detail sheet headers and holding action bars. */
