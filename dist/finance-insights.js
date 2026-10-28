@@ -64,15 +64,15 @@ export function installFinanceInsights(){
  }
  function placeChanges(){const flow=dashboard.querySelector('.flow-home:not([hidden]) .flow-summary');const target=flow||dashboard.querySelector('.dashboard');if(target&&changes.d.previousElementSibling!==target)target.after(changes.d);}
  function valuationFooter(host,accounts){
-  host.querySelector(':scope > .finance-valuation-footer')?.remove();
-  const header=host.querySelector(':scope > .panel-header');let review=header?.querySelector('.finance-valuation-review');
+  const existingActions=host.querySelector(':scope > .finance-valuation-footer');
+  const header=host.querySelector(':scope > .panel-header');let review=host.querySelector('.finance-valuation-review');
   // A fixed-interest or no-return holding has no market quote to refresh.
   // Record its cash additions through the existing account-detail contribution action.
   const hasMarketValuation=accounts.some(({kind,row})=>kind==='nps'||(kind==='investments'&&investmentGrowthType(row.type)==='market'));
-  if(!accounts.length||host.id==='stallionPmsPanel'||!hasMarketValuation){review?.remove();header?.querySelector('.finance-stale-dot')?.remove();return;}
+  if(!accounts.length||host.id==='stallionPmsPanel'||!hasMarketValuation){existingActions?.remove();review?.remove();header?.querySelector('.finance-stale-dot')?.remove();return;}
   if(header&&!review){review=make('button','finance-valuation-review');review.type='button';review.textContent='Update value';}
-  const actions=make('div','finance-valuation-footer');actions.style.cssText='display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)';
-  if(review){review.setAttribute('aria-label','Update value');review.title='Update value';review.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8"><path d="M12 5v14M5 12h14"/></svg>';review.style.cssText='display:inline-grid;place-items:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:10px';actions.append(review);host.append(actions);}
+  const actions=existingActions||make('div','finance-valuation-footer');actions.style.cssText='display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)';
+  if(review){review.setAttribute('aria-label','Update value');review.title='Update value';review.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8"><path d="M12 5v14M5 12h14"/></svg>';review.style.cssText='display:inline-grid;place-items:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:10px';if(review.parentElement!==actions)actions.append(review);if(actions.parentElement!==host)host.append(actions);}
   if(!review)return;
   review.onclick=event=>{event.stopPropagation();window.financeWorkbench.valuations(accounts[0].kind,accounts.length===1?accounts[0].row.id:null,accounts.map(item=>item.row.id));};
   const statuses=accounts.map(({kind,row})=>{
