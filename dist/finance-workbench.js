@@ -1,4 +1,4 @@
-import {automaticEntries} from './finance-insights-model.js';
+import {automaticEntries,automaticEntryTitle} from './finance-insights-model.js';
 import {cashflowIndex,monthClose,realValue,valuationStatus,automaticCheckKey} from './finance-model.js?v=79';
 export function installFinanceWorkbench(){
  // Use one shared model for monthly helpers and recalculated house expense.
@@ -77,7 +77,7 @@ export function installFinanceWorkbench(){
    if(scheduled.length){const paymentMarks=read('paymentStatus'),detail=add(body,'details');add(detail,'summary',scheduled.length+' automatically posted entries');detail.open=options.automaticOnly===true||wasAutomaticListOpen;add(detail,'p','Already included in balances. Confirming payment does not post the contribution again.');for(const row of scheduled){const box=add(detail,'details'),key=automaticCheckKey(row),payment=paymentMarks[key],paid=payment?.status==='paid'&&payment.amount===row.amount&&(payment.epsAmount||0)===(row.epsAmount||0);box.dataset.contributionId=row.id;box.className='automatic-entry-card';box.open=openContributionIds.has(row.id);
 const rowSummary=add(box,'summary');rowSummary.className='automatic-entry-summary';
 const copy=add(rowSummary,'span');copy.className='automatic-entry-copy';
-add(copy,'strong',row.investmentType||row.source||row.category||'Investment');
+add(copy,'strong',automaticEntryTitle(row,visible));
 add(copy,'small',new Date(row.date+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}));
 const right=add(rowSummary,'span');right.className='automatic-entry-value';
 add(right,'strong',formatCurrency(row.amount));
