@@ -192,6 +192,52 @@ const server=http.createServer(async(req,res)=>{try{
  });
  await check('Bottom sync appears with search and hides after scrolling up',async()=>{await page.evaluate(()=>{window.scrollTo(0,0);});assert.equal(await page.locator('#financeBottomSync').isVisible(),false);await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));await page.waitForFunction(()=>document.getElementById('financeBottomSync').classList.contains('at-page-bottom'));await page.locator('#financeBottomSync').waitFor({state:'visible'});assert(await page.locator('#financeBottomSync').isVisible());const a=await page.locator('#financeBottomSync').boundingBox(),b=await page.locator('#openRecordSearch').boundingBox();assert(a.y+a.height<=b.y||b.y+b.height<=a.y||a.x+a.width<=b.x||b.x+b.width<=a.x);await page.evaluate(()=>window.scrollTo(0,0));await page.waitForFunction(()=>!document.getElementById('financeBottomSync').classList.contains('at-page-bottom'));});
  await check('Quiet sync text stays centred beside Search with consistent typography',async()=>{for(const style of ['modern','emerald-flow'])for(const width of [320,390,701,1440]){await page.setViewportSize({width,height:844});await page.evaluate(style=>{PFT_STYLE.apply(style);document.querySelector('.nav-tab[data-tab="income-expenses"]').click();financeInsights.refresh();},style);await page.waitForTimeout(80);await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));await page.locator('#financeBottomSync').waitFor({state:'visible'});const a=await page.locator('#financeBottomSync').boundingBox(),b=await page.locator('#openRecordSearch').boundingBox();assert(Math.abs((a.y+a.height/2)-(b.y+b.height/2))<=2,JSON.stringify({style,width,a,b}));assert(a.x+a.width<=b.x-7);assert(a.x>=0&&b.x+b.width<=width);assert(Math.abs(a.x+a.width/2-width/2)<=1);assert(b.height>=44);const syncType=await page.locator('#financeBottomSync').evaluate(e=>({size:getComputedStyle(e).fontSize,weight:getComputedStyle(e).fontWeight,border:getComputedStyle(e).borderTopWidth,bg:getComputedStyle(e).backgroundColor}));assert.deepEqual(syncType,{size:width<=700?'10px':'11px',weight:'400',border:'0px',bg:'rgba(0, 0, 0, 0)'});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);const type=await page.locator('#cashBalanceBreakdown>summary').evaluate(e=>({size:getComputedStyle(e).fontSize,weight:getComputedStyle(e).fontWeight}));assert.deepEqual(type,{size:'14px',weight:'500'});}await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="dashboard"]').click());assert.equal(await page.locator('#dashboard button').filter({hasText:/^Backup & record checks$/}).count(),0);assert(await page.locator('.settings-quick-tile').filter({has:page.locator('strong',{hasText:/^Data & backup$/})}).count());await page.evaluate(()=>PFT_STYLE.apply('modern'));await page.setViewportSize({width:390,height:844});});
+ await check('Fixed and no-return accounts have contribution actions, not valuation updates',async()=>{
+  const original=await page.evaluate(()=>JSON.stringify(state));
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>{
+   const member=state.customValues.familyMembers[0],base={member,date:'2025-01-01',invested:10000,current:10800,monthly:0,autoMonthlyContribution:false};
+   state.pf=[{id:'review-pf',member,account:'PF test account',date:'2025-01-01',invested:670000,current:790000,rate:8.25,employee:5000,employer:5000,epsMonthly:1000,epsCurrent:0,autoMonthlyContribution:false}];
+   state.ppf=[{id:'review-ppf',member,account:'PPF test account',date:'2025-01-01',invested:315000,current:360000,rate:7.1,monthly:5000,autoMonthlyContribution:false}];
+   state.nps=[{id:'review-nps',member,account:'NPS market test',date:'2025-01-01',invested:20000,current:22500,monthly:0,autoMonthlyContribution:false}];
+   state.customInvestmentProfiles={...state.customInvestmentProfiles,'No Return Test':{growthType:'no-return'}};
+   state.investments.push(
+    {...base,id:'review-bond',type:'Bonds',name:'Fixed bond',rate:7.5},
+    {...base,id:'review-deposit',type:'Fixed Deposits',name:'Bank FD',rate:6.5},
+    {...base,id:'review-no-return',type:'No Return Test',name:'No return holding'},
+    {...base,id:'review-fund',type:'Mutual Funds',name:'Market fund'}
+   );
+   PFT_STYLE.apply('emerald-flow');document.querySelector('.nav-tab[data-tab="investments"]').click();
+   renderInvestments();renderPf();renderPpf();renderNps();financeInsights.refresh();
+  });
+  const selectorForType=type=>'.investment-category-card[data-investment-type="'+type+'"]';
+  await page.waitForFunction(()=>document.querySelector('.retirement-account-card[data-retirement-type="nps"] .finance-valuation-review'));
+  for(const kind of ['pf','ppf']){
+   const card=page.locator('.retirement-account-card[data-retirement-type="'+kind+'"]');
+   assert.equal(await card.locator('.finance-valuation-review').count(),0,kind+' must not have Update value');
+   const name=kind==='pf'?'openManualPfContribution':'openManualPpfContribution';
+   assert.equal(await page.locator('#'+kind+'Body button[onclick^="'+name+'"]').count(),1,kind+' must retain Add Contribution inside');
+  }
+  for(const type of ['Bonds','Fixed Deposits','No Return Test']){
+   const card=page.locator(selectorForType(type));
+   assert.equal(await card.locator('.finance-valuation-review').count(),0,type+' must not show Update value');
+   assert(await card.locator('button[onclick^="openManualInvestmentContribution"]').count()>0,type+' must retain contribution action');
+  }
+  for(const card of [page.locator('.retirement-account-card[data-retirement-type="nps"]'),page.locator(selectorForType('Mutual Funds'))]){
+   assert.equal(await card.locator('.finance-valuation-review').count(),1,'market-valued investment still needs Update value');
+  }
+  // The value-confirmation dialog also offers Add contribution, never Update balance.
+  await page.evaluate(()=>financeWorkbench.valuations('investments','review-bond'));
+  let dialog=page.locator('#financeWorkbenchDialog');
+  assert(await dialog.getByRole('button',{name:'Add contribution'}).isVisible());
+  assert.equal(await dialog.getByRole('button',{name:'Update balance'}).count(),0);
+  await dialog.getByRole('button',{name:'Add contribution'}).click();
+  assert(await page.locator('#investmentContributionModal').isVisible());
+  await page.locator('#investmentContributionAmount').fill('1250');
+  await page.locator('#saveInvestmentContribution').click();
+  assert.deepEqual(await page.evaluate(()=>{const row=state.investments.find(r=>r.id==='review-bond');return {invested:row.invested,current:row.current,contributions:state.investmentContributions.filter(r=>r.investmentId===row.id&&r.automatic!==true).map(r=>r.amount)};}),{invested:11250,current:12050,contributions:[1250]});
+  await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderInvestments();renderPf();renderPpf();renderNps();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();},original);
+ });
  await check('Stallion PMS only shows its two contribution and gain-loss actions',async()=>{
   await page.evaluate(()=>{localDateKey=()=> '2026-10-31';document.querySelector('.nav-tab[data-tab="investments"]').click();renderInvestments();financeInsights.refresh();});
   await page.locator('#investmentMobileTabInvestments').click();
