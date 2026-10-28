@@ -66,7 +66,10 @@ export function installFinanceInsights(){
  function valuationFooter(host,accounts){
   host.querySelector(':scope > .finance-valuation-footer')?.remove();
   const header=host.querySelector(':scope > .panel-header');let review=header?.querySelector('.finance-valuation-review');
-  if(!accounts.length||host.id==='stallionPmsPanel'){review?.remove();header?.querySelector('.finance-stale-dot')?.remove();return;}
+  // A fixed-interest or no-return holding has no market quote to refresh.
+  // Record its cash additions through the existing account-detail contribution action.
+  const hasMarketValuation=accounts.some(({kind,row})=>kind==='nps'||(kind==='investments'&&investmentGrowthType(row.type)==='market'));
+  if(!accounts.length||host.id==='stallionPmsPanel'||!hasMarketValuation){review?.remove();header?.querySelector('.finance-stale-dot')?.remove();return;}
   if(header&&!review){review=make('button','finance-valuation-review');review.type='button';review.textContent='Update value';header.append(review);}
   if(!review)return;
   review.onclick=()=>window.financeWorkbench.valuations(accounts[0].kind,accounts.length===1?accounts[0].row.id:null,accounts.map(item=>item.row.id));
