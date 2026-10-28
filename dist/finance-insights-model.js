@@ -10,6 +10,16 @@ export function automaticEntries(data,visible,month,payments={}){
  const incomeIds=new Set((visible.income||[]).map(r=>r.id));const recurring=[...(data.income||[]).filter(r=>incomeIds.has(r.id)),...(data.expenses||[])].filter(r=>r.recurringRuleId&&inMonth(r,month));
  return [...contributions,...recurring].map(row=>{const p=payments[automaticCheckKey(row)];return {row,confirmed:p?.status==='paid'&&p.amount===row.amount&&(p.epsAmount||0)===(row.epsAmount||0)};});
 }
+// Resolve the specific holding/account rather than showing only "pf", "ppf" or a broad investment type.
+export function automaticEntryTitle(row,visible={}){
+ const kind=String(row.investmentType||'').toLowerCase();
+ const accounts=['pf','ppf','nps'];
+ const account=accounts.flatMap(k=>visible[k]||[]).find(a=>a.id===row.accountId);
+ const investment=(visible.investments||[]).find(a=>a.id===(row.investmentId||row.stallionId));
+ const type=account||accounts.includes(kind)?({pf:'PF',ppf:'PPF',nps:'NPS'}[kind]||'Investment'):investment?.type||row.source||row.category||'Investment';
+ const name=String(account?.account||account?.name||row.accountName||investment?.name||row.investmentName||'').trim();
+ return !name||name.toLowerCase()===String(type).toLowerCase()?String(type):type+' — '+name;
+}
 export function freshness(kind,row,stamp,today,growthType='market'){
  const market=kind==='nps'||kind==='investments'&&growthType==='market';
  const date=row.valuationDate,valid=typeof date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(date)&&Number.isFinite(Date.parse(date+'T00:00:00Z'))&&new Date(date+'T00:00:00Z').toISOString().slice(0,10)===date&&date<=today;
