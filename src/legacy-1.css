@@ -2317,3 +2317,31 @@
   #investmentCategoryPanels .investment-category-card .panel-controls :is(button,.btn-primary),
   #retirementAccountPanels .retirement-account-card .panel-controls :is(button,.btn-primary) { min-height: 44px; }
 }
+
+/* Loan payment history: readable aligned summary and paired card metrics. */
+@media (max-width: 640px) {
+  #debtEmiHistoryModal .loan-history-summary-grid {
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px 12px;margin:8px 0 14px;
+  }
+  #debtEmiHistoryModal .loan-history-summary-item {min-width:0;text-align:left;}
+  #debtEmiHistoryModal .loan-history-summary-item span {
+    display:block;font-size:10px;font-weight:700;color:var(--text-light);line-height:1.3;
+  }
+  #debtEmiHistoryModal .loan-history-summary-item strong {
+    display:block;margin-top:2px;font-size:14px;line-height:1.3;
+    font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+  }
+  #debtEmiHistoryModal .table-wrapper tbody tr {align-items:start;column-gap:14px;row-gap:9px;}
+  #debtEmiHistoryModal .table-wrapper tbody td {
+    text-align:left!important;min-width:0;align-self:start;
+  }
+  #debtEmiHistoryModal .table-wrapper tbody td::before {
+    text-align:left;white-space:normal;line-height:1.3;overflow-wrap:normal;
+  }
+  #debtEmiHistoryModal .table-wrapper tbody td strong {
+    display:block;text-align:left;font-variant-numeric:tabular-nums;
+    white-space:normal;overflow-wrap:anywhere;
+  }
+  #debtEmiHistoryModal .table-wrapper tbody td:last-child {grid-column:1/-1;}
+}
