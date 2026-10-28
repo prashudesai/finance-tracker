@@ -131,7 +131,7 @@ export function installFinanceWorkbench(){
  // Immediate actions complement the collapsible detailed month-review tools.
  const cashIntro=document.querySelector('#income-expenses .transaction-intro');
  if(cashIntro){
-  const shortcuts=add(cashIntro,'div');shortcuts.className='cash-flow-quick-actions';
+  const shortcuts=document.createElement('div');shortcuts.className='cash-flow-quick-actions';cashIntro.after(shortcuts);
   const review=button(shortcuts,'Review this month',()=>monthly());
   review.setAttribute('aria-label','Review current month cash flow');
   const upcoming=button(shortcuts,'Upcoming commitments',commitments);
