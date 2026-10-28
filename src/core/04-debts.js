@@ -233,7 +233,7 @@
       const details=document.createElement('section');details.className='loan-details-section';
       const detailsHeading=document.createElement('h3');detailsHeading.textContent='Loan details';details.append(detailsHeading);
       const terms=document.createElement('dl');terms.className='loan-details-terms';
-      for(const [label,value] of [['Family member',debt.member||'Family'],['Interest method',debt.dailyInterestBasis?'Daily balance · month-end capitalization':'Monthly EMI calculation'],['First EMI date',debt.firstEmiDate||'Automatic schedule'],['Extra days’ interest with first EMI',formatCurrency(debt.firstEmiExtraInterest||0)],['Monthly EMI Due Date',loanDueDateLabel(debt)]].filter(([label])=>!debt.dailyInterestBasis||label!=='Extra days’ interest with first EMI'))metric(terms,label,value);
+      for(const [label,value] of [['Family member',debt.member||'Family'],['Interest method',debt.dailyInterestBasis?'Daily balance · month-end capitalization':'Monthly EMI calculation'],['First EMI date',debt.firstEmiDate||'Automatic schedule'],['Extra days’ interest with first EMI',formatCurrency(debt.firstEmiExtraInterest||0)],['Monthly EMI Due Date',loanDueDateLabel(debt)]].filter(([label])=>!debt.dailyInterestBasis||!['Extra days’ interest with first EMI'].includes(label)))metric(terms,label,value);
       details.append(terms);
       const notes=document.createElement('dl');notes.className='loan-details-notes';metric(notes,'Notes',debt.notes||'—');details.append(notes);body.append(details);
       const actions=document.createElement('div');actions.className='loan-details-actions';actions.setAttribute('role','group');actions.setAttribute('aria-label','Loan actions');
