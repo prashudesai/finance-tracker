@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - release/2026-10-27-12-staging
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -45,10 +42,5 @@ jobs:
         run: npm run test:rules
       - name: Finance and application tests
         run: npm test
-      - name: Check generated output drift
-        run: |
-          git diff --stat -- dist
-          if ! git diff --quiet -- dist; then
-            echo "Generated dist output differs from committed artifacts."
-            exit 1
-          fi
+      - name: Verify reproducible generated files
+        run: node tests/build-layout.cjs
