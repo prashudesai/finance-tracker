@@ -1,4 +1,4 @@
-import {automaticEntries,automaticEntryTitle} from './finance-insights-model.js';
+import {automaticEntries,automaticEntryTitle,pendingAutomaticEntries} from './finance-insights-model.js';
 import {cashflowIndex,monthClose,realValue,valuationStatus,automaticCheckKey} from './finance-model.js?v=79';
 export function installFinanceWorkbench(){
  // Use one shared model for monthly helpers and recalculated house expense.
@@ -39,13 +39,15 @@ export function installFinanceWorkbench(){
  document.addEventListener('click',cancelReviewEdit,true);document.addEventListener('keydown',cancelReviewEdit,true);
  function monthly(month=currentMonthKey(),options={}){if(!open(options.automaticOnly?'Review automatic entries':'Review month'))return;const input=field(dialog,'Month','month',month),body=add(dialog,'section');
   const render=()=>{const openContributionIds=new Set([...body.querySelectorAll('.automatic-entry-card[open]')].map(node=>node.dataset.contributionId));const wasAutomaticListOpen=Boolean(body.querySelector('details:has(.automatic-entry-card)')?.open);body.replaceChildren();const r=monthClose(state,input.value);const money=n=>n===null?'Missing':formatCurrency(n);
+   const firstTrackedMonth=(state.monthlyBalances||[]).map(b=>b.month).filter(Boolean).sort()[0];
+   const beforeTracking=Boolean(firstTrackedMonth&&r.month<firstTrackedMonth);
    if(!options.automaticOnly){
     body.classList.add('month-review-body');
     const summary=add(body,'div');summary.className='month-review-summary';
     const heading=add(summary,'h3',new Date(r.month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}));
     const saved=read('closedMonths')[r.month],signature=JSON.stringify(r);
     const reviewed=saved?.signature===signature;
-    const status=add(summary,'p',reviewed?'Reviewed ✓':saved?'Review again — figures changed':r.complete?'Ready to mark reviewed':'Opening or closing balance missing');
+    const status=add(summary,'p',beforeTracking?'Before tracking started':reviewed?'Reviewed ✓':saved?'Review again — figures changed':r.complete?'Ready to mark reviewed':'Bank balance needed');
     status.className='month-review-status'+(r.complete?' is-ready':' is-warning');
     const figures=add(body,'div');figures.className='month-review-figures';
     for(const [label,value] of [['Income',money(r.income)],['Expenses (including EMIs)',money(r.expenses)],['Closing bank balance',money(r.closing)]]){
@@ -54,27 +56,34 @@ export function installFinanceWorkbench(){
     }
     const actions=add(body,'div');actions.className='month-review-actions';
     const navigateBalance=(month)=>{dialog.close();document.querySelector('.nav-tab[data-tab="income-expenses"]').click();const tools=document.querySelector('#income-expenses .cash-tools');if(tools)tools.open=true;const form=document.getElementById('balanceEntryForm');if(form.hidden)document.getElementById('toggleBalanceForm').click();document.getElementById('balanceMonth').value=month;document.getElementById('balanceStartAmount').value=state.monthlyBalances.find(b=>b.month===month)?.startBalance??'';form.scrollIntoView({block:'nearest'});document.getElementById('balanceStartAmount').focus();};
-    if(!r.complete){
-      const missing=add(body,'p',r.opening===null&&r.closing===null?'Add the opening and closing balances to continue.':r.opening===null?'Add the opening balance to continue.':'Add the closing balance to continue.');missing.className='month-review-help';missing.setAttribute('role','status');
+    if(beforeTracking){
+      const skipped=add(body,'p','Tracking began in '+new Date(firstTrackedMonth+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'})+'. Earlier months do not need review.');skipped.className='month-review-help';
+    }else if(!r.complete){
+      const missing=add(body,'p','Set the bank balance for '+(r.opening===null?'this month':'the next month')+' to complete this review. Each balance is entered only once and is also the previous month’s closing balance.');missing.className='month-review-help';missing.setAttribute('role','status');
     }else{
       const help=add(body,'p',reviewed?'This month has been marked reviewed.':'Check the amounts above, then mark the month reviewed.');help.className='month-review-help';help.setAttribute('role','status');
     }
-    if(r.opening===null){const fix=button(actions,'Enter opening balance',()=>navigateBalance(r.month));fix.classList.add('month-review-primary');fix.disabled=window.financeCloud.canEdit===false;}
-    if(r.closing===null){const fix=button(actions,'Enter closing balance',()=>navigateBalance(nextMonthKey(r.month)));fix.classList.add('month-review-primary');fix.disabled=window.financeCloud.canEdit===false;}
-    if(r.complete){
+    if(!beforeTracking&&!r.complete){
+      const balanceMonth=r.opening===null?r.month:nextMonthKey(r.month);
+      const fix=button(actions,'Set bank balance — '+new Date(balanceMonth+'-01T12:00:00').toLocaleDateString('en-IN',{month:'short',year:'numeric'}),()=>navigateBalance(balanceMonth));fix.classList.add('month-review-primary');fix.disabled=window.financeCloud.canEdit===false;
+    }
+    if(r.complete&&!beforeTracking){
       const mark=button(actions,reviewed?'Reviewed ✓':'Mark as reviewed',async()=>{if(mark.disabled)return;mark.disabled=true;mark.textContent='Saving review…';try{await window.financeBridge.settle();if(window.financeBridge.dirty())throw Error('Finish saving financial changes before marking the month reviewed.');const latest=monthClose(state,input.value);if(!latest.complete)throw Error('Add the missing balances before marking this month reviewed.');const data=read('closedMonths');data[latest.month]={signature:JSON.stringify(latest),at:new Date().toISOString()};await write('closedMonths',data);render();}catch(error){mark.disabled=false;mark.textContent='Mark as reviewed';throw error;}});
       mark.classList.add('month-review-primary');mark.disabled=reviewed||window.financeCloud.canEdit===false;
     }
     const details=add(body,'details');details.className='month-review-details';
     add(details,'summary','View calculation details');
-    table(details,[['Opening balance',money(r.opening)],['Recorded income',money(r.income)],['Recorded expenses (including EMIs)',money(r.expenses)],['PMS contributions',money(r.stallion)],['Available before unrecorded house spending',money(r.available)],['Closing balance (next month opening)',money(r.closing)],['Residual house expense',money(r.house)]]);
-    const editClosing=button(details,'Correct closing balance',()=>navigateBalance(nextMonthKey(r.month)));editClosing.disabled=window.financeCloud.canEdit===false;
-    const editOpening=button(details,'Correct opening balance',()=>navigateBalance(r.month));editOpening.disabled=window.financeCloud.canEdit===false;
+    table(details,[['Opening balance (selected month)',money(r.opening)],['Recorded income',money(r.income)],['Recorded expenses (including EMIs)',money(r.expenses)],['PMS contributions',money(r.stallion)],['Available before unrecorded house spending',money(r.available)],['Closing balance = next month opening',money(r.closing)],['Residual house expense',money(r.house)]]);
+    if(!beforeTracking){const balanceMonth=nextMonthKey(r.month);
+      const edit=button(details,'Update bank balance — '+new Date(balanceMonth+'-01T12:00:00').toLocaleDateString('en-IN',{month:'short',year:'numeric'}),()=>navigateBalance(balanceMonth));edit.disabled=window.financeCloud.canEdit===false;
+    }
     if(saved&&!reviewed)add(details,'p','Financial records changed since your last review. Please review again.');
    }
    const visible=Object.fromEntries(['investments','pf','ppf','nps','income'].map(k=>[k,profileRows(state[k]||[])]));
-   const scheduled=automaticEntries(state,visible,r.month).map(e=>e.row);if(!scheduled.length)add(body,'p','No automatic contributions recorded for this month and profile.');
-   if(scheduled.length){const paymentMarks=read('paymentStatus'),detail=add(body,'details');add(detail,'summary',scheduled.length+' automatically posted entries');detail.open=options.automaticOnly===true||wasAutomaticListOpen;add(detail,'p','Already included in balances. Confirming payment does not post the contribution again.');for(const row of scheduled){const box=add(detail,'details'),key=automaticCheckKey(row),payment=paymentMarks[key],paid=payment?.status==='paid'&&payment.amount===row.amount&&(payment.epsAmount||0)===(row.epsAmount||0);box.dataset.contributionId=row.id;box.className='automatic-entry-card';box.open=openContributionIds.has(row.id);
+   const paymentMarks=read('paymentStatus');
+   const scheduled=pendingAutomaticEntries(state,visible,r.month,paymentMarks,localDateKey()).map(e=>e.row);
+   if(!scheduled.length&&options.automaticOnly)add(body,'p','No automatic entries need verification.');
+   if(scheduled.length){const detail=add(body,'details');add(detail,'summary',scheduled.length+' automatically posted entries');detail.open=options.automaticOnly===true||wasAutomaticListOpen;add(detail,'p','Already included in balances. Confirming payment does not post the contribution again.');for(const row of scheduled){const box=add(detail,'details'),key=automaticCheckKey(row),payment=paymentMarks[key],paid=payment?.status==='paid'&&payment.amount===row.amount&&(payment.epsAmount||0)===(row.epsAmount||0);box.dataset.contributionId=row.id;box.className='automatic-entry-card';box.open=openContributionIds.has(row.id);
 const rowSummary=add(box,'summary');rowSummary.className='automatic-entry-summary';
 const copy=add(rowSummary,'span');copy.className='automatic-entry-copy';
 add(copy,'strong',automaticEntryTitle(row,visible));
