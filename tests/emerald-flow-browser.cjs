@@ -111,6 +111,27 @@ const server=http.createServer(async(req,res)=>{try{
  for(const id of pages)await check('Only '+id+' is visible after navigation',async()=>{await page.locator('.pft-style-navigation [data-style-page="'+(['growth-projection','reports'].includes(id)?'analytics':id)+'"]').evaluate((e,id)=>document.querySelector('.nav-tab[data-tab="'+id+'"]').click(),id);assert(await page.locator('#'+id).isVisible());for(const other of pages.filter(p=>p!==id))assert.equal(await page.locator('#'+other).isVisible(),false,other+' should be hidden');});
  await check('Income and expense workspaces have working tabs',async()=>{await page.locator('.nav-tab[data-tab="income-expenses"]').evaluate(e=>e.click());await page.locator('.flow-cash .flow-tabs:visible [role=tab]').filter({hasText:'Expenses'}).click();assert(await page.locator('#cashHistory-expense').isVisible());assert.equal(await page.locator('#cashHistory-income').isVisible(),false);await page.locator('.flow-cash .flow-tabs:visible [role=tab]').filter({hasText:'Income'}).click();assert(await page.locator('#cashHistory-income').isVisible());});
  await check('Investment workspaces display their real panels',async()=>{await page.locator('.nav-tab[data-tab="investments"]').evaluate(e=>e.click());await page.locator('.flow-investments [role=tab]').filter({hasText:'Stallion PMS'}).click();assert(await page.locator('#stallionPmsPanel').isVisible());await page.locator('.flow-investments [role=tab]').filter({hasText:'Retirement'}).click();assert(await page.locator('.retirement-accounts-section').isVisible());});
+
+ await check('Emerald mobile shows two investment groups and includes Stallion PMS in Investments',async()=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>{PFT_STYLE.apply('emerald-flow');document.querySelector('.nav-tab[data-tab="investments"]').click();});
+  const tabs=page.locator('.flow-investments .flow-tabs [role="tab"]:visible');
+  assert.deepEqual(await tabs.allTextContents(),['Investments','Retirement']);
+  await tabs.first().click();
+  assert.equal(await page.locator('#investmentListPanel').isVisible(),true);
+  assert.equal(await page.locator('#stallionPmsPanel').isVisible(),true);
+  assert.equal(await page.locator('#retirementAccountsPanel').isVisible(),false);
+  await tabs.nth(1).click();
+  assert.equal(await page.locator('#investmentListPanel').isVisible(),false);
+  assert.equal(await page.locator('#stallionPmsPanel').isVisible(),false);
+  assert.equal(await page.locator('#retirementAccountsPanel').isVisible(),true);
+  await page.setViewportSize({width:1440,height:1050});
+  const desktopTabs=page.locator('.flow-investments .flow-tabs [role="tab"]:visible');
+  assert.deepEqual(await desktopTabs.allTextContents(),['Portfolio','Retirement','Stallion PMS']);
+  await desktopTabs.nth(2).click();
+  assert(await page.locator('#stallionPmsPanel').isVisible());
+  await desktopTabs.first().click();
+ });
  await check('Changing style restores controls to their original pages',async()=>{await page.evaluate(()=>PFT_STYLE.apply('modern'));assert.equal(await page.locator('.flow-investments').isVisible(),false);assert.equal(await page.locator('#investments > .investment-holdings-grid > #investmentListPanel').count(),1);await page.evaluate(()=>PFT_STYLE.apply('classic'));await page.evaluate(()=>PFT_STYLE.apply('emerald-flow'));assert.equal(await page.locator('.flow-investments #investmentListPanel').count(),1);const dup=await page.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(n=>n.id);return ids.filter((id,i)=>ids.indexOf(id)!==i)});assert.deepEqual(dup,[]);});
 
 
