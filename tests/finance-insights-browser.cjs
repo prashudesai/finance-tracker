@@ -34,6 +34,68 @@ const server=http.createServer(async(req,res)=>{try{
  await check('Desktop hero stays hidden on mobile and net worth fits',async()=>{await page.evaluate(()=>{PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="dashboard"]').click();});for(const width of [320,390,700]){await page.setViewportSize({width,height:844});assert.equal(await page.locator('.pft-style-hero').isVisible(),false);const tile=page.locator('#dashboard .dashboard-net-worth');assert(await tile.isVisible());const fit=await tile.evaluate(e=>({scroll:e.scrollWidth,width:e.clientWidth}));assert(fit.scroll<=fit.width+1,JSON.stringify({width,fit}));}await page.setViewportSize({width:1024,height:900});assert.equal(await page.locator('.pft-style-hero').isVisible(),true);await page.setViewportSize({width:390,height:844});await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());});
  await check('Mobile record details do not overlap and open the editor',async()=>{for(const style of ['modern','emerald-flow'])for(const width of [320,390,700])for(const kind of ['income','expense']){await page.setViewportSize({width,height:844});await page.evaluate(({style,kind})=>{PFT_STYLE.apply(style);financeCashFlow.select(kind);},{style,kind});const row=page.locator('#'+kind+'Body tr[data-cash-record]').first();const labels=kind==='income'?['Source','Member','Date']:['Category','Date'];const boxes=[];for(const label of labels){const box=await row.locator('[data-label="'+label+'"]').boundingBox();assert(box);boxes.push(box);}for(let i=1;i<boxes.length;i++)assert(boxes[i].y>=boxes[i-1].y+boxes[i-1].height-1,JSON.stringify({style,width,kind,boxes}));assert.equal(await row.locator('.cash-record-menu').count(),0);await row.click();const editor=page.locator('#recordEditorDialog');await editor.waitFor({state:'visible'});assert(await editor.getByRole('button',{name:'Delete transaction'}).isVisible());await page.keyboard.press('Escape');await editor.waitFor({state:'hidden'});}await page.setViewportSize({width:390,height:844});await page.evaluate(()=>{PFT_STYLE.apply('modern');financeCashFlow.select('expense');});});
  await check('Mobile delete cancellation preserves the record',async()=>{for(const kind of ['income','expense']){await page.evaluate(kind=>financeCashFlow.select(kind),kind);const before=await page.evaluate(()=>JSON.stringify({income:state.income,expenses:state.expenses}));const row=page.locator('#'+kind+'Body tr[data-cash-record]').first();await row.click();const editor=page.locator('#recordEditorDialog');await editor.waitFor({state:'visible'});assert.match(await page.locator('#recordEditorTitle').textContent(),new RegExp('Edit '+kind,'i'));page.once('dialog',dialog=>dialog.dismiss());await editor.getByRole('button',{name:'Delete transaction'}).click();assert.equal(await page.evaluate(()=>JSON.stringify({income:state.income,expenses:state.expenses})),before);}await page.evaluate(()=>financeCashFlow.select('expense'));});
+
+ await check('Release mobile Debt, EMI and editor layouts use aligned compact rows',async()=>{
+  const before=await page.evaluate(()=>JSON.stringify(state));
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>{
+   const date=currentMonthKey()+'-15';
+   state.debts=[{id:'release-loan',type:'Home Loan',notes:'Apartment loan',date:'2025-01-01',principal:1850000,remaining:1584716,rate:8.65,emi:23500,interestPaid:298716}];
+   state.expenses.push({id:'release-emi',date,category:'EMI Payment',amount:23500,loanId:'release-loan',principalPaid:11990,interestPaid:11510,repaymentType:'emi'});
+   PFT_STYLE.apply('emerald-flow');renderDebts();renderExpenses();financeCashFlow.select('expense');
+   document.querySelector('.nav-tab[data-tab="income-expenses"]').click();
+  });
+  const emi=page.locator('#expenseBody tr[data-cash-record="release-emi"]');
+  assert(await emi.isVisible());
+  const metric=await emi.locator('[data-label="Amount"]').boundingBox();
+  const label=await emi.locator('[data-label="Category"]').boundingBox();
+  const pieces=await emi.locator('.emi-breakdown>div').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().toJSON()));
+  assert(metric&&label&&metric.x>=label.x+label.width-2,JSON.stringify({metric,label}));
+  assert.equal(pieces.length,2);assert(pieces[1].y>=pieces[0].y+pieces[0].height-1,JSON.stringify(pieces));
+  await emi.click();
+  const editor=page.locator('#recordEditorDialog');
+  assert(await editor.isVisible());
+  const title=await editor.locator('#recordEditorTitle').boundingBox(),close=await editor.locator('#closeRecordEditor').boundingBox();
+  const actions=await editor.locator('.record-editor-actions button').evaluateAll(es=>es.map(e=>({name:e.getAttribute('aria-label')||e.textContent.trim(),box:e.getBoundingClientRect().toJSON()})));
+  assert(title&&close&&close.x>=title.x+title.width-1&&Math.abs(close.y-title.y)<20,JSON.stringify({title,close}));
+  assert.equal(actions.length,3);assert(actions.every(x=>Math.abs(x.box.y-actions[0].box.y)<2),JSON.stringify(actions));
+  await page.keyboard.press('Escape');
+  await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="debts"]').click());
+  const loan=page.locator('#debtsBody tr[data-loan-id="release-loan"]');
+  const box=await loan.boundingBox();
+  const name=await loan.locator('td').nth(0).boundingBox();
+  const status=await loan.locator('td').nth(6).boundingBox();
+  const balance=await loan.locator('td').nth(4).boundingBox();
+  const action=await loan.locator('td').nth(7).boundingBox();
+  assert(box&&name&&status&&balance&&action,JSON.stringify({box,name,status,balance,action}));
+  assert(status.x>name.x&&balance.y>=name.y+name.height-2&&action.y>balance.y,JSON.stringify({box,name,status,balance,action}));
+  assert(box.height<525,JSON.stringify({height:box.height}));
+  await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderDebts();renderExpenses();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();},before);
+  assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
+ });
+ await check('Review Month and Valuation Freshness show readable native calendar values',async()=>{
+  const previous=await page.evaluate(()=>JSON.stringify(state));
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>{PFT_STYLE.apply('emerald-flow');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();financeWorkbench.monthly(currentMonthKey());});
+  const dialog=page.locator('#financeWorkbenchDialog');
+  const month=dialog.locator('input[type="month"]');
+  assert(await month.isVisible());
+  const display=dialog.locator('.valuation-date-control .valuation-date-display').first();
+  assert(await display.isVisible());assert.match(await display.textContent(),/2026/);
+  await month.fill('2026-09');
+  assert.match(await display.textContent(),/September 2026/);
+  await dialog.getByRole('button',{name:'Close',exact:true}).click();
+  await page.evaluate(()=>financeWorkbench.valuations('pf'));
+  if(await dialog.locator('input[type="date"]').count()){
+   const date=dialog.locator('input[type="date"]').first();
+   const output=dialog.locator('.valuation-date-display').first();
+   assert(await output.isVisible());assert((await output.textContent()).length>5);
+   await date.fill('2026-10-20');
+   assert.match(await output.textContent(),/Oct 2026/);
+  }
+  await dialog.getByRole('button',{name:'Close',exact:true}).click();
+  assert.equal(await page.evaluate(()=>JSON.stringify(state)),previous);
+ });
  await check('Record action icons stay legible across populated pages and mobile styles',async()=>{await page.evaluate(()=>{window.__savedDebt=state.debts;state.debts=[{id:'action-audit-debt',type:'Personal Loan',member:state.customValues.familyMembers[0],principal:120000,remaining:100000,rate:10,emi:5000,date:'2025-04-01',emiDueDay:5,interestPaid:0}];renderDebts();});for(const style of ['modern','emerald-flow'])for(const width of [320,390,700]){await page.setViewportSize({width,height:844});await page.evaluate(style=>PFT_STYLE.apply(style),style);for(const tab of ['dashboard','income-expenses','investments','debts','growth-projection','analytics','reports','settings']){await page.evaluate(tab=>document.querySelector('.nav-tab[data-tab="'+tab+'"]').click(),tab);await page.waitForTimeout(80);const issues=await page.evaluate(()=>[...document.querySelectorAll('.tab-content.active button[data-action-icon],.tab-content.active button.investment-icon-action')].filter(e=>e.getClientRects().length).map(e=>{const r=e.getBoundingClientRect(),svg=e.querySelector('svg'),s=svg?.getBoundingClientRect();return {label:e.getAttribute('aria-label'),width:r.width,height:r.height,icon:s?Math.min(s.width,s.height):0,after:getComputedStyle(e,'::after').content};}).filter(x=>x.width<25||x.height<25||x.icon<12||!['none','normal'].includes(x.after)));assert.deepEqual(issues,[],JSON.stringify({style,width,tab,issues}));}}await page.evaluate(()=>{state.debts=window.__savedDebt;renderDebts();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();financeCashFlow.select('expense');});await page.setViewportSize({width:390,height:844});});
  await check('Small mobile Add record stays above navigation and Search and opens the existing menu',async()=>{const before=await page.evaluate(()=>JSON.stringify(state));for(const style of ['modern','emerald-flow'])for(const width of [320,390,700]){await page.setViewportSize({width,height:844});await page.evaluate(style=>{PFT_STYLE.apply(style);document.querySelector('.nav-tab[data-tab="dashboard"]').click();document.activeElement?.blur();window.scrollTo(0,0);},style);const add=page.locator('#trackerQuickAdd');await add.waitFor({state:'visible'});const a=await add.boundingBox(),nav=await page.locator('.pft-style-navigation').boundingBox();assert.equal(a.width,44);assert.equal(a.height,44);assert(a.y+a.height<=nav.y-8);assert.equal(await add.getAttribute('aria-label'),'Add record');assert.equal(await page.locator('.pft-dashboard-caption').isVisible(),false);await add.click();assert(await page.locator('#quickAddDialog').isVisible());assert.equal(await page.locator('#quickAddDialog').getByRole('button',{name:'Income',exact:true}).count(),1);await page.locator('#quickAddDialog').getByRole('button',{name:/^Close/}).click();await page.evaluate(()=>{document.activeElement?.blur();window.scrollTo(0,document.documentElement.scrollHeight);});await page.locator('#openRecordSearch').waitFor({state:'visible'});const b=await add.boundingBox(),search=await page.locator('#openRecordSearch').boundingBox();assert(b.y+b.height<=search.y-8,JSON.stringify({style,width,b,search,bottom:await add.evaluate(e=>getComputedStyle(e).bottom)}));await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());assert.equal(await add.isVisible(),false);}assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);await page.setViewportSize({width:390,height:844});await page.evaluate(()=>{PFT_STYLE.apply('modern');financeCashFlow.select('expense');});});
  await check('Monthly Expenses replaces duplicate debt tile and follows recorded month totals',async()=>{const before=await page.evaluate(()=>JSON.stringify(state));for(const style of ['modern','emerald-flow']){await page.evaluate(style=>{PFT_STYLE.apply(style);document.querySelector('.nav-tab[data-tab="dashboard"]').click();updateDashboard();},style);assert.equal(await page.locator('#monthlyExpenses').textContent(),'₹2,000');assert.equal(await page.locator('#totalDebts').count(),0);assert.equal(await page.locator('#monthlyExpenses').evaluate(e=>e.closest('.dashboard-stat').querySelector('.dashboard-kicker').textContent),'Monthly Expenses');assert.equal(await page.evaluate(()=>PFT_DASHBOARD_INSIGHTS.netWorth===PFT_DASHBOARD_INSIGHTS.totalAssets-PFT_DASHBOARD_INSIGHTS.totalDebts),true);}await page.evaluate(()=>{state.expenses.push({id:'past',date:addMonthsClamped(currentMonthKey()+'-01',-1,1),category:'Other',amount:999});updateDashboard();});assert.equal(await page.locator('#monthlyExpenses').textContent(),'₹2,000');await page.evaluate(()=>{state.expenses=state.expenses.filter(r=>r.id!=='past');PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();updateDashboard();});assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);});
