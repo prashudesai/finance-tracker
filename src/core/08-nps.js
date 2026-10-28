@@ -118,13 +118,16 @@
       modal.dataset.investmentId=investmentId;modal.dataset.mode='history';delete modal.dataset.editContributionId;
       document.getElementById('investmentContributionEntryForm').hidden=true;document.getElementById('investmentContributionHistoryPanel').hidden=false;
       document.getElementById('investmentContributionTitle').textContent=`${investment.type} Contributions — ${investment.name}`;
-      document.getElementById('investmentContributionSummary').textContent=`Invested ${formatCurrency(investment.invested)} · Current ${formatCurrency(investment.current)}${investmentUsesReturnMetrics(investment.type)?` · Absolute return ${investmentAbsoluteReturn(investment)===null?'N/A':(investmentAbsoluteReturn(investment)*100).toFixed(2)+'%'} · CAGR ${investmentCagr(investment)===null?'N/A':(investmentCagr(investment)*100).toFixed(2)+'%'} · XIRR ${investmentXirr(investment)===null?'N/A':(investmentXirr(investment)*100).toFixed(2)+'%'}`:''}`;
+      const summary=document.getElementById('investmentContributionSummary');summary.replaceChildren();
+      const figures=[['Invested',formatCurrency(investment.invested)],['Current value',formatCurrency(investment.current)]];
+      if(investmentUsesReturnMetrics(investment.type))for(const [label,value] of [['Absolute return',investmentAbsoluteReturn(investment)],['CAGR',investmentCagr(investment)],['XIRR',investmentXirr(investment)]])figures.push([label,value===null?'N/A':(value*100).toFixed(2)+'%']);
+      for(const [label,value] of figures){const item=document.createElement('span'),caption=document.createElement('span'),amount=document.createElement('strong');item.className='contribution-summary-metric';caption.textContent=label;amount.textContent=value;item.append(caption,amount);summary.append(item);}
       document.getElementById('investmentContributionDate').value=localDateKey();
       document.getElementById('investmentContributionAmount').value='';
       document.getElementById('investmentContributionFilter').value='all';
       document.getElementById('saveInvestmentContribution').textContent='Add Contribution';
       renderInvestmentContributionHistory(investmentId);
-      modal.hidden=false;syncInvestmentOverlayBodyLock();document.getElementById('investmentContributionFilter').focus();
+      modal.hidden=false;syncInvestmentOverlayBodyLock();modal.querySelector('button[data-close-investment-contribution]')?.focus();
     }
     function openManualInvestmentContribution(investmentId){
       const investment=state.investments.find(row=>row.id===investmentId);if(!investment||investment.type==='Stallion PMS')return;
