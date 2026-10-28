@@ -249,6 +249,11 @@ const server=http.createServer(async(req,res)=>{try{
   await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderInvestments();renderPf();renderPpf();renderNps();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();},original);
  });
  await check('Stallion PMS only shows its two contribution and gain-loss actions',async()=>{
+  const historyModal=page.locator('#investmentContributionModal');
+  if(await historyModal.isVisible()){
+   await historyModal.getByRole('button',{name:/close/i}).click();
+   await historyModal.waitFor({state:'hidden'});
+  }
   await page.evaluate(()=>{localDateKey=()=> '2026-10-31';document.querySelector('.nav-tab[data-tab="investments"]').click();renderInvestments();financeInsights.refresh();});
   await page.locator('#investmentMobileTabInvestments').click();
   const pms=page.locator('#stallionPmsPanel');
