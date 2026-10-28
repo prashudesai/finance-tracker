@@ -113,7 +113,23 @@ const edit=button(actions,'Edit amount',()=>editForReview(row,input.value,option
    const balance=add(top,'div');balance.className='valuation-account-balance';
    add(balance,'span','Current value');add(balance,'strong',formatCurrency(row.current));
    const date=field(card,'Valuation date','date',stamps[key]?.date||localDateKey());
-   date.closest('label')?.classList.add('valuation-account-date');
+   const dateLabel=date.closest('label');dateLabel?.classList.add('valuation-account-date');
+   // iOS Safari can suppress the visible value of a native date input in dark dialogs.
+   // Keep the real date input/picker and show an independent, always-readable value.
+   const dateControl=add(dateLabel,'span');dateControl.className='valuation-date-control';
+   dateControl.append(date);
+   const dateDisplay=add(dateControl,'span');dateDisplay.className='valuation-date-display';
+   dateDisplay.setAttribute('aria-hidden','true');
+   const displayDate=()=>{
+    const raw=date.value;
+    const parsed=raw&&/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)?new Date(raw+'T12:00:00'):null;
+    dateDisplay.textContent=parsed&&!Number.isNaN(parsed.getTime())
+     ?parsed.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})
+     :'Choose valuation date';
+   };
+   date.addEventListener('input',displayDate);
+   date.addEventListener('change',displayDate);
+   displayDate();
    const actions=add(card,'div');actions.className='valuation-account-actions';
    const confirm=button(actions,'Confirm value as of date',async()=>{
     if(!validCalendarDate(date.value)||date.value>localDateKey())throw Error('Choose a valid date through today.');
