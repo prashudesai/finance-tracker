@@ -472,7 +472,7 @@
           <h2>Monthly balances</h2>
           <div class="panel-header-actions">
             <button type="button" class="btn-secondary" id="toggleBalanceHistory" aria-expanded="false" aria-controls="balanceHistoryContent">View balance history</button>
-            <button type="button" class="btn-primary" id="toggleBalanceForm" aria-expanded="false" aria-controls="balanceEntryForm">+ Add opening balance</button>
+            <button type="button" class="btn-primary" id="toggleBalanceForm" aria-expanded="false" aria-controls="balanceEntryForm">+ Set bank balance</button>
           </div>
         </div>
         <div id="balanceEntryForm" hidden>
@@ -482,7 +482,7 @@
               <input type="month" id="balanceMonth">
             </div>
             <div class="form-group">
-              <label for="balanceStartAmount">Opening balance (₹)</label>
+              <label for="balanceStartAmount">Bank balance at start of selected month (₹)</label>
               <input type="number" id="balanceStartAmount" placeholder="50000" min="0">
             </div>
           </div>
@@ -496,7 +496,7 @@
             <br>
              <strong>Tracked separately:</strong> NPS, PPF and PF contributions are not deducted in this calculation
             <br><br>
-            Record the opening balance for the selected month. When you record the following month's opening balance, the app can reconcile the previous month's remaining household spending. Do not enter the same expenses twice.
+            Enter a bank balance only once at the start of a month. This is also the closing balance of the previous month. For example, November 1 opening is October 31 closing. When first starting the tracker, older months do not require an opening balance or review. Do not enter the same expenses twice.
             </div>
           </div>
         </div>
