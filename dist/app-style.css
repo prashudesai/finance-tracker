@@ -2328,3 +2328,60 @@ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions[hidden]{dis
 }
 
 body:has(#loanDetailsModal:not([hidden])) #debtEmiHistoryModal{z-index:1120}
+
+/* Aligned loan-change comparisons without long inline before/after paragraphs. */
+#recordEditorFields>.loan-change-preview{grid-column:1/-1;min-width:0;padding:12px;border:1px solid var(--border);border-radius:12px}
+.loan-change-preview h4{margin:0 0 10px;font-size:14px;line-height:1.3}
+.loan-change-comparison{display:grid;grid-template-columns:minmax(0,1fr) repeat(2,minmax(0,1.1fr));gap:9px 8px;align-items:start}
+.loan-change-comparison>span{min-width:0;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.loan-change-comparison .comparison-label{color:var(--text-light);font-size:11px}
+.loan-change-comparison .comparison-heading{font-size:10px;color:var(--text-light);font-weight:600}
+.loan-change-comparison .comparison-after{font-weight:600}
+.loan-change-current{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 0;padding-top:12px;border-top:1px solid var(--border)}
+.loan-change-current dt{font-size:10px;line-height:1.4;color:var(--text-light)}
+.loan-change-current dd{margin:3px 0 0;font-size:13px;line-height:1.35;font-weight:600;overflow-wrap:anywhere}
+.loan-change-preview .loan-change-help{margin:12px 0 0;font-size:11px;line-height:1.5;color:var(--text-light)}
+
+/* Compact mobile Analytics heading, period control and report navigation. */
+@media(max-width:700px){
+ html[data-app-style] body.advanced-layout #analytics>header.analytics-intro{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:8px 0 12px;
+  padding:0;border:0;min-width:0;
+ }
+ html[data-app-style] body.advanced-layout #analytics .analytics-intro-copy{padding:0;min-width:0}
+ html[data-app-style] body.advanced-layout #analytics .analytics-intro-copy h1{
+  margin:0;padding:0;font-size:20px;line-height:1.3;letter-spacing:normal;
+ }
+ html[data-app-style] body.advanced-layout #analytics .analytics-period-filter{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:5px;width:100%;min-width:0;
+  font-size:11px;line-height:1.4;color:var(--text-light);
+ }
+ html[data-app-style] body.advanced-layout #analytics #analyticsFinancialYear{
+  box-sizing:border-box;display:block;width:100%;min-width:0;max-width:100%;
+  min-height:44px;padding:9px 34px 9px 12px;font-size:16px;line-height:1.3;border-radius:10px;
+ }
+ html[data-app-style] body.advanced-layout .pft-style-report-tabs{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;
+  padding:4px;margin:0 0 12px;border:1px solid var(--border);border-radius:12px;
+  background:color-mix(in srgb,var(--bg) 55%,var(--card-bg));overflow:visible;
+ }
+ html[data-app-style] body.advanced-layout .pft-style-report-tabs button{
+  min-width:0;min-height:44px;margin:0;padding:7px 5px;font-size:11px;line-height:1.3;
+  white-space:normal;border:0;border-radius:8px;align-self:stretch;
+ }
+ html[data-app-style] body.advanced-layout .pft-style-report-tabs button.active{
+  color:var(--primary);background:var(--card-bg);box-shadow:0 1px 3px #0002;
+ }
+}
+
+/* Keep native date controls aligned with other editor fields on iPhone. */
+#recordEditorDialog #recordEditorFields input[type="date"]{
+ display:block;box-sizing:border-box;width:100%!important;max-width:100%;min-width:0;
+ min-height:46px;margin:0;padding:10px 40px 10px 12px!important;
+ font-size:16px!important;line-height:1.4;text-align:left!important;
+ -webkit-appearance:none;appearance:none;
+}
+#recordEditorDialog #recordEditorFields input[type="date"]::-webkit-date-and-time-value{
+ text-align:left;min-height:1.4em;margin:0;
+}
+#recordEditorDialog #recordEditorFields input[type="date"]::-webkit-datetime-edit{padding:0}

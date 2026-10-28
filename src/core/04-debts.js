@@ -127,7 +127,7 @@
               </div>
               <div style="font-size: 11px; color: var(--success); margin-top: 2px;">${percentPaid}% paid | Interest: ${formatCurrency(interestPaid)}</div>
             </td>
-            <td class="text-right" data-label="Remaining EMIs (estimate)"><strong>${schedule.label}</strong>${schedule.count > 0 ? `<div class="text-muted" style="font-size: 11px; margin-top: 4px;">Final payment: ${formatCurrency(schedule.finalPayment)}</div>` : ''}</td>
+            <td class="text-right" data-label="Remaining EMIs (estimate)"><strong>${schedule.label}</strong></td>
             <td data-label="Status"><span class="badge ${d.remaining <= 0 ? 'badge-success' : 'badge-danger'}">${d.remaining <= 0 ? 'Paid off' : 'Active'}</span></td>
             <td data-label="Actions">
               <button class="btn-small" onclick="viewDebtEmiHistory('${d.id}')">View EMI History</button>
@@ -157,7 +157,7 @@
         {key:'date',label:type!=='topup'?'Effective from repayment date':'Top-up date',type:'date',value:entry?.date||localDateKey()},
         ...(type==='topup'?[{key:'amount',label:'Additional principal ₹',type:'number',min:0.01,value:entry?.amount||''}]:[]),
         ...(type==='emi'?[]:[{key:'rate',label:type==='rate'?'New annual rate %':'New annual rate % (optional)',type:'number',required:type==='rate',value:entry?.rate??(type==='rate'?debt.rate:'')}]),
-        ...(type==='emi'?[]:[{key:'choice',label:'After this change',options:['tenure','emi','manual'],optionLabels:{tenure:'Keep tenure · calculate EMI',emi:'Keep EMI · revise tenure',manual:'Enter bank-confirmed EMI'},value:entry?.repaymentChoice||(entry?.emi!==undefined?'manual':'tenure')}]),
+        ...(type==='emi'?[]:[{key:'choice',label:'After this change',options:['tenure','emi','manual'],optionLabels:{tenure:'Keep tenure · calculate EMI',emi:'Keep EMI · revise tenure',manual:'Enter bank-confirmed EMI'},value:entry?.repaymentChoice||(entry?.emi!==undefined?'manual':'emi')}]),
         {key:'emi',label:type==='emi'?'Revised regular monthly EMI ₹':'Bank-confirmed monthly EMI ₹',type:'number',required:type==='emi',min:1,value:entry?.emi??(type==='emi'?debt.emi:'')},
         {key:'notes',label:'Notes',type:'textarea',maxLength:500,value:entry?.notes||''}
       ];
@@ -180,22 +180,32 @@
         if(removing&&values.confirm!=='Remove entry')return 'Choose Remove entry or press Cancel.';
         return preview(values).error||null;
       });
-      const container=document.getElementById('recordEditorFields'),note=document.createElement('div');note.setAttribute('role','status');note.setAttribute('aria-live','polite');note.style.cssText='padding:12px;line-height:1.6;border:1px solid var(--border);border-radius:10px';container.append(note);
+      const container=document.getElementById('recordEditorFields'),note=document.createElement('div');note.setAttribute('role','status');note.setAttribute('aria-live','polite');note.className='loan-change-preview';container.append(note);
       const refresh=()=>{
         const values=Object.fromEntries(new FormData(document.getElementById('recordEditorForm'))),manual=document.getElementById('recordEdit_emi');
         if(manual){const enabled=type==='emi'||values.choice==='manual';manual.parentElement.hidden=!enabled;manual.disabled=!enabled;manual.required=enabled;}
         const result=preview(values);note.replaceChildren();
         if(result.error){note.textContent=result.error;return;}
         const change=result.history.find(e=>e.id===eventId),estimate=PFT_LOAN_LEDGER.estimate(result.remaining,result.emi,result.rate);
-        const lines=change?[
-          'At the effective date: balance '+formatCurrency(change.beforeBalance)+' → '+formatCurrency(change.balance),
-          'Annual rate: '+change.beforeRate+'% → '+change.rate+'%',
-          'Monthly EMI: '+formatCurrency(change.beforeEmi)+' → '+formatCurrency(change.emi),
-          'Estimated remaining payments: '+(change.oldTerm??'Unavailable')+' → '+(change.newTerm??'Unavailable'),
-          'Current position after all recorded repayments: '+formatCurrency(result.remaining)+' outstanding · EMI '+formatCurrency(result.emi)+' · '+(estimate.count??'Unavailable')+' estimated payments.'
-        ]:['Outstanding: '+formatCurrency(result.remaining)+' · Rate '+result.rate+'% · EMI '+formatCurrency(result.emi)];
-        lines.push('Tenure is estimated from the balance, rate and EMI at this date. Whole-rupee rounding may leave a small final payment. Confirm the bank’s revised schedule when available. Earlier repayments are preserved; top-ups do not create income entries.');
-        for(const text of lines){const line=document.createElement('p');line.style.margin='0 0 8px';line.textContent=text;note.append(line);}
+        const title=document.createElement('h4');title.textContent='Change preview';note.append(title);
+        if(change){
+          const grid=document.createElement('div');grid.className='loan-change-comparison';
+          const cell=(text,kind)=>{const node=document.createElement('span');node.className=kind;node.textContent=text;grid.append(node);};
+          cell('At effective date','comparison-label');cell('Before','comparison-heading');cell('After','comparison-heading');
+          for(const [label,before,after] of [
+            ['Balance',formatCurrency(change.beforeBalance),formatCurrency(change.balance)],
+            ['Annual rate',change.beforeRate+'%',change.rate+'%'],
+            ['Monthly EMI',formatCurrency(change.beforeEmi),formatCurrency(change.emi)],
+            ['Payments left',String(change.oldTerm??'Unavailable'),String(change.newTerm??'Unavailable')]
+          ]){cell(label,'comparison-label');cell(before,'comparison-before');cell(after,'comparison-after');}
+          note.append(grid);
+        }
+        const current=document.createElement('dl');current.className='loan-change-current';
+        for(const [label,value] of [['Current outstanding',formatCurrency(result.remaining)],['Monthly EMI',formatCurrency(result.emi)],['Estimated payments',String(estimate.count??'Unavailable')]]){
+          const item=document.createElement('div'),term=document.createElement('dt'),description=document.createElement('dd');term.textContent=label;description.textContent=value;item.append(term,description);current.append(item);
+        }
+        note.append(current);
+        const help=document.createElement('p');help.className='loan-change-help';help.textContent='Tenure is an estimate. Confirm the bank’s revised schedule when available. Earlier repayments are preserved; top-ups do not create income entries.';note.append(help);
       };
       const rateInput=document.getElementById('recordEdit_rate');if(rateInput)rateInput.step='0.05';
       container.addEventListener('input',refresh);container.addEventListener('change',refresh);refresh();
