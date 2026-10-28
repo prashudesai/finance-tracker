@@ -1520,3 +1520,167 @@ html[data-app-style] body.advanced-layout #income-expenses .history-month-contro
    transform:none!important;
  }
 }
+
+
+/* Release 2026.10.28.13: corrective mobile layouts; keep calculations unchanged. */
+/* One visible, reachable dashboard month picker. */
+#dashboardExpenseSnapshot #dashboardExpenseMonth.dashboard-month-native{display:none!important}
+#dashboardExpenseSnapshot .dashboard-wide-header{min-width:0}
+@media(max-width:700px){
+ #dashboardExpenseSnapshot .dashboard-wide-header{
+   display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+   align-items:start!important;gap:11px!important;
+ }
+ #dashboardExpenseSnapshot .dashboard-wide-header>.dashboard-card-heading{
+   display:flex!important;align-items:center!important;min-width:0!important;
+   width:100%!important;flex-wrap:nowrap!important;
+ }
+ #dashboardExpenseSnapshot .dashboard-card-heading .dashboard-kicker{
+   display:block!important;min-width:0!important;
+   font-size:13px!important;white-space:normal!important;line-height:1.4!important;
+ }
+ #dashboardExpenseSnapshot .dashboard-month-picker{
+   width:100%!important;max-width:100%!important;display:flex;justify-content:flex-end;
+   margin:0!important;min-width:0!important;
+ }
+ #dashboardExpenseSnapshot .dashboard-month-trigger{
+   max-width:100%!important;min-height:44px!important;font-size:13px!important;
+ }
+ /* The overview wrapper used to add 16px of invisible inset around both cards. */
+ html[data-app-style] body.advanced-layout #investments .investment-overview-grid{
+   box-sizing:border-box!important;padding:0!important;margin-inline:0!important;
+   width:100%!important;max-width:100%!important;border:0!important;background:none!important;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-overview-grid
+  >:is(.investment-summary-hero,.investment-allocation-card){width:100%;max-width:100%;min-width:0;margin-inline:0}
+}
+/* Stallion PMS keeps exactly two, matching buttons under the title. */
+#investments #stallionPmsPanel>.panel-header{align-items:flex-start}
+#investments #stallionPmsPanel>.panel-header>.panel-controls{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ width:100%!important;max-width:100%!important;gap:9px!important;
+ margin:12px 0 0!important;min-width:0!important;
+}
+#investments #stallionPmsPanel>.panel-header>.panel-controls button{
+ width:100%!important;min-width:0!important;min-height:44px!important;
+ margin:0!important;padding:10px 9px!important;line-height:1.35!important;
+ white-space:normal!important;text-align:center!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+}
+@media(min-width:701px){
+ #investments #stallionPmsPanel>.panel-header>.panel-controls{
+   width:auto!important;max-width:min(100%,480px)!important;margin:0 0 0 auto!important;
+ }
+}
+/* Single page-level Cash Flow month; retain hidden backing selectors for rendering. */
+#income-expenses.cash-flow-layout [data-cash-history-kind] .history-filter-controls,
+#income-expenses.cash-flow-layout [data-cash-history-kind] .transaction-search{
+ display:none!important;
+}
+#income-expenses.cash-flow-layout [data-cash-history-kind] .transaction-history-toolbar{
+ display:block!important;margin:7px 0 11px!important;
+}
+#income-expenses.cash-flow-layout [data-cash-history-kind] .transaction-history-summary{
+ width:100%!important;max-width:none!important;margin:0!important;
+}
+/* Unified mobile detail sheet headers and holding action bars. */
+@media(max-width:700px){
+ #investmentCategoryDialog .investment-category-dialog-header,
+ #retirementCategoryDialog .investment-category-dialog-header{
+   position:sticky!important;top:0!important;z-index:7!important;
+   display:flex!important;justify-content:space-between!important;
+   align-items:center!important;flex-wrap:nowrap!important;
+   min-height:64px!important;padding:12px 14px!important;margin:0!important;
+   gap:10px!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-header>div:first-child,
+ #retirementCategoryDialog .investment-category-dialog-header>div:first-child{
+   flex:1 1 auto!important;min-width:0!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-close,
+ #retirementCategoryDialog .investment-category-dialog-close{
+   flex:0 0 44px!important;align-self:center!important;
+   width:44px!important;height:44px!important;margin:0 0 0 auto!important;
+   padding:10px!important;order:4!important;
+ }
+ #retirementCategoryDialog .investment-category-dialog-header{
+   flex-wrap:wrap!important;
+ }
+ #retirementCategoryDialog .investment-category-dialog-header .retirement-account-actions{
+   order:5!important;flex-basis:100%!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-content,
+ #retirementCategoryDialog .investment-category-dialog-content{
+   padding:12px 14px 20px!important;
+ }
+ #investmentCategoryDialogTable .investment-row-actions{
+   display:block!important;position:static!important;z-index:auto!important;
+   background:none!important;width:100%!important;min-width:0!important;
+   padding:10px 0 0!important;grid-column:1/-1!important;
+ }
+ #investmentCategoryDialogTable .investment-row-actions::before{display:none!important}
+ #investmentCategoryDialogTable .investment-row-action-group,
+ #investmentCategoryDialogTable .investment-row-action-group:has(button:nth-of-type(4)){
+   display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+   gap:7px!important;width:100%!important;max-width:100%!important;
+   align-items:stretch!important;
+ }
+ #investmentCategoryDialogTable .investment-row-action-group .investment-icon-action{
+   box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+   gap:5px!important;align-items:center!important;justify-content:center!important;
+   width:100%!important;max-width:100%!important;min-width:0!important;
+   height:57px!important;min-height:57px!important;flex:1 1 auto!important;
+   margin:0!important;padding:7px 3px!important;border-radius:10px!important;
+ }
+ #investmentCategoryDialogTable .investment-icon-action svg{
+   width:18px!important;height:18px!important;flex-shrink:0!important;
+ }
+ #investmentCategoryDialogTable .investment-icon-action::after{
+   content:attr(data-short-action);display:block;font-size:10px;font-weight:600;
+   line-height:1.2;white-space:nowrap;
+ }
+ #investmentCategoryDialogTable tbody tr{
+   gap:9px!important;padding:12px!important;border:1px solid var(--border)!important;
+   box-shadow:none!important;
+ }
+}
+/* Record editors: consistent header, compact form and one aligned action footer. */
+#recordEditorDialog{width:min(520px,calc(100vw - 24px));max-height:min(86dvh,740px);border-radius:18px}
+#recordEditorDialog header{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px!important;position:sticky!important;top:-16px;z-index:2;
+ background:var(--card-bg)!important;padding:5px 0 12px!important;margin:0 0 10px!important;
+ border-bottom:1px solid var(--border)!important;
+}
+#recordEditorDialog header h2{margin:0!important;min-width:0;line-height:1.3;font-size:20px!important}
+#closeRecordEditor{
+ flex:0 0 44px;display:grid;place-items:center;width:44px;height:44px;
+ border:1px solid var(--border);border-radius:12px;background:transparent;
+ color:var(--text);font-size:27px;line-height:1;cursor:pointer;margin:0 0 0 auto;
+}
+#closeRecordEditor:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+#recordEditorFields{gap:11px!important}
+#recordEditorFields .form-group{min-width:0!important;margin:0!important}
+#recordEditorFields .form-group label{margin:0 0 6px!important;line-height:1.35!important}
+#recordEditorDialog textarea{
+ min-height:66px!important;height:auto!important;resize:vertical;
+}
+#recordEditorDialog .record-editor-actions{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:9px!important;align-items:stretch!important;
+ padding:13px 0 3px!important;margin:9px 0 0!important;
+ border-top:1px solid var(--border)!important;
+}
+#recordEditorDialog .record-editor-actions button{
+ width:100%!important;min-width:0!important;min-height:44px!important;
+ margin:0!important;padding:10px!important;border-radius:12px!important;
+}
+#recordEditorDialog .record-editor-actions [data-record-delete]{
+ grid-column:1/-1!important;grid-row:2!important;justify-self:start!important;
+ width:auto!important;min-width:0!important;padding:9px 12px!important;
+ background:transparent!important;border:1px solid var(--danger)!important;
+ color:var(--danger)!important;
+}
+/* Global sheet close controls: ensure tap size, consistent top-right alignment. */
+:is(#investmentCategoryDialog,#retirementCategoryDialog)
+ .investment-category-dialog-close{min-width:44px;min-height:44px;display:grid;place-items:center}
