@@ -69,7 +69,27 @@ const server=http.createServer(async(req,res)=>{try{
   const action=await loan.locator('td').nth(7).boundingBox();
   assert(box&&name&&status&&balance&&action,JSON.stringify({box,name,status,balance,action}));
   assert(status.x>name.x&&balance.y>=name.y+name.height-2&&action.y>balance.y,JSON.stringify({box,name,status,balance,action}));
-  assert(box.height<525,JSON.stringify({height:box.height}));
+  assert(box.height<360,JSON.stringify({height:box.height}));
+  for(const style of ['modern','emerald-flow'])for(const width of [320,390,430,700]){
+   await page.setViewportSize({width,height:844});
+   await page.evaluate(style=>{PFT_STYLE.apply(style);renderDebts();},style);
+   const geometry=await loan.evaluate(row=>{
+    const box=e=>e.getBoundingClientRect().toJSON(),cells=[...row.children];
+    return {row:box(row),cells:cells.map(box),align:cells.map(e=>getComputedStyle(e).textAlign),
+     buttons:[...cells[7].querySelectorAll('button')].map(box)};
+   });
+   const c=geometry.cells;
+   assert(geometry.row.height<380,JSON.stringify({style,width,geometry}));
+   assert(c[4].y>=c[0].bottom-1&&c[4].bottom<=c[1].y+1,JSON.stringify({style,width,geometry}));
+   assert(Math.abs(c[1].y-c[2].y)<1&&Math.abs(c[3].y-c[5].y)<1,JSON.stringify({style,width,geometry}));
+   for(const i of [1,2,3,4,5])assert.equal(geometry.align[i],'left');
+   for(const b of geometry.buttons)assert(b.width>=44&&b.height>=44&&Math.abs(b.y-geometry.buttons[0].y)<1);
+   const header=await page.locator('.debt-list-panel>.panel-header').boundingBox();
+   const heading=await page.locator('.debt-list-panel h2').boundingBox();
+   const add=await page.locator('#openAddLoanBtn').boundingBox();
+   assert(header.height<110&&add.height>=44&&heading.x+heading.width<=add.x+1,JSON.stringify({style,width,header,heading,add}));
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  }
   await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderDebts();renderExpenses();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();},before);
   assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
  });
