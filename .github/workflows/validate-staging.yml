@@ -1,10 +1,8 @@
-name: Validate staged finance release
+name: Validate staged finance release (full, on demand)
 
+# Full pre-release validation is available on demand; intermediate commits on
+# temporary staging branches no longer restart the same comprehensive suite.
 on:
-  push:
-    branches:
-      - release/2026-10-28-13-staging
-      - release/mobile-ui-and-month-end-review-20261028
   workflow_dispatch:
 
 permissions:
@@ -20,21 +18,29 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v5
-      - name: Set up Node
+      - name: Set up Node with npm cache
         uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: npm
       - name: Install dependencies
         run: npm ci --ignore-scripts
       - name: Build
         run: npm run build
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-      - name: Cash Flow mobile smoke test
-        run: npm run test:cash-flow
-      - name: Finance insights smoke test
-        run: node tests/finance-insights-browser.cjs
-      - name: Browser regression suite
+      - name: Verify reproducible generated files
+        run: node tests/build-layout.cjs
+      - name: Cache Playwright Chromium binaries
+        id: chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-chromium-${{ hashFiles('package-lock.json') }}
+      - name: Install Chromium Linux dependencies
+        run: npx playwright install-deps chromium
+      - name: Download Chromium when not cached
+        if: steps.chromium.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+      - name: Browser regression suite (includes Cash Flow and Finance Insights)
         run: npm run test:emerald
       - name: PWA browser and offline tests
         run: npm run test:pwa
@@ -47,5 +53,3 @@ jobs:
         run: npm run test:rules
       - name: Finance and application tests
         run: npm test
-      - name: Verify reproducible generated files
-        run: node tests/build-layout.cjs
