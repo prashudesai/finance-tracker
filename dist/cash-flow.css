@@ -212,3 +212,14 @@ html body #income-expenses :is(#cashHistory-income,#cashHistory-expense) .transa
 html body #income-expenses :is(#cashHistory-income,#cashHistory-expense) .transaction-history-summary{
  width:100%!important;max-width:100%!important;margin:0!important;
 }
+
+/* Mobile transaction cards: compact while remaining tappable and semantic. */
+@media screen and (max-width:700px){
+ html body #income-expenses.cash-flow-layout tbody tr[data-cash-record]{padding:10px 11px!important;gap:3px 8px!important;margin:7px 0!important;min-height:72px!important;align-content:start}
+ html body #income-expenses.cash-flow-layout tbody tr[data-cash-record]>td[data-label=Member]{grid-column:1/3!important;grid-row:2!important;font-size:11px!important;line-height:1.35!important;margin:0!important}
+ html body #income-expenses.cash-flow-layout tbody tr[data-cash-record]>td[data-label=Date]{grid-column:1/3!important;grid-row:3!important;font-size:11px!important;line-height:1.35!important;margin-top:2px!important}
+ html body #income-expenses.cash-flow-layout tbody tr[data-cash-record]>td[data-label=Amount]{font-size:16px!important;line-height:1.3!important}
+ html body #income-expenses.cash-flow-layout .cash-category-icon{width:29px;height:29px;border-radius:9px;background:color-mix(in srgb,var(--cash-category-color,var(--primary)) 14%,transparent);color:var(--cash-category-color,var(--primary))}
+ html body #income-expenses.cash-flow-layout .cash-category-icon svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ html body #income-expenses.cash-flow-layout td[data-label=Category],html body #income-expenses.cash-flow-layout td[data-label=Source]{padding-left:37px!important}
+}
