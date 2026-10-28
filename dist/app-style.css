@@ -2328,3 +2328,16 @@ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions[hidden]{dis
 }
 
 body:has(#loanDetailsModal:not([hidden])) #debtEmiHistoryModal{z-index:1120}
+
+/* Aligned loan-change comparisons without long inline before/after paragraphs. */
+#recordEditorFields>.loan-change-preview{grid-column:1/-1;min-width:0;padding:12px;border:1px solid var(--border);border-radius:12px}
+.loan-change-preview h4{margin:0 0 10px;font-size:14px;line-height:1.3}
+.loan-change-comparison{display:grid;grid-template-columns:minmax(0,1fr) repeat(2,minmax(0,1.1fr));gap:9px 8px;align-items:start}
+.loan-change-comparison>span{min-width:0;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.loan-change-comparison .comparison-label{color:var(--text-light);font-size:11px}
+.loan-change-comparison .comparison-heading{font-size:10px;color:var(--text-light);font-weight:600}
+.loan-change-comparison .comparison-after{font-weight:600}
+.loan-change-current{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 0;padding-top:12px;border-top:1px solid var(--border)}
+.loan-change-current dt{font-size:10px;line-height:1.4;color:var(--text-light)}
+.loan-change-current dd{margin:3px 0 0;font-size:13px;line-height:1.35;font-weight:600;overflow-wrap:anywhere}
+.loan-change-preview .loan-change-help{margin:12px 0 0;font-size:11px;line-height:1.5;color:var(--text-light)}
