@@ -166,7 +166,7 @@ const server=http.createServer(async(req,res)=>{try{
   await page.locator('#cashMonthFilter').selectOption(await page.evaluate(()=>currentMonthKey()));
   assert.equal(await page.locator('#income-expenses .cash-flow-quick-actions button').count(),1);
   assert.equal(await page.locator('#income-expenses .cash-flow-quick-actions').getByRole('button',{name:'Upcoming commitments'}).count(),0);
-  assert.equal(await page.locator('#cashFlowCommitmentsPanel').count(),1);
+  assert.equal(await page.locator('#cashCommitments').count(),1);
   await page.evaluate(()=>{
    window.__cashReviewTestOriginalGet=financeReviews.get;
    const month=currentMonthKey(),signed=JSON.stringify(monthClose(state,month));
