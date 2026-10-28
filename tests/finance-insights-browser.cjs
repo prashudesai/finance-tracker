@@ -88,13 +88,13 @@ const server=http.createServer(async(req,res)=>{try{
   const title=await gratuity.locator('#retirementCategoryDialogTitle').boundingBox();
   const close=await gratuity.locator('.investment-category-dialog-close').boundingBox();
   assert(header&&title&&close&&header.height<90&&close.x>title.x+title.width-2&&Math.abs(title.y+title.height/2-(close.y+close.height/2))<24,JSON.stringify({header,title,close}));
-  await gratuity.locator('[data-close-retirement-category-dialog]').click();
+  await gratuity.locator('.investment-category-dialog-close[data-close-retirement-category-dialog]').click();
   await page.evaluate(()=>renderRetirementCategoryDialog('pf',true));
   const actions=gratuity.locator('#retirementCategoryDialogTable tbody td[data-mobile-label="Actions"]').first();
   assert(await actions.count()>0);
   const geometry=await actions.evaluate(td=>[...td.querySelectorAll('button')].map(b=>b.getBoundingClientRect().toJSON()));
   assert(geometry.length>=3&&geometry.every(b=>Math.abs(b.y-geometry[0].y)<3),JSON.stringify(geometry));
-  await gratuity.locator('[data-close-retirement-category-dialog]').click();
+  await gratuity.locator('.investment-category-dialog-close[data-close-retirement-category-dialog]').click();
   const row=page.locator('#stallionPmsTileBody .stallion-pms-holdings tbody tr').first();
   const monthly=await row.locator('[data-label="Monthly Contribution"]').boundingBox();
   const gain=await row.locator('[data-label="Gain / Loss"]').boundingBox();
