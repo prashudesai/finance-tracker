@@ -1,6 +1,6 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.28.16",
-  "released": "2026-10-28",
+  "version": "2026.10.29.1",
+  "released": "2026-10-29",
   "releaseNotes": [
   "Align Stallion PMS details and action icons with other investment modals.",
   "Compact cash-flow cards and label every amount in monthly balance history.",
