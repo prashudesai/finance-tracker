@@ -511,6 +511,38 @@
         (pmsActionRow||pmsHeaderControls)?.append(button);
       }
       if(pmsHeaderControls)pmsHeaderControls.hidden=Boolean(pmsActionRow);
+      const pmsSource=stallionBody.querySelector('.table-wrapper');
+      if(pmsSource&&hasStallion){
+        pmsSource.classList.add('pms-detail-source');
+        const summaries=document.createElement('div');summaries.className='pms-summary-list';
+        stallionItems.forEach((inv,index)=>{
+          const gain=Number(inv.current||0)-Number(inv.invested||0),xirr=stallionXirr(inv,valuationDate,stallionContributionsById.get(inv.id)||[]);
+          const tile=document.createElement('button');tile.type='button';tile.className='pms-summary-tile';tile.setAttribute('aria-haspopup','dialog');
+          tile.innerHTML='<span class="pms-summary-name">'+analyticEscape(inv.name)+'</span><span class="pms-summary-member">'+analyticEscape(inv.member||'—')+'</span><span class="pms-summary-metrics">'+[
+            ['Current value',formatCurrency(inv.current)],['XIRR',xirr===null?'N/A':(xirr*100).toFixed(2)+'%'],['Invested',formatCurrency(inv.invested)],['Gain / loss',(gain>=0?'+':'')+formatCurrency(gain)]
+          ].map(([label,value])=>'<span><small>'+label+'</small><strong>'+analyticEscape(value)+'</strong></span>').join('')+'</span>';
+          tile.onclick=()=>{
+            const dialog=document.getElementById('investmentCategoryDialog');delete dialog.dataset.investmentType;
+            document.getElementById('investmentCategoryDialogTitle').textContent=inv.name||'Stallion PMS';
+            document.getElementById('investmentCategoryDialogSubtitle').textContent='Stallion PMS · '+(inv.member||'');
+            const summary=document.getElementById('investmentCategoryDialogSummary');summary.replaceChildren();
+            const target=document.getElementById('investmentCategoryDialogTable');target.replaceChildren();
+            const wrapper=pmsSource.cloneNode(true);wrapper.classList.remove('pms-detail-source');wrapper.classList.add('investment-category-dialog-table');
+            wrapper.querySelectorAll('tbody tr').forEach((row,rowIndex)=>{if(rowIndex!==index)row.remove();});
+            wrapper.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+            const rowActions=wrapper.querySelector('tbody td[data-label="Actions"]');
+            if(rowActions){
+              rowActions.querySelectorAll('[data-pms-compact-action]').forEach(node=>node.remove());
+              pmsQuickActions.forEach(original=>{const copy=original.cloneNode(true);copy.removeAttribute('id');copy.onclick=()=>original.click();rowActions.append(copy);});
+            }
+            target.append(wrapper);labelInvestmentDialogCells(target);
+            dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();
+          };
+          summaries.append(tile);
+        });
+        stallionBody.prepend(summaries);
+      }
+
       if(stallionContributionAddPanel&&!entryPanelIsModal(stallionContributionAddPanel))stallionBody.appendChild(stallionContributionAddPanel);
       if(stallionHistoryPanel)stallionBody.appendChild(stallionHistoryPanel);
       if(stallionProfitPanel&&!entryPanelIsModal(stallionProfitPanel))stallionBody.appendChild(stallionProfitPanel);
