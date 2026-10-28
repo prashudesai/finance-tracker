@@ -371,7 +371,7 @@
       });
       if(kind==='investment')updateInvestmentEditVisibility(fields,record.type);
       else if(['pf','ppf','nps'].includes(kind))updateRetirementEditMonthlyVisibility(fields,kind);
-      modal.hidden=false;syncInvestmentOverlayBodyLock();modal.querySelector('input,select')?.focus();
+      modal.hidden=false;syncInvestmentOverlayBodyLock();modal.querySelector('button')?.focus({preventScroll:true});
     }
     function updateInvestmentEditVisibility(fields,type){
       const growthType=investmentGrowthType(type),groupFor=key=>fields.querySelector(`[data-edit-group="${key}"]`),rate=groupFor('rate'),current=groupFor('current'),monthly=groupFor('monthly'),monthlyDate=groupFor('monthlyContributionDate'),automatic=groupFor('autoMonthlyContribution');
