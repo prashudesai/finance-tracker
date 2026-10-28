@@ -2678,3 +2678,19 @@ html body #growth-projection #growthScenarioDetails dl>div{min-width:0}
 html body #growth-projection #growthScenarioDetails dt{font-size:10px;line-height:1.4;color:var(--text-light)}
 html body #growth-projection #growthScenarioDetails dd{font-size:14px;font-weight:600;line-height:1.4;margin:3px 0 0;overflow-wrap:anywhere}
 @media(max-width:360px){html body #growth-projection #growthProjectionSummary .stat-value{font-size:16px!important}html body #growth-projection #growthProjectionSummary .growth-projection-stat-card{padding:8px!important}}
+
+/* Give the projection plot more usable space instead of the default wide aspect ratio. */
+html body #growth-projection #growthProjectionChartWrap{
+ position:relative;box-sizing:border-box;width:100%!important;height:420px!important;
+ min-height:0!important;max-height:none!important;padding:8px!important;margin:0!important;
+}
+html body #growth-projection #growthProjectionChart{
+ display:block!important;box-sizing:border-box;width:100%!important;height:100%!important;
+ min-height:0!important;max-height:none!important;
+}
+@media(max-width:700px){
+ html body #growth-projection .growth-projection-chart-panel{padding:12px!important}
+ html body #growth-projection .growth-projection-chart-panel>.panel-header{padding:0!important;margin:0 0 12px!important;min-height:0!important}
+ html body #growth-projection .growth-projection-chart-panel>.panel-header h2{font-size:18px!important;line-height:1.4!important;margin:0!important}
+ html body #growth-projection #growthProjectionChartWrap{height:clamp(300px,46dvh,380px)!important;padding:4px!important;border-radius:12px!important}
+}
