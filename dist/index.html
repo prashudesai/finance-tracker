@@ -1281,16 +1281,17 @@
         </section>
         <section class="panel settings-panel" aria-labelledby="pwaTitle">
           <h2 id="pwaTitle">App &amp; updates</h2>
-          <div class="pwa-install-section" style="margin:16px 0;padding-bottom:16px;border-bottom:1px solid var(--border)">
+          <div class="pwa-install-section">
             <h3>Install app</h3>
-            <p>Add Personal Finance Tracker to your Home Screen or desktop for easy access.</p>
+            <p class="pwa-install-intro">Add the tracker to your Home Screen or desktop.</p>
             <button type="button" class="btn-secondary" id="pwaInstall" aria-describedby="pwaInstallHelp">Install app</button>
             <p id="pwaInstallHelp" role="status" aria-live="polite" style="margin-top:10px"></p>
           </div>
-          <p id="pwaStatus" role="status" aria-live="polite">Preparing the app for offline use…</p>
-          <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <div class="app-sync-section"><h3>App status</h3><p id="pwaStatus" role="status" aria-live="polite">Preparing the app for offline use…</p>
+          <div class="app-update-actions">
             <button type="button" class="btn-secondary" id="pwaCheckUpdate">Check for updates</button>
             <button type="button" class="btn-primary" id="pwaApplyUpdate" hidden>Apply update</button>
+          </div>
           </div>
         </section>
         <section class="panel settings-panel record-tools-panel" style="grid-column:1/-1"><h2>Records &amp; statement checks</h2><p id="storageHealth" role="status">Opening saved records…</p>
