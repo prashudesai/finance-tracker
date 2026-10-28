@@ -281,20 +281,20 @@ const server=http.createServer(async(req,res)=>{try{
    renderInvestments();renderPf();renderPpf();renderNps();financeInsights.refresh();
   });
   const selectorForType=type=>'.investment-category-card[data-investment-type="'+type+'"]';
-  await page.waitForFunction(()=>document.querySelector('.retirement-account-card[data-retirement-type="nps"] .finance-valuation-review'));
+  await page.waitForFunction(()=>document.querySelector('.retirement-account-card[data-retirement-type="nps"] [title="Update value"]'));
   for(const kind of ['pf','ppf']){
    const card=page.locator('.retirement-account-card[data-retirement-type="'+kind+'"]');
-   assert.equal(await card.locator('.finance-valuation-review').count(),0,kind+' must not have Update value');
+   assert.equal(await card.locator('[title="Update value"]').count(),0,kind+' must not have Update value');
    const name=kind==='pf'?'openManualPfContribution':'openManualPpfContribution';
    assert.equal(await page.locator('#'+kind+'Body button[onclick^="'+name+'"]').count(),1,kind+' must retain Add Contribution inside');
   }
   for(const type of ['Bonds','Fixed Deposits','No Return Test']){
    const card=page.locator(selectorForType(type));
-   assert.equal(await card.locator('.finance-valuation-review').count(),0,type+' must not show Update value');
+   assert.equal(await card.locator('[title="Update value"]').count(),0,type+' must not show Update value');
    assert(await card.locator('button[onclick^="openManualInvestmentContribution"]').count()>0,type+' must retain contribution action');
   }
   for(const card of [page.locator('.retirement-account-card[data-retirement-type="nps"]'),page.locator(selectorForType('Mutual Funds'))]){
-   assert.equal(await card.locator('.finance-valuation-review').count(),1,'market-valued investment still needs Update value');
+   assert.equal(await card.locator('[title="Update value"]').count(),1,'market-valued investment still needs Update value');
   }
   // The value-confirmation dialog also offers Add contribution, never Update balance.
   await page.evaluate(()=>financeWorkbench.valuations('investments','review-bond'));
@@ -339,7 +339,7 @@ const server=http.createServer(async(req,res)=>{try{
    for(const style of ['modern','emerald-flow'])for(const width of [320,390,430,700]){
     await page.setViewportSize({width,height:900});
     await page.evaluate(style=>{PFT_STYLE.apply(style);document.getElementById('investmentMobileTabInvestments').click();financeInsights.refresh();},style);
-    await page.waitForFunction(()=>document.querySelector('[data-investment-type="Mutual Funds"] .finance-valuation-review'));
+    await page.waitForFunction(()=>document.querySelector('[data-investment-type="Mutual Funds"] [title="Update value"]'));
     const geometry=await page.locator('#investmentCategoryPanels>.investment-category-card').evaluateAll(cards=>cards.map(card=>{
      const r=card.getBoundingClientRect(),summary=card.querySelector('.investment-category-summary-grid');
      return {type:card.dataset.investmentType,height:r.height-(card.querySelector('.finance-valuation-footer')?card.querySelector('.finance-valuation-footer').getBoundingClientRect().height+parseFloat(getComputedStyle(card.querySelector('.finance-valuation-footer')).marginTop):0),header:card.querySelector('.panel-header').getBoundingClientRect().height,summary:summary.getBoundingClientRect().height,headerWidth:card.querySelector('.panel-header').getBoundingClientRect().width,headerText:card.querySelector('.investment-category-summary').getBoundingClientRect().toJSON(),value:card.querySelector('.investment-summary-value').getBoundingClientRect().toJSON(),rate:card.querySelector('.investment-summary-metric').getBoundingClientRect().toJSON(),overflow:card.scrollWidth>card.clientWidth+1,rows:[...summary.children].filter(e=>!e.classList.contains('investment-summary-chevron')&&e.getClientRects().length).map(e=>Math.round(e.getBoundingClientRect().top))};
@@ -351,7 +351,7 @@ const server=http.createServer(async(req,res)=>{try{
     assert(await mf.locator('.investment-monthly-inline').isVisible());
     assert.match(await mf.locator('.investment-monthly-inline').textContent(),/7,500/);
     assert.equal(await mf.locator('.investment-summary-monthly').isVisible(),false);
-    assert.equal(await mf.locator('.panel-header .finance-valuation-review').count(),0);assert.equal(await mf.locator('.finance-valuation-footer .finance-valuation-review').count(),1);const action=await mf.locator('.finance-valuation-review').boundingBox();assert(action.height>=44);
+    assert.equal(await mf.locator('.panel-header [title="Update value"]').count(),0);assert.equal(await mf.locator('.finance-valuation-footer').count(),0);assert.equal(await mf.locator('.investment-row-action-group [title="Update value"]').count(),1);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    }
    await page.locator('[data-investment-type="Mutual Funds"] .investment-category-summary-grid').click();
@@ -375,8 +375,8 @@ const server=http.createServer(async(req,res)=>{try{
   await page.evaluate(()=>{localDateKey=()=> '2026-10-31';document.querySelector('.nav-tab[data-tab="investments"]').click();renderInvestments();financeInsights.refresh();});
   await page.locator('#investmentMobileTabInvestments').click();
   const pms=page.locator('#stallionPmsPanel');
-  await page.waitForFunction(()=>!document.querySelector('#stallionPmsPanel .finance-valuation-review'));
-  assert.equal(await pms.locator('.finance-valuation-review').count(),0);
+  await page.waitForFunction(()=>!document.querySelector('#stallionPmsPanel [title="Update value"]'));
+  assert.equal(await pms.locator('[title="Update value"]').count(),0);
   assert.equal(await pms.locator('.finance-stale-dot').count(),0);
   assert(await pms.locator('#openStallionContributionBtn').isVisible());
   assert(await pms.locator('[data-open-entry="stallionProfitAddPanel"]').isVisible());
