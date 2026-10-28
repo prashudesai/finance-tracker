@@ -2247,3 +2247,18 @@ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions[hidden]{dis
     justify-content:flex-start!important;padding-top:9px!important;gap:8px!important;
   }
 }
+
+/* Keep optional monthly contributions out of the mobile summary's third row.
+   The full metric remains in desktop cards and the holdings dialog. */
+.investment-monthly-inline{display:none}
+@media(max-width:700px){
+ #investmentCategoryPanels .investment-monthly-inline{display:inline}
+ #investmentCategoryPanels .investment-category-summary{font-size:10px;line-height:1.4}
+ #investmentCategoryPanels .investment-summary-monthly{display:none}
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-card>.panel-header{
+  min-height:44px;box-sizing:border-box;padding:0;margin:0 0 6px;
+ }
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-card>.panel-header button{
+  min-height:44px;padding:6px 8px;
+ }
+}
