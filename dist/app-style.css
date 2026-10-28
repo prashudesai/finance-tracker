@@ -2594,3 +2594,39 @@ body:has(#loanDetailsModal:not([hidden])) #debtEmiHistoryModal{z-index:1120}
 #settingsBackupPanel #settingsRecordsPanel{margin:0!important;padding:8px 0 0!important;border:0!important;box-shadow:none!important;background:transparent!important}
 #settingsBackupPanel #clearTrackerSection{margin-top:12px!important}
 #settingsBackupPanel input:not([type=file]),#settingsBackupPanel select{box-sizing:border-box;max-width:100%;min-height:44px;font-size:13px}
+
+/* Assumptions are compact data cards; group headings inherit the active palette. */
+html body #growth-projection .growth-assumption-group-heading{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:10px!important;min-height:0!important;height:auto!important;margin:0 0 10px!important;
+ padding:8px 0!important;border:0!important;border-bottom:1px solid var(--border)!important;
+ border-radius:0!important;background:transparent!important;background-image:none!important;
+ color:var(--text)!important;box-shadow:none!important;
+}
+html body #growth-projection .growth-assumption-group-heading>div{min-width:0;margin:0;padding:0}
+html body #growth-projection .growth-assumption-group-heading h3{font-size:14px!important;line-height:1.4!important;margin:0!important;color:var(--text)!important}
+html body #growth-projection .growth-assumption-group-heading p{font-size:11px!important;line-height:1.4!important;margin:3px 0 0!important;color:var(--text-light)!important}
+html body #growth-projection .growth-assumption-group-count{flex:none;font-size:10px!important;line-height:1.4;padding:4px 7px!important;min-height:0!important;margin:0!important;border-radius:8px!important;color:var(--text-light)!important;background:var(--bg)!important;border:1px solid var(--border)}
+@media(max-width:700px){
+ html body #growth-projection .growth-assumptions-panel{padding:12px!important}
+ html body #growth-projection .growth-assumptions-panel>.panel-header{padding:0 0 10px!important;margin:0 0 10px!important;min-height:0!important}
+ html body #growth-projection .growth-assumptions-panel>.panel-header h2{font-size:18px!important;line-height:1.35!important;margin:0!important}
+ html body #growth-projection .growth-assumptions-panel>p{font-size:12px!important;line-height:1.5!important;margin:0 0 12px!important}
+ html body #growth-projection .growth-assumption-grid{gap:10px!important}
+ html body #growth-projection .growth-assumption-group{padding:10px!important;border-left-width:3px!important;border-radius:12px!important}
+ html body #growth-projection .growth-assumption-group-grid{gap:8px!important}
+ html body #growth-projection .growth-assumption-tile{margin:0!important;padding:0!important;min-height:0!important;border-radius:10px!important}
+ html body #growth-projection .growth-assumption-toggle{position:relative;display:block!important;box-sizing:border-box;width:100%;height:auto!important;min-height:44px!important;padding:10px!important;margin:0!important;text-align:left}
+ html body #growth-projection .growth-assumption-topline{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:8px!important;padding-right:14px!important;margin:0!important}
+ html body #growth-projection .growth-assumption-name{font-size:13px!important;line-height:1.4!important;min-width:0;white-space:normal!important}
+ html body #growth-projection .growth-assumption-value{font-size:14px!important;line-height:1.4!important;flex:none;white-space:nowrap}
+ html body #growth-projection .growth-assumption-subline{display:flex!important;justify-content:space-between;flex-wrap:wrap;gap:4px 10px;margin:5px 0 0!important;font-size:11px!important;line-height:1.4!important}
+ html body #growth-projection .growth-assumption-subline:empty{display:none!important}
+ html body #growth-projection .growth-assumption-returns{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin:9px 0 0!important}
+ html body #growth-projection .growth-assumption-return{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:3px!important;min-width:0!important;padding:0!important;margin:0!important}
+ html body #growth-projection .growth-assumption-return>span:first-child{font-size:10px!important;line-height:1.35!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+ html body #growth-projection .growth-assumption-return>strong{font-size:12px!important;line-height:1.35!important;white-space:nowrap}
+ html body #growth-projection .growth-assumption-track{height:3px!important;margin-top:2px!important}
+ html body #growth-projection .growth-assumption-returns-single{grid-template-columns:minmax(0,1fr)!important}
+ html body #growth-projection .growth-assumption-chevron{top:10px!important;right:9px!important;font-size:13px!important}
+}
