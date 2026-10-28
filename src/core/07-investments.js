@@ -1,4 +1,35 @@
     // INVESTMENTS
+    // Mobile-only section switcher: one view at a time; no changes to financial data.
+    const investmentSectionTabs=document.getElementById('investmentMobileSectionTabs');
+    const setInvestmentMobileSection=(section,focus=false)=>{
+      const choice=section==='retirement'?'retirement':'investments';
+      const page=document.getElementById('investments');
+      if(!page||!investmentSectionTabs)return;
+      page.dataset.mobileInvestmentView=choice;
+      for(const tab of investmentSectionTabs.querySelectorAll('[data-investment-mobile-tab]')){
+        const active=tab.dataset.investmentMobileTab===choice;
+        tab.setAttribute('aria-selected',String(active));
+        tab.tabIndex=active?0:-1;
+        if(active&&focus)tab.focus();
+      }
+      try{localStorage.setItem('pft-mobile-investment-section',choice);}catch(_){}
+    };
+    if(investmentSectionTabs){
+      let initial='investments';
+      try{initial=localStorage.getItem('pft-mobile-investment-section')||initial;}catch(_){}
+      setInvestmentMobileSection(initial);
+      investmentSectionTabs.addEventListener('click',event=>{
+        const tab=event.target.closest('[data-investment-mobile-tab]');
+        if(tab&&investmentSectionTabs.contains(tab))setInvestmentMobileSection(tab.dataset.investmentMobileTab);
+      });
+      investmentSectionTabs.addEventListener('keydown',event=>{
+        if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+        event.preventDefault();
+        const current=document.getElementById('investments')?.dataset.mobileInvestmentView;
+        const next=event.key==='Home'?'investments':event.key==='End'?'retirement':current==='investments'?'retirement':'investments';
+        setInvestmentMobileSection(next,true);
+      });
+    }
     function customInvestmentProfile(type){return state.customInvestmentProfiles?.[String(type||'').trim()]||null;}
     function investmentGrowthType(type){
       const name=String(type||'').trim();

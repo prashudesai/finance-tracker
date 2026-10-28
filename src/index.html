@@ -545,6 +545,10 @@
         </article>
         <article class="investment-allocation-card"><h2>Asset allocation</h2><p class="investment-allocation-note">Current balances by asset type · excludes gratuity</p><div class="investment-allocation-content"><div id="investmentAllocationRing" class="investment-allocation-ring" role="img" aria-label="No investment balances recorded"><div class="investment-allocation-center"><span>Portfolio</span><strong id="investmentAllocationTotal">₹0</strong></div></div><div id="investmentAllocationLegend" class="investment-allocation-legend" tabindex="0" aria-label="Asset allocation legend"><p>No assets added yet</p></div></div></article>
       </section>
+      <div id="investmentMobileSectionTabs" class="investment-mobile-section-tabs" role="tablist" aria-label="Investment and retirement sections">
+        <button type="button" id="investmentMobileTabInvestments" role="tab" aria-selected="true" aria-controls="investmentListPanel" tabindex="0" data-investment-mobile-tab="investments">Investments</button>
+        <button type="button" id="investmentMobileTabRetirement" role="tab" aria-selected="false" aria-controls="retirementAccountsPanel" tabindex="-1" data-investment-mobile-tab="retirement">Retirement</button>
+      </div>
       <div class="panel investment-stallion-panel" id="stallionPmsPanel" hidden>
         <div class="panel-header">
           <h2>Stallion PMS</h2>
@@ -712,7 +716,7 @@
         <div id="investmentCategoryPanels"></div>
       </div>
 
-      <section class="retirement-accounts-section" aria-labelledby="retirementAccountsHeading">
+      <section class="retirement-accounts-section" id="retirementAccountsPanel" aria-labelledby="retirementAccountsHeading">
       <div class="retirement-accounts-heading"><div><h2 id="retirementAccountsHeading">Retirement Accounts</h2><p>PF, PPF, NPS and gratuity</p></div><div class="retirement-add-menu-wrap"><button type="button" class="btn-primary" id="retirementAddBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="retirementAddMenu">+ Add <span aria-hidden="true">⌄</span></button><div class="retirement-add-menu" id="retirementAddMenu" role="menu" hidden><button type="button" role="menuitem" data-retirement-add="pf">Provident Fund (PF)</button><button type="button" role="menuitem" data-retirement-add="ppf">Public Provident Fund (PPF)</button><button type="button" role="menuitem" data-retirement-add="nps">National Pension Scheme (NPS)</button><button type="button" role="menuitem" data-retirement-add="gratuity">Gratuity</button></div></div></div>
       <div id="retirementAccountPanels"><div class="retirement-empty-state" id="retirementEmptyState" hidden><span class="account-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 10a7 7 0 0 1 7-5h2l2-2v4a5 5 0 0 1 3 4h2v4h-2a5 5 0 0 1-2 3l-.5 2h-3l-.5-1h-3l-.5 1h-3L6 17a5 5 0 0 1-2-4v-2H2"/><circle cx="15.5" cy="10" r=".7"/></svg></span><div class="account-empty-copy"><strong>No retirement accounts yet</strong><span>Add a PF, PPF, NPS or gratuity account to get started.</span></div></div>
       <div class="panel retirement-account-card" id="pfListPanel" data-retirement-type="pf" hidden>
