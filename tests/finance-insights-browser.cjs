@@ -401,5 +401,37 @@ assert.equal(await page.locator('[data-projection-scenario="optimistic"]').getAt
 const buttons=await page.locator('#growthProjectionSummary [data-projection-scenario]').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().y));assert(Math.max(...buttons)-Math.min(...buttons)<2);assert.equal(await page.locator('#growthProjectionResultsTable').evaluate(e=>{const p=e.parentElement;return p.scrollWidth>p.clientWidth&&getComputedStyle(e.querySelector('td')).position==='sticky';}),true);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);});
  await check('Analytics zero values show an honest empty state and allocation placeholder ring',async()=>{const original=await page.evaluate(()=>JSON.stringify(state));await page.evaluate(()=>{state.investments=[];state.stallionPms=[];state.pf=[];state.ppf=[];state.nps=[];document.querySelector('.nav-tab[data-tab="analytics"]').click();renderCharts();});await page.waitForFunction(()=>document.getElementById('investmentReturnsEmpty')&&!document.getElementById('investmentReturnsEmpty').hidden);assert.equal(await page.locator('#investmentReturnsChartScroll').isVisible(),false);assert.equal(await page.evaluate(()=>chartInstances.assetAllocationChart.data.datasets[0].data.every(n=>n===0)),true);assert.equal(await page.evaluate(()=>chartInstances.assetAllocationChart.config.plugins.some(p=>p.id==='emptyAllocationRing')),true);await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderCharts();},original);await page.waitForFunction(()=>!document.getElementById('investmentReturnsChartScroll').hidden);});
  await check('Settings removes the duplicate Last sync label and keeps it in the bottom status',async()=>{await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="settings"]').click());assert.equal(await page.locator('#cloudLastUpdated').count(),0);assert.match(await page.locator('#financeBottomSync').textContent(),/^Synced /);assert.equal(await page.locator('#cloudSignOut').evaluate(e=>e.closest('#settingsAccountPanel')!==null),true);assert.equal(await page.locator('.cloud-account-panel #cloudSignOut').count(),0);assert.match(await page.locator('#cloudRefresh').textContent(),/Sync now/);for(const width of [320,390,700,1024]){await page.setViewportSize({width,height:844});const geometry=await page.locator('#cloudRefresh').evaluate(e=>{const b=e.getBoundingClientRect(),i=e.querySelector('svg').getBoundingClientRect(),t=e.querySelector('span').getBoundingClientRect();return {display:getComputedStyle(e).display,b:b.toJSON(),i:i.toJSON(),t:t.toJSON()};});assert(['flex','inline-flex'].includes(geometry.display));assert(geometry.b.width>=43.99&&geometry.b.height>=43.99&&geometry.i.left>=geometry.b.left&&geometry.t.right<=geometry.b.right&&geometry.i.top>=geometry.b.top&&geometry.t.bottom<=geometry.b.bottom&&Math.abs((geometry.i.top+geometry.i.height/2)-(geometry.t.top+geometry.t.height/2))<2,JSON.stringify({width,geometry}));}await page.setViewportSize({width:390,height:844});assert(await page.locator('#settingsProfileName').textContent());const icons=await page.evaluate(()=>[document.querySelector('[data-style-page="settings"] svg').innerHTML,document.querySelector('#themeToggle svg').innerHTML]);assert.notEqual(icons[0],icons[1]);await page.locator('.settings-quick-tile').filter({has:page.locator('strong',{hasText:/^Account$/})}).click();assert(await page.locator('#cloudSignOut').isVisible());await page.locator('#settingsTileClose').click();});
+
+ await check('Guided tour is replayable, accessible and does not change financial records',async()=>{
+  await page.evaluate(()=>{PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="settings"]').click();});
+  const before=await page.evaluate(()=>JSON.stringify(state));
+  assert.equal(await page.evaluate(()=>PFTTour.shouldOffer(false)),false);
+  await page.locator('.settings-quick-tile').filter({has:page.locator('strong',{hasText:/^App info$/})}).click();
+  await page.locator('#replayAppTour').click();
+  const tour=page.locator('#appGuideTour');
+  await tour.waitFor({state:'visible'});
+  assert.equal(await tour.locator('[data-tour-back]').isDisabled(),true);
+  await tour.locator('[data-tour-next]').click();
+  assert.match(await page.locator('#appGuideTourTitle').textContent(),/Record money/);
+  await tour.locator('[data-tour-back]').click();
+  assert.match(await page.locator('#appGuideTourTitle').textContent(),/finances at a glance/);
+  for(const width of [320,390,700,1440]){
+    await page.setViewportSize({width,height:844});
+    const fits=await tour.evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1&&e.scrollWidth<=e.clientWidth+1;});
+    assert.equal(fits,true,'Tour fits '+width);
+  }
+  for(let i=0;i<8;i++)await tour.locator('[data-tour-next]').click();
+  assert.match(await page.locator('#appGuideTourTitle').textContent(),/backup/);
+  assert.equal(await tour.locator('[data-tour-next]').textContent(),'Finish');
+  await tour.locator('[data-tour-next]').click();assert.equal(await tour.isVisible(),false);
+  assert.equal(await page.evaluate(()=>PFTTour.shouldOffer(true)),false);
+  assert.equal(await page.evaluate(()=>document.querySelector('.nav-tab.active').dataset.tab),'settings');
+  assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
+  await page.evaluate(()=>PFTTour.start());await tour.waitFor({state:'visible'});
+  await page.keyboard.press('Escape');assert.equal(await tour.isVisible(),false);
+  await page.evaluate(()=>PFTTour.maybeStart(true));assert.equal(await tour.isVisible(),false);
+  await page.setViewportSize({width:390,height:844});
+ });
+
  assert.deepEqual(errors,[]);await browser.close();server.close();console.log(JSON.stringify({passed:results.length,failed:0}));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});
