@@ -110,6 +110,21 @@
   window.addEventListener('pft:desktop-cash-kind',e=>{if(cashDesktop)cashTabs.show(e.detail==='income'?0:1);});
   matchMedia('(max-width:700px)').addEventListener('change',adaptCash);adaptCashLayout=adaptCash;
   const invest=space('#investments','flow-investments');const investSummary=slot(invest,'flow-full');capture('#investments .investment-overview-grid',investSummary);const investMain=slot(invest,'flow-full panel');investMain.append(el('p','flow-eyebrow','YOUR HOLDINGS'),el('h2','','Investment workspace'));const it=tabs(investMain,['Portfolio','Retirement','Stallion PMS']);capture('#investmentListPanel',it.panes[0].pane);capture('#investments .retirement-accounts-section',it.panes[1].pane);capture('#stallionPmsPanel',it.panes[2].pane);const pmsEmpty=el('p','flow-empty','No Stallion PMS holding recorded. Add one from the Portfolio tab to get started.');pmsEmpty.id='flowPmsEmpty';it.panes[2].pane.append(pmsEmpty);
+  const investmentMedia=matchMedia('(max-width:700px)');
+  function adaptInvestmentTabs(){
+   const mobile=enabled&&investmentMedia.matches;
+   const portfolio=it.panes[0],stallion=it.panes[2];
+   portfolio.button.textContent=mobile?'Investments':'Portfolio';
+   stallion.button.style.display=mobile?'none':'';
+   stallion.button.setAttribute('aria-hidden',String(mobile));
+   if(!enabled)return;
+   const target=mobile?portfolio.pane:stallion.pane;
+   const pms=document.getElementById('stallionPmsPanel');
+   if(pms&&pms.parentNode!==target)target.append(pms);
+   if(pmsEmpty.parentNode!==target)target.append(pmsEmpty);
+   if(mobile&&stallion.button.getAttribute('aria-selected')==='true')it.show(0);
+  }
+  investmentMedia.addEventListener('change',adaptInvestmentTabs);
   const debt=space('#debts','flow-debts');const debtRail=slot(debt,'flow-rail');capture('#debts .debt-page-overview',debtRail);const debtMain=slot(debt,'flow-main');capture('#loanAddPanel',debtMain);capture('#debts .debt-list-panel',debtMain);
   const analytics=space('#analytics','flow-analytics');const analyticsBody=slot(analytics,'flow-full');capture('#analytics .advanced-analytics-overview',analyticsBody);capture('#analytics .analytics-grid',analyticsBody);
   const growth=space('#growth-projection','flow-growth');const gr=slot(growth,'flow-full');capture('#growthProjectionControls',gr);capture('#growth-projection .growth-projection-chart-panel',gr);capture('#growth-projection .growth-assumptions-panel',gr);capture('#growthContributionExclusionsWrap',gr);capture('#growth-projection .growth-scenario-panel',gr);capture('#growth-projection .growth-breakdown-panel',gr);
@@ -138,7 +153,7 @@
   }catch(error){console.error('Emerald Flow chart update failed',error);}
  }
  function styleCharts(active){if(!window.Chart?.instances)return;for(const chart of Object.values(window.Chart.instances)){if(!charts.has(chart))charts.set(chart,{type:chart.config.type,cutout:chart.options.cutout,animation:chart.options.animation,legend:chart.options.plugins?.legend?.position,datasets:chart.data.datasets.map(d=>({borderRadius:d.borderRadius,barPercentage:d.barPercentage,categoryPercentage:d.categoryPercentage}))});const previous=charts.get(chart);chart.config.type=active&&previous.type==='pie'?'doughnut':previous.type;if(previous.type==='pie')chart.options.cutout=active?'68%':previous.cutout;chart.options.animation=active?false:previous.animation;chart.data.datasets.forEach((d,i)=>{const old=previous.datasets[i];if(chart.config.type==='bar'){d.borderRadius=active?7:old?.borderRadius;d.barPercentage=active?0.72:old?.barPercentage;d.categoryPercentage=active?0.72:old?.categoryPercentage;}});if(chart.options.plugins?.legend)chart.options.plugins.legend.position=active?'bottom':previous.legend;chart.update('none');}}
- function apply(){const next=root.dataset.layoutStyle==='emerald-flow';if(next===enabled)return;if(typeof closeEntryFormModal==='function'&&!$('#entryFormModal')?.hidden)closeEntryFormModal();enabled=next;if(next){for(const m of moves)m.dest.append(m.node);spaces.forEach(s=>s.hidden=false);draw();}else{for(const m of [...moves].reverse())if(m.anchor.parentNode)m.anchor.after(m.node);spaces.forEach(s=>s.hidden=true);}adaptCashLayout();styleCharts(next);requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));}
+ function apply(){const next=root.dataset.layoutStyle==='emerald-flow';if(next===enabled)return;if(typeof closeEntryFormModal==='function'&&!$('#entryFormModal')?.hidden)closeEntryFormModal();enabled=next;if(next){for(const m of moves)m.dest.append(m.node);spaces.forEach(s=>s.hidden=false);draw();}else{for(const m of [...moves].reverse())if(m.anchor.parentNode)m.anchor.after(m.node);spaces.forEach(s=>s.hidden=true);}adaptCashLayout();adaptInvestmentTabs();styleCharts(next);requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));}
  let built=false;function prepare(){if(built||!window.financeCloud)return;built=true;build();new MutationObserver(apply).observe(root,{attributes:true,attributeFilter:['data-layout-style']});apply();}
  window.addEventListener('pft:before-reveal',prepare);Promise.resolve(window.trackerReady).then(prepare);
 })();
