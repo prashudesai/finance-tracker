@@ -11,6 +11,11 @@ export function automaticEntries(data,visible,month,payments={}){
  return [...contributions,...recurring].map(row=>{const p=payments[automaticCheckKey(row)];return {row,confirmed:p?.status==='paid'&&p.amount===row.amount&&(p.epsAmount||0)===(row.epsAmount||0)};});
 }
 // Resolve the specific holding/account rather than showing only "pf", "ppf" or a broad investment type.
+// Pending reviews start at month-end; posted/verified entries remain in the ledger.
+export function pendingAutomaticEntries(data,visible,month,payments={},today){
+ if(typeof today!=='string'||!(month<today.slice(0,7)||month===today.slice(0,7)&&monthEnd(today)))return [];
+ return automaticEntries(data,visible,month,payments).filter(item=>!item.confirmed);
+}
 export function automaticEntryTitle(row,visible={}){
  const kind=String(row.investmentType||'').toLowerCase();
  const accounts=['pf','ppf','nps'];
