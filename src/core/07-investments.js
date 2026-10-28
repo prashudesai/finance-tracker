@@ -447,14 +447,14 @@
         const extraHeaders=`${hasReturnMetrics?'<th class="text-right" title="(Current value − total invested) ÷ total invested">Absolute Return</th><th class="text-right" title="Annualized return from the holding start date; contribution dates are not weighted">CAGR</th><th class="text-right" title="Annualized return using initial investment, dated contributions and current value">XIRR</th>':''}${hasRate?'<th class="text-right" title="Annual interest rate entered for this holding">Interest Rate</th>':''}`;
         const emptySpan=6+(hasMonthlyContribution?1:0)+(hasReturnMetrics?3:0)+(hasRate?1:0);
         return `<section class="panel investment-category-card" data-category-index="${defaultCategoryOrder.indexOf(category)}" data-investment-type="${analyticEscape(category)}">
-          <div class="panel-header"><div><h3>${analyticEscape(category)}</h3><div class="investment-category-summary">${items.length} ${items.length===1?'holding':'holdings'}</div></div></div>
+          <div class="panel-header"><div><h3>${analyticEscape(category)}</h3><div class="investment-category-summary"><span>${items.length} ${items.length===1?'holding':'holdings'}</span>${hasMonthlyContribution?`<span class="investment-monthly-inline"> · ${formatCurrency(monthlyTotal)}/mo</span>`:''}</div></div></div>
           <div class="investment-category-summary-grid" role="button" tabindex="0" aria-haspopup="dialog" aria-label="View ${analyticEscape(category)} holdings">
             <span class="investment-summary-value"><span>Current value</span><strong>${formatCurrency(currentTotal)}</strong></span>
             <span class="investment-summary-metric" data-category-summary-metric="${tileMetric.key}"${tileMetric.title?` title="${analyticEscape(tileMetric.title)}"`:''}><span>${tileMetric.label}</span><strong>${analyticEscape(tileMetric.value)}</strong></span>
             <span class="investment-summary-chevron" aria-hidden="true">›</span>
             <span class="investment-summary-detail"><span>Invested</span><strong>${formatCurrency(investedTotal)}</strong></span>
             <span class="investment-summary-detail"><span>Gain / loss</span><strong class="${gainTotal>=0?'positive':'negative'}">${gainTotal>=0?'+':''}${formatCurrency(gainTotal)}</strong></span>
-            ${hasMonthlyContribution?`<span class="investment-summary-detail"><span>Monthly</span><strong>${formatCurrency(monthlyTotal)}</strong></span>`:''}
+            ${hasMonthlyContribution?`<span class="investment-summary-detail investment-summary-monthly"><span>Monthly</span><strong>${formatCurrency(monthlyTotal)}</strong></span>`:''}
           </div><div class="investment-category-dialog-source" hidden><div class="table-wrapper"><table><thead><tr><th>Member</th><th>Name</th><th class="text-right">Invested</th><th class="text-right">Current Value</th>${hasMonthlyContribution?'<th class="text-right">Monthly Contribution</th>':''}<th class="text-right">Gain/Loss</th>${extraHeaders}<th class="investment-row-actions-header">Actions</th></tr></thead><tbody>${rows||`<tr><td colspan="${emptySpan}" class="text-muted">No holdings.</td></tr>`}</tbody></table></div></div>
         </section>`;
       }).join('');
