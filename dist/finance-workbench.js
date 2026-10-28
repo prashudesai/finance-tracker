@@ -137,7 +137,12 @@ const edit=button(actions,'Edit amount',()=>editForReview(row,input.value,option
     await write('valuations',latest);status.textContent=valuationStatus(row,latest[key],localDateKey());
    });
    confirm.classList.add('valuation-confirm');confirm.disabled=window.financeCloud.canEdit===false;
-   const update=button(actions,'Update balance',()=>{dialog.close();if(kind==='investments')editInvestment(row.id);else openInvestmentEditModal(kind,row.id);});
+   const update=button(actions,['pf','ppf'].includes(kind)?'Add contribution':'Update balance',()=>{
+    dialog.close();
+    if(['pf','ppf'].includes(kind))openManualRetirementContribution(kind,row.id);
+    else if(kind==='investments')editInvestment(row.id);
+    else openInvestmentEditModal(kind,row.id);
+   });
    update.disabled=window.financeCloud.canEdit===false;
    const returns=add(card,'details');returns.className='valuation-return-basis';add(returns,'summary','Return basis');
    const gain=Number(row.current)-Number(row.invested??row.current);
