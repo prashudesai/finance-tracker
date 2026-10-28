@@ -342,7 +342,7 @@ const server=http.createServer(async(req,res)=>{try{
     await page.waitForFunction(()=>document.querySelector('[data-investment-type="Mutual Funds"] .finance-valuation-review'));
     const geometry=await page.locator('#investmentCategoryPanels>.investment-category-card').evaluateAll(cards=>cards.map(card=>{
      const r=card.getBoundingClientRect(),summary=card.querySelector('.investment-category-summary-grid');
-     return {type:card.dataset.investmentType,height:r.height,header:card.querySelector('.panel-header').getBoundingClientRect().height,summary:summary.getBoundingClientRect().height,headerWidth:card.querySelector('.panel-header').getBoundingClientRect().width,headerText:card.querySelector('.investment-category-summary').getBoundingClientRect().toJSON(),value:card.querySelector('.investment-summary-value').getBoundingClientRect().toJSON(),rate:card.querySelector('.investment-summary-metric').getBoundingClientRect().toJSON(),overflow:card.scrollWidth>card.clientWidth+1,rows:[...summary.children].filter(e=>!e.classList.contains('investment-summary-chevron')&&e.getClientRects().length).map(e=>Math.round(e.getBoundingClientRect().top))};
+     return {type:card.dataset.investmentType,height:r.height-(card.querySelector('.finance-valuation-footer')?card.querySelector('.finance-valuation-footer').getBoundingClientRect().height+parseFloat(getComputedStyle(card.querySelector('.finance-valuation-footer')).marginTop):0),header:card.querySelector('.panel-header').getBoundingClientRect().height,summary:summary.getBoundingClientRect().height,headerWidth:card.querySelector('.panel-header').getBoundingClientRect().width,headerText:card.querySelector('.investment-category-summary').getBoundingClientRect().toJSON(),value:card.querySelector('.investment-summary-value').getBoundingClientRect().toJSON(),rate:card.querySelector('.investment-summary-metric').getBoundingClientRect().toJSON(),overflow:card.scrollWidth>card.clientWidth+1,rows:[...summary.children].filter(e=>!e.classList.contains('investment-summary-chevron')&&e.getClientRects().length).map(e=>Math.round(e.getBoundingClientRect().top))};
     }));
     assert.equal(geometry.length,3);
     assert(Math.max(...geometry.map(r=>r.height))-Math.min(...geometry.map(r=>r.height))<=2,JSON.stringify({style,width,geometry}));
@@ -351,7 +351,7 @@ const server=http.createServer(async(req,res)=>{try{
     assert(await mf.locator('.investment-monthly-inline').isVisible());
     assert.match(await mf.locator('.investment-monthly-inline').textContent(),/7,500/);
     assert.equal(await mf.locator('.investment-summary-monthly').isVisible(),false);
-    const action=await mf.locator('.finance-valuation-review').boundingBox();assert(action.height>=44);
+    assert.equal(await mf.locator('.panel-header .finance-valuation-review').count(),0);assert.equal(await mf.locator('.finance-valuation-footer .finance-valuation-review').count(),1);const action=await mf.locator('.finance-valuation-review').boundingBox();assert(action.height>=44);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    }
    await page.locator('[data-investment-type="Mutual Funds"] .investment-category-summary-grid').click();
