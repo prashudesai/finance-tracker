@@ -2247,3 +2247,30 @@ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions[hidden]{dis
     justify-content:flex-start!important;padding-top:9px!important;gap:8px!important;
   }
 }
+
+/* Keep optional monthly contributions out of the mobile summary's third row.
+   The full metric remains in desktop cards and the holdings dialog. */
+.investment-monthly-inline{display:none}
+@media(max-width:700px){
+ #investmentCategoryPanels .investment-monthly-inline{display:inline}
+ #investmentCategoryPanels .investment-category-summary{font-size:10px;line-height:1.4}
+ #investmentCategoryPanels .investment-summary-monthly{display:none}
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-card>.panel-header{
+  min-height:44px;box-sizing:border-box;padding:0;margin:0 0 6px;
+ }
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-card>.panel-header button{
+  min-height:44px;padding:6px 8px;
+ }
+}
+
+/* Preserve the same two-row layout on narrow phones. */
+@media(max-width:360px){
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-summary-grid strong{
+  font-size:13px;white-space:nowrap;overflow-wrap:normal;
+ }
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-summary-grid span>span:first-child{
+  font-size:9px;letter-spacing:0;white-space:nowrap;
+ }
+ #investmentCategoryPanels .finance-valuation-review{font-size:0!important}
+ #investmentCategoryPanels .finance-valuation-review::after{content:"Update";font-size:11px}
+}
