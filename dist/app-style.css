@@ -2158,8 +2158,15 @@ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions[hidden]{dis
   html[data-app-style] body.advanced-layout #debts .debt-list-panel>.table-wrapper{
     width:100%;max-width:100%;margin:10px 0 0;overflow:visible;border:0;
   }
+  html[data-app-style] body.advanced-layout #debts .debt-list-panel table{
+    display:block!important;width:100%!important;max-width:100%;min-width:0!important;
+  }
+  html[data-app-style] body.advanced-layout #debts .debt-list-panel thead{
+    position:absolute!important;width:1px!important;height:1px!important;
+    min-width:0!important;overflow:hidden!important;clip-path:inset(50%);
+  }
   html[data-app-style] body.advanced-layout #debts #debtsBody{
-    display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important;
+    display:grid!important;width:100%!important;min-width:0!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important;
   }
   html[data-app-style] body.advanced-layout #debts #debtsBody tr[data-loan-id]{
     display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
