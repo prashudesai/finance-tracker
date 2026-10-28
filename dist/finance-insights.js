@@ -37,7 +37,7 @@ export function installFinanceInsights(){
   placeChanges();if(changes.body.dataset.signature===signature)return;
   changes.body.dataset.signature=signature;changes.body.replaceChildren();
   const monthLabel=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long'});
-  const previousLabel=new Date(previousMonth(month)+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long yyyy'});
+  const previousLabel=new Date(previousMonth(month)+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'});
   changes.d.querySelector('summary').textContent='What changed in '+monthLabel;
   const heading=append(changes.body,'p','Key recorded changes · '+monthLabel+' compared with '+previousLabel,'finance-highlights-intro');
   const grid=append(changes.body,'div',undefined,'finance-highlights-grid');
