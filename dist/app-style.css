@@ -2401,3 +2401,23 @@ body:has(#loanDetailsModal:not([hidden])) #debtEmiHistoryModal{z-index:1120}
  html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td[data-label="Actions"]{padding-top:8px!important;gap:8px!important}
  html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td[data-label="Actions"] button{min-width:44px!important;min-height:44px!important}
 }
+
+/* Tighten portfolio whitespace while preserving figures and touch targets. */
+@media(max-width:700px){
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels{gap:7px!important}
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels>.investment-category-card{
+  padding:8px 11px!important;
+ }
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels>.investment-category-card>.panel-header{
+  padding:0!important;margin:0 0 3px!important;gap:7px!important;min-height:44px;
+ }
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-summary-grid{
+  padding:0 18px 0 0!important;margin:0!important;row-gap:4px!important;column-gap:10px!important;
+ }
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-summary-grid>span{
+  padding:0!important;margin:0!important;
+ }
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-summary-grid strong{
+  margin-top:1px!important;
+ }
+}
