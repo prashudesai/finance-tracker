@@ -2421,3 +2421,26 @@ body:has(#loanDetailsModal:not([hidden])) #debtEmiHistoryModal{z-index:1120}
   margin-top:1px!important;
  }
 }
+
+#stallionPmsPanel .panel-controls[hidden]{display:none!important}
+#stallionPmsTileBody td[data-label="Actions"]{flex-wrap:wrap!important}
+#stallionPmsPanel button[data-pms-compact-action]{
+ display:inline-grid!important;place-items:center;box-sizing:border-box;
+ width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;
+ padding:10px!important;margin:0!important;border-radius:10px!important;
+}
+#stallionPmsPanel button[data-pms-compact-action] svg{
+ width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
+
+#investmentContributionSummary:has(.contribution-summary-metric){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;margin:12px 0 16px;padding:12px;border:1px solid var(--border);border-radius:12px}
+.contribution-summary-metric{min-width:0}
+.contribution-summary-metric>span{display:block;font-size:10px;line-height:1.4;color:var(--text-light)}
+.contribution-summary-metric>strong{display:block;margin-top:3px;font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+#investmentContributionModal .investment-edit-dialog>.panel-header{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;margin:0 0 12px!important}
+#investmentContributionModal .investment-edit-dialog>.panel-header h2{margin:0!important;font-size:18px!important;line-height:1.3}
+#investmentContributionModal .investment-edit-dialog>.panel-header button{min-height:44px;margin:0}
+#investmentContributionModal .investment-contribution-history-heading{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important;margin:0 0 12px!important}
+#investmentContributionModal .investment-contribution-history-heading h3{margin:0;font-size:15px}
+#investmentContributionModal .investment-contribution-filter-label{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;font-size:12px}
+#investmentContributionModal #investmentContributionFilter{width:100%;min-width:0;min-height:44px}

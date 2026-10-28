@@ -1,5 +1,5 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.28.13",
+  "version": "2026.10.28.14",
   "released": "2026-10-28",
   "releaseNotes": [
     "Fix Dashboard month selection, Investments spacing and mobile modal consistency.",

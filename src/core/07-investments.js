@@ -498,7 +498,19 @@
 
       stallionPanel.hidden=!hasStallion;
       const showStallionMonthly=stallionItems.some(inv=>investmentMonthlyAmount(inv)>0);
+      const pmsQuickActions=[document.getElementById('openStallionContributionBtn'),document.querySelector('#stallionPmsPanel [data-open-entry="stallionProfitAddPanel"]')].filter(Boolean);
       stallionBody.innerHTML=hasStallion?`<div class="table-wrapper"><table class="stallion-pms-holdings ${showStallionMonthly?'has-monthly':'no-monthly'}"><thead><tr><th>Member</th><th>Name</th><th class="text-right">Invested</th><th class="text-right">Current Value</th>${showStallionMonthly?'<th class="text-right">Monthly</th>':''}<th class="text-right">Gain/Loss</th><th class="text-right" title="(Current value − total invested) ÷ total invested">Absolute Return</th><th class="text-right" title="Annualized absolute return from the portfolio start date; monthly contribution dates are not weighted">CAGR</th><th class="text-right" title="Annualized return based on initial investment, dated PMS contributions and current value as of today">XIRR</th><th>Actions</th></tr></thead><tbody>${stallionItems.map(inv=>{const gain=Number(inv.current||0)-Number(inv.invested||0),absoluteReturn=stallionAbsoluteReturn(inv),cagr=stallionCagr(inv,valuationDate),xirr=stallionXirr(inv,valuationDate,stallionContributionsById.get(inv.id)||[]);return `<tr><td data-label="Member"><strong>${analyticEscape(inv.member||'—')}</strong></td><td data-label="Name">${analyticEscape(inv.name)}</td><td class="text-right" data-label="Invested">${formatCurrency(inv.invested)}</td><td class="text-right" data-label="Current Value">${formatCurrency(inv.current)}</td>${showStallionMonthly?`<td class="text-right" data-label="Monthly Contribution">${formatCurrency(investmentMonthlyAmount(inv))}</td>`:''}<td class="text-right ${gain>=0?'positive':'negative'}" data-label="Gain / Loss">${gain>=0?'+':''}${formatCurrency(gain)}</td><td class="text-right" data-label="Absolute Return">${absoluteReturn===null?'N/A':(absoluteReturn*100).toFixed(2)+'%'}</td><td class="text-right" data-label="CAGR">${cagr===null?'N/A':(cagr*100).toFixed(2)+'%'}</td><td class="text-right" data-label="XIRR">${xirr===null?'N/A':(xirr*100).toFixed(2)+'%'}</td><td class="investment-row-actions" data-label="Actions"><button class="btn-small" onclick="openStallionHistory('${inv.id}')">View History</button> <button class="btn-small" onclick="editInvestment('${inv.id}')">Edit</button> <button class="btn-small btn-danger" onclick="deleteInvestment('${inv.id}')">Delete</button></td></tr>`;}).join('')}</tbody></table></div>`:'';
+      const pmsActionRow=stallionBody.querySelector('td[data-label="Actions"]');
+      const pmsHeaderControls=stallionPanel.querySelector('.panel-header .panel-controls');
+      for(const [index,button] of pmsQuickActions.entries()){
+        if(!button.dataset.pmsCompactAction){
+          const label=index===0?'Add contribution':'Update PMS gain/loss';
+          button.setAttribute('aria-label',label);button.title=label;button.dataset.pmsCompactAction='true';
+          button.innerHTML=index===0?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16 5-5 4 3 7-9M15 5h5v5"/></svg>';
+        }
+        (pmsActionRow||pmsHeaderControls)?.append(button);
+      }
+      if(pmsHeaderControls)pmsHeaderControls.hidden=Boolean(pmsActionRow);
       if(stallionContributionAddPanel&&!entryPanelIsModal(stallionContributionAddPanel))stallionBody.appendChild(stallionContributionAddPanel);
       if(stallionHistoryPanel)stallionBody.appendChild(stallionHistoryPanel);
       if(stallionProfitPanel&&!entryPanelIsModal(stallionProfitPanel))stallionBody.appendChild(stallionProfitPanel);

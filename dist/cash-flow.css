@@ -317,3 +317,16 @@ html body #income-expenses :is(#cashHistory-income,#cashHistory-expense) .transa
   grid-column:1/-1!important;grid-row:4!important;
  }
 }
+
+@media(max-width:700px){
+ html body #income-expenses.cash-flow-layout :is(#incomeBody,#expenseBody) tr[data-cash-record]{box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important}
+ html body #income-expenses.cash-flow-layout :is(#incomeBody,#expenseBody) tr[data-cash-record]>td{min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important}
+ html body #income-expenses.cash-flow-layout :is(#incomeBody,#expenseBody) .transaction-mobile-details{display:flex!important;flex-wrap:wrap!important;white-space:normal!important;min-width:0;max-width:100%}
+ html body #income-expenses.cash-flow-layout :is(#incomeBody,#expenseBody) td:is([data-label="Source"],[data-label="Category"]) :not(svg,path){white-space:normal;overflow-wrap:anywhere}
+}
+
+@media(max-width:700px){
+ html body #income-expenses.cash-flow-layout :is(#incomeBody,#expenseBody) tr[data-cash-record]{
+  grid-template-columns:minmax(0,1fr) minmax(96px,max-content)!important;
+ }
+}
