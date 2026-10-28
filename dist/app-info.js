@@ -1,35 +1,11 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.12",
-  "released": "2026-10-27",
+  "version": "2026.10.28.13",
+  "released": "2026-10-28",
   "releaseNotes": [
-    "Redesign investment and retirement detail sheets for compact mobile account cards.",
-    "Improve Cash Flow with a six-month recorded-income and expense trend and upcoming commitments.",
-    "Clarify monthly opening balances and simplify the month-review workflow.",
-    "Refine Dashboard monthly highlights, month selection and net-worth ratio.",
-    "Improve mobile transaction search, history filters and tap-to-edit actions.",
-    "Refine investment and debt cards, valuation reminders, projections and conflict review.",
-    "Give mobile pages more usable width and make the Dashboard more compact.",
-    "Keep mobile controls accessible with streamlined spacing.",
-    "Balance investment and retirement holding layouts and unify valuation controls.",
-    "Improve valuation status indicators and asset allocation legend scrolling.",
-    "Refine Dashboard, Investments, Analytics, Growth Projection and Date Range Reports.",
-    "Add optional expense ownership, transaction search and clearer cash-flow histories.",
-    "Redesign Analytics with a financial-year filter, compact chart views and clear empty states.",
-    "Refresh the Investments overview and improve the cash-entry focus behavior.",
-    "Use the Google profile photo in the header by default, label it My finances, and keep Black in Appearance.",
-    "Repair icon-only record actions throughout the pages; improve the mobile Investment, Retirement and Debt cards and empty states.",
-    "Make the Cash Flow top month pill open the glass popover and filter all three totals plus both history tables on desktop and mobile.",
-    "Align Income and Expense forms and bottom buttons; let Expense notes fill the row, use mint for Add Income and coral for Add Expense.",
-    "Default Income and Expense dates to today, show teal select chevrons and a muted teal calendar icon, and reset the date after saving.",
-    "Put the Cash Flow accent on the Income & Expenses heading with breathing room.",
-    "Keep the Monthly Expense Snapshot visible on desktop when pending and align Emerald Flow Net Worth with its 2x2 summary grid.",
-    "Unify the three-arch hero artwork and copy inside a softly glowing rounded card.",
-    "Improve the desktop Debt empty state and align the Settings Sync now control; remove the duplicate Last sync line while retaining the bottom status."
-],
-  "sections": [
-    [
-      "Short first EMI interest",
-      "New monthly loans use actual-days / 365 for a first EMI earlier than the one-calendar-month anniversary (clamped in shorter months). Example: March 1 to March 5 is four elapsed days, so \u20b910,00,000 at 12% accrues about \u20b91,315 interest. At or after one full monthly cycle, one regular monthly interest amount applies; any extra days are estimated separately at principal \u00d7 annual rate \u00d7 extra days \u00f7 36,500. For example, March 1 to April 5 is one monthly interest amount (\u20b910,000 at \u20b910,00,000 and 12%) plus four extra days (\u20b91,315.07). The Extra days' interest with first EMI field fills automatically and can be edited to match the bank. The first suggested payment includes the extra amount so the normal EMI principal portion remains unchanged. A statement correction remains authoritative and does not double-charge this estimate. Existing loans preserve their saved first-EMI method until edited and confirmed. This is a first-payment estimate, not a full daily-accrual model; use Daily interest basis (SBI style) for daily balances and month-end capitalization."
+    "Fix the Dashboard month selector and align Investments cards across mobile screens.",
+    "Simplify Cash Flow history to one month selector and remove the trend chart.",
+    "Redesign automatic contributions, valuation review and transaction editor modals.",
+    "Standardize investment detail actions and mobile modal close controls."
     ],
     [
       "Revising the regular EMI",
