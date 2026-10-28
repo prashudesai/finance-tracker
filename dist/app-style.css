@@ -956,3 +956,567 @@ html body .growth-assumption-slider::-moz-range-thumb{background:var(--growth-ac
  html body #debts .debt-summary-card-amount{display:grid;grid-template-columns:minmax(0,1fr);gap:3px}
  html body #debts .debt-summary-type{min-width:0;overflow-wrap:anywhere}
 }
+
+/* Release staging: Investments overview uses the same compact mobile rhythm as
+   Home and Debts. Keep the full allocation legend scrollable, not clipped. */
+@media screen and (max-width:700px) {
+  html[data-app-style] body.advanced-layout #investments .investment-overview-grid {
+    gap:10px;
+    margin-bottom:12px;
+    align-items:start;
+  }
+  html[data-app-style] body.advanced-layout #investments :is(.investment-summary-hero,.investment-allocation-card) {
+    padding:14px;
+    border-radius:12px;
+    min-height:0;
+  }
+  #investments .investment-hero-top { gap:8px; }
+  #investments .investment-hero-top strong { margin-top:5px; font-size:clamp(25px,7vw,31px); line-height:1.18; }
+  #investments .investment-hero-description { margin-top:7px; line-height:1.4; }
+  #investments .investment-hero-metrics { gap:10px; margin-top:15px; padding-top:13px; }
+  #investments .investment-hero-metrics > div+div { padding-left:10px; }
+  #investments .investment-hero-metrics strong { margin-top:4px; font-size:clamp(16px,5vw,20px); line-height:1.25; }
+  #investments .investment-allocation-card h2 { font-size:17px; line-height:1.3; }
+  #investments .investment-allocation-note { margin-top:5px; line-height:1.4; }
+  #investments .investment-allocation-content { gap:12px; margin-top:12px; align-items:center; }
+  #investments .investment-allocation-ring { width:104px; height:104px; flex:0 0 104px; }
+  #investments .investment-allocation-center { font-size:9px; }
+  #investments .investment-allocation-center strong { font-size:11px; }
+  #investments .investment-allocation-legend { max-height:190px; align-self:center; min-width:0; }
+  #investments .investment-allocation-item { grid-template-columns:9px minmax(0,1fr) auto; gap:6px; margin:5px 0; font-size:11px; }
+  #investments .investment-allocation-item i { width:9px; height:9px; }
+  #investments .investment-allocation-item strong { font-size:10px; }
+}
+@media screen and (max-width:350px) {
+  #investments .investment-allocation-content { flex-wrap:wrap; }
+  #investments .investment-allocation-ring { margin-inline:auto; }
+  #investments .investment-allocation-legend { flex-basis:100%; }
+}
+
+/* Release staging: Dashboard has the same compact section heading as other tabs. */
+html[data-app-style] body.advanced-layout #dashboard > .dashboard-page-intro {
+  margin:12px 0 16px;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+html[data-app-style] body.advanced-layout #dashboard > .dashboard-page-intro h1 {
+  margin:0;
+  padding-inline-start:14px;
+  border-inline-start:4px solid var(--primary);
+  color:var(--text);
+  font-size:clamp(20px,2.5vw,27px);
+  font-weight:500;
+  line-height:1.3;
+}
+@media screen and (max-width:700px) {
+  html[data-app-style] body.advanced-layout #dashboard > .dashboard-page-intro { margin:7px 0 11px; }
+  html[data-app-style] body.advanced-layout #dashboard > .dashboard-page-intro h1 { font-size:19px; }
+}
+
+/* Dashboard snapshot: restrained frosted-glass month picker.
+   The native select remains available to assistive technology. */
+#dashboardExpenseSnapshot .dashboard-month-picker{position:relative;flex:0 0 auto;min-width:0}
+#dashboardExpenseSnapshot .dashboard-month-native{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;opacity:0!important;overflow:hidden!important;clip-path:inset(50%)!important;pointer-events:none!important}
+#dashboardExpenseSnapshot .dashboard-month-trigger{display:inline-flex;align-items:center;justify-content:space-between;gap:12px;max-width:100%;min-height:44px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--text-light) 30%,transparent);border-radius:13px;background:linear-gradient(145deg,color-mix(in srgb,var(--card-bg) 78%,transparent),color-mix(in srgb,var(--primary) 9%,var(--card-bg)));color:var(--text);font:inherit;font-size:12px;font-weight:500;letter-spacing:0;white-space:nowrap;box-shadow:inset 0 1px rgba(255,255,255,.07),0 3px 14px rgba(0,0,0,.06);cursor:pointer;transition:border-color .15s ease,background .15s ease}
+#dashboardExpenseSnapshot .dashboard-month-trigger:hover,#dashboardExpenseSnapshot .dashboard-month-trigger[aria-expanded="true"]{border-color:color-mix(in srgb,var(--primary) 50%,var(--border));background:color-mix(in srgb,var(--primary) 10%,var(--card-bg))}
+#dashboardExpenseSnapshot .dashboard-month-trigger:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+#dashboardExpenseSnapshot .dashboard-month-chevron{color:var(--primary);font-size:19px;line-height:1;transition:transform .15s ease}
+#dashboardExpenseSnapshot .dashboard-month-trigger[aria-expanded="true"] .dashboard-month-chevron{transform:rotate(180deg)}
+#dashboardExpenseSnapshot .dashboard-month-menu{z-index:1100;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;padding:6px;border:1px solid color-mix(in srgb,var(--primary) 27%,var(--border));border-radius:15px;background:color-mix(in srgb,var(--card-bg) 92%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:0 14px 36px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.08);scrollbar-width:thin}
+#dashboardExpenseSnapshot .dashboard-month-menu[hidden]{display:none!important}
+#dashboardExpenseSnapshot .dashboard-month-option{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--text);font:inherit;font-size:12px;text-align:left;cursor:pointer}
+#dashboardExpenseSnapshot .dashboard-month-option:hover,#dashboardExpenseSnapshot .dashboard-month-option:focus-visible{outline:none;background:color-mix(in srgb,var(--primary) 12%,var(--card-bg))}
+#dashboardExpenseSnapshot .dashboard-month-option[aria-selected="true"]{background:color-mix(in srgb,var(--primary) 17%,var(--card-bg));font-weight:600}
+#dashboardExpenseSnapshot .dashboard-month-check{color:var(--primary);font-size:15px}
+@media(max-width:700px){
+ #dashboardExpenseSnapshot .dashboard-wide-header{display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
+ #dashboardExpenseSnapshot .dashboard-wide-header>.dashboard-card-heading{min-width:0;flex:1}
+ #dashboardExpenseSnapshot .dashboard-wide-header .dashboard-kicker{line-height:1.35}
+ #dashboardExpenseSnapshot .dashboard-month-trigger{font-size:12px;gap:7px;padding:7px 10px}
+}
+@media(max-width:360px){#dashboardExpenseSnapshot .dashboard-wide-header{flex-wrap:wrap}#dashboardExpenseSnapshot .dashboard-month-picker{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){#dashboardExpenseSnapshot .dashboard-month-trigger,#dashboardExpenseSnapshot .dashboard-month-chevron{transition:none}}
+
+/* Release staging: simple, accessible monthly review. */
+.finance-workbench-dialog:has(.month-review-body){width:min(520px,calc(100vw - 24px));max-height:min(85dvh,760px);overflow-y:auto;box-sizing:border-box;padding:20px;border-radius:18px}
+.finance-workbench-dialog:has(.month-review-body) h2{margin:0 0 12px;font-size:21px}
+.month-review-body{display:grid;gap:14px;min-width:0}
+.month-review-summary{padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--primary) 7%,var(--card-bg))}
+.month-review-summary h3{margin:0 0 5px;font-size:18px}
+.month-review-status{margin:0;font-size:13px;color:var(--text-light)}
+.month-review-status.is-warning{color:#eab86b}
+.month-review-status.is-ready{color:var(--success)}
+.month-review-figures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.month-review-figure{display:grid;gap:6px;min-width:0;padding:12px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--primary) 4%,var(--card-bg))}
+.month-review-figure:last-child{grid-column:1/-1}
+.month-review-figure span{color:var(--text-light);font-size:12px;line-height:1.35}
+.month-review-figure strong{color:var(--text);font-size:clamp(17px,4.5vw,22px);overflow-wrap:anywhere}
+.month-review-help{margin:0;color:var(--text-light);font-size:13px;line-height:1.5}
+.month-review-actions{display:grid;gap:8px}
+.month-review-actions .month-review-primary{width:100%;min-height:46px;padding:11px 14px;border-radius:12px;border:1px solid color-mix(in srgb,var(--primary) 60%,var(--border));background:var(--primary);color:var(--card-bg);font-size:14px;font-weight:650}
+.month-review-actions .month-review-primary:disabled{opacity:.55;cursor:not-allowed}
+.month-review-details{padding:11px 13px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--primary) 3%,var(--card-bg))}
+.month-review-details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--text);min-height:28px}
+.month-review-details .finance-workbench-values{margin-top:12px}
+@media(max-width:700px){.finance-workbench-dialog:has(.month-review-body){padding:16px;max-height:calc(100dvh - 85px)}.month-review-figures{gap:8px}}
+
+
+/* Staged release: restrained emerald-glass identity in the mobile header.
+   Profile name and avatar remain owned by the existing family-profile UI. */
+@media screen and (max-width:700px){
+  html[data-app-style] body.advanced-layout .container>header{
+    position:relative;
+    isolation:isolate;
+    min-height:100px;
+    padding-block:12px 14px;
+    background:linear-gradient(115deg,color-mix(in srgb,var(--primary) 8%,transparent),transparent 72%);
+  }
+  html[data-app-style] body.advanced-layout .container>header::after{
+    content:"";position:absolute;left:18px;right:18px;bottom:0;height:1px;
+    background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--primary) 45%,transparent),transparent);
+    pointer-events:none;
+  }
+  html[data-app-style] body.advanced-layout .family-profile-mobile-trigger{
+    border-radius:50%;
+    box-shadow:0 0 0 2px color-mix(in srgb,var(--primary) 36%,transparent),0 0 18px color-mix(in srgb,var(--primary) 12%,transparent);
+  }
+  html[data-app-style] body.advanced-layout .advanced-header-context{gap:2px;min-width:0}
+  html[data-app-style] body.advanced-layout .advanced-header-context .advanced-header-eyebrow{
+    display:block;font-size:11px;font-weight:400;line-height:1.25;
+    color:var(--text-light,var(--text));letter-spacing:.01em;
+  }
+  html[data-app-style] body.advanced-layout .advanced-header-context #layoutPageTitle{
+    font-size:clamp(16px,4.5vw,20px);font-weight:650;line-height:1.2;
+    color:var(--text);
+  }
+  html[data-app-style] body.advanced-layout .advanced-header-context .advanced-header-subtitle{display:none}
+  html[data-app-style] body.advanced-layout #dashboard>.dashboard-page-intro{margin:9px 0 13px}
+}
+@media screen and (min-width:701px){
+  html[data-app-style] body.advanced-layout .advanced-header-context .advanced-header-eyebrow{display:none}
+}
+
+
+/* Staged release Issue 7: concise, accessible monthly highlights. */
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-insight-body{display:grid;gap:12px}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-intro{margin:0;color:var(--text-light);font-size:12px;line-height:1.5}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight{display:flex;flex-direction:column;gap:7px;min-width:0;padding:15px;border:1px solid color-mix(in srgb,var(--primary) 23%,var(--border));border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--primary) 9%,var(--card-bg)),var(--card-bg))}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-label{color:var(--text-light);font-size:12px;line-height:1.35}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-value{color:var(--text);font-size:clamp(17px,2.4vw,24px);line-height:1.2;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-caption{margin-top:auto;color:var(--text-light);font-size:11px;line-height:1.45}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-positive .finance-highlight-value{color:#7ddbbd}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-negative .finance-highlight-value{color:#f1a69e}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-pms{border-color:color-mix(in srgb,#9389d8 35%,var(--border))}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain{border-top:1px solid var(--border);padding-top:5px;color:var(--text-light)}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain>summary{cursor:pointer;min-height:44px;align-content:center;font-size:13px;color:var(--text)}
+html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain .finance-insight-note{font-size:12px;line-height:1.55}
+@media(max-width:450px){html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight{padding:12px;gap:6px}html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-value{font-size:17px}html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-grid{gap:8px}}
+@media(max-width:330px){html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-grid{grid-template-columns:minmax(0,1fr)}}
+
+
+/* Issue 8: one portfolio composition view, not two competing allocation panels.
+   Keep the existing full category list and its sorting/expansion functionality. */
+html[data-app-style] body.advanced-layout #dashboard .advanced-dashboard-insights>.advanced-dashboard-chart-panel:has(#advancedDashboardAllocationChart){display:none}
+html[data-app-style] body.advanced-layout #dashboard .advanced-dashboard-insights{grid-template-columns:minmax(0,1fr)}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-panel{
+  overflow:hidden;border-radius:18px;
+  border:1px solid color-mix(in srgb,var(--primary) 35%,var(--border));
+  background:linear-gradient(155deg,color-mix(in srgb,var(--primary) 7%,var(--card-bg)),var(--card-bg) 64%);
+}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-heading{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;
+}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-title{flex:1 1 190px;min-width:0}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-title h2{margin:0;font-size:clamp(18px,2.2vw,23px)}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-title p{margin:4px 0 0;color:var(--text-light);font-size:12px;line-height:1.4}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-view-all{flex:0 0 auto;min-height:40px}
+html[data-app-style] body.advanced-layout #dashboard .portfolio-total-summary{
+  border-radius:14px;padding:14px;
+  border:1px solid color-mix(in srgb,var(--primary) 18%,var(--border));
+  background:color-mix(in srgb,var(--primary) 6%,var(--card-bg));
+}
+html[data-app-style] body.advanced-layout #dashboard .portfolio-total-item strong{font-variant-numeric:tabular-nums}
+html[data-app-style] body.advanced-layout #dashboard .portfolio-category-row{
+  border-radius:12px;min-height:56px;transition:background-color .15s ease;
+}
+html[data-app-style] body.advanced-layout #dashboard .portfolio-category-row:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+@media(max-width:700px){
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-panel{padding:14px;border-radius:16px}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-heading{gap:9px}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-title{flex-basis:100%}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-view-all{font-size:12px}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-sort-control{margin-left:auto}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-total-summary{padding:11px;gap:9px}
+}
+
+
+/* Issue 9: premium but restrained Cash Flow presentation. Existing data and forms remain authoritative. */
+html[data-app-style] body.advanced-layout #income-expenses .transaction-intro{
+  position:relative;isolation:isolate;gap:12px;
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-intro-copy h1{
+  font-size:clamp(24px,5.5vw,32px);line-height:1.16;letter-spacing:-.025em;
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-intro-copy p{
+  font-size:13px;line-height:1.5;color:var(--text-light);
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-overview{
+  border:1px solid color-mix(in srgb,var(--primary) 42%,var(--border));
+  border-radius:20px;padding:16px;
+  background:linear-gradient(130deg,color-mix(in srgb,var(--primary) 12%,var(--card-bg)),color-mix(in srgb,var(--primary) 3%,var(--card-bg)) 75%);
+  box-shadow:0 12px 34px color-mix(in srgb,#000 10%,transparent),inset 0 1px color-mix(in srgb,var(--primary) 14%,transparent);
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-metric{
+  border-radius:15px;border:1px solid color-mix(in srgb,var(--primary) 20%,var(--border));
+  background:color-mix(in srgb,var(--primary) 5%,var(--card-bg));
+  box-shadow:none;min-width:0;
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-metric-net{
+  border-color:color-mix(in srgb,var(--primary) 36%,var(--border));
+  background:linear-gradient(115deg,color-mix(in srgb,var(--primary) 13%,var(--card-bg)),color-mix(in srgb,var(--primary) 4%,var(--card-bg)));
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-metric-value{
+  font-variant-numeric:tabular-nums;letter-spacing:-.025em;
+}
+html[data-app-style] body.advanced-layout #income-expenses .recurring-launch button{
+  min-height:44px;border-radius:13px;
+  background:color-mix(in srgb,var(--primary) 7%,var(--card-bg));
+  border:1px solid color-mix(in srgb,var(--primary) 24%,var(--border));
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-panel,
+html[data-app-style] body.advanced-layout #income-expenses .transaction-surplus{
+  border-radius:18px;
+  border-color:color-mix(in srgb,var(--primary) 21%,var(--border));
+  background:linear-gradient(155deg,color-mix(in srgb,var(--primary) 5%,var(--card-bg)),var(--card-bg) 65%);
+}
+html[data-app-style] body.advanced-layout #income-expenses .history-section{
+  border-radius:15px;
+}
+html[data-app-style] body.advanced-layout #income-expenses .history-section .panel-header h2{
+  font-size:clamp(18px,4.6vw,22px);letter-spacing:-.015em;
+}
+html[data-app-style] body.advanced-layout #income-expenses .transaction-search input,
+html[data-app-style] body.advanced-layout #income-expenses .history-month-control select{
+  border-radius:12px;min-height:44px;
+}
+@media(max-width:700px){
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-intro{margin-bottom:12px}
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-overview{padding:12px;border-radius:17px;gap:9px}
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-metric{padding:12px;border-radius:13px}
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-metric-value{font-size:clamp(19px,5.5vw,28px);overflow-wrap:anywhere}
+ html[data-app-style] body.advanced-layout #income-expenses .history-filter-controls{gap:8px}
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-panel{border-radius:16px}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-app-style] body.advanced-layout #income-expenses .transaction-metric{transition:none}
+}
+
+
+/* Issue 11: mobile-first investment and retirement cards.
+   Preserve existing category dialogs, update actions, account details and calculations. */
+@media(max-width:700px){
+ html[data-app-style] body.advanced-layout #investments #investmentListPanel,
+ html[data-app-style] body.advanced-layout #investments .retirement-accounts-section{
+   border-radius:18px;padding:14px!important;
+ }
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels,
+ html[data-app-style] body.advanced-layout #investments #retirementAccountPanels{display:grid;gap:9px}
+ html[data-app-style] body.advanced-layout #investments .investment-category-card,
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card{
+   margin:0!important;padding:12px!important;border-radius:14px!important;
+   background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 7%,var(--card-bg)),var(--card-bg))!important;
+   border:1px solid color-mix(in srgb,var(--primary) 25%,var(--border))!important;
+   box-shadow:none!important;min-width:0;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-card>.panel-header,
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card>.panel-header{
+   display:flex;align-items:center;justify-content:space-between;gap:8px;
+   padding:0 0 8px!important;margin:0!important;border:0!important;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-card>.panel-header h3,
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card>.panel-header h2{
+   font-size:16px!important;line-height:1.3;margin:0!important;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid{
+   display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+   gap:7px 10px!important;padding:9px!important;margin:0!important;
+   border-radius:11px!important;border:1px solid color-mix(in srgb,var(--primary) 15%,var(--border))!important;
+   background:color-mix(in srgb,var(--primary) 3%,var(--card-bg))!important;
+   min-width:0;box-shadow:none!important;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid .investment-summary-value,
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid .investment-summary-metric,
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid .investment-summary-detail{
+   min-width:0!important;padding:0!important;margin:0!important;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid strong{
+   font-size:clamp(14px,4vw,19px)!important;line-height:1.25!important;
+   font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-summary-grid span>span:first-child{
+   font-size:10px!important;line-height:1.3;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-card .investment-category-summary-grid{
+   cursor:pointer;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-card .investment-category-summary-grid:focus-visible{
+   outline:2px solid var(--primary);outline-offset:2px;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-category-card .panel-header button,
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card .panel-header button{
+   min-height:40px!important;padding:8px 10px!important;font-size:12px!important;
+   border-radius:10px!important;flex-shrink:0;
+ }
+ html[data-app-style] body.advanced-layout #investments .investment-portfolio-title p,
+ html[data-app-style] body.advanced-layout #investments .retirement-accounts-heading p{font-size:12px;line-height:1.4}
+}
+
+
+/* Issue 11B: investment/retirement detail sheets, compact on phones.
+   Desktop tables remain unchanged; all existing table buttons stay functional. */
+@media(max-width:700px){
+ #investmentCategoryDialog .investment-category-dialog-shell,
+ #retirementCategoryDialog .investment-category-dialog-shell{
+   width:min(100%,560px)!important;max-width:100%!important;max-height:calc(100dvh - 20px)!important;
+   margin:auto auto 0!important;border-radius:22px 22px 0 0!important;
+   overflow-y:auto!important;overscroll-behavior:contain;
+   background:var(--card-bg)!important;color:var(--text)!important;
+   border:1px solid color-mix(in srgb,var(--primary) 32%,var(--border))!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-header,
+ #retirementCategoryDialog .investment-category-dialog-header{
+   display:flex!important;align-items:center!important;gap:10px!important;
+   min-height:76px!important;padding:17px 16px!important;
+   background:linear-gradient(130deg,color-mix(in srgb,var(--primary) 13%,var(--card-bg)),var(--card-bg))!important;
+   border-bottom:1px solid var(--border)!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-header>div:first-child,
+ #retirementCategoryDialog .investment-category-dialog-header>div:first-child{flex:1 1 100%;min-width:0}
+ #investmentCategoryDialog .investment-category-dialog-header h2,
+ #retirementCategoryDialog .investment-category-dialog-header h2{font-size:21px!important;line-height:1.25!important;margin:0!important}
+ #investmentCategoryDialog .investment-category-dialog-header p,
+ #retirementCategoryDialog .investment-category-dialog-header p{font-size:12px!important;margin:4px 0 0!important}
+ #retirementCategoryDialog .investment-category-dialog-header .retirement-account-actions{
+   order:3;flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;
+ }
+ #retirementCategoryDialog .investment-category-dialog-header{flex-wrap:wrap}
+ #investmentCategoryDialog .investment-category-dialog-close,
+ #retirementCategoryDialog .investment-category-dialog-close{flex:0 0 44px!important;width:44px!important;height:44px!important;order:2}
+ #investmentCategoryDialog .investment-category-dialog-content,
+ #retirementCategoryDialog .investment-category-dialog-content{padding:15px!important;overflow:visible!important}
+ #investmentCategoryDialog .investment-category-dialog-content h3,
+ #retirementCategoryDialog .investment-category-dialog-content h3{font-size:12px!important;letter-spacing:.07em!important;text-transform:uppercase;color:var(--text-light)!important;margin:10px 0!important}
+ #investmentCategoryDialog .investment-category-dialog-summary,
+ #retirementCategoryDialog .investment-category-dialog-summary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ #investmentCategoryDialog .investment-category-dialog-summary>span,
+ #retirementCategoryDialog .investment-category-dialog-summary>span{
+   min-width:0!important;margin:0!important;padding:11px!important;
+   border:1px solid var(--border)!important;border-radius:12px!important;
+   background:color-mix(in srgb,var(--primary) 5%,var(--card-bg))!important;
+ }
+ #investmentCategoryDialog .investment-category-dialog-summary strong,
+ #retirementCategoryDialog .investment-category-dialog-summary strong{
+   font-size:clamp(15px,4vw,20px)!important;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;
+ }
+ #investmentCategoryDialogTable,
+ #retirementCategoryDialogTable{
+   overflow:visible!important;max-width:100%!important;min-width:0!important;
+ }
+ #investmentCategoryDialogTable table,
+ #retirementCategoryDialogTable table{
+   display:block!important;width:100%!important;min-width:0!important;border:0!important;
+ }
+ #investmentCategoryDialogTable thead,
+ #retirementCategoryDialogTable thead{display:none!important}
+ #investmentCategoryDialogTable tbody,
+ #retirementCategoryDialogTable tbody{
+   display:grid!important;gap:10px!important;width:100%!important;
+ }
+ #investmentCategoryDialogTable tbody tr,
+ #retirementCategoryDialogTable tbody tr{
+   display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+   gap:12px 8px!important;padding:13px!important;min-width:0!important;
+   border:1px solid color-mix(in srgb,var(--primary) 25%,var(--border))!important;
+   border-radius:14px!important;background:color-mix(in srgb,var(--primary) 4%,var(--card-bg))!important;
+ }
+ #investmentCategoryDialogTable tbody td,
+ #retirementCategoryDialogTable tbody td{
+   display:flex!important;flex-direction:column;align-items:flex-start!important;justify-content:flex-start!important;
+   gap:5px!important;min-width:0!important;max-width:100%!important;
+   width:auto!important;padding:0!important;border:0!important;
+   white-space:normal!important;overflow-wrap:anywhere!important;text-align:left!important;
+   font-variant-numeric:tabular-nums;
+ }
+ #investmentCategoryDialogTable tbody td::before,
+ #retirementCategoryDialogTable tbody td::before{
+   content:attr(data-mobile-label);display:block;font-size:10px;font-weight:700;
+   letter-spacing:.035em;text-transform:uppercase;color:var(--text-light);
+ }
+ #investmentCategoryDialogTable tbody td:has(button),
+ #retirementCategoryDialogTable tbody td:has(button){grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center!important}
+ #investmentCategoryDialogTable tbody td button,
+ #retirementCategoryDialogTable tbody td button{min-height:40px!important;white-space:normal!important}
+ #investmentCategoryDialog .investment-category-dialog-footer,
+ #retirementCategoryDialog .investment-category-dialog-footer{display:none!important}
+ #retirementCategoryDialog .retirement-account-help{font-size:12px!important;line-height:1.5!important}
+}
+
+
+/* Issue 9: the month review and recorded commitments are discoverable without opening tools. */
+#income-expenses .cash-flow-quick-actions{display:flex;gap:8px;flex-wrap:wrap;flex:1 1 100%;margin-top:4px}
+#income-expenses .cash-flow-quick-actions button{
+  min-height:40px;border:1px solid color-mix(in srgb,var(--primary) 28%,var(--border));
+  border-radius:12px;padding:9px 14px;background:color-mix(in srgb,var(--primary) 8%,var(--card-bg));
+  color:inherit;font:inherit;font-size:13px;font-weight:650;cursor:pointer;
+}
+#income-expenses .cash-flow-quick-actions button:first-child{
+  background:var(--primary);border-color:var(--primary);color:var(--button-text,#fff);
+}
+#income-expenses .cash-flow-quick-actions button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+@media(max-width:700px){
+ #income-expenses .cash-flow-quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #income-expenses .cash-flow-quick-actions button{min-width:0;line-height:1.3;padding:11px 8px}
+}
+
+
+/* Keep the original tabular details accessible without horizontal scroll in the phone detail sheet. */
+@media(max-width:700px){
+ #investmentCategoryDialogTable .table-wrapper,
+ #retirementCategoryDialogTable .table-wrapper,
+ #investmentCategoryDialogTable .investment-category-dialog-table,
+ #retirementCategoryDialogTable .investment-category-dialog-table{
+   width:100%!important;max-width:100%!important;min-width:0!important;
+   overflow:visible!important;overflow-x:visible!important;
+ }
+ #investmentCategoryDialogTable tbody td:has(a),
+ #retirementCategoryDialogTable tbody td:has(a),
+ #investmentCategoryDialogTable tbody td:has(select),
+ #retirementCategoryDialogTable tbody td:has(select){
+   grid-column:1/-1;
+ }
+ #investmentCategoryDialogTable tbody tr:only-child,
+ #retirementCategoryDialogTable tbody tr:only-child{margin:0!important}
+ #investmentCategoryDialogTable tbody td button,
+ #retirementCategoryDialogTable tbody td button{
+   max-width:100%;overflow-wrap:anywhere;touch-action:manipulation;
+ }
+}
+
+
+/* Issue 6: evidence-backed balance-sheet ratio, not a fictitious growth badge. */
+.dashboard-networth-ratio{
+  display:inline-flex;max-width:100%;align-items:center;margin:9px 0 0;
+  padding:5px 10px;border:1px solid color-mix(in srgb,var(--primary) 23%,var(--border));
+  border-radius:999px;background:color-mix(in srgb,var(--primary) 9%,var(--card-bg));
+  font-size:12px;font-weight:600;line-height:1.4;color:inherit;
+}
+
+
+/* Six-month trend: plotted only from recorded financial transactions. */
+#income-expenses .cash-flow-trend-panel{margin:13px 0 19px;padding:16px;border-radius:19px;min-width:0}
+#income-expenses .cash-flow-trend-heading{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+#income-expenses .cash-flow-trend-heading h2{margin:0;font-size:17px;font-weight:750}
+#income-expenses .cash-flow-trend-heading p{margin:5px 0 0;color:var(--text-light);font-size:12px;line-height:1.5}
+#income-expenses .cash-flow-trend-legend{display:flex;gap:13px;font-size:11px;font-weight:700}
+#income-expenses .cash-flow-trend-legend span{display:inline-flex;align-items:center;gap:5px}
+#income-expenses .cash-flow-trend-legend span::before{content:'';width:9px;height:9px;border-radius:50%;background:var(--primary)}
+#income-expenses .cash-flow-trend-legend span.expense::before{background:var(--danger,#df7e70)}
+#income-expenses .cash-flow-trend-chart{width:100%;margin:12px auto 0;min-width:0;max-width:660px}
+#income-expenses .cash-flow-trend-chart svg{display:block;width:100%;height:auto;max-height:210px;overflow:visible}
+#income-expenses .cash-flow-trend-chart text{font-size:11px;fill:var(--text-light)}
+#income-expenses .cash-flow-trend-grid{stroke:var(--border);stroke-width:.8;stroke-dasharray:3 4}
+#income-expenses .cash-flow-trend-income,#income-expenses .cash-flow-trend-expense{fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+#income-expenses .cash-flow-trend-income{stroke:var(--primary)}
+#income-expenses .cash-flow-trend-expense{stroke:var(--danger,#df7e70)}
+@media(max-width:700px){
+ #income-expenses .cash-flow-trend-panel{padding:14px 12px;margin:12px 0}
+ #income-expenses .cash-flow-trend-heading p{font-size:11px}
+}
+
+
+/* Issue 9: compact, data-backed upcoming recurring commitment preview. */
+#income-expenses .cash-flow-commitments-panel{
+  margin:12px 0 18px;padding:15px 16px;border-radius:18px;min-width:0;
+}
+#income-expenses .cash-flow-commitments-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+#income-expenses .cash-flow-commitments-heading h2{font-size:16px;margin:0}
+#income-expenses .cash-flow-commitments-heading button{
+  border:1px solid var(--border);background:color-mix(in srgb,var(--primary) 8%,var(--card-bg));
+  border-radius:10px;padding:8px 12px;cursor:pointer;color:inherit;min-height:40px;
+}
+#income-expenses #cashFlowCommitmentsPreview p{margin:12px 0 0;font-size:12px;color:var(--text-light)}
+#income-expenses .cash-flow-commitment-list{list-style:none;display:grid;gap:8px;margin:12px 0 0;padding:0}
+#income-expenses .cash-flow-commitment-list li{
+  min-width:0;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:color-mix(in srgb,var(--primary) 5%,var(--card-bg));border:1px solid var(--border);
+  border-radius:12px;padding:10px 12px;
+}
+#income-expenses .cash-flow-commitment-list li>span{display:grid;gap:4px;min-width:0}
+#income-expenses .cash-flow-commitment-list strong{font-size:13px;overflow-wrap:anywhere}
+#income-expenses .cash-flow-commitment-list small{font-size:11px;color:var(--text-light)}
+#income-expenses .cash-flow-commitment-list b{font-size:13px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+@media(max-width:700px){
+ #income-expenses .cash-flow-commitments-panel{padding:13px 12px}
+ #income-expenses .cash-flow-commitment-list b{white-space:normal}
+}
+
+
+/* Fix narrow-phone Cash Flow overflow without changing desktop flow. */
+@media(max-width:700px){
+  html body #income-expenses.cash-flow-layout{
+    box-sizing:border-box;min-width:0;max-width:100%;width:100%;
+  }
+  html body #income-expenses.cash-flow-layout .transaction-intro,
+  html body #income-expenses.cash-flow-layout .transaction-overview,
+  html body #income-expenses.cash-flow-layout .cash-flow-trend-panel,
+  html body #income-expenses.cash-flow-layout .cash-flow-commitments-panel,
+  html body #income-expenses.cash-flow-layout .cash-controls,
+  html body #income-expenses.cash-flow-layout .transaction-grid,
+  html body #income-expenses.cash-flow-layout .cash-tools,
+  html body #income-expenses.cash-flow-layout .cash-flow-quick-actions{
+    box-sizing:border-box;min-width:0;max-width:100%;width:100%;
+  }
+  html body #income-expenses.cash-flow-layout .transaction-intro-copy,
+  html body #income-expenses.cash-flow-layout .transaction-period,
+  html body #income-expenses.cash-flow-layout #cashMonthFilter,
+  html body #income-expenses.cash-flow-layout .cash-flow-trend-chart,
+  html body #income-expenses.cash-flow-layout #cashFlowCommitmentsPreview{
+    box-sizing:border-box;min-width:0;max-width:100%;
+  }
+  html body #income-expenses.cash-flow-layout .cash-flow-trend-chart svg{
+    display:block;width:100%;max-width:100%;overflow:hidden;
+  }
+}
+
+
+/* The cash actions live below (not inside) the fixed-height title/month header. */
+#income-expenses>.cash-flow-quick-actions{
+  box-sizing:border-box;min-width:0;max-width:100%;width:100%;
+  margin:0 0 12px;
+}
+@media(max-width:700px){
+ html body #income-expenses.cash-flow-layout>.transaction-intro{
+   display:flex;flex-direction:row;flex-wrap:nowrap!important;
+   align-items:center;justify-content:space-between;
+ }
+ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions{
+   display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
+   gap:8px;max-width:100%;width:100%;margin:0 0 12px;
+ }
+ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions>button{
+   box-sizing:border-box;display:block;width:100%;min-width:0!important;
+   max-width:100%;white-space:normal;overflow-wrap:anywhere;
+   padding:10px 7px;line-height:1.3;
+ }
+}
+
+
+/* Keep the two desktop cash-entry form buttons aligned even when one card is hovered.
+   Legacy card hover translated only one panel vertically by 2px. */
+@media(min-width:701px){
+ html body.advanced-layout #income-expenses .advanced-cashflow-entry-card:hover{
+   transform:none!important;
+ }
+}

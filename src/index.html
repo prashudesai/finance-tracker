@@ -66,7 +66,7 @@
         <p>Track income, expenses, investments, and financial goals</p>
       </div>
       <button type="button" class="family-profile-mobile-trigger" data-family-profile-trigger aria-label="Choose family profile" title="Choose family profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg></button>
-      <div class="advanced-header-context" aria-live="polite"><strong id="layoutPageTitle">Dashboard</strong><span>Personal Finance Tracker</span></div>
+      <div class="advanced-header-context" aria-live="polite"><span class="advanced-header-eyebrow">Your financial overview</span><strong id="layoutPageTitle">Dashboard</strong><span class="advanced-header-subtitle">Personal Finance Tracker</span></div>
       <div class="header-controls">
         <div class="theme-mode-switch" id="themeToggle" role="group" aria-label="Theme mode">
           <button type="button" class="theme-mode-option" data-mode="light" aria-label="Switch to light mode" title="Switch to light mode"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button>
@@ -101,6 +101,7 @@
     </div>
     <!-- DASHBOARD TAB -->
     <div id="dashboard" class="tab-content active">
+      <div class="dashboard-page-intro" aria-label="Dashboard page heading"><h1>Dashboard</h1></div>
       <aside id="dashboardUpdateNotice" class="dashboard-update-notice" hidden aria-label="App update">
         <div><strong>Update available</strong><p id="dashboardUpdateStatus" role="status">A new version is ready to install.</p></div>
         <button type="button" id="dashboardApplyUpdate">Update now</button>
@@ -112,7 +113,7 @@
               <span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18V6m0 12h16"/><path d="m7 14 4-4 3 2 5-6"/><path d="M15 6h4v4"/></svg></span>
               <div><div class="dashboard-kicker">Net Worth</div><div class="dashboard-support">Assets after outstanding debts</div></div>
             </div>
-            <div class="dashboard-main-value" id="netWorth">₹0</div>
+            <div class="dashboard-main-value" id="netWorth">₹0</div><p class="dashboard-networth-ratio" id="dashboardNetWorthRatio" aria-live="polite">Net worth as a share of assets: —</p>
           </div>
           <div>
             <div class="dashboard-position-values">
@@ -128,7 +129,7 @@
         <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="M18 14v4m-1-3h2"/></svg></span><span class="dashboard-kicker">Available Balance</span></div><div class="dashboard-stat-value" id="surplusBalance">₹0</div></article>
         <article class="dashboard-card dashboard-stat"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8a8 8 0 0 1 13-3l2 2"/><path d="M19 3v4h-4M20 16a8 8 0 0 1-13 3l-2-2"/><path d="M5 21v-4h4"/></svg></span><span class="dashboard-kicker">Monthly Savings</span></div><div class="dashboard-stat-value" id="monthlyContrib">₹0</div></article>
         <section class="dashboard-card dashboard-wide-card" id="dashboardExpenseSnapshot" hidden>
-          <div class="dashboard-wide-header"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 3v4m8-4v4M4 9h16"/></svg></span><span class="dashboard-kicker">Monthly Expense Snapshot</span></div><select class="dashboard-period-chip" id="dashboardExpenseMonth" aria-label="Expense snapshot month"><option value="">Previous month</option></select></div>
+          <div class="dashboard-wide-header"><div class="dashboard-card-heading"><span class="dashboard-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 3v4m8-4v4M4 9h16"/></svg></span><span class="dashboard-kicker">Monthly Expense Snapshot</span></div><div class="dashboard-month-picker"><select class="dashboard-period-chip dashboard-month-native" id="dashboardExpenseMonth" aria-label="Expense snapshot month"><option value="">Previous month</option></select><button type="button" class="dashboard-month-trigger" id="dashboardExpenseMonthTrigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="dashboardExpenseMonthMenu"><span id="dashboardExpenseMonthLabel">Previous month</span><span class="dashboard-month-chevron" aria-hidden="true">⌄</span></button><div class="dashboard-month-menu" id="dashboardExpenseMonthMenu" role="listbox" aria-label="Select expense snapshot month" hidden></div></div></div>
           <div class="dashboard-expense-row"><span class="dashboard-expense-label" id="houseExpenseLabel">House Expense</span><strong class="dashboard-expense-amount" id="lastMonthHouseExpense">Pending</strong></div>
           <div class="dashboard-expense-row"><span class="dashboard-expense-label" id="fullExpenseLabel">Full Expense</span><strong class="dashboard-expense-amount" id="lastMonthFullExpense">Pending</strong></div>
         </section>
@@ -155,7 +156,8 @@
 
       <div class="panel dashboard-portfolio-panel">
         <div class="panel-header dashboard-portfolio-heading">
-          <h2>Investment Portfolio</h2>
+          <div class="dashboard-portfolio-title"><h2>Investment Portfolio</h2><p>Value, returns and your investment categories</p></div>
+          <button type="button" class="advanced-dashboard-link dashboard-portfolio-view-all" data-open-tab="investments">View all investments <span aria-hidden="true">›</span></button>
           <label class="portfolio-sort-control">Sort by
             <select id="completePortfolioSort" aria-label="Sort investment portfolio">
               <option value="current">Portfolio size</option>
@@ -294,7 +296,7 @@
     <!-- INCOME & EXPENSES TAB -->
     <div id="income-expenses" class="tab-content">
       <div class="transaction-intro">
-        <div class="transaction-intro-copy"><span class="transaction-eyebrow">CASH FLOW</span><h1>Income &amp; Expenses</h1><p>Record money received and spent, then review entries by month or financial year.</p></div>
+        <div class="transaction-intro-copy"><span class="transaction-eyebrow">YOUR MONEY AT A GLANCE</span><h1>Cash flow</h1><p>Income, spending and what remains</p></div>
         <span class="transaction-period" id="transactionOverviewMonth">Current month</span>
       </div>
       <div class="recurring-launch"><button type="button" id="openRecurringBtn">↻ Recurring items</button></div>
@@ -302,6 +304,13 @@
         <article class="transaction-metric transaction-metric-income"><span class="transaction-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/><path d="M4 20h16"/></svg></span><span class="transaction-metric-copy"><span class="transaction-metric-label">Income recorded</span><strong class="transaction-metric-value" id="transactionIncomeTotal">₹0</strong></span></article>
         <article class="transaction-metric transaction-metric-expense"><span class="transaction-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14m6-6-6 6-6-6"/><path d="M4 4h16"/></svg></span><span class="transaction-metric-copy"><span class="transaction-metric-label">Expenses recorded</span><strong class="transaction-metric-value" id="transactionExpenseTotal">₹0</strong></span></article>
         <article class="transaction-metric transaction-metric-net" id="transactionNetCard"><span class="transaction-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 9 12l3 3 8-9"/><path d="M15 6h5v5"/></svg></span><span class="transaction-metric-copy"><span class="transaction-metric-label">Income after expenses</span><strong class="transaction-metric-value" id="transactionNetTotal">₹0</strong></span></article>
+      </section>
+      <section class="cash-flow-trend-panel panel" aria-labelledby="cashFlowTrendTitle">
+        <div class="cash-flow-trend-heading">
+          <div><h2 id="cashFlowTrendTitle">Cash flow trend</h2><p>Recorded income and expenses over the past six months, including the selected month.</p></div>
+          <div class="cash-flow-trend-legend" aria-hidden="true"><span class="income">Income</span><span class="expense">Expenses</span></div>
+        </div>
+        <div id="cashFlowTrendChart" class="cash-flow-trend-chart" role="img" aria-label="Six-month recorded income and expenses trend."></div>
       </section>
       <div class="transaction-grid">
       <div class="panel transaction-panel transaction-panel-income">
@@ -467,40 +476,40 @@
 
       <div class="panel monthly-surplus-panel transaction-surplus">
         <div class="panel-header">
-          <h2>Monthly Surplus</h2>
+          <h2>Monthly balances</h2>
           <div class="panel-header-actions">
-            <button type="button" class="btn-secondary" id="toggleBalanceHistory" aria-expanded="false" aria-controls="balanceHistoryContent">View History</button>
-            <button type="button" class="btn-primary" id="toggleBalanceForm" aria-expanded="false" aria-controls="balanceEntryForm">+ Add Monthly Surplus</button>
+            <button type="button" class="btn-secondary" id="toggleBalanceHistory" aria-expanded="false" aria-controls="balanceHistoryContent">View balance history</button>
+            <button type="button" class="btn-primary" id="toggleBalanceForm" aria-expanded="false" aria-controls="balanceEntryForm">+ Add opening balance</button>
           </div>
         </div>
         <div id="balanceEntryForm" hidden>
           <div class="form-grid">
             <div class="form-group">
-              <label>Month & Year</label>
+              <label for="balanceMonth">Month</label>
               <input type="month" id="balanceMonth">
             </div>
             <div class="form-group">
-              <label>Start Balance (₹) - Balance at month start</label>
+              <label for="balanceStartAmount">Opening balance (₹)</label>
               <input type="number" id="balanceStartAmount" placeholder="50000" min="0">
             </div>
           </div>
-          <button class="btn-primary" id="addBalanceBtn">Record Start Balance</button>
+          <button class="btn-primary" id="addBalanceBtn">Save opening balance</button>
           <div class="info-box">
-             <strong>Surplus Calculation:</strong>
+             <strong>How is the monthly balance calculated?</strong>
             <div style="margin-top: 8px; font-size: 12px;">
-            Monthly surplus balance = Start Balance + Income − Expenses − Stallion PMS
+            Calculated balance = Opening balance + recorded income − recorded expenses − Stallion PMS contributions
             <br><br>
-             <strong>Reduces Surplus:</strong> Recorded expenses + Stallion PMS contributions
+             <strong>Deducted:</strong> Recorded expenses and Stallion PMS contributions
             <br>
-             <strong>Does NOT Reduce:</strong> NPS, PPF and PF (tracked separately; not deducted in this balance calculation)
+             <strong>Tracked separately:</strong> NPS, PPF and PF contributions are not deducted in this calculation
             <br><br>
-            Enter the next calendar month's opening balance to calculate and record this month's house expense. Avoid entering the same household costs again as expenses.
+            Record the opening balance for the selected month. When you record the following month's opening balance, the app can reconcile the previous month's remaining household spending. Do not enter the same expenses twice.
             </div>
           </div>
         </div>
         <div id="balanceHistoryContent" class="surplus-history-content" hidden>
           <div class="panel-header surplus-history-header">
-            <h2>Monthly Surplus History</h2>
+            <h2>Balance history</h2>
             <label class="history-month-control">Financial year
               <select id="balanceHistoryFinancialYear" aria-label="View surplus history financial year"></select>
             </label>

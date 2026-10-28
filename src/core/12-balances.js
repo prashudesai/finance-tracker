@@ -4,7 +4,7 @@
       const button = document.getElementById('toggleBalanceForm');
       const opening = form.hidden;
       form.hidden = !opening;
-      button.textContent = opening ? 'Cancel' : '+ Add Monthly Surplus';
+      button.textContent = opening ? 'Cancel' : '+ Add opening balance';
       button.setAttribute('aria-expanded', String(opening));
       if (opening) {
         if (!document.getElementById('balanceMonth').value) document.getElementById('balanceMonth').value = currentMonthKey();
@@ -16,14 +16,14 @@
       const startBalance = Number(document.getElementById('balanceStartAmount').value);
 
       if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || document.getElementById('balanceStartAmount').value.trim() === '' || !Number.isFinite(startBalance) || startBalance < 0) {
-        alert('Please enter month and valid start balance');
+        alert('Please select a month and enter a valid opening balance');
         return;
       }
 
       // Check if record already exists for this month
       const existingIndex = state.monthlyBalances.findIndex(b => b.month === month);
       if (existingIndex !== -1) {
-        if (confirm('Record already exists for this month. Replace it?')) {
+        if (confirm('An opening balance already exists for this month. Replace its value?')) {
           state.monthlyBalances[existingIndex].startBalance = startBalance;
         } else {
           return;
@@ -42,7 +42,7 @@
       document.getElementById('balanceMonth').value = currentMonthKey();
       document.getElementById('balanceStartAmount').value = '';
       document.getElementById('balanceEntryForm').hidden = true;
-      document.getElementById('toggleBalanceForm').textContent = '+ Add Monthly Surplus';
+      document.getElementById('toggleBalanceForm').textContent = '+ Add opening balance';
       document.getElementById('toggleBalanceForm').setAttribute('aria-expanded', 'false');
 
       saveData();
@@ -73,6 +73,44 @@
       }
     }
 
+    function renderCashFlowTrend(month) {
+      const host=document.getElementById('cashFlowTrendChart');
+      if(!host||!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(month))return;
+      const [year,number]=month.split('-').map(Number);
+      const months=Array.from({length:6},(_,index)=>{
+        const day=new Date(year,number-1-(5-index),1);
+        const key=`${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}`;
+        return {key,label:day.toLocaleDateString('en-IN',{month:'short'}),income:0,expenses:0};
+      });
+      const byMonth=new Map(months.map(row=>[row.key,row]));
+      for(const row of profileRows(state.income)){
+        const found=byMonth.get(String(row.date||'').slice(0,7));
+        if(found)found.income+=Number(row.amount)||0;
+      }
+      for(const row of state.expenses){
+        const found=byMonth.get(String(row.date||'').slice(0,7));
+        if(found)found.expenses+=Number(row.amount)||0;
+      }
+      const hasRecords=months.some(row=>row.income!==0||row.expenses!==0);
+      if(!hasRecords){
+        host.replaceChildren();
+        const note=document.createElement('p');
+        note.className='cash-flow-trend-empty';
+        note.textContent='No income or expenses recorded across these six months.';
+        host.append(note);
+        host.setAttribute('aria-label',note.textContent);
+        return;
+      }
+      const maximum=Math.max(1,...months.flatMap(row=>[row.income,row.expenses]));
+      const x=index=>34+index*52;
+      const y=value=>126-Math.max(0,value)/maximum*100;
+      const points=kind=>months.map((row,index)=>`${x(index)},${y(row[kind]).toFixed(2)}`).join(' ');
+      const incomePoints=points('income'),expensePoints=points('expenses');
+      const grid=[0,0.5,1].map(fraction=>`<line x1="26" y1="${126-fraction*100}" x2="302" y2="${126-fraction*100}" class="cash-flow-trend-grid"/>`).join('');
+      const labels=months.map((row,index)=>`<text x="${x(index)}" y="146" text-anchor="middle">${row.label}</text>`).join('');
+      host.innerHTML=`<svg viewBox="0 0 320 156" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">${grid}<polyline class="cash-flow-trend-income" points="${incomePoints}"/><polyline class="cash-flow-trend-expense" points="${expensePoints}"/>${labels}</svg>`;
+      host.setAttribute('aria-label',`Recorded cash flow for ${months.map(row=>`${row.key}: income ${formatCurrency(row.income)}, expenses ${formatCurrency(row.expenses)}`).join('; ')}. Profile-filtered income and household expenses; future or missing months have no recorded transactions.`);
+    }
     function renderTransactionOverview() {
       const cashKind=document.getElementById('income-expenses')?.dataset.cashKind;
       const month=document.getElementById('income-expenses')?.dataset.cashMonth||(cashKind&&document.getElementById(cashKind+'HistoryMonth')?.value)||currentMonthKey();
@@ -89,6 +127,8 @@
       if(expenseTotal) expenseTotal.textContent=formatCurrency(expenses);
       if(netTotal) netTotal.textContent=`${net<0?'−':''}${formatCurrency(Math.abs(net))}`;
       if(netCard) netCard.classList.toggle('is-negative',net<0);
+      renderCashFlowTrend(month);
+      window.financeWorkbench?.refreshCommitmentsPreview?.();
       window.financeCashFlow?.refreshMonthFilter();
       window.financeCashFlow?.updateBar(income,expenses);
     }

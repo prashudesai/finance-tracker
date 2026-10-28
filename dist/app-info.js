@@ -1,7 +1,11 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.11",
+  "version": "2026.10.27.12",
   "released": "2026-10-27",
   "releaseNotes": [
+    "Redesign investment and retirement detail sheets for compact mobile account cards.",
+    "Improve Cash Flow with a six-month recorded-income and expense trend and upcoming commitments.",
+    "Clarify monthly opening balances and simplify the month-review workflow.",
+    "Refine Dashboard monthly highlights, month selection and net-worth ratio.",
     "Improve mobile transaction search, history filters and tap-to-edit actions.",
     "Refine investment and debt cards, valuation reminders, projections and conflict review.",
     "Give mobile pages more usable width and make the Dashboard more compact.",

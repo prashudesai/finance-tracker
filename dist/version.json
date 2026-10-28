@@ -1,7 +1,8 @@
 {
-  "version": "2026.10.27.11",
+  "version": "2026.10.27.12",
   "released": "2026-10-27",
   "releaseNotes": [
+    "Improve Cash Flow and Investments mobile layouts, month review and Dashboard highlights.",
     "Improve mobile transaction search, history filters and tap-to-edit actions.",
     "Refine investment and debt cards, valuation reminders, projections and conflict review."
   ]

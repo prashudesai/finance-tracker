@@ -1,0 +1,50 @@
+name: Validate staged finance release
+
+on:
+  push:
+    branches:
+      - release/2026-10-27-12-staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: finance-staging-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Build
+        run: npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Cash Flow mobile smoke test
+        run: npm run test:cash-flow
+      - name: Finance insights smoke test
+        run: node tests/finance-insights-browser.cjs
+      - name: Browser regression suite
+        run: npm run test:emerald
+      - name: PWA browser and offline tests
+        run: npm run test:pwa
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Firestore rules tests
+        run: npm run test:rules
+      - name: Finance and application tests
+        run: npm test
+      - name: Verify reproducible generated files
+        run: node tests/build-layout.cjs

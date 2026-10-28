@@ -37,13 +37,40 @@ export function installFinanceWorkbench(){
  }
  const cancelReviewEdit=e=>{const context=contributionEdit;if(!context)return;if(e.type==='keydown'&&e.key!=='Escape')return;if(e.type==='click'&&!e.target.closest('[data-close-account-update],[data-close-edit],[data-close-investment-contribution]'))return;if(context.saving){e.preventDefault();e.stopImmediatePropagation();return;}setTimeout(()=>{if(contributionEdit===context&&context.modal.hidden)returnToReview();},0);};
  document.addEventListener('click',cancelReviewEdit,true);document.addEventListener('keydown',cancelReviewEdit,true);
- function monthly(month=currentMonthKey(),options={}){if(!open(options.automaticOnly?'Review automatic entries':'Monthly close'))return;const input=field(dialog,'Month','month',month),body=add(dialog,'section');
+ function monthly(month=currentMonthKey(),options={}){if(!open(options.automaticOnly?'Review automatic entries':'Review month'))return;const input=field(dialog,'Month','month',month),body=add(dialog,'section');
   const render=()=>{body.replaceChildren();const r=monthClose(state,input.value);const money=n=>n===null?'Missing':formatCurrency(n);
-   if(!options.automaticOnly){table(body,[['Opening balance',money(r.opening)],['Recorded income',money(r.income)],['Recorded expenses (including EMIs)',money(r.expenses)],['PMS contributions',money(r.stallion)],['Available before unrecorded house spending',money(r.available)],['Closing balance (next month opening)',money(r.closing)],['Residual house expense',money(r.house)]]);
-   const status=add(body,'p',r.complete?'Opening and closing balances are present.':'Add the missing month opening balance in Surplus History before closing.');status.setAttribute('role','status');
-   for(const [label,month]of [['Enter / correct opening balance',r.month],['Enter / correct closing bank balance',nextMonthKey(r.month)]]){const editBalance=button(body,label,()=>{dialog.close();document.querySelector('.nav-tab[data-tab="income-expenses"]').click();const tools=document.querySelector('#income-expenses .cash-tools');if(tools)tools.open=true;const form=document.getElementById('balanceEntryForm');if(form.hidden)document.getElementById('toggleBalanceForm').click();document.getElementById('balanceMonth').value=month;document.getElementById('balanceStartAmount').value=state.monthlyBalances.find(b=>b.month===month)?.startBalance??'';form.scrollIntoView({block:'nearest'});document.getElementById('balanceStartAmount').focus();});editBalance.disabled=window.financeCloud.canEdit===false;}
-   const signature=JSON.stringify(r),saved=read('closedMonths')[r.month];if(saved)add(body,'p',saved.signature===signature?'Reviewed · '+new Date(saved.at).toLocaleString():'Records changed since your last review.');
-   const mark=button(body,'Mark month reviewed',async()=>{const data=read('closedMonths');data[r.month]={signature,at:new Date().toISOString()};await write('closedMonths',data);render();});mark.disabled=!r.complete||window.financeCloud.canEdit===false;
+   if(!options.automaticOnly){
+    body.classList.add('month-review-body');
+    const summary=add(body,'div');summary.className='month-review-summary';
+    const heading=add(summary,'h3',new Date(r.month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}));
+    const saved=read('closedMonths')[r.month],signature=JSON.stringify(r);
+    const reviewed=saved?.signature===signature;
+    const status=add(summary,'p',reviewed?'Reviewed ✓':saved?'Review again — figures changed':r.complete?'Ready to mark reviewed':'Opening or closing balance missing');
+    status.className='month-review-status'+(r.complete?' is-ready':' is-warning');
+    const figures=add(body,'div');figures.className='month-review-figures';
+    for(const [label,value] of [['Income',money(r.income)],['Expenses (including EMIs)',money(r.expenses)],['Closing bank balance',money(r.closing)]]){
+      const item=add(figures,'div');item.className='month-review-figure';
+      add(item,'span',label);add(item,'strong',value);
+    }
+    const actions=add(body,'div');actions.className='month-review-actions';
+    const navigateBalance=(month)=>{dialog.close();document.querySelector('.nav-tab[data-tab="income-expenses"]').click();const tools=document.querySelector('#income-expenses .cash-tools');if(tools)tools.open=true;const form=document.getElementById('balanceEntryForm');if(form.hidden)document.getElementById('toggleBalanceForm').click();document.getElementById('balanceMonth').value=month;document.getElementById('balanceStartAmount').value=state.monthlyBalances.find(b=>b.month===month)?.startBalance??'';form.scrollIntoView({block:'nearest'});document.getElementById('balanceStartAmount').focus();};
+    if(!r.complete){
+      const missing=add(body,'p',r.opening===null&&r.closing===null?'Add the opening and closing balances to continue.':r.opening===null?'Add the opening balance to continue.':'Add the closing balance to continue.');missing.className='month-review-help';missing.setAttribute('role','status');
+    }else{
+      const help=add(body,'p',reviewed?'This month has been marked reviewed.':'Check the amounts above, then mark the month reviewed.');help.className='month-review-help';help.setAttribute('role','status');
+    }
+    if(r.opening===null){const fix=button(actions,'Enter opening balance',()=>navigateBalance(r.month));fix.classList.add('month-review-primary');fix.disabled=window.financeCloud.canEdit===false;}
+    if(r.closing===null){const fix=button(actions,'Enter closing balance',()=>navigateBalance(nextMonthKey(r.month)));fix.classList.add('month-review-primary');fix.disabled=window.financeCloud.canEdit===false;}
+    if(r.complete){
+      const mark=button(actions,reviewed?'Reviewed ✓':'Mark as reviewed',async()=>{if(mark.disabled)return;mark.disabled=true;mark.textContent='Saving review…';try{await window.financeBridge.settle();if(window.financeBridge.dirty())throw Error('Finish saving financial changes before marking the month reviewed.');const latest=monthClose(state,input.value);if(!latest.complete)throw Error('Add the missing balances before marking this month reviewed.');const data=read('closedMonths');data[latest.month]={signature:JSON.stringify(latest),at:new Date().toISOString()};await write('closedMonths',data);render();}catch(error){mark.disabled=false;mark.textContent='Mark as reviewed';throw error;}});
+      mark.classList.add('month-review-primary');mark.disabled=reviewed||window.financeCloud.canEdit===false;
+    }
+    const details=add(body,'details');details.className='month-review-details';
+    add(details,'summary','View calculation details');
+    table(details,[['Opening balance',money(r.opening)],['Recorded income',money(r.income)],['Recorded expenses (including EMIs)',money(r.expenses)],['PMS contributions',money(r.stallion)],['Available before unrecorded house spending',money(r.available)],['Closing balance (next month opening)',money(r.closing)],['Residual house expense',money(r.house)]]);
+    const editClosing=button(details,'Correct closing balance',()=>navigateBalance(nextMonthKey(r.month)));editClosing.disabled=window.financeCloud.canEdit===false;
+    const editOpening=button(details,'Correct opening balance',()=>navigateBalance(r.month));editOpening.disabled=window.financeCloud.canEdit===false;
+    if(saved&&!reviewed)add(details,'p','Financial records changed since your last review. Please review again.');
    }
    const visible=Object.fromEntries(['investments','pf','ppf','nps','income'].map(k=>[k,profileRows(state[k]||[])]));
    const scheduled=automaticEntries(state,visible,r.month).map(e=>e.row);if(!scheduled.length)add(body,'p','No automatic contributions recorded for this month and profile.');
@@ -82,10 +109,46 @@ export function installFinanceWorkbench(){
   add(dialog,'p',issues.length?'Review: '+issues.join(', '):'Monthly cash-flow helpers, house-expense balances and available dashboard totals reconcile.');button(dialog,'Run full record health checks',()=>{dialog.close();runDataHealth();});
  }
  function tools(host,title,actions){if(!host)return;const details=add(host,'details');details.className='finance-workbench-tools';const summary=add(details,'summary');add(summary,'span',title);if(title==='Month review'){const hint=add(summary,'span','Review available');hint.className='month-review-hint';}for(const [label,fn]of actions)button(details,label,fn);}
+ function refreshCommitmentsPreview(){
+  const host=document.getElementById('cashFlowCommitmentsPreview');if(!host)return;
+  host.replaceChildren();
+  const today=localDateKey(),end=new Date(today+'T12:00:00');
+  end.setDate(end.getDate()+60);
+  const until=[end.getFullYear(),String(end.getMonth()+1).padStart(2,'0'),String(end.getDate()).padStart(2,'0')].join('-');
+  const rules=new Map((state.recurringRules||[]).map(rule=>[rule.id,rule]));
+  let due;
+  try{due=PFT_RECURRING.pending(state,until).filter(row=>row.date>=today&&!row.existing).sort((a,b)=>a.date.localeCompare(b.date));}
+  catch(error){add(host,'p','Upcoming commitments are temporarily unavailable.');return;}
+  if(!due.length){add(host,'p','No unrecorded recurring commitments scheduled in the next 60 days.');return;}
+  const list=add(host,'ul');list.className='cash-flow-commitment-list';
+  for(const row of due.slice(0,3)){
+   const item=add(list,'li'),label=add(item,'span'),rule=rules.get(row.ruleId);
+   add(label,'strong',rule?.name||'Recurring commitment');add(label,'small',row.date);
+   add(item,'b',Number.isFinite(row.amount)?formatCurrency(row.amount):'Schedule-based');
+  }
+  if(due.length>3)add(host,'p',`+${due.length-3} more commitments in the next 60 days`);
+ }
+ // Immediate actions complement the collapsible detailed month-review tools.
+ const cashIntro=document.querySelector('#income-expenses .transaction-intro');
+ if(cashIntro){
+  const shortcuts=document.createElement('div');shortcuts.className='cash-flow-quick-actions';cashIntro.after(shortcuts);
+  const review=button(shortcuts,'Review this month',()=>monthly());
+  review.setAttribute('aria-label','Review current month cash flow');
+  const upcoming=button(shortcuts,'Upcoming commitments',commitments);
+  upcoming.setAttribute('aria-label','View upcoming recorded recurring commitments');
+ }
+ const previewHost=document.querySelector('#income-expenses .cash-flow-trend-panel');
+ if(previewHost){
+  const preview=document.createElement('section');preview.id='cashFlowCommitmentsPanel';preview.className='cash-flow-commitments-panel panel';
+  const heading=add(preview,'div');heading.className='cash-flow-commitments-heading';
+  add(heading,'h2','Upcoming commitments');button(heading,'View all',commitments);
+  const content=add(preview,'div');content.id='cashFlowCommitmentsPreview';content.setAttribute('aria-live','polite');
+  previewHost.after(preview);refreshCommitmentsPreview();
+ }
  tools(document.getElementById('income-expenses'),'Month review',[['Review month',monthly],['Upcoming commitments',commitments]]);
  tools(document.getElementById('investments'),'Record freshness',[['Review valuation dates',valuations]]);
  tools(document.getElementById('growth-projection'),'Goal planning',[['Portfolio goal planner',planning]]);
  tools(document.getElementById('settingsRecordsPanel'),'Calculation checks',[['Check financial totals',audit],['Sync details',syncDetails]]);
- window.financeWorkbench={automatic:month=>monthly(month,{automaticOnly:true}),monthly,valuations,planning,audit,commitments,syncDetails,isReviewEditing,saveAndReturn};
+ window.financeWorkbench={refreshCommitmentsPreview,automatic:month=>monthly(month,{automaticOnly:true}),monthly,valuations,planning,audit,commitments,syncDetails,isReviewEditing,saveAndReturn};
  const reset=window.financeBridge.reset;window.financeBridge.reset=function(){document.removeEventListener('click',cancelReviewEdit,true);document.removeEventListener('keydown',cancelReviewEdit,true);contributionEdit=null;if(dialog.open)dialog.close();dialog.remove();return reset.apply(this,arguments);};
 }
