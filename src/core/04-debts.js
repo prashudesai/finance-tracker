@@ -220,16 +220,33 @@
       const modal=document.getElementById('loanDetailsModal');modal.dataset.loanId=id;
       document.getElementById('loanDetailsTitle').textContent=debt.type;
       const schedule=remainingEmiEstimate(debt),body=document.getElementById('loanDetailsContent');body.replaceChildren();
-      for(const [label,value] of [['Family member',debt.member||'Family'],['Original principal',formatCurrency(debt.principal)],['Top-ups',formatCurrency(loanTotalPrincipal(debt)-debt.principal)],['Total borrowed',formatCurrency(loanTotalPrincipal(debt))],['Outstanding',formatCurrency(debt.remaining)],['Monthly EMI',formatCurrency(Math.round(debt.emi))],['Annual rate',debt.rate+'%'],['Interest method',debt.dailyInterestBasis?'Daily balance · month-end capitalization':'Monthly EMI calculation'],['First EMI date',debt.firstEmiDate||'Automatic schedule'],['Extra days’ interest with first EMI',formatCurrency(debt.firstEmiExtraInterest||0)],['Monthly EMI Due Date',loanDueDateLabel(debt)],['Remaining payments',schedule.label],['Notes',debt.notes||'—']].filter(([label])=>!debt.dailyInterestBasis||!['Extra days’ interest with first EMI'].includes(label))){const line=document.createElement('p');line.textContent=label+': '+value;body.appendChild(line);}
-      for(const [label,action] of [['Payment history',()=>viewDebtEmiHistory(id)],['Revise EMI',()=>editLoanChange(id,'emi')],['Update interest rate',()=>editLoanChange(id,'rate')],['Top up loan',()=>editLoanChange(id,'topup')],['Edit',()=>editDebt(id)],['Delete',()=>{deleteDebt(id);if(!state.debts.some(row=>row.id===id))closeLoanDetails();}]]){const button=document.createElement('button');button.className='btn-small';button.textContent=label;button.onclick=action;body.appendChild(button);}
+      modal.querySelector('.investment-edit-dialog>div:first-child').classList.add('loan-details-heading');
+      const metric=(container,label,value)=>{
+        const item=document.createElement('div'),term=document.createElement('dt'),description=document.createElement('dd');
+        term.textContent=label;description.textContent=value;item.append(term,description);container.append(item);
+      };
+      const balance=document.createElement('dl');balance.className='loan-details-balance';
+      metric(balance,'Outstanding balance',formatCurrency(debt.remaining));body.append(balance);
+      const metrics=document.createElement('dl');metrics.className='loan-details-metrics';
+      for(const [label,value] of [['Original principal',formatCurrency(debt.principal)],['Top-ups',formatCurrency(loanTotalPrincipal(debt)-debt.principal)],['Total borrowed',formatCurrency(loanTotalPrincipal(debt))],['Monthly EMI',formatCurrency(Math.round(debt.emi))],['Annual rate',debt.rate+'%'],['Remaining payments',schedule.label]])metric(metrics,label,value);
+      body.append(metrics);
+      const details=document.createElement('section');details.className='loan-details-section';
+      const detailsHeading=document.createElement('h3');detailsHeading.textContent='Loan details';details.append(detailsHeading);
+      const terms=document.createElement('dl');terms.className='loan-details-terms';
+      for(const [label,value] of [['Family member',debt.member||'Family'],['Interest method',debt.dailyInterestBasis?'Daily balance · month-end capitalization':'Monthly EMI calculation'],['First EMI date',debt.firstEmiDate||'Automatic schedule'],['Extra days’ interest with first EMI',formatCurrency(debt.firstEmiExtraInterest||0)],['Monthly EMI Due Date',loanDueDateLabel(debt)]].filter(([label])=>!debt.dailyInterestBasis||!['Extra days’ interest with first EMI'].includes(label)))metric(terms,label,value);
+      details.append(terms);
+      const notes=document.createElement('dl');notes.className='loan-details-notes';metric(notes,'Notes',debt.notes||'—');details.append(notes);body.append(details);
+      const actions=document.createElement('div');actions.className='loan-details-actions';actions.setAttribute('role','group');actions.setAttribute('aria-label','Loan actions');
+      for(const [label,action] of [['Payment history',()=>viewDebtEmiHistory(id)],['Revise EMI',()=>editLoanChange(id,'emi')],['Update interest rate',()=>editLoanChange(id,'rate')],['Top up loan',()=>editLoanChange(id,'topup')],['Edit',()=>editDebt(id)],['Delete',()=>{deleteDebt(id);if(!state.debts.some(row=>row.id===id))closeLoanDetails();}]]){const button=document.createElement('button');button.className=label==='Delete'?'btn-small btn-danger':'btn-small';button.textContent=label;button.onclick=action;actions.appendChild(button);}body.append(actions);
       const editable=window.financeCloud?.canEdit!==false;
       for(const button of body.querySelectorAll('button'))if(button.textContent!=='Payment history')button.disabled=!editable;
-      const heading=document.createElement('h3');heading.textContent='Rate, EMI & top-up history';body.append(heading);
-      const opening=document.createElement('p');opening.textContent='Opening terms: '+(debt.openingRate??debt.rate)+'% · EMI '+formatCurrency(debt.openingEmi??debt.repaymentBaseEmi??debt.emi);body.append(opening);
+      const history=document.createElement('section');history.className='loan-details-section loan-details-history';body.append(history);
+      const heading=document.createElement('h3');heading.textContent='Rate, EMI & top-up history';history.append(heading);
+      const opening=document.createElement('p');opening.textContent='Opening terms: '+(debt.openingRate??debt.rate)+'% · EMI '+formatCurrency(debt.openingEmi??debt.repaymentBaseEmi??debt.emi);history.append(opening);
       const ledgerHistory=Array.isArray(debt.loanChanges)?PFT_LOAN_LEDGER.rebuild(debt,loanPayments(id),undefined,localDateKey()).history||[]:[];
       for(const entry of [...(debt.loanChanges||[])].sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id))){
-        const computed=ledgerHistory.find(e=>e.id===entry.id),row=document.createElement('div'),line=document.createElement('p');line.textContent=entry.date+' · '+(entry.type==='topup'?'Top-up '+formatCurrency(entry.amount):entry.type==='emi'?'Regular EMI revision':'Rate update')+(entry.rate!==undefined?' · '+entry.rate+'%':'')+(entry.repaymentChoice?' · '+({tenure:'Keep tenure',emi:'Keep EMI',manual:'Bank-confirmed EMI'}[entry.repaymentChoice])+' · EMI '+formatCurrency(computed?.emi??entry.emi):entry.emi!==undefined?' · EMI '+formatCurrency(entry.emi):'')+(entry.notes?' · '+entry.notes:'');row.append(line);
-        for(const [label,remove] of [['Edit entry',false],['Remove entry',true]]){const button=document.createElement('button');button.className='btn-small';button.textContent=label;button.disabled=!editable;button.onclick=()=>editLoanChange(id,entry.type,entry.id,remove);row.append(button);}body.append(row);
+        const computed=ledgerHistory.find(e=>e.id===entry.id),row=document.createElement('div'),line=document.createElement('p');row.className='loan-details-history-entry';line.textContent=entry.date+' · '+(entry.type==='topup'?'Top-up '+formatCurrency(entry.amount):entry.type==='emi'?'Regular EMI revision':'Rate update')+(entry.rate!==undefined?' · '+entry.rate+'%':'')+(entry.repaymentChoice?' · '+({tenure:'Keep tenure',emi:'Keep EMI',manual:'Bank-confirmed EMI'}[entry.repaymentChoice])+' · EMI '+formatCurrency(computed?.emi??entry.emi):entry.emi!==undefined?' · EMI '+formatCurrency(entry.emi):'')+(entry.notes?' · '+entry.notes:'');row.append(line);
+        for(const [label,remove] of [['Edit entry',false],['Remove entry',true]]){const button=document.createElement('button');button.className='btn-small';button.textContent=label;button.disabled=!editable;button.onclick=()=>editLoanChange(id,entry.type,entry.id,remove);row.append(button);}history.append(row);
       }
       modal.hidden=false;syncInvestmentOverlayBodyLock();modal.querySelector('button').focus();
     }
@@ -256,8 +273,14 @@
       }else{
         head.innerHTML='<tr><th>Payment date</th><th>Payment type</th><th class="text-right">EMI / payment paid</th><th class="text-right">Interest</th><th class="text-right">Principal repaid</th><th class="text-right">Outstanding after payment</th><th>Notes</th></tr>';
         const balanceResult=PFT_LOAN_LEDGER.paymentBalances(debt,records,localDateKey()),balances=balanceResult.balances||new Map();
-      document.getElementById('debtEmiHistorySummary').textContent=records.length
-        ? `${records.length} recorded ${records.length===1?'payment':'payments'} · Total paid ${formatCurrency(total)} · Interest ${formatCurrency(interest)} · Principal repaid ${formatCurrency(principal)} · Current outstanding ${formatCurrency(debt.remaining)}`
+      document.getElementById('debtEmiHistorySummary').innerHTML=records.length
+        ? '<div class="loan-history-summary-grid">'+[
+          ['Payments',String(records.length)],
+          ['Total paid',formatCurrency(total)],
+          ['Interest',formatCurrency(interest)],
+          ['Principal repaid',formatCurrency(principal)],
+          ['Outstanding',formatCurrency(debt.remaining)]
+        ].map(([label,value])=>'<div class="loan-history-summary-item"><span>'+label+'</span><strong>'+value+'</strong></div>').join('')+'</div>'
         : `No EMI payments have been recorded for this debt yet. Current outstanding ${formatCurrency(debt.remaining)}.`;
         body.innerHTML=records.length?records.map(row=>`<tr><td data-label="Payment date">${row.date?calendarDate(row.date).toLocaleDateString('en-IN'):'—'}</td><td data-label="Payment type">${row.repaymentType==='part-payment'?'Part Payment'+(row.partPaymentAction==='reduce'?' · Reduce EMI':row.partPaymentAction==='keep'?' · Keep EMI':''):'Monthly EMI'}</td><td class="text-right" data-label="EMI / payment paid">${formatCurrency(row.amount)}</td><td class="text-right" data-label="Interest">${formatCurrency(row.interestPaid||0)}</td><td class="text-right" data-label="Principal repaid">${formatCurrency(row.principalPaid??row.amount)}</td><td class="text-right" data-label="Outstanding after payment">${balances.has(row.id)?formatCurrency(balances.get(row.id)):'—'}</td><td data-label="Notes">${analyticEscape(row.notes||'—')}</td></tr>`).join(''):'<tr><td colspan="7" class="text-muted">No loan payments recorded.</td></tr>';
       }

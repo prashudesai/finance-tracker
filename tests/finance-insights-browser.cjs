@@ -69,9 +69,79 @@ const server=http.createServer(async(req,res)=>{try{
   const action=await loan.locator('td').nth(7).boundingBox();
   assert(box&&name&&status&&balance&&action,JSON.stringify({box,name,status,balance,action}));
   assert(status.x>name.x&&balance.y>=name.y+name.height-2&&action.y>balance.y,JSON.stringify({box,name,status,balance,action}));
-  assert(box.height<525,JSON.stringify({height:box.height}));
+  assert(box.height<360,JSON.stringify({height:box.height}));
+  for(const style of ['modern','emerald-flow'])for(const width of [320,390,430,700]){
+   await page.setViewportSize({width,height:844});
+   await page.evaluate(style=>{PFT_STYLE.apply(style);renderDebts();},style);
+   const geometry=await loan.evaluate(row=>{
+    const box=e=>e.getBoundingClientRect().toJSON(),cells=[...row.children];
+    return {row:box(row),cells:cells.map(box),align:cells.map(e=>getComputedStyle(e).textAlign),
+     buttons:[...cells[7].querySelectorAll('button')].map(box)};
+   });
+   const c=geometry.cells;
+   assert(geometry.row.height<380,JSON.stringify({style,width,geometry}));
+   assert(c[4].y>=c[0].bottom-1&&c[4].bottom<=c[1].y+1,JSON.stringify({style,width,geometry}));
+   assert(Math.abs(c[1].y-c[2].y)<1&&Math.abs(c[3].y-c[5].y)<1,JSON.stringify({style,width,geometry}));
+   for(const i of [1,2,3,4,5])assert.equal(geometry.align[i],'left');
+   for(const b of geometry.buttons)assert(b.width>=44&&b.height>=44&&Math.abs(b.y-geometry.buttons[0].y)<1);
+   const header=await page.locator('.debt-list-panel>.panel-header').boundingBox();
+   const heading=await page.locator('.debt-list-panel h2').boundingBox();
+   const add=await page.locator('#openAddLoanBtn').boundingBox();
+   assert(header.height<110&&add.height>=44&&heading.x+heading.width<=add.x+1,JSON.stringify({style,width,header,heading,add}));
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  }
   await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderDebts();renderExpenses();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();},before);
   assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
+ });
+ await check('Loan details group figures, align actions and scroll below a stable close header',async()=>{
+  const original=await page.evaluate(()=>JSON.stringify(state));
+  try{
+   await page.evaluate(()=>{
+    state.debts=[{id:'details-loan',type:'Home Loan',member:'Family',notes:'Apartment loan',date:'2025-01-01',principal:1850000,remaining:1584716,rate:8.65,emi:23500,interestPaid:298716,loanChanges:[{id:'details-change',type:'emi',date:'2026-01-01',emi:23500,notes:'Bank-confirmed payment'}]}];
+    document.querySelector('.nav-tab[data-tab="debts"]').click();renderDebts();
+   });
+   const modal=page.locator('#loanDetailsModal');
+   for(const style of ['modern','emerald-flow'])for(const width of [320,390,430,700,1440]){
+    await page.setViewportSize({width,height:844});
+    await page.evaluate(style=>{PFT_STYLE.apply(style);renderDebts();},style);
+    await page.locator('#debtsBody tr[data-loan-id="details-loan"]').click();
+    assert(await modal.isVisible());
+    assert.equal(await modal.locator('.loan-details-metrics>div').count(),6);
+    assert.match(await modal.locator('.loan-details-balance dd').textContent(),/15,84,716/);
+    assert.match(await modal.locator('.loan-details-notes dd').textContent(),/Apartment loan/);
+    const geometry=await modal.evaluate(e=>{
+     const box=node=>node.getBoundingClientRect().toJSON(),shell=e.querySelector('.investment-edit-dialog'),heading=e.querySelector('.loan-details-heading'),content=e.querySelector('#loanDetailsContent'),metrics=e.querySelector('.loan-details-metrics');
+     return {shell:box(shell),heading:box(heading),title:box(heading.querySelector('h3')),close:box(heading.querySelector('button')),content:box(content),metrics:[...metrics.children].map(box),overflow:content.scrollWidth>content.clientWidth+1,buttons:[...e.querySelectorAll('.loan-details-actions button')].map(box)};
+    });
+    assert(geometry.shell.x>=0&&geometry.shell.right<=width+1&&geometry.shell.bottom<=844,JSON.stringify({style,width,geometry}));
+    assert(!geometry.overflow&&geometry.close.width>=44&&geometry.close.height>=44);
+    assert(geometry.title.right<=geometry.close.x&&Math.abs(geometry.title.y+geometry.title.height/2-geometry.close.y-geometry.close.height/2)<2);
+    assert.equal(geometry.buttons.length,6);
+    for(let i=0;i<6;i+=2){const a=geometry.buttons[i],b=geometry.buttons[i+1];assert(a.right<=b.x-7&&Math.abs(a.y-b.y)<1&&a.height>=44&&b.height>=44,JSON.stringify({style,width,a,b}));}
+    for(let i=0;i<6;i+=2)assert(Math.abs(geometry.metrics[i].y-geometry.metrics[i+1].y)<1);
+    await modal.locator('#loanDetailsContent').evaluate(e=>e.scrollTop=e.scrollHeight);
+    const after=await modal.locator('.loan-details-heading').boundingBox();
+    assert(Math.abs(after.y-geometry.heading.y)<1);
+    assert.equal(await modal.locator('.loan-details-history-entry button').count(),2);
+    await modal.getByRole('button',{name:'Close loan details',exact:true}).click();
+    assert.equal(await modal.isVisible(),false);
+   }
+   await page.setViewportSize({width:390,height:844});
+   await page.locator('#debtsBody tr[data-loan-id="details-loan"]').click();
+   await modal.getByRole('button',{name:'Payment history',exact:true}).click();
+   const history=page.locator('#debtEmiHistoryModal');
+   assert(await history.isVisible());
+   const close=history.getByRole('button',{name:'Close payment history',exact:true});
+   assert(await close.evaluate(e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}));
+   await close.click();assert(await modal.isVisible());
+   await modal.getByRole('button',{name:'Revise EMI',exact:true}).click();
+   assert(await page.locator('#recordEditorDialog').isVisible());
+   await page.locator('#cancelRecordEditor').click();
+   await modal.getByRole('button',{name:'Close loan details',exact:true}).click();
+  }finally{
+   await page.evaluate(original=>{closeLoanDetails();closeDebtEmiHistory();Object.assign(state,JSON.parse(original));renderDebts();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();},original);
+   await page.setViewportSize({width:390,height:844});
+  }
  });
  await check('Review Month and Valuation Freshness show readable native calendar values',async()=>{
   const previous=await page.evaluate(()=>JSON.stringify(state));
