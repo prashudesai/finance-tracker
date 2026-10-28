@@ -84,7 +84,20 @@ jobs:
 
       - name: Installed-PWA offline and update tests
         if: steps.lane.outputs.visual_only != 'true'
-        run: npm run test:pwa
+        shell: bash
+        run: |
+          set -o pipefail
+          log_file="$RUNNER_TEMP/pwa-release-check.log"
+          if npm run test:pwa 2>&1 | tee "$log_file"; then
+            exit 0
+          fi
+          # Intermittent Chromium service-worker controllerchange delay: retry
+          # only the known 30-second update timeout, and still fail if it persists.
+          if ! grep -q 'page.waitForFunction: Timeout 30000ms exceeded.' "$log_file"; then
+            exit 1
+          fi
+          echo "::warning::Retrying the PWA update timeout once in a fresh browser session."
+          npm run test:pwa
 
       - name: Set up Java for Firestore emulator
         if: steps.lane.outputs.visual_only != 'true'
