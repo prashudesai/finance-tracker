@@ -2051,3 +2051,199 @@ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions[hidden]{dis
   min-height:44px!important;padding:9px 7px!important;
  }
 }
+
+
+/* Mobile release polish: the same compact information hierarchy across dialogs,
+   debts and PMS. No financial data or ledger calculation is changed. */
+@media(max-width:700px){
+  /* Income and expense use one compact title / close row, including on iPhone. */
+  html body #recordEditorDialog{
+    box-sizing:border-box!important;width:calc(100vw - 24px)!important;max-width:520px!important;
+    max-height:calc(100dvh - max(48px,env(safe-area-inset-top)) - max(22px,env(safe-area-inset-bottom)))!important;
+    padding:14px!important;overflow:auto!important;border-radius:17px!important;
+  }
+  html body #recordEditorDialog #recordEditorForm>header{
+    display:grid!important;grid-template-columns:minmax(0,1fr) 44px!important;
+    grid-template-rows:44px!important;align-items:center!important;
+    width:100%!important;min-height:44px!important;height:44px!important;
+    gap:10px!important;padding:0 0 10px!important;margin:0 0 14px!important;
+    top:-14px!important;flex-wrap:nowrap!important;border-bottom:1px solid var(--border)!important;
+    background:var(--card-bg)!important;
+  }
+  html body #recordEditorDialog #recordEditorForm>header #recordEditorTitle{
+    grid-column:1!important;grid-row:1!important;min-width:0!important;
+    font-size:20px!important;line-height:1.2!important;
+    text-align:left!important;margin:0!important;padding:0!important;
+  }
+  html body #recordEditorDialog #recordEditorForm>header #closeRecordEditor{
+    grid-column:2!important;grid-row:1!important;justify-self:end!important;
+    width:44px!important;height:44px!important;min-width:44px!important;
+    min-height:44px!important;align-self:center!important;margin:0!important;
+    padding:6px!important;box-shadow:none!important;
+  }
+  html body #recordEditorDialog #recordEditorFields{
+    display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important;
+  }
+  html body #recordEditorDialog #recordEditorForm>.record-editor-actions{
+    display:grid!important;grid-template-columns:minmax(66px,.7fr) repeat(2,minmax(0,1fr))!important;
+    align-items:center!important;gap:7px!important;padding:11px 0 0!important;
+    margin-top:14px!important;bottom:-14px!important;
+  }
+  html body #recordEditorDialog .record-editor-actions button{
+    min-width:0!important;min-height:44px!important;height:44px!important;
+    padding:7px 5px!important;font-size:12px!important;white-space:normal!important;
+  }
+  html body #recordEditorDialog .record-editor-actions button[data-record-delete]{
+    grid-column:1!important;grid-row:1!important;width:100%!important;
+    min-width:0!important;justify-self:stretch!important;
+    padding:6px 5px!important;font-size:12px!important;
+    background:transparent!important;border:1px solid var(--danger)!important;
+    color:var(--danger)!important;
+  }
+  html body #recordEditorDialog .record-editor-actions:has([data-record-delete]) #cancelRecordEditor{
+    grid-column:2!important;grid-row:1!important;
+  }
+  html body #recordEditorDialog .record-editor-actions:has([data-record-delete]) button[type="submit"]{
+    grid-column:3!important;grid-row:1!important;
+  }
+  html body #recordEditorDialog .record-editor-actions:not(:has([data-record-delete])){
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  /* iOS month/date picker: accessible native control is retained under a visible date. */
+  #financeWorkbenchDialog .valuation-date-control{
+    box-sizing:border-box!important;width:100%!important;min-width:0!important;
+    display:block!important;position:relative!important;
+  }
+  #financeWorkbenchDialog .valuation-date-control input[type="month"],
+  #financeWorkbenchDialog .valuation-date-control input[type="date"]{
+    box-sizing:border-box!important;display:block!important;width:100%!important;
+    height:46px!important;min-height:46px!important;margin:0!important;
+    padding:8px 42px 8px 12px!important;border:1px solid var(--border)!important;
+    border-radius:11px!important;background-color:var(--card-bg)!important;
+    color:transparent!important;-webkit-text-fill-color:transparent!important;
+    font-size:16px!important;
+  }
+  #financeWorkbenchDialog .valuation-date-control input::-webkit-datetime-edit{
+    color:transparent!important;-webkit-text-fill-color:transparent!important;
+  }
+  #financeWorkbenchDialog .valuation-date-control .valuation-date-display{
+    position:absolute!important;left:12px!important;right:46px!important;top:50%!important;
+    transform:translateY(-50%)!important;pointer-events:none!important;
+    font-size:14px!important;line-height:1.3!important;
+    color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;
+    font-weight:600!important;white-space:nowrap!important;
+    overflow:hidden!important;text-overflow:ellipsis!important;
+  }
+
+  /* Debt page: compact overview and account cards instead of widely separated cells. */
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts{
+    gap:12px!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts .debt-list-panel{
+    padding:0 12px 12px!important;border-radius:16px!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .debt-list-panel>.panel-header{
+    padding:13px 2px!important;margin:0 0 4px!important;
+    gap:5px 10px!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .debt-list-panel .debt-section-title p{
+    font-size:11px!important;line-height:1.3!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .debt-list-panel .panel-controls button{
+    min-height:42px!important;padding:8px 12px!important;
+    font-size:13px!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts .debt-list-panel tbody{
+    display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts .debt-list-panel tbody tr[data-loan-id]{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-template-areas:"loan status" "balance balance" "principal rate" "emi remaining" "actions actions"!important;
+    gap:12px 12px!important;align-content:start!important;align-items:start!important;
+    width:100%!important;max-width:100%!important;min-height:0!important;
+    padding:14px!important;border:1px solid var(--border)!important;
+    border-radius:13px!important;box-sizing:border-box!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td{
+    grid-column:auto!important;grid-row:auto!important;min-width:0!important;
+    max-width:100%!important;width:auto!important;box-sizing:border-box!important;
+    align-self:start!important;text-align:left!important;line-height:1.4!important;
+    padding:0!important;border:0!important;margin:0!important;
+    overflow-wrap:break-word!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td::before{
+    font-size:10px!important;line-height:1.3!important;margin-bottom:4px!important;
+    letter-spacing:.02em!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(1){
+    grid-area:loan!important;align-self:center!important;font-size:15px!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(2){grid-area:principal!important}
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(3){grid-area:rate!important}
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(4){grid-area:emi!important}
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(5){
+    grid-area:balance!important;padding:10px 0 12px!important;
+    border-block:1px solid var(--border)!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(5) strong{
+    font-size:20px!important;line-height:1.3!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(6){grid-area:remaining!important}
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(7){
+    grid-area:status!important;justify-self:end!important;align-self:center!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(7)::before{display:none!important}
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(8){
+    grid-area:actions!important;display:flex!important;align-items:center!important;
+    flex-wrap:nowrap!important;justify-content:flex-start!important;
+    gap:8px!important;padding-top:10px!important;border-top:1px solid var(--border)!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(8)::before{display:none!important}
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts tbody tr[data-loan-id]>td:nth-child(8) button{
+    box-sizing:border-box!important;flex:0 0 44px!important;
+    display:inline-flex!important;align-items:center!important;justify-content:center!important;
+    width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;
+    padding:7px!important;margin:0!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts .debt-page-overview{
+    padding:10px!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts .debt-page-stat{
+    min-height:0!important;padding:5px!important;gap:6px!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts .debt-page-stat-icon{
+    width:32px!important;height:32px!important;flex:0 0 32px!important;
+  }
+  html[data-layout-style="emerald-flow"] body.advanced-layout #debts .flow-debts .debt-page-stat-value{
+    font-size:clamp(17px,4.5vw,22px)!important;line-height:1.3!important;
+  }
+
+  /* PMS: readable two-column metrics without a tall stack of single-item rows. */
+  html body #investments #stallionPmsTileBody .stallion-pms-holdings.has-monthly tbody tr{
+    grid-template-areas:"name current" "member current" "invested monthly" "gain absolute" "cagr xirr" "actions actions"!important;
+  }
+  html body #investments #stallionPmsTileBody .stallion-pms-holdings.no-monthly tbody tr{
+    grid-template-areas:"name current" "member current" "invested gain" "absolute cagr" "xirr xirr" "actions actions"!important;
+  }
+  html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody tr{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px 16px!important;padding:12px!important;
+  }
+  html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td:nth-child(1){
+    font-size:11px!important;align-self:start!important;
+  }
+  html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td:nth-child(2){
+    font-size:15px!important;white-space:normal!important;align-self:end!important;
+    overflow:visible!important;line-height:1.3!important;
+  }
+  html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td:nth-child(4){
+    font-size:16px!important;align-self:center!important;text-align:right!important;
+  }
+  html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td:nth-child(n+3):not(:last-child){
+    font-size:13px!important;line-height:1.4!important;
+  }
+  html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td[data-label="Actions"]{
+    justify-content:flex-start!important;padding-top:9px!important;gap:8px!important;
+  }
+}
