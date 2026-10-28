@@ -189,7 +189,7 @@
       }
       function start(){
         if(dialog.open)return;
-        if(document.querySelector('dialog[open]:not(#settingsTileDialog),[aria-modal="true"]:not([hidden]):not(dialog)'))return;
+        if([...document.querySelectorAll('dialog[open]:not(#settingsTileDialog),[aria-modal="true"]:not(dialog)')].some(node=>node.getClientRects().length&&getComputedStyle(node).visibility!=='hidden'))return;
         returnPage=document.querySelector('.nav-tab.active')?.dataset.tab||'dashboard';returnScroll=window.scrollY;returnFocus=document.activeElement;
         window.closeSettingsTile?.();index=0;remember('started');document.body.classList.add('app-guide-open');dialog.showModal();render();
       }
