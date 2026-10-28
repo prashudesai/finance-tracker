@@ -234,8 +234,18 @@ const server=http.createServer(async(req,res)=>{try{
   await dialog.getByRole('button',{name:'Add contribution'}).click();
   assert(await page.locator('#investmentContributionModal').isVisible());
   await page.locator('#investmentContributionAmount').fill('1250');
-  await page.locator('#saveInvestmentContribution').click();
-  assert.deepEqual(await page.evaluate(()=>{const row=state.investments.find(r=>r.id==='review-bond');return {invested:row.invested,current:row.current,contributions:state.investmentContributions.filter(r=>r.investmentId===row.id&&r.automatic!==true).map(r=>r.amount)};}),{invested:11250,current:12050,contributions:[1250]});
+  // Isolate the local contribution math from the mock cloud listener: cloud
+  // persistence and replay are covered by the dedicated save/recovery suites.
+  const credit=await page.evaluate(()=>{
+   const actualSave=saveData;
+   try{
+    saveData=()=>Promise.resolve(true);
+    document.getElementById('saveInvestmentContribution').click();
+    const row=state.investments.find(r=>r.id==='review-bond');
+    return row?{invested:row.invested,current:row.current,contributions:state.investmentContributions.filter(r=>r.investmentId===row.id&&r.automatic!==true).map(r=>r.amount)}:null;
+   }finally{saveData=actualSave;}
+  });
+  assert.deepEqual(credit,{invested:11250,current:12050,contributions:[1250]});
   await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderInvestments();renderPf();renderPpf();renderNps();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();},original);
  });
  await check('Stallion PMS only shows its two contribution and gain-loss actions',async()=>{
