@@ -2275,3 +2275,15 @@
     }
     @media(max-width:700px){input:not([type="checkbox"]):not([type="radio"]),select,textarea,.family-access-row input,.family-access-row select{font-size:16px!important;min-height:44px;} .settings-tile{min-height:64px;}}
   
+
+/* Compact mobile portfolio category cards without shrinking tap targets. */
+@media (max-width: 640px) {
+  #investmentCategoryPanels { gap: 10px; }
+  #investmentCategoryPanels .investment-category-card { padding: 10px 12px; }
+  #investmentCategoryPanels .investment-category-card .panel-header { margin-bottom: 7px; gap: 6px; }
+  #investmentCategoryPanels .investment-category-card .panel-header h3 { margin-bottom: 2px; }
+  #investmentCategoryPanels .investment-category-summary-grid { min-height: 0; padding: 8px 28px 8px 10px; gap: 6px 8px; }
+  #investmentCategoryPanels .investment-summary-value > strong,
+  #investmentCategoryPanels .investment-summary-metric > strong,
+  #investmentCategoryPanels .investment-summary-detail > strong { margin-top: 2px; }
+}
