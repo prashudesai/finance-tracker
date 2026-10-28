@@ -318,12 +318,12 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const previousFocus=document.activeElement;
       dialog.querySelector('[data-record-delete]')?.remove();
       const remove=deleteRecord?document.createElement('button'):null;
-      if(remove){remove.type='button';remove.className='btn-small btn-danger';remove.dataset.recordDelete='';remove.textContent='Delete transaction';form.append(remove);}
+      if(remove){remove.type='button';remove.className='btn-small btn-danger';remove.dataset.recordDelete='';remove.textContent='Delete transaction';form.querySelector('.record-editor-actions').prepend(remove);}
       dialog.showModal();
       return new Promise(resolve=>{
         const finish=value=>{remove?.remove();form.onsubmit=null;dialog.oncancel=null;document.getElementById('cancelRecordEditor').onclick=null;dialog.close();previousFocus?.focus();resolve(value);};
         if(remove)remove.onclick=()=>{finish(null);deleteRecord();};
-        document.getElementById('cancelRecordEditor').onclick=()=>finish(null);dialog.oncancel=event=>{event.preventDefault();finish(null);};
+        document.getElementById('cancelRecordEditor').onclick=()=>finish(null);document.getElementById('closeRecordEditor').onclick=()=>finish(null);dialog.oncancel=event=>{event.preventDefault();finish(null);};
         form.onsubmit=event=>{event.preventDefault();if(!form.reportValidity())return;const values=Object.fromEntries(new FormData(form));for(const f of fields){if(f.type==='date'&&!(f.required===false&&values[f.key]==='')&&!validCalendarDate(values[f.key])){document.getElementById('recordEditorError').textContent='Enter a valid calendar date.';return;}}
           const error=validate?.(values);if(error){document.getElementById('recordEditorError').textContent=error;return;}finish(values);};
       });
