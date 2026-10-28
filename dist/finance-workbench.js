@@ -21,7 +21,7 @@ export function installFinanceWorkbench(){
   const collection=context.kind==='retirement'?'retirementContributions':context.kind==='stallion'?'stallionContributions':'investmentContributions',row=state[collection]?.find(r=>r.id===context.id);
   document.getElementById('retirementContributionHistoryModal').hidden=true;syncInvestmentOverlayBodyLock();monthly(row?.date?.slice(0,7)||context.month,context.options);
   const entry=[...dialog.querySelectorAll('[data-contribution-id]')].find(e=>e.dataset.contributionId===context.id);
-  if(entry){entry.closest('details').open=true;[...entry.querySelectorAll('button')].at(-1)?.focus();}
+  if(entry){for(let node=entry;node&&node!==dialog;node=node.parentElement){if(node.tagName==='DETAILS')node.open=true;}[...entry.querySelectorAll('button')].at(-1)?.focus();}
  }
  async function editForReview(row,month,options={}){
   if((state.income||[]).includes(row)||(state.expenses||[]).includes(row)){dialog.close();try{if((state.income||[]).includes(row))await editIncome(row.id);else await editExpense(row.id);}finally{monthly(month,options);}return;}
@@ -38,7 +38,7 @@ export function installFinanceWorkbench(){
  const cancelReviewEdit=e=>{const context=contributionEdit;if(!context)return;if(e.type==='keydown'&&e.key!=='Escape')return;if(e.type==='click'&&!e.target.closest('[data-close-account-update],[data-close-edit],[data-close-investment-contribution]'))return;if(context.saving){e.preventDefault();e.stopImmediatePropagation();return;}setTimeout(()=>{if(contributionEdit===context&&context.modal.hidden)returnToReview();},0);};
  document.addEventListener('click',cancelReviewEdit,true);document.addEventListener('keydown',cancelReviewEdit,true);
  function monthly(month=currentMonthKey(),options={}){if(!open(options.automaticOnly?'Review automatic entries':'Review month'))return;const input=field(dialog,'Month','month',month),body=add(dialog,'section');
-  const render=()=>{body.replaceChildren();const r=monthClose(state,input.value);const money=n=>n===null?'Missing':formatCurrency(n);
+  const render=()=>{const openContributionIds=new Set([...body.querySelectorAll('.automatic-entry-card[open]')].map(node=>node.dataset.contributionId));const wasAutomaticListOpen=Boolean(body.querySelector('details:has(.automatic-entry-card)')?.open);body.replaceChildren();const r=monthClose(state,input.value);const money=n=>n===null?'Missing':formatCurrency(n);
    if(!options.automaticOnly){
     body.classList.add('month-review-body');
     const summary=add(body,'div');summary.className='month-review-summary';
@@ -74,7 +74,7 @@ export function installFinanceWorkbench(){
    }
    const visible=Object.fromEntries(['investments','pf','ppf','nps','income'].map(k=>[k,profileRows(state[k]||[])]));
    const scheduled=automaticEntries(state,visible,r.month).map(e=>e.row);if(!scheduled.length)add(body,'p','No automatic contributions recorded for this month and profile.');
-   if(scheduled.length){const paymentMarks=read('paymentStatus'),detail=add(body,'details');add(detail,'summary',scheduled.length+' automatically posted entries');detail.open=options.automaticOnly===true;add(detail,'p','Already included in balances. Confirming payment does not post the contribution again.');for(const row of scheduled){const box=add(detail,'details'),key=automaticCheckKey(row),payment=paymentMarks[key],paid=payment?.status==='paid'&&payment.amount===row.amount&&(payment.epsAmount||0)===(row.epsAmount||0);box.dataset.contributionId=row.id;box.className='automatic-entry-card';
+   if(scheduled.length){const paymentMarks=read('paymentStatus'),detail=add(body,'details');add(detail,'summary',scheduled.length+' automatically posted entries');detail.open=options.automaticOnly===true||wasAutomaticListOpen;add(detail,'p','Already included in balances. Confirming payment does not post the contribution again.');for(const row of scheduled){const box=add(detail,'details'),key=automaticCheckKey(row),payment=paymentMarks[key],paid=payment?.status==='paid'&&payment.amount===row.amount&&(payment.epsAmount||0)===(row.epsAmount||0);box.dataset.contributionId=row.id;box.className='automatic-entry-card';box.open=openContributionIds.has(row.id);
 const rowSummary=add(box,'summary');rowSummary.className='automatic-entry-summary';
 const copy=add(rowSummary,'span');copy.className='automatic-entry-copy';
 add(copy,'strong',row.investmentType||row.source||row.category||'Investment');
