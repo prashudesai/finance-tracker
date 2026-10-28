@@ -318,7 +318,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const previousFocus=document.activeElement;
       dialog.querySelector('[data-record-delete]')?.remove();
       const remove=deleteRecord?document.createElement('button'):null;
-      if(remove){remove.type='button';remove.className='btn-small btn-danger';remove.dataset.recordDelete='';remove.textContent='Delete transaction';form.querySelector('.record-editor-actions').prepend(remove);}
+      if(remove){remove.type='button';remove.className='btn-small btn-danger';remove.dataset.recordDelete='';remove.textContent='Delete';remove.setAttribute('aria-label','Delete transaction');remove.title='Delete transaction';form.querySelector('.record-editor-actions').prepend(remove);}
       dialog.showModal();
       return new Promise(resolve=>{
         const finish=value=>{remove?.remove();form.onsubmit=null;dialog.oncancel=null;document.getElementById('cancelRecordEditor').onclick=null;dialog.close();previousFocus?.focus();resolve(value);};
