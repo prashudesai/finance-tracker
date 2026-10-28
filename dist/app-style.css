@@ -2385,3 +2385,19 @@ body:has(#loanDetailsModal:not([hidden])) #debtEmiHistoryModal{z-index:1120}
  text-align:left;min-height:1.4em;margin:0;
 }
 #recordEditorDialog #recordEditorFields input[type="date"]::-webkit-datetime-edit{padding:0}
+
+@media(max-width:700px){
+ html[data-app-style] body.advanced-layout #investments #stallionPmsPanel{padding:12px!important}
+ html body #investments #stallionPmsPanel>.panel-header{gap:8px!important;margin:0 0 10px!important;padding:0 0 10px!important}
+ html body #investments #stallionPmsPanel>.panel-header h2{font-size:16px!important}
+ html body #investments #stallionPmsPanel>.panel-header>.panel-controls button{min-height:44px!important;padding:7px 8px!important;font-size:11px!important;line-height:1.3!important}
+ html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody tr{min-height:0!important;height:auto!important;gap:7px 12px!important;padding:10px!important}
+ html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td{min-height:0!important;margin:0!important;padding:0!important;line-height:1.3!important}
+ html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td::before{font-size:9px!important;line-height:1.3!important;margin-bottom:3px!important}
+ html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td:nth-child(2){font-size:14px!important}
+ html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td:nth-child(2)::before{display:none!important}
+ html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td:nth-child(1){font-size:10px!important}
+ html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td:nth-child(n+3):not(:last-child){font-size:13px!important}
+ html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td[data-label="Actions"]{padding-top:8px!important;gap:8px!important}
+ html body #investments #stallionPmsTileBody .stallion-pms-holdings tbody td[data-label="Actions"] button{min-width:44px!important;min-height:44px!important}
+}
