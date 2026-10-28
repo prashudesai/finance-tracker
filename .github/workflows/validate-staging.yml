@@ -5,6 +5,7 @@ on:
     branches:
       - release/2026-10-28-13-staging
       - release/mobile-ui-and-month-end-review-20261028
+      - fix/mobile-investment-dialogs-and-section-tabs-20261028
   workflow_dispatch:
 
 permissions:
