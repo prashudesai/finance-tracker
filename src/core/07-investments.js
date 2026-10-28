@@ -526,14 +526,18 @@
             document.getElementById('investmentCategoryDialogTitle').textContent=inv.name||'Stallion PMS';
             document.getElementById('investmentCategoryDialogSubtitle').textContent='Stallion PMS · '+(inv.member||'');
             const summary=document.getElementById('investmentCategoryDialogSummary');summary.replaceChildren();
+            tile.querySelectorAll('.pms-summary-metrics>span').forEach(metric=>{
+              const item=document.createElement('span'),label=document.createElement('span'),value=document.createElement('strong');
+              item.className='investment-summary-detail';label.textContent=metric.querySelector('small').textContent;value.textContent=metric.querySelector('strong').textContent;item.append(label,value);summary.append(item);
+            });
             const target=document.getElementById('investmentCategoryDialogTable');target.replaceChildren();
-            const wrapper=pmsSource.cloneNode(true);wrapper.classList.remove('pms-detail-source');wrapper.classList.add('investment-category-dialog-table');
+            const wrapper=pmsSource.cloneNode(true);wrapper.classList.remove('pms-detail-source');wrapper.classList.add('investment-category-dialog-table','pms-holding-details');
             wrapper.querySelectorAll('tbody tr').forEach((row,rowIndex)=>{if(rowIndex!==index)row.remove();});
             wrapper.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
             const rowActions=wrapper.querySelector('tbody td[data-label="Actions"]');
             if(rowActions){
               rowActions.querySelectorAll('[data-pms-compact-action]').forEach(node=>node.remove());
-              pmsQuickActions.forEach(original=>{const copy=original.cloneNode(true);copy.removeAttribute('id');copy.onclick=()=>original.click();rowActions.append(copy);});
+              pmsQuickActions.forEach(original=>{const copy=original.cloneNode(true);copy.removeAttribute('id');copy.removeAttribute('data-open-entry');copy.className='investment-icon-action';copy.onclick=()=>original.click();rowActions.append(copy);});
             }
             target.append(wrapper);labelInvestmentDialogCells(target);
             dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();

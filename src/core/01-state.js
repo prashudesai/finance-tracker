@@ -66,7 +66,8 @@
       recordsDetails.append(document.getElementById('settingsRecordsPanel'));
       document.getElementById('settingsBackupPanel').append(recordsDetails);
       const appPanel=document.getElementById('settingsAppPanel'),versionInfo=document.createElement('div');
-      versionInfo.innerHTML='<p><strong>Installed version: <span id="appInstalledVersion"></span></strong></p><p id="appLatestVersion" role="status">Latest available: checking when online</p><details id="appReleaseNotes"><summary>Release notes</summary><p>Released '+window.PFT_APP_INFO.released+'</p><ul></ul></details>';
+      versionInfo.className='app-version-section';
+      versionInfo.innerHTML='<p class="app-installed-version"><span>Installed version</span><strong id="appInstalledVersion"></strong></p><p id="appLatestVersion" role="status">Latest available: checking when online</p><details id="appReleaseNotes"><summary>Release notes</summary><p>Released '+window.PFT_APP_INFO.released+'</p><ul></ul></details>';
       versionInfo.querySelector('#appInstalledVersion').textContent=window.PFT_APP_INFO.version;
       for(const note of window.PFT_APP_INFO.releaseNotes){const item=document.createElement('li');item.textContent=note;versionInfo.querySelector('ul').append(item);}appPanel.prepend(versionInfo);
       fetch('./version.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(meta=>{document.getElementById('appLatestVersion').textContent='Latest available: '+meta.version+(meta.version!==window.PFT_APP_INFO.version?' · Check for updates to install':' · Up to date');}).catch(()=>{document.getElementById('appLatestVersion').textContent='Latest available: connect to check. Installed version '+window.PFT_APP_INFO.version;});

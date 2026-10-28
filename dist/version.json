@@ -1,10 +1,12 @@
 {
-  "version": "2026.10.28.15",
-  "released": "2026-10-28",
+  "version": "2026.10.29.1",
+  "released": "2026-10-29",
   "releaseNotes": [
-    "Correct mobile Dashboard, Cash Flow and Investments card layout.",
-    "Simplify Cash Flow history and remove its trend chart.",
-    "Improve automatic contributions, valuation and transaction editing dialogs.",
-    "Align modal close controls and investment actions across devices."
+    "Align Stallion PMS details and action icons with other investment modals.",
+    "Compact cash-flow cards and label every amount in monthly balance history.",
+    "Simplify Appearance, App info, App updates and Data and backup layouts.",
+    "Match projection headers to the active theme and compact assumption editors.",
+    "Move interactive scenario comparison below the graph with exact values and line highlighting.",
+    "Remove the redundant net-worth share percentage and its spacing."
   ]
 }

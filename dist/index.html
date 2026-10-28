@@ -504,7 +504,7 @@
             <label class="history-month-control">Financial year
               <select id="balanceHistoryFinancialYear" aria-label="View surplus history financial year"></select>
             </label>
-            <p class="text-muted">Completed months only. Current and future months are hidden. Click other column headings to sort.</p>
+            <p class="text-muted">Completed months only. Surplus balance = opening balance + income − expenses − PMS contributions. NPS + PPF are shown separately.</p>
           </div>
           <div class="table-wrapper">
             <table>
@@ -1031,7 +1031,7 @@
       </header>
       <div class="panel growth-assumptions-panel">
         <div class="panel-header"><h2>Current Values and Assumptions</h2></div>
-        <p class="text-muted">Select an investment tile to adjust its assumptions. Stress, base and optimistic returns stay visible on each tile.</p>
+        <p class="text-muted">Tap an investment to edit its return and contribution assumptions.</p>
         <div class="growth-assumption-grid" id="growthProjectionAssumptionTiles"></div>
       </div>
       <div class="panel" id="growthProjectionControls">
@@ -1045,10 +1045,10 @@
           <div class="growth-exclusion-list" id="growthContributionExclusions"></div>
         </div>
       </div>
-      <div class="dashboard" id="growthProjectionSummary"></div>
       <div class="panel growth-projection-chart-panel">
         <div class="panel-header"><h2>Projected Portfolio Growth</h2></div>
         <div class="growth-projection-chart-wrap" id="growthProjectionChartWrap"><canvas id="growthProjectionChart" style="max-height:340px"></canvas><div class="growth-projection-cursor-tooltip" id="growthProjectionCursorTooltip" role="status" aria-live="polite"></div></div>
+        <div class="dashboard" id="growthProjectionSummary"></div>
         <div class="chart-takeaway growth-projection-takeaway" id="growthProjectionTakeaway" aria-live="polite"></div>
       </div>
       <div class="panel growth-breakdown-panel">
@@ -1253,7 +1253,7 @@
 
         <section class="panel settings-panel settings-appearance-panel" aria-labelledby="settingsAppearanceTitle">
           <div class="settings-panel-heading"><div><span class="settings-step">01</span><div><h2 id="settingsAppearanceTitle">Appearance</h2><p>Choose a palette. Switch Light or Dark mode from the top bar.</p></div></div></div>
-          <div class="appearance-panel"><div class="theme-options" id="themeOptions" role="group" aria-label="Color themes"></div><p class="theme-description" id="themeDescription" aria-live="polite">Select a color palette to preview it across the tracker.</p></div>
+          <div class="appearance-panel"><h3>Color palette</h3><p class="settings-palette-help">Choose your colors. Use the top-bar switch for Light or Dark mode.</p><div class="theme-options" id="themeOptions" role="group" aria-label="Color themes"></div><p class="theme-description" id="themeDescription" aria-live="polite">Select a color palette to preview it across the tracker.</p></div>
         </section>
         <section class="panel custom-values-panel settings-panel" id="customValuesPanel" aria-labelledby="customValuesTitle" hidden>
           <div class="settings-panel-heading"><div><span class="settings-step">02</span><div><h2 id="customValuesTitle">Custom values</h2><p>Add options for income, expenses, debts, investments, or family members.</p></div></div></div>
@@ -1281,16 +1281,17 @@
         </section>
         <section class="panel settings-panel" aria-labelledby="pwaTitle">
           <h2 id="pwaTitle">App &amp; updates</h2>
-          <div class="pwa-install-section" style="margin:16px 0;padding-bottom:16px;border-bottom:1px solid var(--border)">
+          <div class="pwa-install-section">
             <h3>Install app</h3>
-            <p>Add Personal Finance Tracker to your Home Screen or desktop for easy access.</p>
+            <p class="pwa-install-intro">Add the tracker to your Home Screen or desktop.</p>
             <button type="button" class="btn-secondary" id="pwaInstall" aria-describedby="pwaInstallHelp">Install app</button>
             <p id="pwaInstallHelp" role="status" aria-live="polite" style="margin-top:10px"></p>
           </div>
-          <p id="pwaStatus" role="status" aria-live="polite">Preparing the app for offline use…</p>
-          <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <div class="app-sync-section"><h3>App status</h3><p id="pwaStatus" role="status" aria-live="polite">Preparing the app for offline use…</p>
+          <div class="app-update-actions">
             <button type="button" class="btn-secondary" id="pwaCheckUpdate">Check for updates</button>
             <button type="button" class="btn-primary" id="pwaApplyUpdate" hidden>Apply update</button>
+          </div>
           </div>
         </section>
         <section class="panel settings-panel record-tools-panel" style="grid-column:1/-1"><h2>Records &amp; statement checks</h2><p id="storageHealth" role="status">Opening saved records…</p>
