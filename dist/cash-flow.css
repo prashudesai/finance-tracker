@@ -271,3 +271,49 @@ html body #income-expenses :is(#cashHistory-income,#cashHistory-expense) .transa
    grid-column:1/-1!important;grid-row:4!important;
  }
 }
+
+/* Compact mobile expense cards with consistent spacing and amount alignment. */
+@media(max-width:700px){
+ html body #income-expenses.cash-flow-layout #expenseBody tr[data-cash-record]{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(96px,34%)!important;
+  grid-auto-rows:auto!important;grid-template-rows:none!important;
+  align-items:start!important;align-content:start!important;
+  min-height:0!important;height:auto!important;padding:11px 12px!important;
+  gap:4px 10px!important;margin:0 0 8px!important;border-radius:12px;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody tr[data-cash-record]>td{
+  min-height:0!important;height:auto!important;margin:0!important;padding-block:0!important;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody tr[data-cash-record]>td[data-label="Category"]{
+  grid-column:1!important;grid-row:1!important;padding-left:36px!important;font-size:13px!important;line-height:1.3!important;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody tr[data-cash-record]>td[data-label="Amount"]{
+  grid-column:2!important;grid-row:1/3!important;text-align:right!important;
+  align-self:start!important;font-size:16px!important;line-height:1.3!important;white-space:nowrap;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody tr[data-cash-record]>td[data-label="Member"]{
+  grid-column:1!important;grid-row:2!important;padding-left:36px!important;font-size:11px!important;line-height:1.3!important;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody tr[data-cash-record]>td[data-label="Date"]{
+  grid-column:1!important;grid-row:3!important;padding-left:36px!important;
+  margin:0!important;align-self:start!important;font-size:11px!important;line-height:1.3!important;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody .transaction-mobile-details{
+  margin-top:4px!important;gap:4px!important;font-size:10px!important;line-height:1.3!important;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody .transaction-mobile-details .badge{
+  padding:3px 6px!important;font-size:10px!important;line-height:1.3!important;border-radius:6px;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody .cash-category-icon{
+  width:27px;height:27px;border-radius:8px;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody .emi-breakdown{
+  gap:3px!important;margin-top:6px!important;padding-top:6px!important;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody tr[data-cash-record]>td.transaction-actions{
+  grid-column:2!important;grid-row:3!important;justify-self:end!important;
+ }
+ html body #income-expenses.cash-flow-layout #expenseBody tr[data-cash-record]>td.transaction-actions:has(.cash-record-menu[open]){
+  grid-column:1/-1!important;grid-row:4!important;
+ }
+}
