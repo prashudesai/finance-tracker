@@ -267,7 +267,7 @@ const server=http.createServer(async(req,res)=>{try{
     await page.waitForFunction(()=>document.querySelector('[data-investment-type="Mutual Funds"] .finance-valuation-review'));
     const geometry=await page.locator('#investmentCategoryPanels>.investment-category-card').evaluateAll(cards=>cards.map(card=>{
      const r=card.getBoundingClientRect(),summary=card.querySelector('.investment-category-summary-grid');
-     return {type:card.dataset.investmentType,height:r.height,overflow:card.scrollWidth>card.clientWidth+1,rows:[...summary.children].filter(e=>!e.classList.contains('investment-summary-chevron')&&e.getClientRects().length).map(e=>Math.round(e.getBoundingClientRect().top))};
+     return {type:card.dataset.investmentType,height:r.height,header:card.querySelector('.panel-header').getBoundingClientRect().height,summary:summary.getBoundingClientRect().height,headerWidth:card.querySelector('.panel-header').getBoundingClientRect().width,headerText:card.querySelector('.investment-category-summary').getBoundingClientRect().toJSON(),value:card.querySelector('.investment-summary-value').getBoundingClientRect().toJSON(),rate:card.querySelector('.investment-summary-metric').getBoundingClientRect().toJSON(),overflow:card.scrollWidth>card.clientWidth+1,rows:[...summary.children].filter(e=>!e.classList.contains('investment-summary-chevron')&&e.getClientRects().length).map(e=>Math.round(e.getBoundingClientRect().top))};
     }));
     assert.equal(geometry.length,3);
     assert(Math.max(...geometry.map(r=>r.height))-Math.min(...geometry.map(r=>r.height))<=2,JSON.stringify({style,width,geometry}));
