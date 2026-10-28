@@ -81,7 +81,7 @@ export function installFinanceWorkbench(){
    }
    const visible=Object.fromEntries(['investments','pf','ppf','nps','income'].map(k=>[k,profileRows(state[k]||[])]));
    const paymentMarks=read('paymentStatus');
-   const scheduled=pendingAutomaticEntries(state,visible,r.month,paymentMarks,localDateKey()).map(e=>e.row);
+   const scheduled=beforeTracking?[]:pendingAutomaticEntries(state,visible,r.month,paymentMarks,localDateKey()).map(e=>e.row);
    if(!scheduled.length&&options.automaticOnly)add(body,'p','No automatic entries need verification.');
    if(scheduled.length){const detail=add(body,'details');add(detail,'summary',scheduled.length+' automatically posted entries');detail.open=options.automaticOnly===true||wasAutomaticListOpen;add(detail,'p','Already included in balances. Confirming payment does not post the contribution again.');for(const row of scheduled){const box=add(detail,'details'),key=automaticCheckKey(row),payment=paymentMarks[key],paid=payment?.status==='paid'&&payment.amount===row.amount&&(payment.epsAmount||0)===(row.epsAmount||0);box.dataset.contributionId=row.id;box.className='automatic-entry-card';box.open=openContributionIds.has(row.id);
 const rowSummary=add(box,'summary');rowSummary.className='automatic-entry-summary';
