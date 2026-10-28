@@ -2490,21 +2490,21 @@ body:has(#loanDetailsModal:not([hidden])) #debtEmiHistoryModal{z-index:1120}
  display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;
 }
 /* App info reads as a compact guide, with a stable header and a scrolling body. */
-#settingsTileDialog:has(#settingsInfoPanel){
+#settingsTileDialog:has(:is(#settingsInfoPanel,#settingsAppPanel)){
  display:flex;flex-direction:column;box-sizing:border-box;width:min(720px,calc(100% - 24px));
  max-height:calc(100dvh - 40px);padding:0;overflow:hidden;border-radius:18px;
 }
-#settingsTileDialog:has(#settingsInfoPanel):not([open]){display:none}
-#settingsTileDialog:has(#settingsInfoPanel) .settings-modal-heading{
+#settingsTileDialog:has(:is(#settingsInfoPanel,#settingsAppPanel)):not([open]){display:none}
+#settingsTileDialog:has(:is(#settingsInfoPanel,#settingsAppPanel)) .settings-modal-heading{
  flex:none;display:grid!important;grid-template-columns:minmax(0,1fr) 44px;align-items:center;
  gap:12px;padding:12px 16px!important;margin:0;border-bottom:1px solid var(--border);
 }
-#settingsTileDialog:has(#settingsInfoPanel) #settingsTileTitle{margin:0;font-size:20px;line-height:1.3}
-#settingsTileDialog:has(#settingsInfoPanel) #settingsTileClose{
+#settingsTileDialog:has(:is(#settingsInfoPanel,#settingsAppPanel)) #settingsTileTitle{margin:0;font-size:20px;line-height:1.3}
+#settingsTileDialog:has(:is(#settingsInfoPanel,#settingsAppPanel)) #settingsTileClose{
  box-sizing:border-box;width:44px;height:44px;min-height:44px;margin:0;padding:0;
  display:grid;place-items:center;border-radius:10px;font-size:24px;
 }
-#settingsTileDialog:has(#settingsInfoPanel) #settingsTileContent{
+#settingsTileDialog:has(:is(#settingsInfoPanel,#settingsAppPanel)) #settingsTileContent{
  min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px!important;
 }
 #settingsTileContent #settingsInfoPanel{margin:0!important;padding:0!important}
@@ -2523,3 +2523,23 @@ body:has(#loanDetailsModal:not([hidden])) #debtEmiHistoryModal{z-index:1120}
 #settingsInfoPanel #appInfoPdfStatus:empty{display:none}
 #settingsTileContent #settingsInfoPanel details{margin:10px 0 14px;padding:10px 12px;border:1px solid var(--border);border-radius:10px}
 #settingsTileContent #settingsInfoPanel summary{min-height:44px;align-content:center;font-size:13px!important;line-height:1.4!important;font-weight:600}
+
+/* App & updates uses the same compact modal frame as App info. */
+#settingsTileDialog #settingsAppPanel{display:grid;gap:12px;margin:0!important;padding:0!important;min-height:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+#settingsAppPanel>.app-version-section,#settingsAppPanel>.pwa-install-section,#settingsAppPanel>.app-sync-section{box-sizing:border-box;min-width:0;margin:0!important;padding:14px!important;border:1px solid var(--border)!important;border-radius:12px;background:var(--card-bg)}
+#settingsAppPanel h3{font-size:15px!important;line-height:1.4!important;margin:0 0 8px!important}
+#settingsAppPanel p{font-size:13px!important;line-height:1.5!important;margin:0 0 10px!important;overflow-wrap:anywhere}
+#settingsAppPanel .app-installed-version{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px 12px}
+#settingsAppPanel .app-installed-version>span{color:var(--text-light,var(--text));font-size:12px}
+#settingsAppPanel #appInstalledVersion{font-size:16px;font-weight:650;line-height:1.4;font-variant-numeric:tabular-nums}
+#settingsAppPanel #appLatestVersion{color:var(--text-light,var(--text));font-size:12px!important}
+#settingsAppPanel #appReleaseNotes{margin:10px 0 0;padding-top:8px;border-top:1px solid var(--border)}
+#settingsAppPanel #appReleaseNotes>summary{display:list-item;min-height:44px;align-content:center;font-size:13px!important;font-weight:600;line-height:1.4;cursor:pointer}
+#settingsAppPanel #appReleaseNotes ul{margin:4px 0 0;padding-left:18px}
+#settingsAppPanel #appReleaseNotes li{font-size:12px;line-height:1.5;margin-bottom:8px}
+#settingsAppPanel #pwaInstallHelp{font-size:12px!important;color:var(--text-light,var(--text));margin:8px 0 0!important}
+#settingsAppPanel #pwaInstallHelp:empty{display:none}
+#settingsAppPanel .app-update-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+#settingsAppPanel :is(#pwaInstall,#pwaCheckUpdate,#pwaApplyUpdate){box-sizing:border-box;min-height:44px;margin:0!important;padding:9px 14px!important;border-radius:10px!important;font-size:12px!important;line-height:1.4!important}
+#settingsAppPanel #pwaApplyUpdate[hidden]{display:none!important}
+#settingsAppPanel .pwa-install-section:has(#pwaInstall:disabled) .pwa-install-intro{display:none}
