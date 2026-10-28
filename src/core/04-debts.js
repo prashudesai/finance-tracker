@@ -127,7 +127,7 @@
               </div>
               <div style="font-size: 11px; color: var(--success); margin-top: 2px;">${percentPaid}% paid | Interest: ${formatCurrency(interestPaid)}</div>
             </td>
-            <td class="text-right" data-label="Remaining EMIs (estimate)"><strong>${schedule.label}</strong>${schedule.count > 0 ? `<div class="text-muted" style="font-size: 11px; margin-top: 4px;">Final payment: ${formatCurrency(schedule.finalPayment)}</div>` : ''}</td>
+            <td class="text-right" data-label="Remaining EMIs (estimate)"><strong>${schedule.label}</strong></td>
             <td data-label="Status"><span class="badge ${d.remaining <= 0 ? 'badge-success' : 'badge-danger'}">${d.remaining <= 0 ? 'Paid off' : 'Active'}</span></td>
             <td data-label="Actions">
               <button class="btn-small" onclick="viewDebtEmiHistory('${d.id}')">View EMI History</button>
