@@ -31,6 +31,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Cash Flow mobile smoke test
         run: npm run test:cash-flow
+      - name: Finance insights smoke test
+        run: node tests/finance-insights-browser.cjs
       - name: Browser regression suite
         run: npm run test:emerald
       - name: PWA browser and offline tests
