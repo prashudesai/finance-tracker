@@ -1,9 +1,13 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.27.12",
-  "released": "2026-10-27",
+  "version": "2026.10.28.13",
+  "released": "2026-10-28",
   "releaseNotes": [
+    "Fix Dashboard month selection, Investments spacing and mobile modal consistency.",
+    "Use one Cash Flow month selector and remove its trend chart.",
+    "Refine automatic contributions and valuation review layouts.",
+    "Improve investment detail actions and transaction editor controls.",
     "Redesign investment and retirement detail sheets for compact mobile account cards.",
-    "Improve Cash Flow with a six-month recorded-income and expense trend and upcoming commitments.",
+    "Simplify Cash Flow history while retaining upcoming commitments.",
     "Clarify monthly opening balances and simplify the month-review workflow.",
     "Refine Dashboard monthly highlights, month selection and net-worth ratio.",
     "Improve mobile transaction search, history filters and tap-to-edit actions.",

@@ -1,9 +1,10 @@
 {
-  "version": "2026.10.27.12",
-  "released": "2026-10-27",
+  "version": "2026.10.28.13",
+  "released": "2026-10-28",
   "releaseNotes": [
-    "Improve Cash Flow and Investments mobile layouts, month review and Dashboard highlights.",
-    "Improve mobile transaction search, history filters and tap-to-edit actions.",
-    "Refine investment and debt cards, valuation reminders, projections and conflict review."
+    "Correct mobile Dashboard, Cash Flow and Investments card layout.",
+    "Simplify Cash Flow history and remove its trend chart.",
+    "Improve automatic contributions, valuation and transaction editing dialogs.",
+    "Align modal close controls and investment actions across devices."
   ]
 }

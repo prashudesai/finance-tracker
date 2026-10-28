@@ -11,7 +11,7 @@ export function installFinanceWorkbench(){
  const add=(parent,tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;parent.append(e);return e;};
  const button=(parent,text,fn)=>{const b=add(parent,'button',text);b.type='button';b.className='btn-small';b.onclick=()=>Promise.resolve().then(fn).catch(error=>{const msg=add(parent,'p',error.message);msg.setAttribute('role','alert');});return b;};
  const dialog=document.createElement('dialog');dialog.id='financeWorkbenchDialog';dialog.className='finance-workbench-dialog';document.body.append(dialog);
- function open(title){if(dialog.open||dataOperationBusy)return false;dialog.replaceChildren();const heading=add(dialog,'h2',title);heading.id='workbenchHeading';dialog.setAttribute('aria-labelledby',heading.id);button(dialog,'Close',()=>dialog.close());dialog.showModal();return true;}
+ function open(title){if(dialog.open||dataOperationBusy)return false;dialog.replaceChildren();const header=add(dialog,'header');header.className='finance-workbench-header';const heading=add(header,'h2',title);heading.id='workbenchHeading';dialog.setAttribute('aria-labelledby',heading.id);const close=button(header,'×',()=>dialog.close());close.className='finance-workbench-close';close.setAttribute('aria-label','Close');dialog.showModal();return true;}
  function table(parent,rows){const dl=add(parent,'dl');dl.className='finance-workbench-values';for(const [key,value]of rows){add(dl,'dt',key);add(dl,'dd',value);}return dl;}
  function field(parent,label,type,value){const wrap=add(parent,'label',label),e=add(wrap,'input');e.type=type;e.value=value;e.setAttribute('aria-label',label);return e;}
  let contributionEdit=null;
@@ -21,7 +21,7 @@ export function installFinanceWorkbench(){
   const collection=context.kind==='retirement'?'retirementContributions':context.kind==='stallion'?'stallionContributions':'investmentContributions',row=state[collection]?.find(r=>r.id===context.id);
   document.getElementById('retirementContributionHistoryModal').hidden=true;syncInvestmentOverlayBodyLock();monthly(row?.date?.slice(0,7)||context.month,context.options);
   const entry=[...dialog.querySelectorAll('[data-contribution-id]')].find(e=>e.dataset.contributionId===context.id);
-  if(entry){entry.closest('details').open=true;[...entry.querySelectorAll('button')].at(-1)?.focus();}
+  if(entry){for(let node=entry;node&&node!==dialog;node=node.parentElement){if(node.tagName==='DETAILS')node.open=true;}[...entry.querySelectorAll('button')].at(-1)?.focus();}
  }
  async function editForReview(row,month,options={}){
   if((state.income||[]).includes(row)||(state.expenses||[]).includes(row)){dialog.close();try{if((state.income||[]).includes(row))await editIncome(row.id);else await editExpense(row.id);}finally{monthly(month,options);}return;}
@@ -38,7 +38,7 @@ export function installFinanceWorkbench(){
  const cancelReviewEdit=e=>{const context=contributionEdit;if(!context)return;if(e.type==='keydown'&&e.key!=='Escape')return;if(e.type==='click'&&!e.target.closest('[data-close-account-update],[data-close-edit],[data-close-investment-contribution]'))return;if(context.saving){e.preventDefault();e.stopImmediatePropagation();return;}setTimeout(()=>{if(contributionEdit===context&&context.modal.hidden)returnToReview();},0);};
  document.addEventListener('click',cancelReviewEdit,true);document.addEventListener('keydown',cancelReviewEdit,true);
  function monthly(month=currentMonthKey(),options={}){if(!open(options.automaticOnly?'Review automatic entries':'Review month'))return;const input=field(dialog,'Month','month',month),body=add(dialog,'section');
-  const render=()=>{body.replaceChildren();const r=monthClose(state,input.value);const money=n=>n===null?'Missing':formatCurrency(n);
+  const render=()=>{const openContributionIds=new Set([...body.querySelectorAll('.automatic-entry-card[open]')].map(node=>node.dataset.contributionId));const wasAutomaticListOpen=Boolean(body.querySelector('details:has(.automatic-entry-card)')?.open);body.replaceChildren();const r=monthClose(state,input.value);const money=n=>n===null?'Missing':formatCurrency(n);
    if(!options.automaticOnly){
     body.classList.add('month-review-body');
     const summary=add(body,'div');summary.className='month-review-summary';
@@ -74,12 +74,57 @@ export function installFinanceWorkbench(){
    }
    const visible=Object.fromEntries(['investments','pf','ppf','nps','income'].map(k=>[k,profileRows(state[k]||[])]));
    const scheduled=automaticEntries(state,visible,r.month).map(e=>e.row);if(!scheduled.length)add(body,'p','No automatic contributions recorded for this month and profile.');
-   if(scheduled.length){const paymentMarks=read('paymentStatus'),detail=add(body,'details');add(detail,'summary',scheduled.length+' automatically posted entries');detail.open=options.automaticOnly===true;add(detail,'p','Already included in balances. Confirming payment does not post the contribution again.');for(const row of scheduled){const box=add(detail,'section'),key=automaticCheckKey(row),payment=paymentMarks[key],paid=payment?.status==='paid'&&payment.amount===row.amount&&(payment.epsAmount||0)===(row.epsAmount||0);box.dataset.contributionId=row.id;add(box,'p',`${row.investmentType||row.source||row.category||'Investment'} · ${row.date} · ${formatCurrency(row.amount)} · ${paid?'Paid · statement confirmed':'Auto-posted · payment unverified'}`);const date=field(box,'Payment date','date',paid?payment.date:row.date);const edit=button(box,'Edit amount',()=>editForReview(row,input.value,options));edit.disabled=window.financeCloud.canEdit===false;const mark=button(box,paid?'Undo payment confirmation':'Mark paid from statement',async()=>{await window.financeBridge.settle();if(window.financeBridge.dirty())throw Error('Finish saving financial changes before confirming payment.');if(!paid&&(!validCalendarDate(date.value)||date.value>localDateKey()))throw Error('Choose a valid payment date through today.');const payments=read('paymentStatus');payments[key]={status:paid?'unverified':'paid',date:paid?null:date.value,amount:row.amount,epsAmount:row.epsAmount||0,at:new Date().toISOString(),by:window.financeCloud.email};await write('paymentStatus',payments);render();});mark.disabled=window.financeCloud.canEdit===false;}}
+   if(scheduled.length){const paymentMarks=read('paymentStatus'),detail=add(body,'details');add(detail,'summary',scheduled.length+' automatically posted entries');detail.open=options.automaticOnly===true||wasAutomaticListOpen;add(detail,'p','Already included in balances. Confirming payment does not post the contribution again.');for(const row of scheduled){const box=add(detail,'details'),key=automaticCheckKey(row),payment=paymentMarks[key],paid=payment?.status==='paid'&&payment.amount===row.amount&&(payment.epsAmount||0)===(row.epsAmount||0);box.dataset.contributionId=row.id;box.className='automatic-entry-card';box.open=openContributionIds.has(row.id);
+const rowSummary=add(box,'summary');rowSummary.className='automatic-entry-summary';
+const copy=add(rowSummary,'span');copy.className='automatic-entry-copy';
+add(copy,'strong',row.investmentType||row.source||row.category||'Investment');
+add(copy,'small',new Date(row.date+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}));
+const right=add(rowSummary,'span');right.className='automatic-entry-value';
+add(right,'strong',formatCurrency(row.amount));
+const paidStatus=add(right,'small',paid?'Verified':'Unverified');paidStatus.className=paid?'is-verified':'is-unverified';
+const actions=add(box,'div');actions.className='automatic-entry-actions';
+const date=field(actions,'Payment date','date',paid?payment.date:row.date);
+const edit=button(actions,'Edit amount',()=>editForReview(row,input.value,options));edit.disabled=window.financeCloud.canEdit===false;const mark=button(actions,paid?'Undo payment confirmation':'Mark paid from statement',async()=>{await window.financeBridge.settle();if(window.financeBridge.dirty())throw Error('Finish saving financial changes before confirming payment.');if(!paid&&(!validCalendarDate(date.value)||date.value>localDateKey()))throw Error('Choose a valid payment date through today.');const payments=read('paymentStatus');payments[key]={status:paid?'unverified':'paid',date:paid?null:date.value,amount:row.amount,epsAmount:row.epsAmount||0,at:new Date().toISOString(),by:window.financeCloud.email};await write('paymentStatus',payments);render();});mark.disabled=window.financeCloud.canEdit===false;}}
   };input.onchange=render;render();
  }
- function valuations(onlyKind=null,onlyId=null,onlyIds=null){if(!open('Valuation freshness'))return;add(dialog,'p','Valuation confirmations sync with shared reviews. Changing a balance requires confirmation again.');const stamps=read('valuations');
-  for(const kind of ['investments','pf','ppf','nps'])for(const row of profileRows(state[kind]||[])){if(onlyKind&&(kind!==onlyKind||(onlyId&&row.id!==onlyId)||(onlyIds&&!onlyIds.includes(row.id))))continue;const card=add(dialog,'section');const key=kind+':'+row.id;add(card,'h3',row.name||row.account||row.scheme||row.type||kind.toUpperCase());add(card,'p',formatCurrency(row.current));const update=button(card,'Update balance',()=>{dialog.close();if(kind==='investments')editInvestment(row.id);else openInvestmentEditModal(kind,row.id);});update.disabled=window.financeCloud.canEdit===false;const status=add(card,'p',valuationStatus(row,stamps[key],localDateKey()));const returns=add(card,'details');add(returns,'summary','Return basis');const gain=Number(row.current)-Number(row.invested??row.current);table(returns,[['Gain / loss',formatCurrency(gain)]]);if(kind==='nps'||kind==='investments'){const xirr=kind==='nps'?npsXirr(row):row.type==='Stallion PMS'?stallionXirr(row):investmentXirr(row);add(returns,'p',xirr===null?'XIRR unavailable: check dated contributions and the opening investment balance.':'XIRR from dated cash flows: '+(xirr*100).toFixed(2)+'%');add(returns,'p','CAGR compares opening and closing amounts; XIRR accounts for dated contributions. Neither is a forecast.');}const input=field(card,'Valuation date','date',stamps[key]?.date||localDateKey());const confirmValue=button(card,'Confirm value as of date',async()=>{if(!validCalendarDate(input.value)||input.value>localDateKey())throw Error('Choose a valid date through today.');const latest=read('valuations');latest[key]={date:input.value,value:row.current};await write('valuations',latest);status.textContent=valuationStatus(row,latest[key],localDateKey());});confirmValue.disabled=window.financeCloud.canEdit===false;}
+
+ function valuations(onlyKind=null,onlyId=null,onlyIds=null){
+  if(!open('Valuation freshness'))return;
+  const intro=add(dialog,'p','Valuation confirmations sync with shared reviews. Changing a balance requires confirmation again.');
+  intro.className='valuation-intro';
+  const list=add(dialog,'div');list.className='valuation-account-list';
+  const stamps=read('valuations');
+  for(const kind of ['investments','pf','ppf','nps'])for(const row of profileRows(state[kind]||[])){
+   if(onlyKind&&(kind!==onlyKind||(onlyId&&row.id!==onlyId)||(onlyIds&&!onlyIds.includes(row.id))))continue;
+   const card=add(list,'section');card.className='valuation-account';
+   const top=add(card,'div');top.className='valuation-account-top';
+   const heading=add(top,'div');add(heading,'h3',row.name||row.account||row.scheme||row.type||kind.toUpperCase());
+   const key=kind+':'+row.id;
+   const status=add(heading,'p',valuationStatus(row,stamps[key],localDateKey()));status.className='valuation-account-status';
+   const balance=add(top,'div');balance.className='valuation-account-balance';
+   add(balance,'span','Current value');add(balance,'strong',formatCurrency(row.current));
+   const date=field(card,'Valuation date','date',stamps[key]?.date||localDateKey());
+   date.closest('label')?.classList.add('valuation-account-date');
+   const actions=add(card,'div');actions.className='valuation-account-actions';
+   const confirm=button(actions,'Confirm value as of date',async()=>{
+    if(!validCalendarDate(date.value)||date.value>localDateKey())throw Error('Choose a valid date through today.');
+    const latest=read('valuations');latest[key]={date:date.value,value:row.current};
+    await write('valuations',latest);status.textContent=valuationStatus(row,latest[key],localDateKey());
+   });
+   confirm.classList.add('valuation-confirm');confirm.disabled=window.financeCloud.canEdit===false;
+   const update=button(actions,'Update balance',()=>{dialog.close();if(kind==='investments')editInvestment(row.id);else openInvestmentEditModal(kind,row.id);});
+   update.disabled=window.financeCloud.canEdit===false;
+   const returns=add(card,'details');returns.className='valuation-return-basis';add(returns,'summary','Return basis');
+   const gain=Number(row.current)-Number(row.invested??row.current);
+   table(returns,[['Gain / loss',formatCurrency(gain)]]);
+   if(kind==='nps'||kind==='investments'){
+    const xirr=kind==='nps'?npsXirr(row):row.type==='Stallion PMS'?stallionXirr(row):investmentXirr(row);
+    add(returns,'p',xirr===null?'XIRR unavailable: check dated contributions and the opening investment balance.':'XIRR from dated cash flows: '+(xirr*100).toFixed(2)+'%');
+    add(returns,'p','CAGR compares opening and closing amounts; XIRR accounts for dated contributions. Neither is a forecast.');
+   }
+  }
  }
+
  function planning(){if(!open('Portfolio goal planner'))return;const saved=read('planning');
   const years=field(dialog,'Years to goal','number',saved.years||5);years.min='1';years.max='40';
   const inflation=field(dialog,'Annual inflation assumption (%)','number',saved.inflation??6);inflation.min='0';inflation.max='30';inflation.step='0.1';

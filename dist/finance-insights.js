@@ -66,7 +66,7 @@ export function installFinanceInsights(){
  function valuationFooter(host,accounts){
   host.querySelector(':scope > .finance-valuation-footer')?.remove();
   const header=host.querySelector(':scope > .panel-header');let review=header?.querySelector('.finance-valuation-review');
-  if(!accounts.length){review?.remove();return;}
+  if(!accounts.length||host.id==='stallionPmsPanel'){review?.remove();header?.querySelector('.finance-stale-dot')?.remove();return;}
   if(header&&!review){review=make('button','finance-valuation-review');review.type='button';review.textContent='Update value';header.append(review);}
   if(!review)return;
   review.onclick=()=>window.financeWorkbench.valuations(accounts[0].kind,accounts.length===1?accounts[0].row.id:null,accounts.map(item=>item.row.id));
