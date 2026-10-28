@@ -64,25 +64,9 @@ export function installFinanceInsights(){
  }
  function placeChanges(){const flow=dashboard.querySelector('.flow-home:not([hidden]) .flow-summary');const target=flow||dashboard.querySelector('.dashboard');if(target&&changes.d.previousElementSibling!==target)target.after(changes.d);}
  function valuationFooter(host,accounts){
-  const existingActions=host.querySelector(':scope > .finance-valuation-footer');
-  const header=host.querySelector(':scope > .panel-header');let review=host.querySelector('.finance-valuation-review');
-  // A fixed-interest or no-return holding has no market quote to refresh.
-  // Record its cash additions through the existing account-detail contribution action.
-  const hasMarketValuation=accounts.some(({kind,row})=>kind==='nps'||(kind==='investments'&&investmentGrowthType(row.type)==='market'));
-  if(!accounts.length||host.id==='stallionPmsPanel'||!hasMarketValuation){existingActions?.remove();review?.remove();header?.querySelector('.finance-stale-dot')?.remove();return;}
-  if(header&&!review){review=make('button','finance-valuation-review');review.type='button';review.textContent='Update value';}
-  const actions=existingActions||make('div','finance-valuation-footer');actions.style.cssText='display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)';
-  if(review){review.setAttribute('aria-label','Update value');review.title='Update value';review.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8"><path d="M12 5v14M5 12h14"/></svg>';review.style.cssText='display:inline-grid;place-items:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:10px';if(review.parentElement!==actions)actions.append(review);if(actions.parentElement!==host)host.append(actions);}
-  if(!review)return;
-  review.onclick=event=>{event.stopPropagation();window.financeWorkbench.valuations(accounts[0].kind,accounts.length===1?accounts[0].row.id:null,accounts.map(item=>item.row.id));};
-  const statuses=accounts.map(({kind,row})=>{
-   const history=kind==='investments'&&row.type==='Stallion PMS'?(state.stallionProfitHistory||[]).filter(r=>r.stallionId===row.id).map(r=>r.date).sort().at(-1):null;
-   const dated={...row,valuationDate:row.valuationDate||history};
-   return freshness(kind,dated,null,localDateKey(),kind==='investments'?investmentGrowthType(row.type):'market');
-  });
-  const stale=statuses.filter(s=>s.due);let dot=host.querySelector('.finance-stale-dot');
-  if(stale.length){if(!dot){dot=make('span','finance-stale-dot');dot.setAttribute('role','img');review.before(dot);}dot.setAttribute('aria-label',stale.length+' market valuation'+(stale.length===1?'':'s')+' over 30 days old');dot.title=stale.map(s=>s.label).join(' · ');}
-  else dot?.remove();
+  host.querySelector(':scope > .finance-valuation-footer')?.remove();
+  host.querySelector(':scope > .panel-header .finance-valuation-review')?.remove();
+  host.querySelector(':scope > .panel-header .finance-stale-dot')?.remove();
  }
  function renderValuations(){const v=visible();for(const card of investments.querySelectorAll('.investment-category-card'))valuationFooter(card,v.investments.filter(r=>r.type===card.dataset.investmentType).map(row=>({kind:'investments',row})));for(const card of investments.querySelectorAll('.retirement-account-card[data-retirement-type]')){const kind=card.dataset.retirementType;if(['pf','ppf','nps'].includes(kind))valuationFooter(card,v[kind].map(row=>({kind,row})));else if(kind==='gratuity'){card.querySelector(':scope > .finance-valuation-footer')?.remove();const header=card.querySelector(':scope > .panel-header');header?.querySelector('.finance-valuation-review')?.remove();}}const pms=document.getElementById('stallionPmsPanel');if(pms)valuationFooter(pms,v.investments.filter(r=>r.type==='Stallion PMS').map(row=>({kind:'investments',row})));}
  function paintSync(){const pending=syncRecord?.pending||window.financeReviews?.pending();let text;if(persistenceDirty)text='Device save needs attention';else if(cloudSaveBlocked||window.financeReviews?.problem())text='Sync needs review';else if(pendingSaves)text='Saving on this device…';else if(window.financeStartupChecking)text='Checking cloud changes…';else if(pending)text=navigator.onLine?(syncBusy?'Saved on device · Syncing…':'Saved on device · Waiting to sync'):'Saved on device · Offline';else if(!navigator.onLine)text='Saved on this device · Offline';else if(window.financeReviews?.status()?.startsWith('Checking'))text='Checking shared reviews…';else text=syncRecord?.lastCloudUpdated?'Synced '+new Date(syncRecord.lastCloudUpdated).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'Saved on this device';if(sync.textContent!==text)sync.textContent=text;sync.classList.toggle('at-page-bottom',Boolean(search?.classList.contains('at-page-bottom')));}
