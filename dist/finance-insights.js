@@ -70,15 +70,17 @@ export function installFinanceInsights(){
   // Record its cash additions through the existing account-detail contribution action.
   const hasMarketValuation=accounts.some(({kind,row})=>kind==='nps'||(kind==='investments'&&investmentGrowthType(row.type)==='market'));
   if(!accounts.length||host.id==='stallionPmsPanel'||!hasMarketValuation){review?.remove();header?.querySelector('.finance-stale-dot')?.remove();return;}
-  if(header&&!review){review=make('button','finance-valuation-review');review.type='button';review.textContent='Update value';header.append(review);}
+  if(header&&!review){review=make('button','finance-valuation-review');review.type='button';review.textContent='Update value';}
+  const actions=make('div','finance-valuation-footer');actions.style.cssText='display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)';
+  if(review){review.setAttribute('aria-label','Update value');review.title='Update value';review.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8"><path d="M12 5v14M5 12h14"/></svg>';review.style.cssText='display:inline-grid;place-items:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:10px';actions.append(review);host.append(actions);}
   if(!review)return;
-  review.onclick=()=>window.financeWorkbench.valuations(accounts[0].kind,accounts.length===1?accounts[0].row.id:null,accounts.map(item=>item.row.id));
+  review.onclick=event=>{event.stopPropagation();window.financeWorkbench.valuations(accounts[0].kind,accounts.length===1?accounts[0].row.id:null,accounts.map(item=>item.row.id));};
   const statuses=accounts.map(({kind,row})=>{
    const history=kind==='investments'&&row.type==='Stallion PMS'?(state.stallionProfitHistory||[]).filter(r=>r.stallionId===row.id).map(r=>r.date).sort().at(-1):null;
    const dated={...row,valuationDate:row.valuationDate||history};
    return freshness(kind,dated,null,localDateKey(),kind==='investments'?investmentGrowthType(row.type):'market');
   });
-  const stale=statuses.filter(s=>s.due);let dot=header.querySelector('.finance-stale-dot');
+  const stale=statuses.filter(s=>s.due);let dot=host.querySelector('.finance-stale-dot');
   if(stale.length){if(!dot){dot=make('span','finance-stale-dot');dot.setAttribute('role','img');review.before(dot);}dot.setAttribute('aria-label',stale.length+' market valuation'+(stale.length===1?'':'s')+' over 30 days old');dot.title=stale.map(s=>s.label).join(' · ');}
   else dot?.remove();
  }
