@@ -934,7 +934,7 @@
     <div id="investmentEditModal" class="investment-edit-modal" hidden>
       <div class="investment-edit-backdrop" data-close-edit></div>
       <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="investmentEditTitle">
-        <h2 id="investmentEditTitle">Edit investment</h2>
+        <div class="modal-heading"><h2 id="investmentEditTitle">Edit investment</h2><button type="button" class="modal-close-button" data-close-edit aria-label="Close investment editor">×</button></div>
         <div id="investmentEditFields" class="form-grid"></div>
         <div class="investment-edit-actions"><button type="button" class="btn-secondary" data-close-edit>Cancel</button><button type="button" class="btn-primary" id="saveInvestmentEdit">Save changes</button></div>
       </section>
@@ -943,7 +943,7 @@
     <div id="gratuityEditModal" class="investment-edit-modal" hidden>
       <div class="investment-edit-backdrop" data-close-gratuity></div>
       <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="gratuityEditTitle">
-        <h2 id="gratuityEditTitle">Add gratuity estimate</h2>
+        <div class="modal-heading"><h2 id="gratuityEditTitle">Add gratuity estimate</h2><button type="button" class="modal-close-button" data-close-gratuity aria-label="Close gratuity editor">×</button></div>
         <p class="text-muted">Enter the family member’s current Basic salary and employer start date. The estimate is separate from investment balances.</p>
         <div class="form-grid">
           <div class="form-group"><label for="gratuityMember">Family member</label><select id="gratuityMember"><option value="">-- Select family member --</option></select></div>
@@ -958,7 +958,7 @@
     <div id="accountUpdateModal" class="investment-edit-modal" hidden>
       <div class="investment-edit-backdrop" data-close-account-update></div>
       <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="accountUpdateTitle">
-        <h2 id="accountUpdateTitle">Update Account</h2>
+        <div class="modal-heading"><h2 id="accountUpdateTitle">Update Account</h2><button type="button" class="modal-close-button" data-close-account-update aria-label="Close account editor">×</button></div>
         <p class="text-muted" id="accountUpdateNote"></p>
         <div class="form-grid">
           <div class="form-group" id="accountUpdateNpsAccountWrap" hidden><label for="accountUpdateNpsAccount">NPS account</label><select id="accountUpdateNpsAccount"></select></div>
@@ -972,7 +972,7 @@
     <div id="retirementContributionHistoryModal" class="investment-edit-modal" hidden>
       <div class="investment-edit-backdrop" data-close-retirement-history></div>
       <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="retirementContributionHistoryTitle">
-        <div class="panel-header"><h2 id="retirementContributionHistoryTitle">Contribution History</h2><button type="button" class="btn-secondary" data-close-retirement-history>Close</button></div>
+        <div class="modal-heading"><h2 id="retirementContributionHistoryTitle">Contribution History</h2><button type="button" class="modal-close-button" data-close-retirement-history aria-label="Close contribution history">×</button></div>
         <div class="history-filter-controls" style="margin-bottom:14px">
           <label class="history-month-control" id="retirementHistoryTypeWrap">History
             <select id="retirementHistoryType" aria-label="Choose contribution or interest history">
@@ -994,7 +994,7 @@
     <div id="debtEmiHistoryModal" class="investment-edit-modal" hidden>
       <div class="investment-edit-backdrop" data-close-debt-emi-history></div>
       <section class="investment-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="debtEmiHistoryTitle">
-        <div class="panel-header"><h2 id="debtEmiHistoryTitle">Loan Payment History</h2><button type="button" class="btn-secondary" data-close-debt-emi-history>Close</button></div>
+        <div class="modal-heading"><h2 id="debtEmiHistoryTitle">Loan Payment History</h2><button type="button" class="modal-close-button" data-close-debt-emi-history aria-label="Close payment history">×</button></div>
         <p class="text-muted" id="debtEmiHistorySummary"></p>
         <div class="investment-edit-actions" style="justify-content:flex-start;margin:0 0 12px">
           <button type="button" class="btn-secondary" id="debtEmiHistoryPdf">Save as PDF</button>
