@@ -273,8 +273,14 @@
       }else{
         head.innerHTML='<tr><th>Payment date</th><th>Payment type</th><th class="text-right">EMI / payment paid</th><th class="text-right">Interest</th><th class="text-right">Principal repaid</th><th class="text-right">Outstanding after payment</th><th>Notes</th></tr>';
         const balanceResult=PFT_LOAN_LEDGER.paymentBalances(debt,records,localDateKey()),balances=balanceResult.balances||new Map();
-      document.getElementById('debtEmiHistorySummary').textContent=records.length
-        ? `${records.length} recorded ${records.length===1?'payment':'payments'} · Total paid ${formatCurrency(total)} · Interest ${formatCurrency(interest)} · Principal repaid ${formatCurrency(principal)} · Current outstanding ${formatCurrency(debt.remaining)}`
+      document.getElementById('debtEmiHistorySummary').innerHTML=records.length
+        ? '<div class="loan-history-summary-grid">'+[
+          ['Payments',String(records.length)],
+          ['Total paid',formatCurrency(total)],
+          ['Interest',formatCurrency(interest)],
+          ['Principal repaid',formatCurrency(principal)],
+          ['Outstanding',formatCurrency(debt.remaining)]
+        ].map(([label,value])=>'<div class="loan-history-summary-item"><span>'+label+'</span><strong>'+value+'</strong></div>').join('')+'</div>'
         : `No EMI payments have been recorded for this debt yet. Current outstanding ${formatCurrency(debt.remaining)}.`;
         body.innerHTML=records.length?records.map(row=>`<tr><td data-label="Payment date">${row.date?calendarDate(row.date).toLocaleDateString('en-IN'):'—'}</td><td data-label="Payment type">${row.repaymentType==='part-payment'?'Part Payment'+(row.partPaymentAction==='reduce'?' · Reduce EMI':row.partPaymentAction==='keep'?' · Keep EMI':''):'Monthly EMI'}</td><td class="text-right" data-label="EMI / payment paid">${formatCurrency(row.amount)}</td><td class="text-right" data-label="Interest">${formatCurrency(row.interestPaid||0)}</td><td class="text-right" data-label="Principal repaid">${formatCurrency(row.principalPaid??row.amount)}</td><td class="text-right" data-label="Outstanding after payment">${balances.has(row.id)?formatCurrency(balances.get(row.id)):'—'}</td><td data-label="Notes">${analyticEscape(row.notes||'—')}</td></tr>`).join(''):'<tr><td colspan="7" class="text-muted">No loan payments recorded.</td></tr>';
       }
