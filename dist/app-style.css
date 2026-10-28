@@ -2694,3 +2694,7 @@ html body #growth-projection #growthProjectionChart{
  html body #growth-projection .growth-projection-chart-panel>.panel-header h2{font-size:18px!important;line-height:1.4!important;margin:0!important}
  html body #growth-projection #growthProjectionChartWrap{height:clamp(300px,46dvh,380px)!important;padding:4px!important;border-radius:12px!important}
 }
+
+/* PMS performance follows the investment gain/loss palette in tiles and details. */
+#stallionPmsPanel .pms-summary-metrics strong.positive,#investmentCategoryDialog[data-stallion-id] .positive{color:var(--success)!important}
+#stallionPmsPanel .pms-summary-metrics strong.negative,#investmentCategoryDialog[data-stallion-id] .negative{color:var(--danger)!important}
