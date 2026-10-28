@@ -249,6 +249,11 @@ const server=http.createServer(async(req,res)=>{try{
   await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderInvestments();renderPf();renderPpf();renderNps();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();},original);
  });
  await check('Mobile portfolio tiles stay equally compact with monthly contributions and valuation actions',async()=>{
+  const contributionModal=page.locator('#investmentContributionModal');
+  if(await contributionModal.isVisible()){
+   await contributionModal.getByRole('button',{name:/close/i}).click();
+   await contributionModal.waitFor({state:'hidden'});
+  }
   const original=await page.evaluate(()=>JSON.stringify(state));
   try{
    await page.evaluate(()=>{
