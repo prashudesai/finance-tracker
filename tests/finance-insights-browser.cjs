@@ -248,6 +248,49 @@ const server=http.createServer(async(req,res)=>{try{
   assert.deepEqual(credit,{invested:11250,current:12050,contributions:[1250]});
   await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderInvestments();renderPf();renderPpf();renderNps();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();},original);
  });
+ await check('Mobile portfolio tiles stay equally compact with monthly contributions and valuation actions',async()=>{
+  const original=await page.evaluate(()=>JSON.stringify(state));
+  try{
+   await page.evaluate(()=>{
+    const member=state.customValues.familyMembers[0],base={member,date:'2025-01-01',autoMonthlyContribution:false,monthly:0};
+    state.investments=[
+     {...base,id:'height-mf',type:'Mutual Funds',name:'Monthly fund',invested:514500,current:497000,monthly:7500,autoMonthlyContribution:true},
+     {...base,id:'height-bond',type:'Bonds',name:'Bond',invested:320000,current:359000,rate:7.4},
+     {...base,id:'height-fd',type:'Fixed Deposits',name:'Deposit',invested:400000,current:443000,rate:7.25}
+    ];
+    document.querySelector('.nav-tab[data-tab="investments"]').click();
+    renderInvestments();financeInsights.refresh();
+   });
+   for(const style of ['modern','emerald-flow'])for(const width of [320,390,430,700]){
+    await page.setViewportSize({width,height:900});
+    await page.evaluate(style=>{PFT_STYLE.apply(style);document.getElementById('investmentMobileTabInvestments').click();financeInsights.refresh();},style);
+    await page.waitForFunction(()=>document.querySelector('[data-investment-type="Mutual Funds"] .finance-valuation-review'));
+    const geometry=await page.locator('#investmentCategoryPanels>.investment-category-card').evaluateAll(cards=>cards.map(card=>{
+     const r=card.getBoundingClientRect(),summary=card.querySelector('.investment-category-summary-grid');
+     return {type:card.dataset.investmentType,height:r.height,overflow:card.scrollWidth>card.clientWidth+1,rows:[...summary.children].filter(e=>!e.classList.contains('investment-summary-chevron')&&e.getClientRects().length).map(e=>Math.round(e.getBoundingClientRect().top))};
+    }));
+    assert.equal(geometry.length,3);
+    assert(Math.max(...geometry.map(r=>r.height))-Math.min(...geometry.map(r=>r.height))<=2,JSON.stringify({style,width,geometry}));
+    for(const card of geometry){assert(!card.overflow,JSON.stringify({style,width,card}));assert.equal(new Set(card.rows).size,2,JSON.stringify({style,width,card}));}
+    const mf=page.locator('[data-investment-type="Mutual Funds"]');
+    assert(await mf.locator('.investment-monthly-inline').isVisible());
+    assert.match(await mf.locator('.investment-monthly-inline').textContent(),/7,500/);
+    assert.equal(await mf.locator('.investment-summary-monthly').isVisible(),false);
+    const action=await mf.locator('.finance-valuation-review').boundingBox();assert(action.height>=44);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+   }
+   await page.locator('[data-investment-type="Mutual Funds"] .investment-category-summary-grid').click();
+   assert(await page.locator('#investmentCategoryDialogSummary .investment-summary-monthly').isVisible());
+   assert.match(await page.locator('#investmentCategoryDialogSummary .investment-summary-monthly').textContent(),/7,500/);
+   await page.locator('[data-close-investment-category-dialog]').first().click();
+   await page.setViewportSize({width:1440,height:900});
+   assert(await page.locator('[data-investment-type="Mutual Funds"] .investment-summary-monthly').isVisible());
+   assert.equal(await page.locator('[data-investment-type="Mutual Funds"] .investment-monthly-inline').isVisible(),false);
+  }finally{
+   await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderInvestments();PFT_STYLE.apply('modern');financeInsights.refresh();},original);
+   await page.setViewportSize({width:390,height:844});
+  }
+ });
  await check('Stallion PMS only shows its two contribution and gain-loss actions',async()=>{
   const historyModal=page.locator('#investmentContributionModal');
   if(await historyModal.isVisible()){
