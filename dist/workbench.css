@@ -123,3 +123,94 @@ html[data-app-style="modern"] body:has(>#openRecordSearch){padding-bottom:0}
 .month-review-details>summary{cursor:pointer;min-height:44px;align-content:center;color:var(--text-light)}
 .month-review-details .finance-workbench-values{gap:8px 12px}
 @media(max-width:600px){.finance-workbench-dialog:has(.month-review-body){padding:16px;max-height:calc(100dvh - 28px)}.month-review-figure{padding:10px}.month-review-details .finance-workbench-values{grid-template-columns:minmax(0,1fr) auto}.month-review-details .finance-workbench-values dd{text-align:right;margin:0}}
+
+
+/* 2026.10.28.13 shared workbench sheets (monthly review, automatic and valuations). */
+.finance-workbench-dialog{
+ box-sizing:border-box;width:min(600px,calc(100vw - 24px));
+ max-height:min(86dvh,760px);padding:16px!important;border-radius:18px!important;
+ overscroll-behavior:contain;
+}
+.finance-workbench-header{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ position:sticky;top:-16px;z-index:9;margin:-3px 0 12px;padding:3px 0 12px;
+ background:var(--card-bg);border-bottom:1px solid var(--border);
+}
+.finance-workbench-header h2{margin:0!important;font-size:20px!important;line-height:1.3!important;min-width:0}
+.finance-workbench-header .finance-workbench-close{
+ box-sizing:border-box;flex:0 0 44px;display:grid;place-items:center;
+ width:44px;height:44px;min-height:44px;margin:0!important;padding:0!important;
+ border:1px solid var(--border);border-radius:12px;background:transparent;
+ color:var(--text);font-size:25px;line-height:1;cursor:pointer;
+}
+.finance-workbench-dialog .valuation-intro{
+ margin:3px 0 12px;color:var(--text-light);font-size:12px;line-height:1.55;
+}
+.valuation-account-list{display:grid;gap:12px}
+.finance-workbench-dialog .valuation-account{
+ box-sizing:border-box;margin:0!important;padding:14px;min-width:0;
+ border:1px solid var(--border);border-radius:14px;
+ background:color-mix(in srgb,var(--primary) 5%,var(--card-bg));
+}
+.valuation-account-top{display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:8px}
+.valuation-account-top h3{font-size:17px;margin:0 0 4px;line-height:1.35}
+.valuation-account-status{margin:0;color:var(--text-light);font-size:11px;line-height:1.4}
+.valuation-account-balance{text-align:right;margin-left:auto}
+.valuation-account-balance span{display:block;color:var(--text-light);font-size:11px;margin:0 0 3px}
+.valuation-account-balance strong{display:block;color:var(--text);font-size:20px;line-height:1.25;font-variant-numeric:tabular-nums}
+.finance-workbench-dialog .valuation-account-date{margin:12px 0!important;font-size:12px;font-weight:600}
+.finance-workbench-dialog .valuation-account-date input{margin-top:6px!important}
+.valuation-account-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.finance-workbench-dialog .valuation-account-actions button{
+ margin:0!important;box-sizing:border-box;min-width:0!important;
+ min-height:44px!important;border:1px solid var(--border);
+ border-radius:11px;padding:8px!important;font:inherit;font-size:12px;
+ line-height:1.35;white-space:normal;background:var(--card-bg);color:var(--text);
+}
+.finance-workbench-dialog .valuation-account-actions .valuation-confirm{
+ background:var(--primary);border-color:var(--primary);color:var(--button-text,#102921);font-weight:700;
+}
+.finance-workbench-dialog .valuation-return-basis{margin:12px 0 0!important;padding-top:9px;border-top:1px solid var(--border)}
+.finance-workbench-dialog .valuation-return-basis summary{font-size:12px;font-weight:600;cursor:pointer}
+.finance-workbench-dialog .valuation-return-basis p{font-size:12px;line-height:1.4}
+.finance-workbench-dialog .automatic-entry-card{
+ margin:9px 0 0!important;padding:0!important;min-width:0!important;
+ border:1px solid var(--border);border-radius:13px;background:color-mix(in srgb,var(--primary) 4%,var(--card-bg));
+ overflow:hidden;
+}
+.finance-workbench-dialog .automatic-entry-summary{
+ list-style:none;cursor:pointer;box-sizing:border-box;display:flex;
+ align-items:center;justify-content:space-between;gap:9px;
+ min-height:62px;padding:12px!important;
+}
+.finance-workbench-dialog .automatic-entry-summary::-webkit-details-marker{display:none}
+.finance-workbench-dialog .automatic-entry-summary::marker{content:''}
+.automatic-entry-copy,.automatic-entry-value{display:flex;flex-direction:column;min-width:0;gap:4px}
+.automatic-entry-copy strong{font-size:14px;line-height:1.3}
+.automatic-entry-copy small{font-size:11px;color:var(--text-light)}
+.automatic-entry-value{text-align:right;align-items:flex-end}
+.automatic-entry-value strong{font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.automatic-entry-value small{font-size:10px;color:var(--text-light)}
+.automatic-entry-value small.is-verified{color:var(--success)}
+.automatic-entry-summary:after{content:'⌄';font-size:21px;line-height:1;color:var(--primary)}
+.automatic-entry-card[open]>.automatic-entry-summary:after{transform:rotate(180deg)}
+.automatic-entry-actions{padding:11px 12px 13px;border-top:1px solid var(--border)}
+.finance-workbench-dialog .automatic-entry-actions label{font-size:12px;margin:0 0 10px}
+.finance-workbench-dialog .automatic-entry-actions button{
+ box-sizing:border-box;margin:3px 7px 3px 0;padding:8px 10px!important;
+ font:inherit;font-size:12px;font-weight:600;line-height:1.3;
+ border:1px solid var(--border);border-radius:10px;min-height:44px;
+ background:var(--card-bg);color:var(--text);
+}
+.finance-workbench-dialog .automatic-entry-actions button:last-child{
+ border-color:var(--primary);background:color-mix(in srgb,var(--primary) 14%,var(--card-bg));
+}
+@media(max-width:600px){
+ .finance-workbench-dialog{padding:14px!important;max-height:min(86dvh,760px)}
+ .finance-workbench-header{top:-14px}
+ .valuation-account-top{flex-wrap:wrap}
+ .valuation-account-balance{min-width:0}
+ .finance-workbench-dialog .automatic-entry-actions{display:flex;flex-wrap:wrap;gap:7px}
+ .finance-workbench-dialog .automatic-entry-actions label{flex-basis:100%;margin:0}
+ .finance-workbench-dialog .automatic-entry-actions button{flex:1 1 120px;margin:0}
+}
