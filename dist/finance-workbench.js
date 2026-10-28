@@ -14,6 +14,22 @@ export function installFinanceWorkbench(){
  function open(title){if(dialog.open||dataOperationBusy)return false;dialog.replaceChildren();const header=add(dialog,'header');header.className='finance-workbench-header';const heading=add(header,'h2',title);heading.id='workbenchHeading';dialog.setAttribute('aria-labelledby',heading.id);const close=button(header,'×',()=>dialog.close());close.className='finance-workbench-close';close.setAttribute('aria-label','Close');dialog.showModal();return true;}
  function table(parent,rows){const dl=add(parent,'dl');dl.className='finance-workbench-values';for(const [key,value]of rows){add(dl,'dt',key);add(dl,'dd',value);}return dl;}
  function field(parent,label,type,value){const wrap=add(parent,'label',label),e=add(wrap,'input');e.type=type;e.value=value;e.setAttribute('aria-label',label);return e;}
+ // On mobile Safari, native month/date fields can show only the calendar icon.
+ // Mirror the selected date visibly without replacing its actual input or value.
+ function readableCalendar(input){
+  const label=input.closest('label');if(!label||!['date','month'].includes(input.type))return input;
+  const control=add(label,'span');control.className='valuation-date-control';
+  control.append(input);
+  const output=add(control,'span');output.className='valuation-date-display';
+  output.setAttribute('aria-hidden','true');
+  const render=()=>{
+   const value=input.value,valid=input.type==='month'?/^\d{4}-\d{2}$/.test(value):/^\d{4}-\d{2}-\d{2}$/.test(value);
+   const date=valid?new Date(value+(input.type==='month'?'-01':'')+'T12:00:00'):null;
+   output.textContent=date&&!Number.isNaN(date.getTime())?date.toLocaleDateString('en-IN',input.type==='month'?{month:'long',year:'numeric'}:{day:'numeric',month:'short',year:'numeric'}):'Choose '+(input.type==='month'?'month':'date');
+  };
+  input.addEventListener('input',render);input.addEventListener('change',render);render();
+  return input;
+ }
  let contributionEdit=null;
  const isReviewEditing=kind=>contributionEdit?.kind===kind;
  function returnToReview(){
@@ -37,7 +53,7 @@ export function installFinanceWorkbench(){
  }
  const cancelReviewEdit=e=>{const context=contributionEdit;if(!context)return;if(e.type==='keydown'&&e.key!=='Escape')return;if(e.type==='click'&&!e.target.closest('[data-close-account-update],[data-close-edit],[data-close-investment-contribution]'))return;if(context.saving){e.preventDefault();e.stopImmediatePropagation();return;}setTimeout(()=>{if(contributionEdit===context&&context.modal.hidden)returnToReview();},0);};
  document.addEventListener('click',cancelReviewEdit,true);document.addEventListener('keydown',cancelReviewEdit,true);
- function monthly(month=currentMonthKey(),options={}){if(!open(options.automaticOnly?'Review automatic entries':'Review month'))return;const input=field(dialog,'Month','month',month),body=add(dialog,'section');
+ function monthly(month=currentMonthKey(),options={}){if(!open(options.automaticOnly?'Review automatic entries':'Review month'))return;const input=readableCalendar(field(dialog,'Month','month',month)),body=add(dialog,'section');
   const render=()=>{const openContributionIds=new Set([...body.querySelectorAll('.automatic-entry-card[open]')].map(node=>node.dataset.contributionId));const wasAutomaticListOpen=Boolean(body.querySelector('details:has(.automatic-entry-card)')?.open);body.replaceChildren();const r=monthClose(state,input.value);const money=n=>n===null?'Missing':formatCurrency(n);
    const firstTrackedMonth=(state.monthlyBalances||[]).map(b=>b.month).filter(Boolean).sort()[0];
    const beforeTracking=Boolean(firstTrackedMonth&&r.month<firstTrackedMonth);
@@ -92,7 +108,7 @@ const right=add(rowSummary,'span');right.className='automatic-entry-value';
 add(right,'strong',formatCurrency(row.amount));
 const paidStatus=add(right,'small',paid?'Verified':'Unverified');paidStatus.className=paid?'is-verified':'is-unverified';
 const actions=add(box,'div');actions.className='automatic-entry-actions';
-const date=field(actions,'Payment date','date',paid?payment.date:row.date);
+const date=readableCalendar(field(actions,'Payment date','date',paid?payment.date:row.date));
 const edit=button(actions,'Edit amount',()=>editForReview(row,input.value,options));edit.disabled=window.financeCloud.canEdit===false;const mark=button(actions,paid?'Undo payment confirmation':'Mark paid from statement',async()=>{await window.financeBridge.settle();if(window.financeBridge.dirty())throw Error('Finish saving financial changes before confirming payment.');if(!paid&&(!validCalendarDate(date.value)||date.value>localDateKey()))throw Error('Choose a valid payment date through today.');const payments=read('paymentStatus');payments[key]={status:paid?'unverified':'paid',date:paid?null:date.value,amount:row.amount,epsAmount:row.epsAmount||0,at:new Date().toISOString(),by:window.financeCloud.email};await write('paymentStatus',payments);render();});mark.disabled=window.financeCloud.canEdit===false;}}
   };input.onchange=render;render();
  }
