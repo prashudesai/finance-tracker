@@ -161,6 +161,36 @@ const server=http.createServer(async(req,res)=>{try{
   assert.equal(await d.getByRole('button',{name:'Mark as reviewed'}).isDisabled(),false);
   const before=await page.evaluate(()=>JSON.stringify(state));await d.getByRole('button',{name:'Mark as reviewed'}).click();assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);await page.waitForFunction(()=>document.getElementById('financeWorkbenchDialog').textContent.includes('Reviewed ✓'));assert.match(await d.textContent(),/Reviewed ✓/);await d.getByRole('button',{name:'Close',exact:true}).click();await page.evaluate(()=>state=window.__workbenchBefore);
  });
+ await check('Cash Flow review shortcut hides after review and returns for changed figures',async()=>{
+  await page.locator('.nav-tab[data-tab="income-expenses"]').click();
+  await page.locator('#cashMonthFilter').selectOption(await page.evaluate(()=>currentMonthKey()));
+  assert.equal(await page.locator('#income-expenses .cash-flow-quick-actions button').count(),1);
+  assert.equal(await page.locator('#income-expenses .cash-flow-quick-actions').getByRole('button',{name:'Upcoming commitments'}).count(),0);
+  assert.equal(await page.locator('#cashFlowCommitmentsPanel').count(),1);
+  await page.evaluate(()=>{
+   window.__cashReviewTestOriginalGet=financeReviews.get;
+   const month=currentMonthKey(),signed=JSON.stringify(monthClose(state,month));
+   financeReviews.get=group=>group==='closedMonths'?{...window.__cashReviewTestOriginalGet(group),[month]:{signature:signed}}:window.__cashReviewTestOriginalGet(group);
+   document.dispatchEvent(new Event('finance-review-changed'));
+  });
+  try{
+   await page.waitForFunction(()=>document.querySelector('#income-expenses .cash-flow-quick-actions')?.hidden===true);
+   assert.equal(await page.locator('#income-expenses .cash-flow-quick-actions').isVisible(),false);
+   await page.evaluate(()=>{
+    const member=state.customValues.familyMembers[0];
+    state.income.push({id:'review-shortcut-regression',member,source:'Other',amount:17,date:currentMonthKey()+'-01'});
+    renderTransactionOverview();
+   });
+   await page.waitForFunction(()=>document.querySelector('#income-expenses .cash-flow-quick-actions')?.hidden===false);
+   assert.equal(await page.locator('#income-expenses .cash-flow-quick-actions').isVisible(),true);
+  }finally{
+   await page.evaluate(()=>{
+    state.income=state.income.filter(row=>row.id!=='review-shortcut-regression');
+    financeReviews.get=window.__cashReviewTestOriginalGet;delete window.__cashReviewTestOriginalGet;
+    renderTransactionOverview();document.dispatchEvent(new Event('finance-review-changed'));
+   });
+  }
+ });
  await check('Planner reuses projection results and rejects invalid assumptions',async()=>{
   await page.evaluate(()=>financeWorkbench.planning());const d=page.locator('#financeWorkbenchDialog');await d.getByLabel('Annual inflation assumption (%)',{exact:true}).fill('0');await d.getByLabel('Years to goal',{exact:true}).fill('5');await d.getByRole('button',{name:'Calculate scenarios'}).click();const expected=await page.evaluate(()=>formatCurrency(runGrowthProjection(growthProjectionAssets(),5,'base').ending));assert.equal((await d.textContent()).includes(expected),true);assert.match(await d.textContent(),/debt and gratuity excluded/);
   await d.getByLabel('Annual inflation assumption (%)',{exact:true}).fill('31');await d.getByRole('button',{name:'Calculate scenarios'}).click();assert.match(await d.textContent(),/Check the amount/);await d.getByRole('button',{name:'Close',exact:true}).click();
