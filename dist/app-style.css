@@ -2444,3 +2444,15 @@ body:has(#loanDetailsModal:not([hidden])) #debtEmiHistoryModal{z-index:1120}
 #investmentContributionModal .investment-contribution-history-heading h3{margin:0;font-size:15px}
 #investmentContributionModal .investment-contribution-filter-label{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;font-size:12px}
 #investmentContributionModal #investmentContributionFilter{width:100%;min-width:0;min-height:44px}
+
+#stallionPmsTileBody>.pms-detail-source{display:none!important}
+.pms-summary-list{display:grid;gap:8px}
+#stallionPmsPanel .pms-summary-tile{display:block;width:100%;box-sizing:border-box;text-align:left;padding:12px;margin:0;border:1px solid var(--border);border-radius:12px;background:var(--card-bg);color:var(--text);font:inherit;cursor:pointer}
+.pms-summary-name{display:block;font-size:16px;font-weight:600;line-height:1.3}
+.pms-summary-member{display:block;margin-top:3px;color:var(--text-light);font-size:11px}
+.pms-summary-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin-top:12px}
+.pms-summary-metrics>span{min-width:0}
+.pms-summary-metrics small{display:block;color:var(--text-light);font-size:10px}
+.pms-summary-metrics strong{display:block;font-size:16px;margin-top:3px;overflow-wrap:anywhere}
+#investmentCategoryDialogTable [data-pms-compact-action]{display:inline-grid;place-items:center;width:44px;min-width:44px;height:44px;margin:0;padding:10px;border-radius:10px}
+#investmentCategoryDialogTable [data-pms-compact-action] svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}
