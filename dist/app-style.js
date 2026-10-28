@@ -95,6 +95,7 @@
  function tabs(parent,labels){const bar=el('div','flow-tabs');bar.setAttribute('role','tablist');parent.append(bar);const panes=labels.map((label,i)=>{const pane=slot(parent,'flow-pane');pane.id='flow-pane-'+spaces.length+'-'+i;pane.setAttribute('role','tabpanel');const button=el('button','',label);button.type='button';button.setAttribute('role','tab');button.setAttribute('aria-controls',pane.id);bar.append(button);return{pane,button};});function show(index){panes.forEach(({pane,button},i)=>{pane.hidden=i!==index;button.setAttribute('aria-selected',String(i===index));button.tabIndex=i===index?0:-1;});requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));}panes.forEach(({button},i)=>{button.onclick=()=>show(i);button.onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?panes.length-1:(i+(e.key==='ArrowRight'?1:panes.length-1))%panes.length;show(next);panes[next].button.focus();}};});show(0);return{panes,show};}
  function action(parent,label,fn,primary=false){const b=el('button',primary?'btn-primary':'btn-secondary',label);b.type='button';b.onclick=fn;parent.append(b);return b;}
  function open(page){$('.nav-tab[data-tab="'+page+'"]')?.click();}
+ let adaptInvestmentTabs=()=>{};
  function build(){
   const home=space('#dashboard','flow-home');
   const title=slot(home,'flow-heading');const copy=slot(title,'');copy.append(el('p','flow-eyebrow','ALL YOUR MONEY IN ONE PLACE'),el('h1','','My finances'));const actions=slot(title,'flow-actions');
@@ -111,7 +112,7 @@
   matchMedia('(max-width:700px)').addEventListener('change',adaptCash);adaptCashLayout=adaptCash;
   const invest=space('#investments','flow-investments');const investSummary=slot(invest,'flow-full');capture('#investments .investment-overview-grid',investSummary);const investMain=slot(invest,'flow-full panel');investMain.append(el('p','flow-eyebrow','YOUR HOLDINGS'),el('h2','','Investment workspace'));const it=tabs(investMain,['Portfolio','Retirement','Stallion PMS']);capture('#investmentListPanel',it.panes[0].pane);capture('#investments .retirement-accounts-section',it.panes[1].pane);capture('#stallionPmsPanel',it.panes[2].pane);const pmsEmpty=el('p','flow-empty','No Stallion PMS holding recorded. Add one from the Portfolio tab to get started.');pmsEmpty.id='flowPmsEmpty';it.panes[2].pane.append(pmsEmpty);
   const investmentMedia=matchMedia('(max-width:700px)');
-  function adaptInvestmentTabs(){
+  adaptInvestmentTabs=function(){
    const mobile=enabled&&investmentMedia.matches;
    const portfolio=it.panes[0],stallion=it.panes[2];
    portfolio.button.textContent=mobile?'Investments':'Portfolio';
