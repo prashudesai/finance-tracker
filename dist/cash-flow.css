@@ -199,3 +199,16 @@ html[data-app-style] body.advanced-layout #income-expenses.cash-flow-layout #cas
  .cash-entry-dialog .form-group label{margin-bottom:5px!important;font-size:12px!important}
  .cash-entry-dialog .cash-entry-heading{top:-16px!important}
 }
+
+
+/* Final Cash Flow history chrome: override earlier desktop/mobile layout rules. */
+html body #income-expenses :is(#cashHistory-income,#cashHistory-expense) .history-filter-controls,
+html body #income-expenses :is(#cashHistory-income,#cashHistory-expense) .transaction-search{
+ display:none!important;
+}
+html body #income-expenses :is(#cashHistory-income,#cashHistory-expense) .transaction-history-toolbar{
+ display:block!important;grid-template-columns:minmax(0,1fr)!important;
+}
+html body #income-expenses :is(#cashHistory-income,#cashHistory-expense) .transaction-history-summary{
+ width:100%!important;max-width:100%!important;margin:0!important;
+}
