@@ -2287,3 +2287,42 @@
   #investmentCategoryPanels .investment-summary-metric > strong,
   #investmentCategoryPanels .investment-summary-detail > strong { margin-top: 2px; }
 }
+
+/* Mobile portfolio and retirement: dense, aligned two-column summaries. */
+@media (max-width: 640px) {
+  #investmentCategoryPanels, #retirementAccountPanels { gap: 8px; }
+  #investmentCategoryPanels > .investment-category-card,
+  #retirementAccountPanels > .retirement-account-card { padding: 10px 12px; }
+  #investmentCategoryPanels .investment-category-card > .panel-header,
+  #retirementAccountPanels .retirement-account-card > .panel-header { margin-bottom: 6px; gap: 8px; align-items: center; }
+  #investmentCategoryPanels .investment-category-card .panel-header h3,
+  #retirementAccountPanels .retirement-account-card .panel-header h2 { margin-bottom: 2px; line-height: 1.25; }
+  #investmentCategoryPanels .investment-category-summary,
+  #retirementAccountPanels .retirement-account-count { margin-top: 1px; }
+  #investmentCategoryPanels .investment-category-summary-grid,
+  #retirementAccountPanels .retirement-account-summary {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    grid-template-rows: none;
+    align-items: start;
+    align-content: start;
+    column-gap: 12px;
+    row-gap: 7px;
+    min-height: 0;
+    padding: 10px 30px 10px 11px;
+  }
+  #investmentCategoryPanels .investment-category-summary-grid > :is(.investment-summary-value,.investment-summary-metric,.investment-summary-detail),
+  #retirementAccountPanels .retirement-account-summary > :is(.retirement-summary-value,.retirement-summary-metric,.investment-summary-detail) {
+    min-width: 0;
+    text-align: left;
+    align-self: start;
+  }
+  #investmentCategoryPanels .investment-category-summary-grid :is(.investment-summary-value,.investment-summary-metric,.investment-summary-detail) > strong,
+  #retirementAccountPanels .retirement-account-summary :is(.retirement-summary-value,.retirement-summary-metric,.investment-summary-detail) > strong {
+    margin-top: 2px;
+    line-height: 1.2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  #investmentCategoryPanels .investment-category-card .panel-controls :is(button,.btn-primary),
+  #retirementAccountPanels .retirement-account-card .panel-controls :is(button,.btn-primary) { min-height: 44px; }
+}
