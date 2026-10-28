@@ -11,7 +11,7 @@ export function installFinanceWorkbench(){
  const add=(parent,tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;parent.append(e);return e;};
  const button=(parent,text,fn)=>{const b=add(parent,'button',text);b.type='button';b.className='btn-small';b.onclick=()=>Promise.resolve().then(fn).catch(error=>{const msg=add(parent,'p',error.message);msg.setAttribute('role','alert');});return b;};
  const dialog=document.createElement('dialog');dialog.id='financeWorkbenchDialog';dialog.className='finance-workbench-dialog';document.body.append(dialog);
- function open(title){if(dialog.open||dataOperationBusy)return false;dialog.replaceChildren();const header=add(dialog,'header');header.className='finance-workbench-header';const heading=add(header,'h2',title);heading.id='workbenchHeading';dialog.setAttribute('aria-labelledby',heading.id);const close=button(header,'×',()=>dialog.close());close.className='finance-workbench-close';close.setAttribute('aria-label','Close '+title);dialog.showModal();return true;}
+ function open(title){if(dialog.open||dataOperationBusy)return false;dialog.replaceChildren();const header=add(dialog,'header');header.className='finance-workbench-header';const heading=add(header,'h2',title);heading.id='workbenchHeading';dialog.setAttribute('aria-labelledby',heading.id);const close=button(header,'×',()=>dialog.close());close.className='finance-workbench-close';close.setAttribute('aria-label','Close');dialog.showModal();return true;}
  function table(parent,rows){const dl=add(parent,'dl');dl.className='finance-workbench-values';for(const [key,value]of rows){add(dl,'dt',key);add(dl,'dd',value);}return dl;}
  function field(parent,label,type,value){const wrap=add(parent,'label',label),e=add(wrap,'input');e.type=type;e.value=value;e.setAttribute('aria-label',label);return e;}
  let contributionEdit=null;
@@ -106,7 +106,7 @@ const edit=button(actions,'Edit amount',()=>editForReview(row,input.value,option
    const date=field(card,'Valuation date','date',stamps[key]?.date||localDateKey());
    date.closest('label')?.classList.add('valuation-account-date');
    const actions=add(card,'div');actions.className='valuation-account-actions';
-   const confirm=button(actions,'Confirm value',async()=>{
+   const confirm=button(actions,'Confirm value as of date',async()=>{
     if(!validCalendarDate(date.value)||date.value>localDateKey())throw Error('Choose a valid date through today.');
     const latest=read('valuations');latest[key]={date:date.value,value:row.current};
     await write('valuations',latest);status.textContent=valuationStatus(row,latest[key],localDateKey());
