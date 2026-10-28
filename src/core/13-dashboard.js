@@ -593,7 +593,8 @@
       const label=document.getElementById('dashboardExpenseMonthLabel');
       if(trigger&&menu&&label){
         const selectedOption=Array.from(select.options).find(option=>option.value===selected);
-        label.textContent=selectedOption?.textContent||'Previous month';
+        label.textContent=selected?new Date(selected+'-01T12:00:00').toLocaleDateString('en-IN',{month:'short',year:'numeric'}):'Previous month';
+        trigger.title=selectedOption?.textContent||'Previous month';
         const closeMenu=(returnFocus=false)=>{
           menu.hidden=true;
           trigger.setAttribute('aria-expanded','false');

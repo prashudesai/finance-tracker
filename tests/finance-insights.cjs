@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');const c={};vm.createContext(c);
-const source=['finance-model.js','finance-insights-model.js'].map(f=>fs.readFileSync('dist/'+f,'utf8').replace(/^import .*;\n/gm,'').replaceAll('export function','function').replaceAll('export const','const')).join('\n');vm.runInContext(source+';this.api={monthEnd,freshness,automaticEntries,automaticEntryTitle,monthlyChanges,commitmentPlan,monthClose};',c);const m=c.api;
+const source=['finance-model.js','finance-insights-model.js'].map(f=>fs.readFileSync('dist/'+f,'utf8').replace(/^import .*;\n/gm,'').replaceAll('export function','function').replaceAll('export const','const')).join('\n');vm.runInContext(source+';this.api={monthEnd,freshness,automaticEntries,pendingAutomaticEntries,automaticEntryTitle,monthlyChanges,commitmentPlan,monthClose};',c);const m=c.api;
 assert(m.monthEnd('2026-10-31'));assert(!m.monthEnd('2026-10-30'));assert(m.monthEnd('2028-02-29'));assert(m.monthEnd('2026-12-31'));
 const data={income:[{id:'inc',amount:1000,date:'2026-10-01'}],expenses:[{id:'e',amount:200,date:'2026-10-02',loanId:'debt',principalPaid:120},{amount:100,date:'2026-09-10'}],monthlyBalances:[{month:'2026-10',startBalance:100},{month:'2026-11',startBalance:500}],stallionContributions:[{id:'c',stallionId:'pms',amount:50,date:'2026-10-01',automatic:true}],retirementContributions:[{id:'pf1',accountId:'pf',amount:20,date:'2026-10-01',automatic:true}],investments:[],stallionProfitHistory:[{stallionId:'pms',date:'2026-09-30',profit:10},{stallionId:'pms',date:'2026-10-20',profit:30}]};
 const visible={investments:[{id:'pms',type:'Stallion PMS'}],pf:[{id:'pf',current:100}],income:data.income,debts:[{id:'debt'}]};const before=JSON.stringify(data);
@@ -29,3 +29,21 @@ assert.equal(m.automaticEntryTitle({investmentId:'mf1'}, {investments:[{id:'mf1'
 assert.equal(m.automaticEntryTitle({stallionId:'pms1'}, {investments:[{id:'pms1',type:'Stallion PMS',name:'Core Portfolio'}]}),'Stallion PMS — Core Portfolio');
 assert.equal(m.automaticEntryTitle({investmentType:'pf',accountId:'missing'}, {}),'PF');
 assert.equal(m.automaticEntryTitle({investmentType:'pf',accountId:'pf1',accountName:'Legacy PF'}, {pf:[{id:'pf1'}]}),'PF — Legacy PF');
+
+const pendingVisible={investments:[{id:'pms',type:'Stallion PMS'}],pf:[{id:'pf',account:'Employer PF'}],income:data.income};
+const pendingAll=m.pendingAutomaticEntries(data,pendingVisible,'2026-10',{},'2026-10-31');
+assert.equal(pendingAll.length,2,'Month-end displays only pending contributions');
+assert.equal(m.pendingAutomaticEntries(data,pendingVisible,'2026-10',{},'2026-10-30').length,0,'Before month-end should be hidden');
+assert.equal(m.pendingAutomaticEntries(data,pendingVisible,'2026-10',{},'2026-11-01').length,2,'Unverified previous-month entries remain');
+const paidRow=pendingAll[0].row;
+const paymentKey=JSON.stringify([paidRow.investmentType||'',paidRow.accountId||paidRow.investmentId||paidRow.stallionId||'',paidRow.id,paidRow.date,paidRow.amount]);
+const confirmations={[paymentKey]:{status:'paid',date:'2026-10-31',amount:paidRow.amount,epsAmount:paidRow.epsAmount||0}};
+assert.equal(m.pendingAutomaticEntries(data,pendingVisible,'2026-10',confirmations,'2026-11-01').length,1,'Verified entry must disappear');
+assert.equal(m.pendingAutomaticEntries(data,pendingVisible,'2026-10',{...confirmations,[JSON.stringify([pendingAll[1].row.investmentType||'',pendingAll[1].row.accountId||pendingAll[1].row.investmentId||pendingAll[1].row.stallionId||'',pendingAll[1].row.id,pendingAll[1].row.date,pendingAll[1].row.amount])]:{status:'paid',amount:pendingAll[1].row.amount,epsAmount:pendingAll[1].row.epsAmount||0}},'2026-11-01').length,0,'All verified means no section');
+const corrected={...data,retirementContributions:data.retirementContributions.map(row=>({...row,amount:row.amount+1}))};
+assert.equal(m.pendingAutomaticEntries(corrected,pendingVisible,'2026-10',confirmations,'2026-11-01').length,2,'Edited amount invalidates old verification');
+const novemberStart={monthlyBalances:[{month:'2026-11',startBalance:5000}],income:[],expenses:[],stallionContributions:[]};
+assert.equal(m.monthClose(novemberStart,'2026-10').closing,5000);
+assert.equal(m.monthClose(novemberStart,'2026-11').opening,5000);
+assert.equal(novemberStart.monthlyBalances.length,1,'Monthly boundary is one record, not two');
+console.log('PASS month-end visibility, verified filtering and single Nov-opening/Oct-closing balance record');

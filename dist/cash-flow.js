@@ -43,7 +43,25 @@ export function installCashFlow(){
  function select(kind){if(!histories[kind])return;if(compact&&page.dataset.cashMonth&&document.getElementById(kind+'HistoryMonth').value!==page.dataset.cashMonth)(kind==='income'?renderIncome:renderExpenses)();selectedKind=kind;if(compact)page.dataset.cashKind=kind;for(const name of ['income','expense']){histories[name].hidden=compact&&name!==kind;tabs[name].setAttribute('aria-selected',String(name===kind));tabs[name].tabIndex=name===kind?0:-1;}renderTransactionOverview();}
  function decorateHistory(kind){if(!compact)return;for(const row of document.getElementById(kind==='income'?'incomeBody':'expenseBody').querySelectorAll('tr[data-cash-record]')){
   const cell=row.querySelector(kind==='income'?'td[data-label=Source]':'td[data-label=Category]');
-  if(cell&&!cell.querySelector('.cash-category-icon')){const icon=make('span','cash-category-icon');icon.setAttribute('aria-hidden','true');icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h14l-1 12H6L5 8ZM9 8V6a3 3 0 0 1 6 0v2M9 12v4m6-4v4"/></svg>';cell.prepend(icon);}
+  if(cell&&!cell.querySelector('.cash-category-icon')){
+   const label=cell.textContent.toLowerCase();
+   const styles=[
+    [/salary|payroll|wages|bonus/,'#56ccb5','<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 11h18m-11 5h4"/>'],
+    [/health|hospital|medical|pharmacy|doctor/,'#f09b94','<path d="M20 8c0 5-8 11-8 11S4 13 4 8a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3Z"/><path d="M9 10h6m-3-3v6"/>'],
+    [/insurance|premium/,'#88afec','<path d="m12 2 8 4v6c0 5-4 8-8 10-4-2-8-5-8-10V6l8-4Z"/><path d="m9 12 2 2 4-4"/>'],
+    [/education|school|tuition|college|course/,'#c4a4f2','<path d="m2 9 10-5 10 5-10 5-10-5Zm4 3v5c4 3 8 3 12 0v-5M22 9v8"/>'],
+    [/transport|fuel|petrol|diesel|vehicle|car|taxi/,'#efad67','<path d="m5 16-1 3h2m12-3 1 3h-2M4 13l2-7h12l2 7v5H4v-5Zm0 0h16M7 16h2m6 0h2"/>'],
+    [/emi|loan|mortgage|debt/,'#89b5ed','<path d="M3 10 12 3l9 7M5 10v10h14V10M9 20v-7h6v7"/>'],
+    [/house|grocer|food|rent|utility|electric|water/,'#8dcfa7','<path d="m3 11 9-8 9 8M5 10v11h14V10M10 21v-7h4v7"/>'],
+    [/investment|dividend|interest|fund|stock|profit/,'#55cbb2','<path d="M3 18h18M5 15l5-5 4 3 5-7M15 6h4v4"/>']
+   ];
+   const found=styles.find(([rx])=>rx.test(label));
+   const icon=make('span','cash-category-icon');icon.setAttribute('aria-hidden','true');
+   const path=found?.[2]||'<path d="M5 4h14v16l-4-2-3 2-3-2-4 2V4Zm4 5h6m-6 4h6"/>';
+   icon.style.setProperty('--cash-category-color',found?.[1]||'#7aaeb8');
+   icon.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+path+'</svg>';
+   cell.prepend(icon);
+  }
   row.classList.add('cash-editable-record');row.tabIndex=0;row.setAttribute('aria-label','Edit '+kind+' · '+cell?.textContent.trim());
  }}
  const historyObserver=new MutationObserver(()=>{decorateHistory('income');decorateHistory('expense');});
