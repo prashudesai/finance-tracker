@@ -153,9 +153,11 @@ const edit=button(actions,'Edit amount',()=>editForReview(row,input.value,option
     await write('valuations',latest);status.textContent=valuationStatus(row,latest[key],localDateKey());
    });
    confirm.classList.add('valuation-confirm');confirm.disabled=window.financeCloud.canEdit===false;
-   const update=button(actions,['pf','ppf'].includes(kind)?'Add contribution':'Update balance',()=>{
+   const contributionOnly=['pf','ppf'].includes(kind)||(kind==='investments'&&investmentGrowthType(row.type)!=='market');
+   const update=button(actions,contributionOnly?'Add contribution':'Update balance',()=>{
     dialog.close();
     if(['pf','ppf'].includes(kind))openManualRetirementContribution(kind,row.id);
+    else if(contributionOnly)openManualInvestmentContribution(row.id);
     else if(kind==='investments')editInvestment(row.id);
     else openInvestmentEditModal(kind,row.id);
    });
