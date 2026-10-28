@@ -1511,3 +1511,12 @@ html[data-app-style] body.advanced-layout #income-expenses .history-month-contro
    padding:10px 7px;line-height:1.3;
  }
 }
+
+
+/* Keep the two desktop cash-entry form buttons aligned even when one card is hovered.
+   Legacy card hover translated only one panel vertically by 2px. */
+@media(min-width:701px){
+ html body.advanced-layout #income-expenses .advanced-cashflow-entry-card:hover{
+   transform:none!important;
+ }
+}
