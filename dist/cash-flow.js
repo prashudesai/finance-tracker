@@ -17,7 +17,7 @@ export function installCashFlow(){
  overview.append(bar);
  const controls=make('div','cash-controls flow-tabs');controls.setAttribute('role','tablist');controls.setAttribute('aria-label','Cash flow record type');
  const dialog=make('dialog','cash-entry-dialog');dialog.id='cashEntryDialog';dialog.setAttribute('aria-labelledby','cashEntryTitle');
- const heading=make('header','cash-entry-heading'),back=make('button','btn-secondary','← Back'),title=make('h2','','Add expense');title.id='cashEntryTitle';back.type='button';heading.append(back,title);
+ const heading=make('header','cash-entry-heading'),back=make('button','cash-entry-close','×'),title=make('h2','','Add expense');title.id='cashEntryTitle';back.type='button';back.setAttribute('aria-label','Close entry form');heading.append(title,back);
  const status=make('p','cash-entry-status');status.setAttribute('role','status');dialog.append(heading,status);document.body.append(dialog);
  const entries={},histories={},tabs={},pending={},moved=[];let selectedKind='expense',active=null,trigger=null,scroll=0,savedRow=null;
  for(const kind of ['income','expense']){
