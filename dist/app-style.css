@@ -1975,3 +1975,22 @@ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions[hidden]{dis
     gap:8px!important;margin-top:2px!important;padding-top:10px!important;
   }
 }
+
+/* PF has its own legacy two-column action grid; flatten it inside the mobile detail sheet. */
+@media(max-width:700px){
+ #retirementCategoryDialogTable .pf-holdings-table .pf-actions-grid{
+  display:flex!important;flex-direction:row!important;align-items:center!important;
+  justify-content:flex-start!important;flex-wrap:nowrap!important;
+  gap:8px!important;width:auto!important;max-width:100%!important;
+  min-width:0!important;margin:0!important;
+ }
+ #retirementCategoryDialogTable .pf-holdings-table .pf-actions-grid>button{
+  display:inline-flex!important;flex:0 0 auto!important;min-width:44px!important;
+  min-height:44px!important;width:auto!important;height:44px!important;
+  padding:7px 9px!important;margin:0!important;
+  font-size:11px!important;white-space:nowrap!important;
+ }
+ #retirementCategoryDialogTable .pf-holdings-table td.account-action-buttons{
+  grid-column:1/-1!important;
+ }
+}
