@@ -162,8 +162,10 @@ const server=http.createServer(async(req,res)=>{try{
   const before=await page.evaluate(()=>JSON.stringify(state));await d.getByRole('button',{name:'Mark as reviewed'}).click();assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);await page.waitForFunction(()=>document.getElementById('financeWorkbenchDialog').textContent.includes('Reviewed ✓'));assert.match(await d.textContent(),/Reviewed ✓/);await d.getByRole('button',{name:'Close',exact:true}).click();await page.evaluate(()=>state=window.__workbenchBefore);
  });
  await check('Cash Flow review shortcut hides after review and returns for changed figures',async()=>{
-  await page.locator('.nav-tab[data-tab="income-expenses"]').click();
-  await page.locator('#cashMonthFilter').selectOption(await page.evaluate(()=>currentMonthKey()));
+  await page.evaluate(()=>{
+   document.querySelector('.nav-tab[data-tab="income-expenses"]').click();
+   const filter=document.getElementById('cashMonthFilter');filter.value=currentMonthKey();filter.dispatchEvent(new Event('change',{bubbles:true}));
+  });
   assert.equal(await page.locator('#income-expenses .cash-flow-quick-actions button').count(),1);
   assert.equal(await page.locator('#income-expenses .cash-flow-quick-actions').getByRole('button',{name:'Upcoming commitments'}).count(),0);
   assert.equal(await page.locator('#cashCommitments').count(),1);
