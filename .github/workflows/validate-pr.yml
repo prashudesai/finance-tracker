@@ -1,0 +1,86 @@
+name: Validate proposed finance changes
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: finance-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out proposed merge and base
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node with npm cache
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Classify release changes safely
+        id: lane
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            git diff --name-only -z "$BASE_SHA" HEAD | node .github/scripts/release-lane.cjs
+          else
+            node .github/scripts/release-lane.cjs --full
+          fi
+          node .github/scripts/release-lane.cjs --self-test
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Build
+        run: npm run build
+      - name: Verify deterministic build
+        run: node tests/build-layout.cjs
+
+      - name: Cache Chromium binaries
+        id: chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-chromium-${{ hashFiles('package-lock.json') }}
+      - name: Install Chromium Linux dependencies
+        run: npx playwright install-deps chromium
+      - name: Download Chromium when not cached
+        if: steps.chromium.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+
+      - name: Fast UI checks for stylesheet-only changes
+        if: steps.lane.outputs.visual_only == 'true'
+        run: |
+          npm run test:cash-flow
+          node tests/finance-insights-browser.cjs
+
+      - name: Complete browser regression suite for application changes
+        if: steps.lane.outputs.visual_only != 'true'
+        run: npm run test:emerald
+      - name: PWA/offline regression
+        if: steps.lane.outputs.visual_only != 'true'
+        run: npm run test:pwa
+      - name: Setup Java for financial/security changes
+        if: steps.lane.outputs.visual_only != 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Firestore permissions and concurrent review tests
+        if: steps.lane.outputs.visual_only != 'true'
+        run: npm run test:rules
+      - name: Full finance and data tests
+        if: steps.lane.outputs.visual_only != 'true'
+        run: npm test
