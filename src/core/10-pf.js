@@ -82,6 +82,7 @@
             <td class="account-action-buttons"><div class="pf-actions-grid">
               <button class="btn-small" onclick="editPf('${pf.id}')">Edit</button>
               <button class="btn-small btn-danger" onclick="deletePf('${pf.id}')">Delete</button>
+              <button class="btn-small" onclick="openManualPfContribution('${pf.id}')">Add Contribution</button>
               <button class="btn-small" onclick="viewRetirementContributionHistory('pf','${pf.id}')">View History</button>
             </div></td>
           </tr>

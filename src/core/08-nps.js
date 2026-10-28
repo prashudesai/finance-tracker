@@ -135,16 +135,20 @@
       const contributionDate=document.getElementById('investmentContributionDate');contributionDate.min=investment.date||'';contributionDate.max=localDateKey();contributionDate.value=localDateKey();document.getElementById('investmentContributionAmount').value='';document.getElementById('saveInvestmentContribution').textContent='Add Contribution';
       modal.hidden=false;syncInvestmentOverlayBodyLock();document.getElementById('investmentContributionDate').focus();
     }
-    function openManualPpfContribution(accountId){
-      const account=(state.ppf||[]).find(row=>row.id===accountId);if(!account)return;
-      const modal=document.getElementById('investmentContributionModal');modal.dataset.mode='retirement-manual';modal.dataset.retirementType='ppf';modal.dataset.investmentId=accountId;delete modal.dataset.editContributionId;
-      document.getElementById('investmentContributionTitle').textContent=`Add Contribution — ${account.account||'PPF Account'}`;
-      document.getElementById('investmentContributionSummary').textContent=`PPF · Invested ${formatCurrency(account.invested)} · Current ${formatCurrency(account.current)}`;
+    function openManualRetirementContribution(kind,accountId){
+      if(!['pf','ppf'].includes(kind))return;
+      const account=(state[kind]||[]).find(row=>row.id===accountId);if(!account)return;
+      if(typeof window!=='undefined'&&window.financeCloud?.canEdit===false)return;
+      const modal=document.getElementById('investmentContributionModal');modal.dataset.mode='retirement-manual';modal.dataset.retirementType=kind;modal.dataset.investmentId=accountId;delete modal.dataset.editContributionId;
+      document.getElementById('investmentContributionTitle').textContent=`Add Contribution — ${account.account||kind.toUpperCase()+' Account'}`;
+      document.getElementById('investmentContributionSummary').textContent=`${kind.toUpperCase()} · One-off additional contribution · Invested ${formatCurrency(account.invested)} · Current ${formatCurrency(account.current)} · Automatic monthly credits remain separate`;
       document.getElementById('investmentContributionFilter').value='all';document.getElementById('investmentContributionEntryForm').hidden=false;document.getElementById('investmentContributionHistoryPanel').hidden=true;
       const date=document.getElementById('investmentContributionDate');date.value=localDateKey();date.min=account.date||'';date.max=localDateKey();
       document.getElementById('investmentContributionAmount').value='';document.getElementById('saveInvestmentContribution').textContent='Add Contribution';
       modal.hidden=false;syncInvestmentOverlayBodyLock();date.focus();
     }
+    function openManualPpfContribution(accountId){openManualRetirementContribution('ppf',accountId);}
+    function openManualPfContribution(accountId){openManualRetirementContribution('pf',accountId);}
     function renderInvestmentContributionHistory(investmentId) {
       const filter=document.getElementById('investmentContributionFilter')?.value||'all';
       const allRows=(state.investmentContributions||[]).filter(row=>row.investmentId===investmentId).sort((a,b)=>b.date.localeCompare(a.date));
@@ -168,12 +172,16 @@
       const amount=Number(document.getElementById('investmentContributionAmount').value),date=document.getElementById('investmentContributionDate').value;
       if(!Number.isFinite(amount)||amount<=0){alert('Enter a contribution amount greater than zero.');return;}
       if(modal.dataset.mode==='retirement-manual'){
-        const account=(state.ppf||[]).find(row=>row.id===modal.dataset.investmentId);
+        const kind=modal.dataset.retirementType;
+        if(!['pf','ppf'].includes(kind))return;
+        if(typeof window!=='undefined'&&window.financeCloud?.canEdit===false)return;
+        const account=(state[kind]||[]).find(row=>row.id===modal.dataset.investmentId);
         if(!account)return;
-        if(!validCalendarDate(date)||date<account.date||date>localDateKey()){alert('Choose a valid contribution date between the PPF opening date and today.');return;}
-        state.retirementContributions.push({id:generateId(),investmentType:'ppf',accountId:account.id,member:account.member||'',accountName:account.account||'PPF',amount,date,automatic:false});
+        if(!validCalendarDate(date)||date<account.date||date>localDateKey()){alert('Choose a valid contribution date between the '+kind.toUpperCase()+' opening date and today.');return;}
+        // One-off credits do not change the recurring PF/PPF amount, EPS, or annual interest.
+        state.retirementContributions.push({id:generateId(),investmentType:kind,accountId:account.id,member:account.member||'',accountName:account.account||kind.toUpperCase(),amount,date,automatic:false});
         account.invested=(Number(account.invested)||0)+amount;account.current=(Number(account.current)||0)+amount;
-        saveData();closeInvestmentContributionModal();renderInvestments();renderPpf();updateDashboard();viewRetirementContributionHistory('ppf',account.id);return;
+        saveData();closeInvestmentContributionModal();renderInvestments();if(kind==='pf')renderPf();else renderPpf();updateDashboard();viewRetirementContributionHistory(kind,account.id);return;
       }
       const investment=state.investments.find(row=>row.id===modal.dataset.investmentId);if(!investment)return;
       if(!validCalendarDate(date)||date<investment.date||date>localDateKey()){alert('Choose a valid contribution date between the investment start date and today.');return;}

@@ -111,6 +111,27 @@ const server=http.createServer(async(req,res)=>{try{
  for(const id of pages)await check('Only '+id+' is visible after navigation',async()=>{await page.locator('.pft-style-navigation [data-style-page="'+(['growth-projection','reports'].includes(id)?'analytics':id)+'"]').evaluate((e,id)=>document.querySelector('.nav-tab[data-tab="'+id+'"]').click(),id);assert(await page.locator('#'+id).isVisible());for(const other of pages.filter(p=>p!==id))assert.equal(await page.locator('#'+other).isVisible(),false,other+' should be hidden');});
  await check('Income and expense workspaces have working tabs',async()=>{await page.locator('.nav-tab[data-tab="income-expenses"]').evaluate(e=>e.click());await page.locator('.flow-cash .flow-tabs:visible [role=tab]').filter({hasText:'Expenses'}).click();assert(await page.locator('#cashHistory-expense').isVisible());assert.equal(await page.locator('#cashHistory-income').isVisible(),false);await page.locator('.flow-cash .flow-tabs:visible [role=tab]').filter({hasText:'Income'}).click();assert(await page.locator('#cashHistory-income').isVisible());});
  await check('Investment workspaces display their real panels',async()=>{await page.locator('.nav-tab[data-tab="investments"]').evaluate(e=>e.click());await page.locator('.flow-investments [role=tab]').filter({hasText:'Stallion PMS'}).click();assert(await page.locator('#stallionPmsPanel').isVisible());await page.locator('.flow-investments [role=tab]').filter({hasText:'Retirement'}).click();assert(await page.locator('.retirement-accounts-section').isVisible());});
+
+ await check('Emerald mobile shows two investment groups and includes Stallion PMS in Investments',async()=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>{PFT_STYLE.apply('emerald-flow');document.querySelector('.nav-tab[data-tab="investments"]').click();});
+  const tabs=page.locator('.flow-investments .flow-tabs [role="tab"]:visible');
+  assert.deepEqual(await tabs.allTextContents(),['Investments','Retirement']);
+  await tabs.first().click();
+  assert.equal(await page.locator('#investmentListPanel').isVisible(),true);
+  assert.equal(await page.locator('#stallionPmsPanel').isVisible(),true);
+  assert.equal(await page.locator('#retirementAccountsPanel').isVisible(),false);
+  await tabs.nth(1).click();
+  assert.equal(await page.locator('#investmentListPanel').isVisible(),false);
+  assert.equal(await page.locator('#stallionPmsPanel').isVisible(),false);
+  assert.equal(await page.locator('#retirementAccountsPanel').isVisible(),true);
+  await page.setViewportSize({width:1440,height:1050});
+  const desktopTabs=page.locator('.flow-investments .flow-tabs [role="tab"]:visible');
+  assert.deepEqual(await desktopTabs.allTextContents(),['Portfolio','Retirement','Stallion PMS']);
+  await desktopTabs.nth(2).click();
+  assert(await page.locator('#stallionPmsPanel').isVisible());
+  await desktopTabs.first().click();
+ });
  await check('Changing style restores controls to their original pages',async()=>{await page.evaluate(()=>PFT_STYLE.apply('modern'));assert.equal(await page.locator('.flow-investments').isVisible(),false);assert.equal(await page.locator('#investments > .investment-holdings-grid > #investmentListPanel').count(),1);await page.evaluate(()=>PFT_STYLE.apply('classic'));await page.evaluate(()=>PFT_STYLE.apply('emerald-flow'));assert.equal(await page.locator('.flow-investments #investmentListPanel').count(),1);const dup=await page.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(n=>n.id);return ids.filter((id,i)=>ids.indexOf(id)!==i)});assert.deepEqual(dup,[]);});
 
 
@@ -123,7 +144,7 @@ const server=http.createServer(async(req,res)=>{try{
 
  await page.evaluate(()=>{const date=new Date().toISOString().slice(0,10);state.income.push({id:'flow-large-income',member:'Tester',source:'Salary',amount:123456789,date,isAnnual:false});state.debts.push({id:'flow-second-loan',type:'Vehicle Loan',member:'Tester',principal:1800000,remaining:1250000,rate:9,emi:42500,date:'2026-01-01',firstEmiDate:'2026-02-01',interestPaid:0});state.investments.push({id:'flow-long-holding',member:'Tester',type:'Mutual Funds',name:'Long term diversified international investment holding with a descriptive account name',date:'2026-01-01',invested:876543210,current:956543210,monthly:0});renderIncome();renderExpenses();renderDebts();renderInvestments();updateDashboard();renderGrowthProjection();renderCharts();});
  await page.evaluate(data=>{for(const key of ['pf','ppf','nps'])if(data[key]?.length)state[key]=[{...data[key][0],member:'Tester'}];renderInvestments();renderPf();renderPpf();renderNps();updateDashboard();renderGrowthProjection();},JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/organic.json'),'utf8')));
- for(const width of [1598,1440,1280,1024,800,768,700,600,390,320]){await page.setViewportSize({width,height:1050});for(const id of pages){await page.locator('.nav-tab[data-tab="'+id+'"]').evaluate(e=>e.click());await page.waitForTimeout(70);const tabs=page.locator('#'+id+' .flow-tabs:visible [role=tab]');const count=await tabs.count();for(let tab=0;tab<count;tab++){await tabs.nth(tab).click();await page.waitForTimeout(30);await internalGeometry(id,width+' tab '+tab);}if(count)await tabs.first().click();await internalGeometry(id,width);if(id==='growth-projection')await check('Projection controls and forecasts do not overlap at '+width+'px',projectionGeometry);if([1440,390].includes(width))await page.screenshot({path:artifacts+'/pft-flow-'+id+'-'+width+'.png',fullPage:false});await check(id+' fits '+width+'px viewport',async()=>{const sizes=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));if(sizes.scroll>sizes.width+2){console.log('OVERFLOW_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>{
+ for(const width of [1598,1440,1280,1024,800,768,700,600,390,320]){await page.setViewportSize({width,height:1050});for(const id of pages){await page.locator('.nav-tab[data-tab="'+id+'"]').evaluate(e=>e.click());await page.waitForTimeout(70);const tabs=page.locator('#'+id+' .flow-tabs:visible [role=tab]:visible');const count=await tabs.count();for(let tab=0;tab<count;tab++){await tabs.nth(tab).click();await page.waitForTimeout(30);await internalGeometry(id,width+' tab '+tab);}if(count)await tabs.first().click();await internalGeometry(id,width);if(id==='growth-projection')await check('Projection controls and forecasts do not overlap at '+width+'px',projectionGeometry);if([1440,390].includes(width))await page.screenshot({path:artifacts+'/pft-flow-'+id+'-'+width+'.png',fullPage:false});await check(id+' fits '+width+'px viewport',async()=>{const sizes=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));if(sizes.scroll>sizes.width+2){console.log('OVERFLOW_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>{
   const items=[document.documentElement,document.body,...document.querySelectorAll('body *')];
   return items.map(e=>{
     const r=e.getBoundingClientRect(),style=getComputedStyle(e);
