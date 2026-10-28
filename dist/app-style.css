@@ -2262,3 +2262,15 @@ html body #income-expenses.cash-flow-layout>.cash-flow-quick-actions[hidden]{dis
   min-height:44px;padding:6px 8px;
  }
 }
+
+/* Preserve the same two-row layout on narrow phones. */
+@media(max-width:360px){
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-summary-grid strong{
+  font-size:13px;white-space:nowrap;overflow-wrap:normal;
+ }
+ html[data-app-style] body.advanced-layout #investments #investmentCategoryPanels .investment-category-summary-grid span>span:first-child{
+  font-size:9px;letter-spacing:0;white-space:nowrap;
+ }
+ #investmentCategoryPanels .finance-valuation-review{font-size:0!important}
+ #investmentCategoryPanels .finance-valuation-review::after{content:"Update";font-size:11px}
+}
