@@ -1,4 +1,4 @@
-import {automaticEntries} from './finance-insights-model.js';
+import {automaticEntries,automaticEntryTitle} from './finance-insights-model.js';
 import {cashflowIndex,monthClose,realValue,valuationStatus,automaticCheckKey} from './finance-model.js?v=79';
 export function installFinanceWorkbench(){
  // Use one shared model for monthly helpers and recalculated house expense.
@@ -77,7 +77,7 @@ export function installFinanceWorkbench(){
    if(scheduled.length){const paymentMarks=read('paymentStatus'),detail=add(body,'details');add(detail,'summary',scheduled.length+' automatically posted entries');detail.open=options.automaticOnly===true||wasAutomaticListOpen;add(detail,'p','Already included in balances. Confirming payment does not post the contribution again.');for(const row of scheduled){const box=add(detail,'details'),key=automaticCheckKey(row),payment=paymentMarks[key],paid=payment?.status==='paid'&&payment.amount===row.amount&&(payment.epsAmount||0)===(row.epsAmount||0);box.dataset.contributionId=row.id;box.className='automatic-entry-card';box.open=openContributionIds.has(row.id);
 const rowSummary=add(box,'summary');rowSummary.className='automatic-entry-summary';
 const copy=add(rowSummary,'span');copy.className='automatic-entry-copy';
-add(copy,'strong',row.investmentType||row.source||row.category||'Investment');
+add(copy,'strong',automaticEntryTitle(row,visible));
 add(copy,'small',new Date(row.date+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}));
 const right=add(rowSummary,'span');right.className='automatic-entry-value';
 add(right,'strong',formatCurrency(row.amount));
@@ -154,7 +154,21 @@ const edit=button(actions,'Edit amount',()=>editForReview(row,input.value,option
   add(dialog,'p',issues.length?'Review: '+issues.join(', '):'Monthly cash-flow helpers, house-expense balances and available dashboard totals reconcile.');button(dialog,'Run full record health checks',()=>{dialog.close();runDataHealth();});
  }
  function tools(host,title,actions){if(!host)return;const details=add(host,'details');details.className='finance-workbench-tools';const summary=add(details,'summary');add(summary,'span',title);if(title==='Month review'){const hint=add(summary,'span','Review available');hint.className='month-review-hint';}for(const [label,fn]of actions)button(details,label,fn);}
+ // The shortcut follows the selected cash-flow month and its saved review signature.
+ const cashPage=document.getElementById('income-expenses');
+ const selectedCashMonth=()=>cashPage?.dataset.cashMonth||currentMonthKey();
+ let reviewShortcut=null;
+ function refreshMonthReviewShortcut(){
+  if(!reviewShortcut)return;
+  const month=selectedCashMonth();
+  const reviewed=read('closedMonths')[month]?.signature===JSON.stringify(monthClose(state,month));
+  reviewShortcut.parentElement.hidden=reviewed;
+  reviewShortcut.textContent=month===currentMonthKey()?'Review this month':'Review selected month';
+  reviewShortcut.setAttribute('aria-label','Review cash flow for '+new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}));
+ }
+ document.addEventListener('finance-review-changed',refreshMonthReviewShortcut);
  function refreshCommitmentsPreview(){
+  refreshMonthReviewShortcut();
   const host=document.getElementById('cashFlowCommitmentsPreview');if(!host)return;
   host.replaceChildren();
   const today=localDateKey(),end=new Date(today+'T12:00:00');
@@ -173,14 +187,13 @@ const edit=button(actions,'Edit amount',()=>editForReview(row,input.value,option
   }
   if(due.length>3)add(host,'p',`+${due.length-3} more commitments in the next 60 days`);
  }
- // Immediate actions complement the collapsible detailed month-review tools.
+ // Keep a single review CTA when the selected month needs attention.
+ // Upcoming commitments remain available in the section below.
  const cashIntro=document.querySelector('#income-expenses .transaction-intro');
  if(cashIntro){
   const shortcuts=document.createElement('div');shortcuts.className='cash-flow-quick-actions';cashIntro.after(shortcuts);
-  const review=button(shortcuts,'Review this month',()=>monthly());
-  review.setAttribute('aria-label','Review current month cash flow');
-  const upcoming=button(shortcuts,'Upcoming commitments',commitments);
-  upcoming.setAttribute('aria-label','View upcoming recorded recurring commitments');
+  reviewShortcut=button(shortcuts,'Review this month',()=>monthly(selectedCashMonth()));
+  refreshMonthReviewShortcut();
  }
  const previewHost=document.querySelector('#income-expenses .cash-flow-trend-panel');
  if(previewHost){
@@ -195,5 +208,5 @@ const edit=button(actions,'Edit amount',()=>editForReview(row,input.value,option
  tools(document.getElementById('growth-projection'),'Goal planning',[['Portfolio goal planner',planning]]);
  tools(document.getElementById('settingsRecordsPanel'),'Calculation checks',[['Check financial totals',audit],['Sync details',syncDetails]]);
  window.financeWorkbench={refreshCommitmentsPreview,automatic:month=>monthly(month,{automaticOnly:true}),monthly,valuations,planning,audit,commitments,syncDetails,isReviewEditing,saveAndReturn};
- const reset=window.financeBridge.reset;window.financeBridge.reset=function(){document.removeEventListener('click',cancelReviewEdit,true);document.removeEventListener('keydown',cancelReviewEdit,true);contributionEdit=null;if(dialog.open)dialog.close();dialog.remove();return reset.apply(this,arguments);};
+ const reset=window.financeBridge.reset;window.financeBridge.reset=function(){document.removeEventListener('click',cancelReviewEdit,true);document.removeEventListener('keydown',cancelReviewEdit,true);document.removeEventListener('finance-review-changed',refreshMonthReviewShortcut);reviewShortcut?.parentElement?.remove();document.getElementById('cashFlowCommitmentsPanel')?.remove();contributionEdit=null;if(dialog.open)dialog.close();dialog.remove();return reset.apply(this,arguments);};
 }

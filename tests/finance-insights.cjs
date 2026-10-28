@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');const c={};vm.createContext(c);
-const source=['finance-model.js','finance-insights-model.js'].map(f=>fs.readFileSync('dist/'+f,'utf8').replace(/^import .*;\n/gm,'').replaceAll('export function','function').replaceAll('export const','const')).join('\n');vm.runInContext(source+';this.api={monthEnd,freshness,automaticEntries,monthlyChanges,commitmentPlan,monthClose};',c);const m=c.api;
+const source=['finance-model.js','finance-insights-model.js'].map(f=>fs.readFileSync('dist/'+f,'utf8').replace(/^import .*;\n/gm,'').replaceAll('export function','function').replaceAll('export const','const')).join('\n');vm.runInContext(source+';this.api={monthEnd,freshness,automaticEntries,automaticEntryTitle,monthlyChanges,commitmentPlan,monthClose};',c);const m=c.api;
 assert(m.monthEnd('2026-10-31'));assert(!m.monthEnd('2026-10-30'));assert(m.monthEnd('2028-02-29'));assert(m.monthEnd('2026-12-31'));
 const data={income:[{id:'inc',amount:1000,date:'2026-10-01'}],expenses:[{id:'e',amount:200,date:'2026-10-02',loanId:'debt',principalPaid:120},{amount:100,date:'2026-09-10'}],monthlyBalances:[{month:'2026-10',startBalance:100},{month:'2026-11',startBalance:500}],stallionContributions:[{id:'c',stallionId:'pms',amount:50,date:'2026-10-01',automatic:true}],retirementContributions:[{id:'pf1',accountId:'pf',amount:20,date:'2026-10-01',automatic:true}],investments:[],stallionProfitHistory:[{stallionId:'pms',date:'2026-09-30',profit:10},{stallionId:'pms',date:'2026-10-20',profit:30}]};
 const visible={investments:[{id:'pms',type:'Stallion PMS'}],pf:[{id:'pf',current:100}],income:data.income,debts:[{id:'debt'}]};const before=JSON.stringify(data);
@@ -21,3 +21,11 @@ assert.equal(m.monthlyChanges({...data,stallionProfitHistory:[{stallionId:'pms',
 const recurring={...data,expenses:[...data.expenses,{id:'recurring',recurringRuleId:'r',date:'2026-10-05',amount:5}]};assert.equal(m.automaticEntries(recurring,visible,'2026-10').length,3);
 assert.equal(m.commitmentPlan({...data,income:[...data.income,{amount:99999,date:'2026-10-30'}]},'2026-10-26',candidates).remaining,750);
 assert.equal(m.commitmentPlan(data,'2026-10-26',[{kind:'expense',date:'2026-10-20',amount:50}]).total,50);
+
+assert.equal(m.automaticEntryTitle({investmentType:'pf',accountId:'pf'}, {pf:[{id:'pf',account:'Company Provident Fund'}]}),'PF — Company Provident Fund');
+assert.equal(m.automaticEntryTitle({investmentType:'ppf',accountId:'ppf1'}, {ppf:[{id:'ppf1',account:'Bank PPF'}]}),'PPF — Bank PPF');
+assert.equal(m.automaticEntryTitle({investmentType:'nps',accountId:'nps1'}, {nps:[{id:'nps1',account:'Retirement Tier I'}]}),'NPS — Retirement Tier I');
+assert.equal(m.automaticEntryTitle({investmentId:'mf1'}, {investments:[{id:'mf1',type:'Mutual Funds',name:'Index Fund'}]}),'Mutual Funds — Index Fund');
+assert.equal(m.automaticEntryTitle({stallionId:'pms1'}, {investments:[{id:'pms1',type:'Stallion PMS',name:'Core Portfolio'}]}),'Stallion PMS — Core Portfolio');
+assert.equal(m.automaticEntryTitle({investmentType:'pf',accountId:'missing'}, {}),'PF');
+assert.equal(m.automaticEntryTitle({investmentType:'pf',accountId:'pf1',accountName:'Legacy PF'}, {pf:[{id:'pf1'}]}),'PF — Legacy PF');
