@@ -2462,3 +2462,12 @@ body:has(#loanDetailsModal:not([hidden])) #debtEmiHistoryModal{z-index:1120}
  #investmentCategoryDialogTable .investment-icon-action{display:inline-grid;place-items:center;min-width:44px!important;min-height:44px!important;width:44px!important;height:44px!important;margin:0!important;padding:10px!important}
  #investmentCategoryDialogTable .investment-icon-action svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}
 }
+
+/* Removing the ratio also releases its spacing in the mobile Net Worth tile. */
+#dashboardNetWorthRatio[hidden]{display:none!important;margin:0!important;padding:0!important}
+@media(max-width:700px){
+ html[data-app-style] body.advanced-layout .dashboard-net-worth:has(#dashboardNetWorthRatio[hidden]){
+  min-height:0!important;height:auto!important;align-self:start;gap:8px!important;
+  justify-content:flex-start!important;padding-block:14px!important;
+ }
+}
