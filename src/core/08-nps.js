@@ -138,7 +138,7 @@
     function openManualRetirementContribution(kind,accountId){
       if(!['pf','ppf'].includes(kind))return;
       const account=(state[kind]||[]).find(row=>row.id===accountId);if(!account)return;
-      if(window.financeCloud?.canEdit===false)return;
+      if(typeof window!=='undefined'&&window.financeCloud?.canEdit===false)return;
       const modal=document.getElementById('investmentContributionModal');modal.dataset.mode='retirement-manual';modal.dataset.retirementType=kind;modal.dataset.investmentId=accountId;delete modal.dataset.editContributionId;
       document.getElementById('investmentContributionTitle').textContent=`Add Contribution — ${account.account||kind.toUpperCase()+' Account'}`;
       document.getElementById('investmentContributionSummary').textContent=`${kind.toUpperCase()} · One-off additional contribution · Invested ${formatCurrency(account.invested)} · Current ${formatCurrency(account.current)} · Automatic monthly credits remain separate`;
@@ -174,7 +174,7 @@
       if(modal.dataset.mode==='retirement-manual'){
         const kind=modal.dataset.retirementType;
         if(!['pf','ppf'].includes(kind))return;
-        if(window.financeCloud?.canEdit===false)return;
+        if(typeof window!=='undefined'&&window.financeCloud?.canEdit===false)return;
         const account=(state[kind]||[]).find(row=>row.id===modal.dataset.investmentId);
         if(!account)return;
         if(!validCalendarDate(date)||date<account.date||date>localDateKey()){alert('Choose a valid contribution date between the '+kind.toUpperCase()+' opening date and today.');return;}
