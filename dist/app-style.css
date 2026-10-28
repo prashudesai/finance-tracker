@@ -1684,3 +1684,60 @@ html[data-app-style] body.advanced-layout #income-expenses .history-month-contro
 /* Global sheet close controls: ensure tap size, consistent top-right alignment. */
 :is(#investmentCategoryDialog,#retirementCategoryDialog)
  .investment-category-dialog-close{min-width:44px;min-height:44px;display:grid;place-items:center}
+
+
+/* Shared application modal chrome: consistent title, top-right dismissal and safe scroll. */
+.investment-edit-modal .investment-edit-dialog{
+ box-sizing:border-box;max-width:calc(100vw - 24px);
+ max-height:calc(100dvh - max(24px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)));
+ overflow-y:auto;overscroll-behavior:contain;
+}
+.investment-edit-modal .investment-edit-dialog>.modal-heading{
+ box-sizing:border-box;display:flex!important;align-items:center!important;
+ justify-content:space-between!important;gap:12px!important;flex-wrap:nowrap!important;
+ position:sticky;top:0;z-index:9;
+ margin:0 0 13px!important;padding:0 0 12px!important;
+ background:var(--card-bg);border-bottom:1px solid var(--border);
+}
+.investment-edit-modal .investment-edit-dialog>.modal-heading h2{
+ flex:1 1 auto;min-width:0;margin:0!important;
+ font-size:clamp(18px,4.5vw,22px)!important;line-height:1.3!important;
+}
+.investment-edit-modal .investment-edit-dialog>.modal-heading .modal-close-button{
+ box-sizing:border-box!important;flex:0 0 44px!important;width:44px!important;
+ height:44px!important;min-width:44px!important;min-height:44px!important;
+ display:grid!important;place-items:center!important;order:2!important;
+ margin:0 0 0 auto!important;padding:8px!important;
+ border:1px solid var(--border)!important;border-radius:12px!important;
+ background:transparent!important;color:var(--text)!important;
+ font:inherit;font-size:25px;cursor:pointer;
+}
+.investment-edit-modal .investment-edit-dialog>.modal-heading .modal-close-button svg{
+ width:20px;height:20px;
+}
+#loanDetailsModal .investment-edit-dialog>div:first-child{
+ display:flex!important;align-items:center!important;gap:12px;
+ margin:0 0 12px;padding-bottom:12px;border-bottom:1px solid var(--border);
+}
+#loanDetailsModal .investment-edit-dialog>div:first-child button{
+ flex:0 0 44px;width:44px;height:44px;min-height:44px;margin-left:auto;
+ display:grid;place-items:center;border-radius:12px;
+}
+.family-detail-dialog header,.recurring-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.family-detail-dialog header>button,.recurring-heading>button{
+ margin-left:auto;flex:0 0 44px;width:44px;height:44px;min-height:44px;
+ display:grid;place-items:center;border-radius:12px;
+}
+@media(max-width:700px){
+ #investments #stallionPmsPanel>.panel-header{
+  display:flex!important;flex-direction:column!important;
+  flex-wrap:nowrap!important;align-items:stretch!important;gap:8px!important;
+ }
+ #investments #stallionPmsPanel>.panel-header>h2{margin:0!important}
+ #investments #stallionPmsPanel>.panel-header>.panel-controls{
+  margin:0!important;flex:none!important;align-self:stretch!important;
+ }
+ .investment-edit-modal .investment-edit-dialog{width:min(100%,560px);max-height:calc(100dvh - 20px)}
+}
