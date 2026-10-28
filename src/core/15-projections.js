@@ -343,6 +343,19 @@
       const selectedScenario=['stress','base','optimistic'].includes(summary.dataset.scenario)?summary.dataset.scenario:'base';
       summary.innerHTML='<h3 class="growth-scenario-heading">'+years+'-year scenario comparison</h3>'+['stress','base','optimistic'].map(scenario=>`<button type="button" data-projection-scenario="${scenario}" class="stat-card growth-projection-stat-card growth-projection-stat-card-${scenario}" aria-pressed="${scenario===selectedScenario}"><span class="stat-label">${labels[scenario]}</span><strong class="stat-value">${formatProjectionLakh(projections[scenario].ending)}</strong></button>`).join('');
 
+      const chartWrap=document.getElementById('growthProjectionChartWrap');
+      if(chartWrap)chartWrap.after(summary);
+      summary.insertAdjacentHTML('beforeend','<p class="growth-scenario-help">Tap a scenario for exact values and its yearly breakdown.</p><div id="growthScenarioDetails" class="growth-scenario-details" role="status" aria-live="polite"></div>');
+      function showScenarioDetails(scenario){
+        const result=projections[scenario],details=document.getElementById('growthScenarioDetails');
+        const metrics=[['Projected value',result.ending],['Monthly contributions',result.totalContributions],['Projected growth',result.totalGrowth],...(result.totalAdditions?[['Planned additions',result.totalAdditions]]:[]),...(result.totalWithdrawals?[['Withdrawals',result.totalWithdrawals]]:[])];
+        details.innerHTML='<strong>'+labels[scenario]+' · '+years+'-year projection</strong><dl>'+metrics.map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+formatCurrency(value)+'</dd></div>').join('')+'</dl>';
+        summary.querySelectorAll('[data-projection-scenario]').forEach(button=>button.dataset.preview=String(button.dataset.projectionScenario===scenario));
+        if(growthProjectionChartInstance){
+          growthProjectionChartInstance.data.datasets.forEach((dataset,index)=>{const active=['stress','base','optimistic'][index]===scenario;dataset.borderWidth=active?4:2;dataset.pointRadius=active?4:2;});
+          growthProjectionChartInstance.update('none');
+        }
+      }
       const baseRows=projections.base.rows;
 
       const todayLabel=`Today · ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
@@ -355,6 +368,7 @@
         bindGrowthProjectionCursorTooltip(growthProjectionChartInstance);
       }
       function renderScenarioBreakdown(scenario){
+      showScenarioDetails(scenario);
       summary.dataset.scenario=scenario;summary.querySelectorAll('[data-projection-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.projectionScenario===scenario)));
       const takeaway=document.getElementById('growthProjectionTakeaway'),base=projections[scenario];
       const table=document.getElementById('growthProjectionResultsTable');
@@ -376,7 +390,14 @@
       takeaway.setAttribute('aria-label',breakdownLabel);
       takeaway.innerHTML=flowItems.map(item=>`<span class="growth-takeaway-item" data-operator="${item.operator||''}"><span class="growth-takeaway-label">${item.label}</span><span class="growth-takeaway-value">${formatProjectionLakh(item.value)}</span></span>`).join('')+`<span class="growth-takeaway-item is-projected" data-operator="="><span class="growth-takeaway-label">Projected value</span><span class="growth-takeaway-value">${formatProjectionLakh(base.ending)}</span></span><span class="growth-takeaway-note">Breakdown uses ${labels[scenario]} scenario values.${gratuityBreakdownNote}</span>`;
       }
-      summary.querySelectorAll('[data-projection-scenario]').forEach(button=>button.onclick=()=>renderScenarioBreakdown(button.dataset.projectionScenario));
+      summary.querySelectorAll('[data-projection-scenario]').forEach(button=>{
+        button.setAttribute('aria-controls','growthScenarioDetails growthProjectionResultsTable');
+        button.onclick=()=>renderScenarioBreakdown(button.dataset.projectionScenario);
+        button.onpointerenter=event=>{if(event.pointerType==='mouse')showScenarioDetails(button.dataset.projectionScenario);};
+        button.onfocus=()=>showScenarioDetails(button.dataset.projectionScenario);
+      });
+      summary.onpointerleave=()=>showScenarioDetails(summary.dataset.scenario||selectedScenario);
+      summary.onfocusout=event=>{if(!summary.contains(event.relatedTarget))showScenarioDetails(summary.dataset.scenario||selectedScenario);};
       renderScenarioBreakdown(selectedScenario);
     }
     document.getElementById('growthContributionExclusions').addEventListener('change',event=>{
