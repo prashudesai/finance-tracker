@@ -98,7 +98,7 @@
       table.replaceChildren();
       if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');table.appendChild(clone);labelInvestmentDialogCells(table);}
       else table.textContent='No holdings available.';
-      dialog.dataset.investmentType=type;
+      delete dialog.dataset.stallionId;dialog.dataset.investmentType=type;
       if(show&&dialog.hidden){dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();}
     }
     // Preserve the original account table and its actions while presenting rows as cards on phones.
@@ -118,7 +118,7 @@
     }
     function closeInvestmentCategoryDialog() {
       const dialog=document.getElementById('investmentCategoryDialog');
-      if(dialog&&!dialog.hidden){dialog.hidden=true;delete dialog.dataset.investmentType;syncInvestmentOverlayBodyLock();}
+      if(dialog&&!dialog.hidden){dialog.hidden=true;delete dialog.dataset.investmentType;delete dialog.dataset.stallionId;syncInvestmentOverlayBodyLock();}
     }
     function renderRetirementCategoryDialog(type,show=false) {
       const dialog=document.getElementById('retirementCategoryDialog');
@@ -441,7 +441,7 @@
             <td class="text-right ${gain >= 0 ? 'positive' : 'negative'}">${gain >= 0 ? '+' : ''}${formatCurrency(gain)}</td>
             ${hasReturnMetrics?`<td class="text-right" data-label="Absolute Return">${absoluteReturn===null?'N/A':(absoluteReturn*100).toFixed(2)+'%'}</td><td class="text-right" data-label="CAGR">${cagr===null?'N/A':(cagr*100).toFixed(2)+'%'}</td><td class="text-right" data-label="XIRR">${xirr===null?'N/A':(xirr*100).toFixed(2)+'%'}</td>`:''}
             ${investmentUsesInterestRate(category)?`<td class="text-right">${Number.isFinite(Number(inv.rate))?Number(inv.rate).toFixed(2)+'%':'—'}</td>`:''}
-            <td class="investment-row-actions"><div class="investment-row-action-group"><button type="button" class="investment-icon-action" title="View History" data-short-action="History" aria-label="View contribution history" onclick="openInvestmentContributionModal('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></button><button type="button" class="investment-icon-action" title="Add Contribution" data-short-action="Add" aria-label="Add contribution" onclick="openManualInvestmentContribution('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg></button><button type="button" class="investment-icon-action" title="Edit" data-short-action="Edit" aria-label="Edit holding" onclick="editInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"></path><path d="m13.5 7 3.5 3.5"></path></svg></button><button type="button" class="investment-icon-action is-danger" title="Delete" data-short-action="Delete" aria-label="Delete holding" onclick="deleteInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button></div></td>
+            <td class="investment-row-actions"><div class="investment-row-action-group">${investmentUsesReturnMetrics(inv.type)?`<button type="button" class="investment-icon-action" aria-label="Update value" title="Update value" onclick="financeWorkbench.valuations('investments','${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 8a7 7 0 0 1 12-2l2 3M4 15l2 3a7 7 0 0 0 12-2"/></svg></button>`:''}<button type="button" class="investment-icon-action" title="View History" data-short-action="History" aria-label="View contribution history" onclick="openInvestmentContributionModal('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></button><button type="button" class="investment-icon-action" title="Add Contribution" data-short-action="Add" aria-label="Add contribution" onclick="openManualInvestmentContribution('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg></button><button type="button" class="investment-icon-action" title="Edit" data-short-action="Edit" aria-label="Edit holding" onclick="editInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"></path><path d="m13.5 7 3.5 3.5"></path></svg></button><button type="button" class="investment-icon-action is-danger" title="Delete" data-short-action="Delete" aria-label="Delete holding" onclick="deleteInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button></div></td>
           </tr>`;
         }).join('');
         const extraHeaders=`${hasReturnMetrics?'<th class="text-right" title="(Current value − total invested) ÷ total invested">Absolute Return</th><th class="text-right" title="Annualized return from the holding start date; contribution dates are not weighted">CAGR</th><th class="text-right" title="Annualized return using initial investment, dated contributions and current value">XIRR</th>':''}${hasRate?'<th class="text-right" title="Annual interest rate entered for this holding">Interest Rate</th>':''}`;
@@ -511,6 +511,39 @@
         (pmsActionRow||pmsHeaderControls)?.append(button);
       }
       if(pmsHeaderControls)pmsHeaderControls.hidden=Boolean(pmsActionRow);
+      const pmsSource=stallionBody.querySelector('.table-wrapper');
+      if(pmsSource&&hasStallion){
+        pmsSource.classList.add('pms-detail-source');
+        const summaries=document.createElement('div');summaries.className='pms-summary-list';
+        stallionItems.forEach((inv,index)=>{
+          const gain=Number(inv.current||0)-Number(inv.invested||0),xirr=stallionXirr(inv,valuationDate,stallionContributionsById.get(inv.id)||[]);
+          const tile=document.createElement('button');tile.type='button';tile.className='pms-summary-tile';tile.setAttribute('aria-haspopup','dialog');
+          tile.innerHTML='<span class="pms-summary-name">'+analyticEscape(inv.name)+'</span><span class="pms-summary-member">'+analyticEscape(inv.member||'—')+'</span><span class="pms-summary-metrics">'+[
+            ['Current value',formatCurrency(inv.current)],['XIRR',xirr===null?'N/A':(xirr*100).toFixed(2)+'%'],['Invested',formatCurrency(inv.invested)],['Gain / loss',(gain>=0?'+':'')+formatCurrency(gain)]
+          ].map(([label,value])=>'<span><small>'+label+'</small><strong>'+analyticEscape(value)+'</strong></span>').join('')+'</span>';
+          tile.onclick=()=>{
+            const dialog=document.getElementById('investmentCategoryDialog');delete dialog.dataset.investmentType;dialog.dataset.stallionId=inv.id;
+            document.getElementById('investmentCategoryDialogTitle').textContent=inv.name||'Stallion PMS';
+            document.getElementById('investmentCategoryDialogSubtitle').textContent='Stallion PMS · '+(inv.member||'');
+            const summary=document.getElementById('investmentCategoryDialogSummary');summary.replaceChildren();
+            const target=document.getElementById('investmentCategoryDialogTable');target.replaceChildren();
+            const wrapper=pmsSource.cloneNode(true);wrapper.classList.remove('pms-detail-source');wrapper.classList.add('investment-category-dialog-table');
+            wrapper.querySelectorAll('tbody tr').forEach((row,rowIndex)=>{if(rowIndex!==index)row.remove();});
+            wrapper.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+            const rowActions=wrapper.querySelector('tbody td[data-label="Actions"]');
+            if(rowActions){
+              rowActions.querySelectorAll('[data-pms-compact-action]').forEach(node=>node.remove());
+              pmsQuickActions.forEach(original=>{const copy=original.cloneNode(true);copy.removeAttribute('id');copy.onclick=()=>original.click();rowActions.append(copy);});
+            }
+            target.append(wrapper);labelInvestmentDialogCells(target);
+            dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();
+          };
+          summaries.append(tile);
+          const activePmsDialog=document.getElementById('investmentCategoryDialog');if(!activePmsDialog.hidden&&activePmsDialog.dataset.stallionId===inv.id)tile.onclick();
+        });
+        stallionBody.prepend(summaries);
+      }
+
       if(stallionContributionAddPanel&&!entryPanelIsModal(stallionContributionAddPanel))stallionBody.appendChild(stallionContributionAddPanel);
       if(stallionHistoryPanel)stallionBody.appendChild(stallionHistoryPanel);
       if(stallionProfitPanel&&!entryPanelIsModal(stallionProfitPanel))stallionBody.appendChild(stallionProfitPanel);
