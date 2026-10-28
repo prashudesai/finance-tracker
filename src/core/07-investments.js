@@ -98,7 +98,7 @@
       table.replaceChildren();
       if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');table.appendChild(clone);labelInvestmentDialogCells(table);}
       else table.textContent='No holdings available.';
-      dialog.dataset.investmentType=type;
+      delete dialog.dataset.stallionId;dialog.dataset.investmentType=type;
       if(show&&dialog.hidden){dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();}
     }
     // Preserve the original account table and its actions while presenting rows as cards on phones.
@@ -118,7 +118,7 @@
     }
     function closeInvestmentCategoryDialog() {
       const dialog=document.getElementById('investmentCategoryDialog');
-      if(dialog&&!dialog.hidden){dialog.hidden=true;delete dialog.dataset.investmentType;syncInvestmentOverlayBodyLock();}
+      if(dialog&&!dialog.hidden){dialog.hidden=true;delete dialog.dataset.investmentType;delete dialog.dataset.stallionId;syncInvestmentOverlayBodyLock();}
     }
     function renderRetirementCategoryDialog(type,show=false) {
       const dialog=document.getElementById('retirementCategoryDialog');
@@ -522,7 +522,7 @@
             ['Current value',formatCurrency(inv.current)],['XIRR',xirr===null?'N/A':(xirr*100).toFixed(2)+'%'],['Invested',formatCurrency(inv.invested)],['Gain / loss',(gain>=0?'+':'')+formatCurrency(gain)]
           ].map(([label,value])=>'<span><small>'+label+'</small><strong>'+analyticEscape(value)+'</strong></span>').join('')+'</span>';
           tile.onclick=()=>{
-            const dialog=document.getElementById('investmentCategoryDialog');delete dialog.dataset.investmentType;
+            const dialog=document.getElementById('investmentCategoryDialog');delete dialog.dataset.investmentType;dialog.dataset.stallionId=inv.id;
             document.getElementById('investmentCategoryDialogTitle').textContent=inv.name||'Stallion PMS';
             document.getElementById('investmentCategoryDialogSubtitle').textContent='Stallion PMS · '+(inv.member||'');
             const summary=document.getElementById('investmentCategoryDialogSummary');summary.replaceChildren();
@@ -539,6 +539,7 @@
             dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();
           };
           summaries.append(tile);
+          const activePmsDialog=document.getElementById('investmentCategoryDialog');if(!activePmsDialog.hidden&&activePmsDialog.dataset.stallionId===inv.id)tile.onclick();
         });
         stallionBody.prepend(summaries);
       }
