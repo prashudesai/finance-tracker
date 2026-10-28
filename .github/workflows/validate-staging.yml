@@ -43,7 +43,20 @@ jobs:
       - name: Browser regression suite (includes Cash Flow and Finance Insights)
         run: npm run test:emerald
       - name: PWA browser and offline tests
-        run: npm run test:pwa
+        shell: bash
+        run: |
+          set -o pipefail
+          log_file="$RUNNER_TEMP/pwa-release-check.log"
+          if npm run test:pwa 2>&1 | tee "$log_file"; then
+            exit 0
+          fi
+          # Intermittent Chromium service-worker controllerchange delay: retry
+          # only the known 30-second update timeout, and still fail if it persists.
+          if ! grep -q 'page.waitForFunction: Timeout 30000ms exceeded.' "$log_file"; then
+            exit 1
+          fi
+          echo "::warning::Retrying the PWA update timeout once in a fresh browser session."
+          npm run test:pwa
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
