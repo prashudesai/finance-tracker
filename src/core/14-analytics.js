@@ -704,29 +704,50 @@
       if(investedTotal)investedTotal.textContent=compact(totalInvested);
       if(gainTotal){gainTotal.textContent=`${totalGain>=0?'+':'−'}${compact(Math.abs(totalGain))}`;gainTotal.classList.toggle('is-loss',totalGain<0);}
       if(returnTotal){returnTotal.textContent=`${totalReturn>=0?'+':''}${totalReturn.toFixed(1)}%`;returnTotal.classList.toggle('is-loss',totalReturn<0);}
+      const remainingButton=document.getElementById('openRemainingInvestments');
+      if(remainingButton){remainingButton.hidden=rows.length<=5;remainingButton.onclick=()=>openRemainingPortfolio();}
+      document.getElementById('remainingPortfolioDialog')?.close();
       if(!rows.length){body.innerHTML='<div class="text-muted">No investments added yet.</div>';body.dataset.expandedCategory='';return;}
       const visibleRows=rows.slice(0,5);
       const portfolioCount=document.getElementById('completePortfolioCount');
-      if(portfolioCount)portfolioCount.textContent=`(${rows.length}) `;
+      if(portfolioCount)portfolioCount.textContent='';
+      if(remainingButton)remainingButton.textContent=`View remaining ${rows.length-5} investments ›`;
+      function paintPortfolio(target,visibleRows,prefix){
       const maxValue=Math.max(...visibleRows.map(row=>Math.max(row.current,row.invested)),1);
       const colors=['#3985a1','#ec9c52','#7566c2','#43a88c','#e06f70','#7889a7','#a16c91','#3f9b8e'];
-      body.innerHTML=visibleRows.map((row,index)=>{
+      target.innerHTML=visibleRows.map((row,index)=>{
         const isExpanded=expandedCategory===row.category;
         const investedWidth=Math.min(100,Math.max(0,row.invested/maxValue*100));
         const currentWidth=Math.min(100,Math.max(0,row.current/maxValue*100));
         const changeLeft=Math.min(investedWidth,currentWidth),changeWidth=Math.abs(currentWidth-investedWidth);
         const changeClass=row.gain>0?'is-gain':row.gain<0?'is-loss':'is-neutral';
-        const detailId=`completePortfolioDetail${index}`;
+        const detailId=`${prefix}Detail${index}`;
         const holdingRows=row.holdings.map(holding=>{
           const gain=holding.current-holding.invested;
           return `<tr><td>${analyticEscape(holding.member||'—')}</td><td>${analyticEscape(holding.label||'Holding')}</td><td class="text-right">${formatCurrency(holding.invested)}</td><td class="text-right">${formatCurrency(holding.current)}</td><td class="text-right ${gain>=0?'positive':'negative'}">${gain>=0?'+':''}${formatCurrency(gain)}</td></tr>`;
         }).join('');
         return `<div class="portfolio-category-group"><button type="button" class="portfolio-category-row" data-portfolio-category="${analyticEscape(row.category)}" aria-expanded="${isExpanded}" aria-controls="${detailId}"><span class="portfolio-category-label"><i class="portfolio-category-dot" style="background:${colors[index%colors.length]}"></i>${analyticEscape(row.category)}</span><span class="portfolio-value-bar" title="Invested ${formatCurrency(row.invested)} · Current ${formatCurrency(row.current)} · Gain ${formatCurrency(row.gain)}"><span class="portfolio-bar-invested" style="width:${investedWidth}%"></span><span class="portfolio-bar-change ${changeClass}" style="left:${changeLeft}%;width:${changeWidth}%"></span></span><span class="portfolio-current-value">${compact(row.current)}</span><span class="portfolio-gain-value ${changeClass}">${row.gain>0?'+':row.gain<0?'−':''}${compact(Math.abs(row.gain))} · ${row.return>0?'+':''}${row.return.toFixed(1)}%${row.gain===0?' · No growth':''}</span><span class="portfolio-row-chevron" aria-hidden="true">›</span></button><div class="portfolio-holdings-details" id="${detailId}"${isExpanded?'':' hidden'}><div class="portfolio-holdings-title">${row.holdings.length} ${row.holdings.length===1?'holding':'holdings'}</div><div class="table-wrapper"><table class="portfolio-holdings-table"><thead><tr><th>Member</th><th>Holding</th><th class="text-right">Invested</th><th class="text-right">Current value</th><th class="text-right">Gain / loss</th></tr></thead><tbody>${holdingRows}</tbody></table></div></div></div>`;
       }).join('');
-      body.dataset.expandedCategory=expandedCategory;
-      body.querySelectorAll('[data-portfolio-category]').forEach(button=>button.addEventListener('click',()=>{
-        body.dataset.expandedCategory=button.getAttribute('aria-expanded')==='true'?'':button.dataset.portfolioCategory;
-        renderCompletePortfolio();
+      target.querySelectorAll('[data-portfolio-category]').forEach(button=>button.addEventListener('click',()=>{
+        const expanded=button.getAttribute('aria-expanded')!=='true';
+        target.querySelectorAll('[data-portfolio-category]').forEach(other=>{
+          const open=other===button&&expanded;other.setAttribute('aria-expanded',String(open));
+          document.getElementById(other.getAttribute('aria-controls')).hidden=!open;
+        });
+        if(target===body)body.dataset.expandedCategory=expanded?button.dataset.portfolioCategory:'';
       }));
+      }
+      paintPortfolio(body,visibleRows,'completePortfolio');
+      function openRemainingPortfolio(){
+        let dialog=document.getElementById('remainingPortfolioDialog');
+        if(!dialog){
+          dialog=document.createElement('dialog');dialog.id='remainingPortfolioDialog';dialog.className='remaining-portfolio-dialog';
+          dialog.setAttribute('aria-labelledby','remainingPortfolioTitle');
+          dialog.innerHTML='<div class="remaining-portfolio-heading"><h2 id="remainingPortfolioTitle">Remaining investments</h2><button type="button" class="btn-secondary">Close</button></div><p>Categories outside the top five, in your selected sort order.</p><div class="portfolio-category-list"></div>';
+          dialog.querySelector('button').onclick=()=>dialog.close();document.body.append(dialog);
+        }
+        paintPortfolio(dialog.querySelector('.portfolio-category-list'),rows.slice(5),'remainingPortfolio');dialog.showModal();
+      }
     }
+
 

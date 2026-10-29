@@ -1,13 +1,12 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.29.4",
+  "version": "2026.10.29.7",
   "released": "2026-10-29",
   "releaseNotes": [
-  "Group projection assumptions into compact Market linked, Fixed returns and No return selectors.",
-  "Move monthly contribution inclusion controls into a compact Manage dialog and remove the redundant heading.",
-  "Hide and compact the monthly contribution summary when contributions are off.",
-  "Align the fixed-return assumption value box and slider.",
-  "Reduce the mobile projection graph height."
-],
+    "Compact the mobile portfolio heading and show only remaining categories after the top five.",
+    "Keep Add record clear of dashboard labels and fade it while scrolling.",
+    "Tighten the mobile page end and center the shorter active navigation highlight.",
+    "Use a clean outline gear in the circular Settings shortcut."
+  ],
   "sections": [
     [
       "Short first EMI interest",
@@ -131,3 +130,4 @@ window.downloadTrackerGuide = async function(){
   const count=pdf.getNumberOfPages();for(let n=1;n<=count;n++){pdf.setPage(n);pdf.setDrawColor(210);pdf.line(18,282,192,282);pdf.setFontSize(9);pdf.setTextColor(100);pdf.text('App info | '+info.version,18,288);pdf.text(n+' / '+count,192,288,{align:'right'});}
   pdf.save('Personal_Finance_Tracker_App_Guide.pdf');
 };
+

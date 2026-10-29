@@ -167,6 +167,24 @@ const server=http.createServer(async(req,res)=>{try{
   assert.equal(await page.evaluate(()=>JSON.stringify(state)),previous);
  });
  await check('Record action icons stay legible across populated pages and mobile styles',async()=>{await page.evaluate(()=>{window.__savedDebt=state.debts;state.debts=[{id:'action-audit-debt',type:'Personal Loan',member:state.customValues.familyMembers[0],principal:120000,remaining:100000,rate:10,emi:5000,date:'2025-04-01',emiDueDay:5,interestPaid:0}];renderDebts();});for(const style of ['modern','emerald-flow'])for(const width of [320,390,700]){await page.setViewportSize({width,height:844});await page.evaluate(style=>PFT_STYLE.apply(style),style);for(const tab of ['dashboard','income-expenses','investments','debts','growth-projection','analytics','reports','settings']){await page.evaluate(tab=>document.querySelector('.nav-tab[data-tab="'+tab+'"]').click(),tab);await page.waitForTimeout(80);const issues=await page.evaluate(()=>[...document.querySelectorAll('.tab-content.active button[data-action-icon],.tab-content.active button.investment-icon-action')].filter(e=>e.getClientRects().length).map(e=>{const r=e.getBoundingClientRect(),svg=e.querySelector('svg'),s=svg?.getBoundingClientRect();return {label:e.getAttribute('aria-label'),width:r.width,height:r.height,icon:s?Math.min(s.width,s.height):0,after:getComputedStyle(e,'::after').content};}).filter(x=>x.width<25||x.height<25||x.icon<12||!['none','normal'].includes(x.after)));assert.deepEqual(issues,[],JSON.stringify({style,width,tab,issues}));}}await page.evaluate(()=>{state.debts=window.__savedDebt;renderDebts();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();financeCashFlow.select('expense');});await page.setViewportSize({width:390,height:844});});
+ await check('Portfolio remaining view excludes the current top five and follows sorting',async()=>{
+  const saved=await page.evaluate(()=>JSON.stringify(state));
+  await page.evaluate(()=>{const member=state.customValues.familyMembers[0];state.pf=[];state.ppf=[];state.nps=[];state.investments=Array.from({length:10},(_,i)=>({id:'remaining-'+i,member,type:'Category '+i,name:'Holding '+i,date:'2026-01-01',invested:1000,current:(i+1)*1000}));document.querySelector('.nav-tab[data-tab="dashboard"]').click();renderCompletePortfolio();});
+  for(const sort of ['current','category']){
+   await page.locator('#completePortfolioSort').selectOption(sort);
+   const top=await page.locator('#completePortfolioBody [data-portfolio-category]').evaluateAll(es=>es.map(e=>e.dataset.portfolioCategory));
+   assert.equal(top.length,5);assert.equal(await page.locator('#openRemainingInvestments').textContent(),'View remaining 5 investments ›');
+   await page.locator('#openRemainingInvestments').click();
+   const remainder=page.locator('#remainingPortfolioDialog [data-portfolio-category]');
+   const other=await remainder.evaluateAll(es=>es.map(e=>e.dataset.portfolioCategory));
+   assert.equal(other.length,5);assert(!other.some(category=>top.includes(category)));assert.equal(new Set([...top,...other]).size,10);
+   await remainder.first().click();assert.equal(await remainder.first().getAttribute('aria-expanded'),'true');
+   await page.keyboard.press('Escape');assert.equal(await page.locator('#remainingPortfolioDialog').isVisible(),false);
+  }
+  await page.evaluate(()=>{state.investments=state.investments.slice(0,3);renderCompletePortfolio();});
+  assert.equal(await page.locator('#openRemainingInvestments').isVisible(),false);
+  await page.evaluate(saved=>{Object.assign(state,JSON.parse(saved));renderCompletePortfolio();},saved);
+ });
  await check('Small mobile Add record is available while browsing and hidden at the page bottom',async()=>{
   const before=await page.evaluate(()=>JSON.stringify(state));
   for(const style of ['modern','emerald-flow'])for(const width of [320,390,700]){
@@ -508,3 +526,4 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
 
  assert.deepEqual(errors,[]);await browser.close();server.close();console.log(JSON.stringify({passed:results.length,failed:0}));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});
+

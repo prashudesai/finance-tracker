@@ -71,7 +71,7 @@
         <div class="theme-mode-switch" id="themeToggle" role="group" aria-label="Theme mode">
           <button type="button" class="theme-mode-option" data-mode="light" aria-label="Switch to light mode" title="Switch to light mode"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button>
         </div>
-        <button type="button" id="mobileSettingsShortcut" aria-label="Open Settings" title="Settings" onclick="document.querySelector('.nav-tab[data-tab=&quot;settings&quot;]')?.click()"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1.4 1.6v.1h-3.2V21A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.88-.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1.4h-.1v-3.2H3A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0 .34-1.88l-.06-.06 2.12-2.12.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.4-1.6v-.1h3.2V3A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.88.34l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.6 1.4h.1v3.2H21a1.7 1.7 0 0 0-1.6 1.4Z"/></svg></button>
+        <button type="button" id="mobileSettingsShortcut" aria-label="Open Settings" title="Settings" onclick="document.querySelector('.nav-tab[data-tab=&quot;settings&quot;]')?.click()"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><filter id="settingsImageInk" x="-50%" y="-50%" width="200%" height="200%"><feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -.2126 -.7152 -.0722 0 1"/><feComponentTransfer><feFuncA type="gamma" amplitude="1" exponent="3" offset="0"/></feComponentTransfer><feFlood flood-color="currentColor"/><feComposite in2="SourceGraphic" operator="in"/></filter></defs><image href="./icons/settings-provided.png" x="-21" y="-17.5" width="68" height="62.5" preserveAspectRatio="none" filter="url(#settingsImageInk)"/></svg></button>
       </div>
     </header>
 
@@ -157,7 +157,7 @@
 
       <div class="panel dashboard-portfolio-panel">
         <div class="panel-header dashboard-portfolio-heading">
-          <div class="dashboard-portfolio-title"><h2>Investment Portfolio</h2><p>Value, returns and your investment categories</p></div>
+          <div class="dashboard-portfolio-title"><h2>Investment Portfolio</h2><p>Value and returns</p></div>
           <label class="portfolio-sort-control"><span class="portfolio-sort-label">Sort by</span><span class="portfolio-sort-mobile">Sort:</span>
             <select id="completePortfolioSort" aria-label="Sort investment portfolio">
               <option value="current">Portfolio size</option>
@@ -177,7 +177,7 @@
         <div class="portfolio-list-head" aria-hidden="true"><span>Category</span><span>Invested amount + gain</span><span>Current value</span><span>Gain / return</span><span></span></div>
         <div id="completePortfolioBody" class="portfolio-category-list" aria-live="polite"></div>
         <p class="portfolio-interaction-note">Tap a category to view its holdings and exact amounts.</p>
-        <button type="button" class="advanced-dashboard-link dashboard-portfolio-view-all dashboard-portfolio-view-all-bottom" data-open-tab="investments">View all investments <span id="completePortfolioCount"></span><span aria-hidden="true">›</span></button>
+        <button type="button" class="advanced-dashboard-link dashboard-portfolio-view-all dashboard-portfolio-view-all-bottom" id="openRemainingInvestments" hidden>View remaining investments <span id="completePortfolioCount"></span><span aria-hidden="true">›</span></button>
       </div>
 
       <div class="panel debt-summary-panel">
@@ -1339,3 +1339,4 @@
 
 </body>
 </html>
+
