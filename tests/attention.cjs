@@ -12,3 +12,15 @@ const paid={status:'paid',amount:10,epsAmount:2};row.epsAmount=2;const paidMeta=
 assert.equal(c.items(empty,{}, {},today,{reviewProblem:true})[0].key,'reviews');
 
 assert(!c.items(d,view,{},'2026-10-30').some(x=>x.key==='automatic'));
+
+// Reviews start with the first tracked bank balance, not imported transaction history.
+const tracked={...empty,income:[{date:'2024-01-01',amount:10},{date:'2026-09-01',amount:50}],monthlyBalances:[{month:'2026-09',startBalance:100},{month:'2026-10',startBalance:120}]};
+assert.equal(c.items(tracked,{}, {},today).find(x=>x.key==='month').label,'1 household month needs balance review');
+const close=vm.runInContext('monthClose',c);
+const reviewed={closedMonths:{'2026-09':{signature:JSON.stringify(close(tracked,'2026-09'))}}};
+assert(!c.items(tracked,{},reviewed,today).some(x=>x.key==='month'));
+tracked.income[1].amount=60;
+assert.equal(c.items(tracked,{},reviewed,today).find(x=>x.key==='month').month,'2026-09');
+tracked.monthlyBalances.pop();
+assert(c.items(tracked,{},reviewed,today).some(x=>x.key==='month'));
+console.log('PASS pre-tracking history excluded, saved reviews clear attention, changed figures and missing balances reopen review');
