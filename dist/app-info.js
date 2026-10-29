@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.29.10",
+  "version": "2026.10.29.11",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Month review reminders now respect the start of bank-balance tracking and saved reviews. Changed figures request a fresh review."
+    "Keep the dashboard Add button visible and clickable above the dock throughout scrolling, including the page bottom."
   ],
   "sections": [
     [

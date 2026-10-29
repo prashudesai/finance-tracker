@@ -185,7 +185,7 @@ const server=http.createServer(async(req,res)=>{try{
   assert.equal(await page.locator('#openRemainingInvestments').isVisible(),false);
   await page.evaluate(saved=>{Object.assign(state,JSON.parse(saved));renderCompletePortfolio();},saved);
  });
- await check('Small mobile Add record is available while browsing and hidden at the page bottom',async()=>{
+ await check('Small mobile Add record stays clickable while browsing and at the page bottom',async()=>{
   const before=await page.evaluate(()=>JSON.stringify(state));
   for(const style of ['modern','emerald-flow'])for(const width of [320,390,700]){
    await page.setViewportSize({width,height:844});
@@ -203,20 +203,17 @@ const server=http.createServer(async(req,res)=>{try{
     assert.equal(dockStyles.border,'0px','The mobile dock must not show a colored top strip');
     assert.equal(await add.getAttribute('aria-label'),'Add record');
     assert.equal(await page.locator('.pft-dashboard-caption').isVisible(),false);
-    await page.waitForFunction(()=>!document.body.classList.contains('quick-add-scrolling'));
-    const obscured=await add.evaluate(e=>e.classList.contains('quick-add-obscured'));
-    if(obscured){
-     assert.equal(await add.evaluate(e=>getComputedStyle(e).pointerEvents),'none','Add must not intercept covered content');
-    }else{
     await add.click();
     assert(await page.locator('#quickAddDialog').isVisible());
     assert.equal(await page.locator('#quickAddDialog').getByRole('button',{name:'Income',exact:true}).count(),1);
     await page.locator('#quickAddDialog').getByRole('button',{name:/^Close/}).click();
-    }
     await page.evaluate(()=>{document.activeElement?.blur();window.scrollTo(0,document.documentElement.scrollHeight);});
     await page.locator('#openRecordSearch').waitFor({state:'visible'});
    }
-   assert.equal(await add.isVisible(),false,'Add record must be hidden at the page bottom');
+   assert(await add.isVisible(),'Add record must stay available at the page bottom');
+   await add.click();
+   assert(await page.locator('#quickAddDialog').isVisible());
+   await page.locator('#quickAddDialog').getByRole('button',{name:/^Close/}).click();
    await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());
    assert.equal(await add.isVisible(),false);
   }

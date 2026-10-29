@@ -403,7 +403,7 @@ html[data-app-style="modern"] .pft-dashboard-caption{display:none}
 html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(84px + env(safe-area-inset-bottom));z-index:41;display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;margin:0;border-radius:50%;box-shadow:0 3px 12px #0003;font-family:inherit;line-height:1}
 html[data-app-style="modern"] #trackerQuickAdd .quick-add-symbol{font-size:26px;font-weight:400;line-height:1}
 html[data-app-style="modern"] #trackerQuickAdd .quick-add-label{display:none}
-html[data-app-style="modern"] body:has(#openRecordSearch.at-page-bottom) #dashboard #trackerQuickAdd{display:none!important}
+
 html[data-app-style="modern"] body.cloud-pending #trackerQuickAdd,html[data-app-style="modern"] body:has(dialog[open],.investment-edit-modal:not([hidden]),input:focus,textarea:focus,select:focus) #dashboard #trackerQuickAdd{visibility:hidden;pointer-events:none}
 }
 @media screen and (max-width:700px){
@@ -2761,7 +2761,7 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 @media screen and (max-width:700px){
   html[data-app-style="modern"] body.advanced-layout #dashboard.active{padding-bottom:1rem}
   html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{transition:opacity .18s ease,background-color .15s,box-shadow .15s}
-  html[data-app-style="modern"] body.advanced-layout.quick-add-scrolling #dashboard #trackerQuickAdd{opacity:0;pointer-events:none}
+  
   #monthlyChanges>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 14px;list-style:none}
   #monthlyChanges>summary::-webkit-details-marker{display:none}
   #monthlyChanges>summary::before{content:"›";display:inline-block;font-size:22px;line-height:1;color:var(--primary);transition:transform .18s}
@@ -2850,8 +2850,7 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
  html[data-app-style] body.advanced-layout #dashboard .portfolio-total-summary{margin-top:0!important}
  html[data-app-style="modern"] .pft-style-navigation>button{position:relative;isolation:isolate;background:transparent!important}
  html[data-app-style="modern"] .pft-style-navigation>button.active::before{content:"";position:absolute;inset:5px 4px;border-radius:10px;background:var(--primary-light);z-index:-1;pointer-events:none}
- html[data-app-style="modern"] body.advanced-layout.quick-add-scrolling #dashboard #trackerQuickAdd,
- html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd.quick-add-obscured{opacity:0;pointer-events:none}
+
  body:has(>#financeBottomTools){padding-bottom:0}
  html[data-app-style="modern"] body.advanced-layout>.container{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
  html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel{padding-bottom:16px;margin-bottom:0}
@@ -2866,4 +2865,9 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 @media screen and (max-width:700px){
  html[data-app-style="modern"] body:has(>#financeBottomTools){padding-bottom:0!important}
  html[data-app-style="modern"] .pft-style-navigation{border-top:0!important}
+}
+
+/* Keep Add available at a stable location throughout dashboard scrolling. */
+@media screen and (max-width:700px){
+ html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{z-index:1010;background:var(--card-bg)!important;border:1px solid var(--primary)!important;opacity:1;pointer-events:auto}
 }

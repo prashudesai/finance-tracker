@@ -136,35 +136,6 @@
       details.append(actions);info.querySelector('#appInfoPdfStatus').after(details);
     }
     const add=el('button','+ Add record','btn-primary tracker-quick-add');add.type='button';add.id='trackerQuickAdd';add.setAttribute('aria-label','Add record');add.title='Add record';add.innerHTML='<span class="quick-add-symbol" aria-hidden="true">+</span><span class="quick-add-label"> Add record</span>';add.hidden=window.financeCloud.canEdit===false;document.getElementById('dashboard').prepend(add);
-    let quickAddScrollTimer;
-    // Keep Add in one predictable spot above the dock. Fade it when that spot
-    // contains content instead of moving it halfway up the dashboard.
-    function placeQuickAdd(){
-      add.style.bottom='';
-      if(!window.matchMedia('(max-width:700px)').matches){add.classList.remove('quick-add-obscured');return;}
-      const dashboard=document.getElementById('dashboard');
-      if(!dashboard.classList.contains('active'))return;
-      const target=add.getBoundingClientRect();
-      if(!target.width)return;
-      const overlaps=r=>r.right>target.left-5&&r.left<target.right+5&&r.bottom>target.top-5&&r.top<target.bottom+5;
-      let blocked=false,walker=document.createTreeWalker(dashboard,NodeFilter.SHOW_TEXT);
-      while(!blocked&&walker.nextNode()){
-        const node=walker.currentNode;
-        if(!node.textContent.trim()||add.contains(node)||!node.parentElement.getClientRects().length)continue;
-        const range=document.createRange();range.selectNodeContents(node);
-        blocked=[...range.getClientRects()].some(overlaps);
-      }
-      if(!blocked)blocked=[...dashboard.querySelectorAll('button,input,select,canvas')].some(e=>e!==add&&!add.contains(e)&&e.getClientRects().length&&overlaps(e.getBoundingClientRect()));
-      add.classList.toggle('quick-add-obscured',blocked);
-    }
-    const settleQuickAdd=()=>{clearTimeout(quickAddScrollTimer);quickAddScrollTimer=setTimeout(()=>{placeQuickAdd();document.body.classList.remove('quick-add-scrolling');},300);};
-    window.addEventListener('scroll',()=>{
-      if(!window.matchMedia('(max-width:700px)').matches)return;
-      document.body.classList.add('quick-add-scrolling');settleQuickAdd();
-    },{passive:true});
-    window.addEventListener('resize',settleQuickAdd,{passive:true});
-    document.addEventListener('click',event=>{if(event.target.closest('[data-tab],[data-style-page]'))settleQuickAdd();});
-    settleQuickAdd();
     add.onclick=()=>{
       const node=dialog('quickAddDialog','Add a record');node.querySelector('.tracker-review-content').replaceChildren();node.querySelector('footer').replaceChildren();
       for(const [label,tab,target,panel] of [['Income','income-expenses','#incomeAmount'],['Expense or loan payment','income-expenses','#expenseAmount'],['Investment','investments','#openGeneralInvestmentBtn'],['PMS contribution','investments',null,'stallionContributionAddPanel'],['Loan or debt','debts',null,'loanAddPanel']]){
