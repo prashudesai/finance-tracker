@@ -712,7 +712,7 @@
         const investedWidth=Math.min(100,Math.max(0,row.invested/maxValue*100));
         const currentWidth=Math.min(100,Math.max(0,row.current/maxValue*100));
         const changeLeft=Math.min(investedWidth,currentWidth),changeWidth=Math.abs(currentWidth-investedWidth);
-        const changeClass=row.gain>=0?'is-gain':'is-loss';
+        const changeClass=row.gain>0?'is-gain':row.gain<0?'is-loss':'is-neutral';
         const detailId=`completePortfolioDetail${index}`;
         const holdingRows=row.holdings.map(holding=>{
           const gain=holding.current-holding.invested;
