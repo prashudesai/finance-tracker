@@ -2756,3 +2756,17 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 #growthContributionDialog>footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
 #growthContributionDialog>footer p{font-size:11px;line-height:1.5;margin:0;color:var(--text-light)}
 #growthContributionDialog>footer button{min-height:44px;padding:9px 14px;margin:0;border-radius:10px;font-size:12px}
+
+/* Dashboard mobile controls */
+@media screen and (max-width:700px){
+  html[data-app-style="modern"] body.advanced-layout #dashboard.active{padding-bottom:7rem}
+  html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{transition:opacity .18s ease,background-color .15s,box-shadow .15s}
+  html[data-app-style="modern"] body.advanced-layout.quick-add-scrolling #dashboard #trackerQuickAdd{opacity:0;pointer-events:none}
+  #monthlyChanges>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 14px;list-style:none}
+  #monthlyChanges>summary::-webkit-details-marker{display:none}
+  #monthlyChanges>summary::before{content:"›";display:inline-block;font-size:22px;line-height:1;color:var(--primary);transition:transform .18s}
+  #monthlyChanges[open]>summary::before{transform:rotate(90deg)}
+  #monthlyChanges .monthly-changes-title{min-width:0}
+  #monthlyChanges .monthly-changes-delta{margin-left:auto;padding:5px 8px;border-radius:999px;background:color-mix(in srgb,var(--primary) 12%,transparent);color:var(--primary);font-size:11px;font-weight:700;white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{transition:none}}
