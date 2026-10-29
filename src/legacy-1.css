@@ -2454,3 +2454,37 @@
         flex:0 0 36px; width:36px; min-width:36px; height:36px; margin:0;
       }
     }
+
+
+    /* Desktop investment actions with visible labels, matching PMS quick actions. */
+    @media (min-width:701px) {
+      #investmentCategoryDialog .investment-row-action-group,
+      .investment-category-card .investment-row-action-group,
+      #investmentCategoryDialog .investment-row-action-group:has(button:nth-of-type(4)),
+      .investment-category-card .investment-row-action-group:has(button:nth-of-type(4)) {
+        display:flex; flex-wrap:wrap; justify-content:flex-start; align-items:center;
+        gap:8px 10px; width:340px; max-width:none;
+      }
+      #investmentCategoryDialog .investment-row-action-group .investment-icon-action,
+      .investment-category-card .investment-row-action-group .investment-icon-action {
+        display:inline-flex; align-items:center; justify-content:flex-start;
+        flex:0 0 102px; width:102px; min-width:102px; height:38px;
+        padding:0 9px; gap:7px; margin:0; font-size:12px; line-height:1.2;
+        white-space:nowrap; text-align:left;
+      }
+      #investmentCategoryDialog .investment-row-action-group .investment-icon-action svg,
+      .investment-category-card .investment-row-action-group .investment-icon-action svg {
+        flex:0 0 17px; width:17px; height:17px;
+      }
+      #investmentCategoryDialog .investment-row-action-group .investment-icon-action::after,
+      .investment-category-card .investment-row-action-group .investment-icon-action::after {
+        content:attr(data-short-action); display:inline; font-size:12px;
+        line-height:1.2; font-weight:600; color:inherit;
+      }
+      #investmentCategoryDialog .investment-row-actions,
+      .investment-category-card .investment-row-actions,
+      #investmentCategoryDialog .table-wrapper > table:has(.investment-row-action-group) :is(th:last-child,td:last-child),
+      .investment-category-card .table-wrapper > table:has(.investment-row-action-group) :is(th:last-child,td:last-child) {
+        width:340px; min-width:340px; white-space:normal;
+      }
+    }
