@@ -365,7 +365,8 @@
       const viewAccounts=profileRows(state.nps||[]);
       updateRetirementTilesVisibility();
       const tbody = document.getElementById('npsBody');
-      document.getElementById('openNpsBalanceUpdate').hidden=viewAccounts.length===0;
+      // Per-account Update value controls replace the legacy portfolio-header button.
+      document.getElementById('openNpsBalanceUpdate').hidden=true;
       updateRetirementAccountSummary('nps');
       renderInvestmentOverview();
       renderAccountPager('nps','npsBody',renderNps);
