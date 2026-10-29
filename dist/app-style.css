@@ -2890,7 +2890,7 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 }
 /* Match Search and Add with equal 22px circles inside 44px touch areas. */
 @media screen and (max-width:700px){
- html[data-app-style="modern"] #financeBottomTools #openRecordSearch{position:relative}
+ html[data-app-style="modern"] #financeBottomTools #openRecordSearch{position:relative;inset:auto}
  html[data-app-style="modern"] #financeBottomTools #openRecordSearch::before{content:"";position:absolute;inset:11px;border-radius:50%;background:var(--card-bg);border:1px solid var(--primary);box-shadow:0 2px 6px #0002;pointer-events:none}
  html[data-app-style="modern"] #financeBottomTools #openRecordSearch svg{position:relative;width:13px;height:13px;flex:0 0 13px}
 }
