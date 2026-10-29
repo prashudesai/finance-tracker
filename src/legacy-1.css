@@ -2393,3 +2393,17 @@
   body.advanced-layout #mobileSettingsShortcut{width:36px;height:36px;min-width:36px}
   body.advanced-layout .header-controls .theme-mode-option{width:36px;height:36px}
 }
+
+
+/* Mobile dock: Settings lives in the header, never in the five-tab dock. */
+@media screen and (max-width:700px){
+  html body.advanced-layout .nav-tab-items{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;width:100%!important}
+  html body.advanced-layout .nav-tab[data-tab="settings"]{display:none!important}
+  html body.advanced-layout .nav-tab[data-tab="growth-projection"],
+  html body.advanced-layout .nav-tab[data-tab="analytics"]{display:none!important}
+  html body.advanced-layout .nav-tab[data-tab="dashboard"],
+  html body.advanced-layout .nav-tab[data-tab="income-expenses"],
+  html body.advanced-layout .nav-tab[data-tab="investments"],
+  html body.advanced-layout .nav-tab[data-tab="debts"],
+  html body.advanced-layout .nav-tab[data-tab="reports"]{display:flex!important;min-width:0!important;width:auto!important}
+}
