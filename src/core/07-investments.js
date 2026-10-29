@@ -216,7 +216,8 @@
       if(pagerSource){const pager=pagerSource.cloneNode(true);pager.removeAttribute('id');pager.onclick=event=>{const button=event.target.closest('[data-direction]');if(!button)return;accountPages[type]=Math.max(0,(accountPages[type]||0)+Number(button.dataset.direction));({pf:renderPf,ppf:renderPpf,nps:renderNps}[type]||(()=>{}))();};table.appendChild(pager);}
       const actions=document.getElementById('retirementCategoryDialogActions');actions.replaceChildren();
       const sourceActions=card.querySelector('.retirement-account-actions');
-      if(sourceActions){const clone=sourceActions.cloneNode(true);clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));actions.appendChild(clone);}
+      // NPS balance updates live in each account's shared action footer, not the modal header.
+      if(sourceActions&&type!=='nps'){const clone=sourceActions.cloneNode(true);clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));actions.appendChild(clone);}
       document.getElementById('retirementCategoryDialogNote').textContent=card.querySelector('.retirement-account-help')?.textContent||'';
       dialog.dataset.retirementType=type;
       if(show&&dialog.hidden){dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-retirement-category-dialog]')?.focus();}
