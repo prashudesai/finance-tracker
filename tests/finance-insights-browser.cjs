@@ -37,6 +37,25 @@ const server=http.createServer(async(req,res)=>{try{
    await page.evaluate(()=>applyColorTheme('ocean-blue'));
    assert.equal(await page.evaluate(()=>document.documentElement.dataset.colorTheme),'navy-emerald');
    await page.evaluate(previous=>applyColorTheme(previous),previous);
+   const migrated=await page.evaluate(()=>{
+     const originalStyle=trackerStorage.getItem('displayStyle');
+     const originalColor=trackerStorage.getItem('familyWealthColorTheme');
+     const cases=[['emerald-flow','classic-teal'],['modern','ocean-blue'],['obsidian-black','midnight-aurora']];
+     const results=[];
+     for(const [style,color] of cases){
+       trackerStorage.setItem('displayStyle',style);
+       trackerStorage.setItem('familyWealthColorTheme',color);
+       initTheme();
+       PFT_STYLE.apply(trackerStorage.getItem('displayStyle'),false);
+       results.push({style:trackerStorage.getItem('displayStyle'),color:trackerStorage.getItem('familyWealthColorTheme'),current:PFT_STYLE.current});
+     }
+     trackerStorage.setItem('displayStyle',originalStyle||'modern');
+     trackerStorage.setItem('familyWealthColorTheme',originalColor||'navy-emerald');
+     initTheme();
+     PFT_STYLE.apply(originalStyle||'modern',false);
+     return results;
+   });
+   assert(migrated.every(row=>row.style==='modern'&&row.current==='modern'&&row.color==='navy-emerald'),JSON.stringify(migrated));
  });
  await check('Dashboard header and Projection Settings are balanced on desktop',async()=>{
   await page.setViewportSize({width:1440,height:900});
