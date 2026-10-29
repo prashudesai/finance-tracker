@@ -27,7 +27,7 @@
     root.dataset.layoutStyle=style==='obsidian-black'?'modern':style;root.dataset.appearanceChoice=style;window.PFTPaint?.remember();
     if(persist){try{window.trackerStorage.setItem(key,style);}catch(_){/* The layout still applies to this session. */}}
     controls?.querySelectorAll('[data-app-style-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.appStyleChoice===style)));
-    const labels={modern:'Style 1 · Modern','emerald-flow':'Style 2 · Emerald Flow','obsidian-black':'Style 3 · Obsidian Black'};
+    const labels={modern:'Style 1 · Modern','emerald-flow':'Retired layout','obsidian-black':'Style 2 · Obsidian Black'};
     const status=document.getElementById('appStyleStatus');if(status)status.textContent=labels[style]+' selected. This preference is saved for this account on this device.';
     const familyMenu=document.getElementById('familyProfileMenu');if(familyMenu)familyMenu.hidden=true;window.syncFamilyProfileButtons?.();
     window.setMobileNavHidden?.(false);
@@ -83,13 +83,16 @@
     for(const [id,slot] of Object.entries(dashboardSlots))document.getElementById(id)?.closest('.dashboard-stat,.dashboard-wide-card')?.setAttribute('data-layout-slot',slot);
     const panel=document.getElementById('settingsAppearancePanel')||document.querySelector('.settings-appearance-panel');
     controls=document.createElement('section');controls.id='appStyleChoices';controls.className='pft-style-choices';controls.setAttribute('aria-labelledby','appStyleChoicesTitle');
-    controls.innerHTML='<h3 id="appStyleChoicesTitle">Page style</h3><p>Choose a layout. Your tracker records stay the same.</p><div class="pft-style-choice-grid"><button type="button" data-app-style-choice="modern" aria-pressed="false"><span class="pft-style-swatch modern" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 1 · Modern <small>Default</small></strong><span>Compact pages with teal and mint accents.</span></button><button type="button" data-app-style-choice="emerald-flow" aria-pressed="false"><span class="pft-style-swatch emerald-flow" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 2 · Emerald Flow</strong><span>Page workspaces and interactive graphs.</span></button><button type="button" data-app-style-choice="obsidian-black" aria-pressed="false"><span class="pft-style-swatch obsidian-black" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 3 · Obsidian Black</strong><span>Black surfaces with mint accents.</span></button></div><p id="appStyleStatus" role="status"></p>';
+    controls.innerHTML='<h3 id="appStyleChoicesTitle">Page style</h3><p>Choose a layout. Your tracker records stay the same.</p><div class="pft-style-choice-grid"><button type="button" data-app-style-choice="modern" aria-pressed="false"><span class="pft-style-swatch modern" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 1 · Modern <small>Default</small></strong><span>Compact pages with teal and mint accents.</span></button><button type="button" data-app-style-choice="obsidian-black" aria-pressed="false"><span class="pft-style-swatch obsidian-black" aria-hidden="true"><i></i><i></i><i></i></span><strong>Style 2 · Obsidian Black</strong><span>Black surfaces with mint accents.</span></button></div><p id="appStyleStatus" role="status"></p>';
     controls.querySelectorAll('[data-app-style-choice]').forEach(b=>b.addEventListener('click',()=>applyStyle(b.dataset.appStyleChoice)));
     panel?.prepend(controls);
     const oldNav=document.querySelector('.nav-tabs');if(oldNav)new MutationObserver(updateSelection).observe(oldNav,{attributes:true,subtree:true,attributeFilter:['class']});
     let saved;try{saved=window.trackerStorage.getItem(key);}catch(_){}
+    // Retire Emerald Flow from user preferences; restore Modern without altering records.
+    const retiredStyle=saved==='emerald-flow';
+    if(retiredStyle)saved='modern';
     const legacyBlack=root.dataset.colorTheme==='obsidian-black'&&saved!=='obsidian-black';
-    applyStyle(legacyBlack?'obsidian-black':saved,saved==='classic'||legacyBlack);
+    applyStyle(legacyBlack?'obsidian-black':saved,saved==='classic'||legacyBlack||retiredStyle);
     window.PFT_STYLE={apply:applyStyle,get current(){return root.dataset.appearanceChoice||root.dataset.layoutStyle||root.dataset.appStyle;}};
   }
   window.addEventListener('pft:before-reveal',install);
