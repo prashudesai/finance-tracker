@@ -135,7 +135,15 @@
       }
       details.append(actions);info.querySelector('#appInfoPdfStatus').after(details);
     }
-    const add=el('button','+ Add record','btn-primary tracker-quick-add');add.type='button';add.id='trackerQuickAdd';add.setAttribute('aria-label','Add record');add.title='Add record';add.innerHTML='<span class="quick-add-symbol" aria-hidden="true">+</span><span class="quick-add-label"> Add record</span>';add.hidden=window.financeCloud.canEdit===false;document.getElementById('dashboard').prepend(add);add.onclick=()=>{
+    const add=el('button','+ Add record','btn-primary tracker-quick-add');add.type='button';add.id='trackerQuickAdd';add.setAttribute('aria-label','Add record');add.title='Add record';add.innerHTML='<span class="quick-add-symbol" aria-hidden="true">+</span><span class="quick-add-label"> Add record</span>';add.hidden=window.financeCloud.canEdit===false;document.getElementById('dashboard').prepend(add);
+    let quickAddScrollTimer;
+    window.addEventListener('scroll',()=>{
+      if(!window.matchMedia('(max-width:700px)').matches)return;
+      document.body.classList.add('quick-add-scrolling');
+      clearTimeout(quickAddScrollTimer);
+      quickAddScrollTimer=setTimeout(()=>document.body.classList.remove('quick-add-scrolling'),180);
+    },{passive:true});
+    add.onclick=()=>{
       const node=dialog('quickAddDialog','Add a record');node.querySelector('.tracker-review-content').replaceChildren();node.querySelector('footer').replaceChildren();
       for(const [label,tab,target,panel] of [['Income','income-expenses','#incomeAmount'],['Expense or loan payment','income-expenses','#expenseAmount'],['Investment','investments','#openGeneralInvestmentBtn'],['PMS contribution','investments',null,'stallionContributionAddPanel'],['Loan or debt','debts',null,'loanAddPanel']]){
         const b=el('button',label,'btn-secondary');b.type='button';b.onclick=()=>{node.close();document.querySelector('.nav-tab[data-tab="'+tab+'"]').click();requestAnimationFrame(()=>{if(panel){openEntryFormModal(panel,add);return;}const field=target?document.querySelector(target):null;if(field&&field.getClientRects().length){field.scrollIntoView({block:'center',behavior:'smooth'});field.focus({preventScroll:true});if(target==='#openGeneralInvestmentBtn')field.click();}});};node.querySelector('.tracker-review-content').append(b);
