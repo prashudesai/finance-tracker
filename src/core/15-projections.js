@@ -176,7 +176,9 @@
       list.innerHTML=monthlyAssets.map(asset=>{const included=!excluded.includes(asset.name);return `<label class="growth-exclusion-item${included?'':' is-excluded'}"><span class="growth-exclusion-name"><strong>${analyticEscape(asset.name)}</strong><small>${formatCurrency((Number(asset.monthly)||0)+(asset.kind==='pf'?(assets.find(row=>row.kind==='eps')?.monthly||0):0))} per month${asset.kind==='pf'&&assets.some(row=>row.kind==='eps')?' · PF + EPS':''}</small></span><span class="growth-exclusion-control"><span>${included?'Included':'Excluded'}</span><span class="growth-switch growth-switch-small"><input type="checkbox" class="growth-monthly-exclude-toggle" data-asset="${analyticEscape(asset.name)}" aria-label="Include ${analyticEscape(asset.name)} monthly contribution" ${included?'checked':''}><span class="growth-switch-track"></span></span></span></label>`;}).join('')||'<p class="text-muted">No monthly contributions available.</p>';
     }
     function renderGrowthAdjustmentRows(assets) {
-      const select=document.getElementById('growthAdjustmentAsset'),previous=select.value;
+      const select=document.getElementById('growthAdjustmentAsset');
+      if(!select)return;
+      const previous=select.value;
       const options=assets.map(asset=>asset.name);
       if(!options.includes('Other'))options.push('Other');
       select.innerHTML=options.map(name=>`<option value="${analyticEscape(name)}">${analyticEscape(name)}</option>`).join('');
