@@ -258,6 +258,43 @@ const server=http.createServer(async(req,res)=>{try{
   await page.setViewportSize({width:390,height:844});
   assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
  });
+ await check('PMS-style investment and retirement actions are full-width on desktop and preserve mobile',async()=>{
+  const original=await page.evaluate(()=>JSON.stringify(state));
+  try{
+   await page.setViewportSize({width:1440,height:900});
+   await page.evaluate(()=>{
+    PFT_STYLE.apply('modern');
+    document.querySelector('.nav-tab[data-tab="investments"]').click();
+    const member=state.customValues.familyMembers[0];
+    state.investments=[{id:'footer-fund',member,type:'Mutual Funds',name:'Test fund',date:'2025-01-01',invested:100000,current:120000,monthly:2500,autoMonthlyContribution:true}];
+    state.pf=[{id:'footer-pf',member,account:'Test PF',employee:2000,employer:1000,monthly:3000,rate:8.25,invested:50000,current:65000,epsCurrent:0,date:'2025-01-01'}];
+    renderInvestments();renderPf();renderInvestmentCategoryDialog('Mutual Funds',true);
+   });
+   const investment=page.locator('#investmentCategoryDialog');
+   assert.deepEqual(await investment.locator('.pms-modal-action-button span').allTextContents(),['View History','Edit','Delete','Add contribution','Update value']);
+   assert.equal(await investment.locator('td.pms-modal-original-actions').evaluate(el=>getComputedStyle(el).display),'none');
+   const investmentGeometry=await investment.locator('.pms-modal-action-button').evaluateAll(buttons=>buttons.map(b=>b.getBoundingClientRect().toJSON()));
+   assert(investmentGeometry.every(box=>Math.abs(box.y-investmentGeometry[0].y)<3),JSON.stringify(investmentGeometry));
+   await page.evaluate(()=>{closeInvestmentCategoryDialog();renderRetirementCategoryDialog('pf',true);});
+   const retirement=page.locator('#retirementCategoryDialog');
+   assert.deepEqual(await retirement.locator('.pms-modal-action-button span').allTextContents(),['View History','Edit','Delete','Add contribution']);
+   assert.equal(await retirement.locator('td.pms-modal-original-actions').evaluate(el=>getComputedStyle(el).display),'none');
+   const retirementGeometry=await retirement.locator('.pms-modal-action-button').evaluateAll(buttons=>buttons.map(b=>b.getBoundingClientRect().toJSON()));
+   assert(retirementGeometry.every(box=>Math.abs(box.y-retirementGeometry[0].y)<3),JSON.stringify(retirementGeometry));
+   await page.setViewportSize({width:390,height:844});
+   assert.equal(await retirement.locator('.pms-modal-action-list').isVisible(),false);
+   assert.notEqual(await retirement.locator('td.pms-modal-original-actions').evaluate(el=>getComputedStyle(el).display),'none');
+   await page.evaluate(()=>{closeRetirementCategoryDialog();renderInvestmentCategoryDialog('Mutual Funds',true);});
+   assert.equal(await investment.locator('.pms-modal-action-list').isVisible(),false);
+   assert.notEqual(await investment.locator('td.pms-modal-original-actions').evaluate(el=>getComputedStyle(el).display),'none');
+  }finally{
+   await page.evaluate(original=>{
+    closeInvestmentCategoryDialog();closeRetirementCategoryDialog();
+    Object.assign(state,JSON.parse(original));renderInvestments();renderPf();
+   },original);
+   await page.setViewportSize({width:390,height:844});
+  }
+ });
  await check('Mobile detail sheet headers and PMS metrics have no overlap',async()=>{
   const original=await page.evaluate(()=>JSON.stringify(state));
   await page.evaluate(()=>{
