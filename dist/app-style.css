@@ -2800,3 +2800,5 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
   body.advanced-layout .nav-tab[data-tab="settings"]{display:none}
   body.advanced-layout .nav-tab.active{margin:4px;border-radius:12px;box-shadow:none}
 }
+
+@media screen and (max-width:360px){body.advanced-layout > .container > header{padding-inline:6px;gap:4px}body.advanced-layout .header-controls{gap:2px}}
