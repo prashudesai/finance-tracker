@@ -61,7 +61,12 @@ const server=http.createServer(async(req,res)=>{try{
  await check('Dashboard header and Projection Settings are balanced on desktop',async()=>{
   await page.setViewportSize({width:1440,height:900});
   await page.evaluate(()=>{PFT_STYLE.apply('modern',false);document.querySelector('.nav-tab[data-tab="dashboard"]').click();updateDashboard();});
-  assert(await page.locator('#dashboard .dashboard-page-icon').isVisible());
+  assert.equal(await page.locator('#dashboard .dashboard-page-icon').isVisible(),false);
+  assert.equal(await page.locator('#dashboardPagePeriod').isVisible(),false);
+  for(const selector of ['#dashboard>.dashboard-page-intro','#debts>.debt-page-intro','#settings>.settings-intro']){
+   const style=await page.locator(selector).evaluate(node=>{const s=getComputedStyle(node);return {background:s.backgroundImage,border:s.borderTopWidth,shadow:s.boxShadow};});
+   assert.deepEqual(style,{background:'none',border:'0px',shadow:'none'});
+  }
   assert.equal(await page.locator('#dashboardPagePeriod').textContent(),await page.evaluate(()=>new Date().toLocaleDateString('en-IN',{month:'long',year:'numeric'})));
   await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="growth-projection"]').click());
   for(const width of [701,800,1024,1440]){
@@ -70,6 +75,7 @@ const server=http.createServer(async(req,res)=>{try{
     const settings=grid.querySelector('.advanced-growth-rail').getBoundingClientRect(),chart=grid.querySelector(':scope>.growth-projection-chart-panel').getBoundingClientRect();
     return {width:grid.getBoundingClientRect().width,gap:parseFloat(getComputedStyle(grid).columnGap),settings:settings.toJSON(),chart:chart.toJSON()};
    });
+   assert(await page.locator('#growthProjectionInputs').isVisible());
    const available=sizes.width-sizes.gap;
    assert(Math.abs(sizes.settings.width/available-.3)<.01,JSON.stringify({width,sizes}));
    assert(Math.abs(sizes.chart.width/available-.7)<.01,JSON.stringify({width,sizes}));
@@ -84,6 +90,7 @@ const server=http.createServer(async(req,res)=>{try{
     return {columns:getComputedStyle(grid).gridTemplateColumns,rail:rail.toJSON(),chart:chart.toJSON()};
    });
    assert.equal(mobile.columns.trim().split(/\s+/).length,1,JSON.stringify({width,mobile}));
+   assert.equal(await page.locator('#growthProjectionInputs').isVisible(),false);
    assert(mobile.chart.top>=mobile.rail.bottom-1,JSON.stringify({width,mobile}));
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   }
@@ -99,7 +106,7 @@ const server=http.createServer(async(req,res)=>{try{
    assert.equal(await chart.locator('path.cash-income').count(),width>700?0:1);
    for(const id of ['debts','settings']){
     await page.evaluate(id=>document.querySelector('.nav-tab[data-tab="'+id+'"]').click(),id);
-    assert.equal(await page.locator('#'+id+' .pending-desktop-page-icon').isVisible(),width>700);
+    assert.equal(await page.locator('#'+id+' .pending-desktop-page-icon').isVisible(),false);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    }
   }

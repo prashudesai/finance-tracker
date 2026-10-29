@@ -4,7 +4,7 @@
   "workbench.css": "assets/workbench.ae99eb56d5654983.css",
   "cash-flow.css": "assets/cash-flow.9211ea05b78d02da.css",
   "boot.js": "assets/boot.a2ca9dc9f03ee137.js",
-  "app-info.js": "assets/app-info.405f70c7c0c6f779.js",
+  "app-info.js": "assets/app-info.b58ee904db5d12d4.js",
   "loan-ledger.js": "assets/loan-ledger.68deb1413e30aa08.js",
   "recurring.js": "assets/recurring.21005de2ca263681.js",
   "recurring-ui.js": "assets/recurring-ui.7063af9db85dae04.js",
@@ -37,8 +37,8 @@
   "runtime/legacy-2.css": "assets/legacy-2.2bf3b4402c360219.css",
   "runtime/legacy-3.css": "assets/legacy-3.da8e96c8d3a1dcce.css",
   "runtime/legacy-4.css": "assets/legacy-4.453862e3306d6301.css",
-  "app-style.css": "assets/app-style.acb4dd87da518a83.css",
+  "app-style.css": "assets/app-style.8608a29ac5370b8b.css",
   "print.css": "assets/print.e13a02846eb11264.css",
   "app-style.js": "assets/app-style.57ccd587fcc9b013.js",
-  "runtime/app-core.js": "assets/app-core.8234f83b10f9b0f0.js"
+  "runtime/app-core.js": "assets/app-core.1f118f4ea192fd09.js"
 }

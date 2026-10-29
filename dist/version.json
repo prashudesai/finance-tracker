@@ -1,7 +1,7 @@
 {
-  "version": "2026.10.29.18",
+  "version": "2026.10.29.19",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Desktop: use a 30:70 Projection Settings and graph layout, grouped income/expense bars, PMS-style retirement details, Cash Reserve retirement card styling, and consistent Debt and Settings headers. Remove Warm Amber and migrate its appearance preference without changing financial records. Mobile layouts remain unchanged."
+    "Desktop: simplify Dashboard, Debt and Settings headers to match Cash Flow; compact the projection panels and show live portfolio, contribution and gratuity inputs. Preserve the 30:70 layout and mobile views."
   ]
 }

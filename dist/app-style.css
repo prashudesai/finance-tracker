@@ -3326,3 +3326,37 @@ html[data-app-style="modern"] #investmentEditModal :is(input,select,textarea){
  #retirementCategoryDialogTable tbody tr{grid-template-columns:repeat(2,minmax(0,1fr))}
  html[data-app-style] body.advanced-layout :is(#debts>.debt-page-intro,#settings>.settings-intro){flex-wrap:wrap}
 }
+
+/* Desktop headers follow the plain Cash Flow heading, without card chrome. */
+@media screen and (min-width:701px){
+ html[data-app-style] body.advanced-layout :is(#dashboard>.dashboard-page-intro,#debts>.debt-page-intro,#settings>.settings-intro){
+  display:block!important;margin:26px 0!important;padding:0!important;border:0!important;
+  border-radius:0!important;background:none!important;box-shadow:none!important;min-height:0!important;
+ }
+ html[data-app-style] body.advanced-layout :is(#dashboard .dashboard-page-heading,#dashboard .dashboard-page-heading>div,#debts>.debt-page-intro>div,#settings>.settings-intro>div){display:block!important;padding:0!important;border:0!important;background:none!important}
+ html[data-app-style] body.advanced-layout :is(#dashboard .dashboard-page-icon,#dashboard .dashboard-page-period,#debts .pending-desktop-page-icon,#settings .pending-desktop-page-icon,#debts>.debt-page-intro>.debt-page-badge,#settings>.settings-intro>.settings-local-note){display:none!important}
+ html[data-app-style] body.advanced-layout :is(#dashboard .dashboard-page-kicker,#debts .debt-page-kicker,#settings .settings-eyebrow){display:block!important;margin:0 0 8px!important;color:var(--primary);font-size:10px!important;font-weight:600;letter-spacing:1.5px!important}
+ html[data-app-style] body.advanced-layout :is(#dashboard>.dashboard-page-intro,#debts>.debt-page-intro,#settings>.settings-intro) h1{margin:0 0 14px!important;padding:0 0 0 14px!important;border:0!important;border-left:4px solid var(--primary)!important;font-size:34px!important;font-weight:650!important;line-height:1.2!important;letter-spacing:-.7px!important}
+ html[data-app-style] body.advanced-layout :is(#dashboard .dashboard-page-caption,#debts>.debt-page-intro p,#settings>.settings-intro p){display:block!important;margin:0!important;color:var(--text-light)!important;font-size:13px!important;line-height:1.7!important}
+}
+
+/* Pending: compact the desktop projection panels by about one fifth. */
+@media screen and (min-width:701px){
+ html[data-app-style="modern"] body.advanced-layout #growth-projection :is(#growthProjectionControls,.growth-projection-chart-panel){padding:13px 14px!important}
+ html[data-app-style="modern"] body.advanced-layout #growth-projection #growthProjectionControls .form-grid{gap:14px!important}
+ html[data-app-style="modern"] body.advanced-layout #growth-projection .growth-projection-chart-wrap{min-height:292px!important;padding:10px 11px 6px!important}
+ html[data-app-style="modern"] body.advanced-layout #growth-projection #growthProjectionChart{max-height:272px!important}
+ html[data-app-style="modern"] body.advanced-layout #growth-projection :is(#growthProjectionControls,.growth-projection-chart-panel)>.panel-header{margin-bottom:8px!important;padding-bottom:6px!important}
+}
+
+.growth-projection-inputs{display:none}
+@media screen and (min-width:701px){
+ #growthProjectionControls .growth-projection-inputs{display:block;margin-top:16px;padding-top:13px;border-top:1px solid var(--border)}
+ #growthProjectionInputs h3{font-size:12px;line-height:1.4;text-transform:uppercase;letter-spacing:.05em;margin:0 0 12px;color:var(--text)}
+ #growthProjectionInputs dl{margin:0}
+ #growthProjectionInputs .projection-input-row{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 10px;margin-top:10px;font-size:12px;line-height:1.45}
+ #growthProjectionInputs dt{min-width:0;color:var(--text-light)}
+ #growthProjectionInputs dd{margin:0;font-weight:650;color:var(--text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+ #growthProjectionInputs .projection-input-help{font-size:10px;line-height:1.5;color:var(--text-light);margin:3px 0 0}
+ #growthProjectionInputs .projection-input-note{font-size:10px;line-height:1.5;color:var(--text-light);margin:14px 0 0;padding-top:10px;border-top:1px solid var(--border)}
+}

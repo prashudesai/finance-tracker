@@ -1,0 +1,13 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
+const source=fs.readFileSync(require('path').join(__dirname,'../src/core/15-projections.js'),'utf8');
+const fn=source.slice(source.indexOf('    function growthProjectionInputSnapshot('),source.indexOf('    function renderGrowthProjectionInputs('));
+const assets=[{name:'Funds',kind:'investment',monthly:25000},{name:'PF',kind:'pf',monthly:8000},{name:'EPS',kind:'eps',monthly:2000},{name:'NPS',kind:'nps',monthly:8000}];
+const state={projectionSettings:{includeMonthlyContributions:true,excludedMonthlyContributions:[]}};
+const c={state};vm.runInNewContext(fn,c);const snapshot=c.growthProjectionInputSnapshot;
+const before=JSON.stringify({assets,state});let s=snapshot(assets,5000000,500000,true,{totalContributions:3000000});
+assert.equal(s.current,5000000);assert.equal(s.monthly,43000);assert.equal(s.contributions,3000000,'Use engine total, including annual increases, instead of monthly × horizon');assert.equal(s.gratuity,500000);
+assert.equal(JSON.stringify({assets,state}),before,'Summary does not modify finances or settings');
+state.projectionSettings.excludedMonthlyContributions=['PF'];s=snapshot(assets,4500000,500000,false,{totalContributions:2200000});assert.equal(s.monthly,33000,'Excluding PF excludes EPS as in engine');assert.equal(s.gratuity,0);
+state.projectionSettings.includeMonthlyContributions=false;s=snapshot(assets,4500000,500000,false,{totalContributions:0});assert.equal(s.monthly,0);assert.equal(s.breakdown.length,0);assert.equal(s.contributions,0);
+s=snapshot([],0,0,false,{totalContributions:0});assert.equal(s.current,0);assert.equal(s.monthly,0);
+console.log('PASS projection inputs: totals, PF/EPS exclusions, toggles, empty portfolios and read-only behavior');

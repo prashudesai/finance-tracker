@@ -6301,6 +6301,27 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerleave',hide);
       growthProjectionHoverCleanup=()=>{canvas.removeEventListener('pointermove',move);canvas.removeEventListener('pointerleave',hide);hide();};
     }
+    function growthProjectionInputSnapshot(assets,current,gratuity,includeGratuity,result){
+      const excluded=new Set(state.projectionSettings?.excludedMonthlyContributions||[]);
+      if(excluded.has('PF'))excluded.add('EPS');
+      const breakdown=new Map();
+      if(state.projectionSettings?.includeMonthlyContributions!==false){
+        for(const asset of assets){
+          if(excluded.has(asset.name))continue;
+          const amount=Number(asset.monthly)||0;if(amount<=0)continue;
+          const label=['pf','eps'].includes(asset.kind)?'PF + EPS':asset.kind==='nps'?'NPS':asset.kind==='ppf'?'PPF':'Investments';
+          breakdown.set(label,(breakdown.get(label)||0)+amount);
+        }
+      }
+      return {current,monthly:[...breakdown.values()].reduce((sum,value)=>sum+value,0),breakdown:[...breakdown],contributions:result.totalContributions,gratuity:includeGratuity?gratuity:0};
+    }
+    function renderGrowthProjectionInputs(assets,current,gratuity,includeGratuity,result,years){
+      const target=document.getElementById('growthProjectionInputs');if(!target)return;
+      const data=growthProjectionInputSnapshot(assets,current,gratuity,includeGratuity,result);
+      const row=(label,value)=>`<div class="projection-input-row"><dt>${analyticEscape(label)}</dt><dd>${formatCurrency(value)}</dd></div>`;
+      const details=data.breakdown.map(([label,value])=>analyticEscape(label)+' '+formatCurrency(value)).join(' · ');
+      target.innerHTML='<h3>Your projection inputs</h3><dl>'+row('Starting portfolio',data.current)+(includeGratuity?'<p class="projection-input-help">Includes gratuity shown below.</p>':'')+row('Monthly contributions',data.monthly)+(details?'<p class="projection-input-help">'+details+'</p>':'')+row('Contributions over '+years+' '+(years===1?'year':'years'),data.contributions)+'<p class="projection-input-help">Uses your selected contributions and annual increases.</p>'+row(includeGratuity?'Gratuity included':'Gratuity excluded',data.gratuity)+'</dl><p class="projection-input-note">Changing these settings affects projections only.</p>';
+    }
     function renderGrowthProjection(options={}) {
       const yearsSelect=document.getElementById('growthProjectionYears');if(!yearsSelect)return;
       const years=Number(state.projectionSettings?.years)||5;yearsSelect.value=String(years);document.getElementById('growthProjectionYearsValue').textContent=`${years} ${years===1?'year':'years'}`;
@@ -6326,12 +6347,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(gratuityToggleWrap)gratuityToggleWrap.hidden=!gratuityPresent;
       const projectionAssets=includeGratuityBalance?[...assets,{name:'__GRATUITY_BENEFIT_INTERNAL__',current:gratuityCurrent,invested:gratuityCurrent,monthly:0,sourceMonthly:0,defaults:{stress:0,base:0,optimistic:0},returns:{stress:0,base:0,optimistic:0},kind:'gratuity'}]:assets;
       const investmentCurrent=assets.reduce((sum,asset)=>sum+asset.current,0),current=projectionAssets.reduce((sum,asset)=>sum+asset.current,0);
+      const inputSummary=document.getElementById('growthProjectionInputs');if(inputSummary)inputSummary.textContent='';
       let projections,investmentProjections;
       try{
         projections=Object.fromEntries(['stress','base','optimistic'].map(scenario=>[scenario,runGrowthProjection(projectionAssets,years,scenario)]));
         investmentProjections=includeGratuityBalance?Object.fromEntries(['stress','base','optimistic'].map(scenario=>[scenario,runGrowthProjection(assets,years,scenario)])):projections;
       }
       catch(error){summary.innerHTML=`<div class="panel"><strong>Projection needs attention</strong><p>${analyticEscape(error.message)}</p></div>`;body.innerHTML='<tr><td colspan="11" class="text-muted">Adjust the planned withdrawal before viewing projected values.</td></tr>';document.getElementById('growthProjectionTakeaway').textContent='';if(growthProjectionHoverCleanup){growthProjectionHoverCleanup();growthProjectionHoverCleanup=null;}if(growthProjectionChartInstance){growthProjectionChartInstance.destroy();growthProjectionChartInstance=null;}return;}
+      renderGrowthProjectionInputs(assets,current,gratuityCurrent,includeGratuityBalance,projections.base,years);
       const style=getComputedStyle(document.documentElement);
       const colors=Object.fromEntries(['stress','base','optimistic'].map(s=>[s,style.getPropertyValue('--projection-'+s).trim()||({stress:'#e89497',base:'#38bdf8',optimistic:'#34d399'})[s]]));
       const labels={stress:'Stress',base:'Base',optimistic:'Optimistic'};

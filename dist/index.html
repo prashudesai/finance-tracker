@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="./assets/boot.a2ca9dc9f03ee137.js"></script>
-  <script defer src="./assets/app-info.405f70c7c0c6f779.js"></script>
+  <script defer src="./assets/app-info.b58ee904db5d12d4.js"></script>
   <script defer src="./assets/loan-ledger.68deb1413e30aa08.js"></script>
   <script defer src="./assets/recurring.21005de2ca263681.js"></script>
   <script defer src="./assets/recurring-ui.7063af9db85dae04.js"></script>
@@ -28,7 +28,7 @@
 
   <link rel="stylesheet" href="./assets/legacy-3.da8e96c8d3a1dcce.css">
 <link rel="stylesheet" href="./assets/legacy-4.453862e3306d6301.css">
-  <link rel="stylesheet" href="./assets/app-style.acb4dd87da518a83.css">
+  <link rel="stylesheet" href="./assets/app-style.8608a29ac5370b8b.css">
   <link rel="stylesheet" href="./assets/workbench.ae99eb56d5654983.css">
   <link rel="stylesheet" href="./assets/cash-flow.9211ea05b78d02da.css">
   <link rel="stylesheet" href="./assets/print.e13a02846eb11264.css" media="print">
@@ -1047,6 +1047,7 @@
           <div class="form-group"><label for="growthProjectionYears">Investment horizon</label><div class="growth-horizon-control"><input id="growthProjectionYears" type="range" min="1" max="10" step="1" value="5" aria-label="Investment horizon in years"><output id="growthProjectionYearsValue" for="growthProjectionYears">5 years</output></div><div class="growth-horizon-scale"><span>1 year</span><span>10 years</span></div><div class="pms-optimistic-control" id="pmsOptimisticControl" hidden><label for="pmsOptimisticReturn">Stallion PMS optimistic return</label><div class="growth-horizon-control"><input id="pmsOptimisticReturn" type="range" min="8" max="24" step="0.05" aria-label="Stallion PMS optimistic return"><span class="pms-optimistic-value-box"><input id="pmsOptimisticReturnValue" type="number" min="-100" max="100" step="0.05" value="15" inputmode="decimal" aria-label="Stallion PMS optimistic return percentage"><span aria-hidden="true">%</span></span></div><div class="growth-horizon-scale"><span id="pmsOptimisticMin">8%</span><span id="pmsOptimisticMax">24%</span></div><p class="pms-optimistic-help">Slider: 8%–24%. Enter another custom return in the value box.</p></div></div>
           <div class="form-group"><div class="growth-contribution-setting"><label class="growth-contribution-toggle"><span>Include monthly contributions</span><span class="growth-switch"><input id="growthIncludeMonthlyContributions" type="checkbox" checked aria-label="Include monthly contributions"><span class="growth-switch-track"></span></span></label><div class="growth-contribution-summary-row"><span id="growthContributionSummary"></span><button type="button" class="btn-secondary" id="manageGrowthContributions" aria-haspopup="dialog" aria-controls="growthContributionDialog">Manage ›</button></div></div><label class="growth-contribution-toggle growth-gratuity-toggle" id="growthGratuityBalanceWrap" hidden><span>Gratuity balance</span><span class="growth-switch"><input id="growthIncludeGratuityBalance" type="checkbox" checked aria-label="Include gratuity balance and growth"><span class="growth-switch-track"></span></span></label></div>
         </div>
+        <section id="growthProjectionInputs" class="growth-projection-inputs" aria-label="Your projection inputs" aria-live="polite"></section>
         <dialog id="growthContributionDialog" aria-labelledby="growthContributionDialogTitle">
           <header class="growth-contribution-dialog-header"><h2 id="growthContributionDialogTitle">Monthly contributions</h2><button type="button" data-close-contribution-dialog aria-label="Close monthly contributions">×</button></header>
           <p class="growth-contribution-dialog-intro">Choose which contributions to include in this projection.</p>
@@ -1334,7 +1335,7 @@
   <div id="investmentCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="investmentCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="investmentCategoryDialogTitle"></h2><p id="investmentCategoryDialogSubtitle"></p></div><button type="button" class="investment-category-dialog-close" data-close-investment-category-dialog aria-label="Close investment details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Portfolio summary</h3><div id="investmentCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Holdings and actions</h3><div id="investmentCategoryDialogTable"></div></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-investment-category-dialog>Done</button></footer></div></div>
     <div id="retirementCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="retirementCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="retirementCategoryDialogTitle"></h2><p id="retirementCategoryDialogSubtitle"></p></div><button type="button" class="investment-category-dialog-close" data-close-retirement-category-dialog aria-label="Close retirement account details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><div id="retirementCategoryDialogActions" class="retirement-account-actions"></div><h3>Account summary</h3><div id="retirementCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Accounts and actions</h3><div id="retirementCategoryDialogTable"></div><p id="retirementCategoryDialogNote" class="retirement-account-help"></p></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-retirement-category-dialog>Done</button></footer></div></div>
 
-  <script defer src="./assets/app-core.8234f83b10f9b0f0.js"></script>
+  <script defer src="./assets/app-core.1f118f4ea192fd09.js"></script>
 
 
 </body>
