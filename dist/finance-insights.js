@@ -38,7 +38,13 @@ export function installFinanceInsights(){
   changes.body.dataset.signature=signature;changes.body.replaceChildren();
   const monthLabel=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long'});
   const previousLabel=new Date(previousMonth(month)+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'});
-  changes.d.querySelector('summary').textContent='What changed in '+monthLabel;
+  const summary=changes.d.querySelector('summary');summary.replaceChildren();
+  append(summary,'span','What changed in '+monthLabel,'monthly-changes-title');
+  const priorTotal=(state.expenses||[]).filter(row=>row.date?.slice(0,7)===previousMonth(month)).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+  if(r.spendingChange!==null&&priorTotal>0){
+   const percent=Math.round(r.spendingChange/priorTotal*100),priorMonth=new Date(previousMonth(month)+'-01T12:00:00').toLocaleDateString('en-IN',{month:'short'});
+   append(summary,'span','Expenses '+(percent>0?'+':'')+percent+'% vs '+priorMonth,'monthly-changes-delta');
+  }
   const heading=append(changes.body,'p','Key recorded changes · '+monthLabel+' compared with '+previousLabel,'finance-highlights-intro');
   const grid=append(changes.body,'div',undefined,'finance-highlights-grid');
   const card=(title,value,kind,caption)=>{

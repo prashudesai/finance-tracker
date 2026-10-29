@@ -2756,3 +2756,53 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 #growthContributionDialog>footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
 #growthContributionDialog>footer p{font-size:11px;line-height:1.5;margin:0;color:var(--text-light)}
 #growthContributionDialog>footer button{min-height:44px;padding:9px 14px;margin:0;border-radius:10px;font-size:12px}
+
+/* Dashboard mobile controls */
+@media screen and (max-width:700px){
+  html[data-app-style="modern"] body.advanced-layout #dashboard.active{padding-bottom:7rem}
+  html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{transition:opacity .18s ease,background-color .15s,box-shadow .15s}
+  html[data-app-style="modern"] body.advanced-layout.quick-add-scrolling #dashboard #trackerQuickAdd{opacity:0;pointer-events:none}
+  #monthlyChanges>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 14px;list-style:none}
+  #monthlyChanges>summary::-webkit-details-marker{display:none}
+  #monthlyChanges>summary::before{content:"›";display:inline-block;font-size:22px;line-height:1;color:var(--primary);transition:transform .18s}
+  #monthlyChanges[open]>summary::before{transform:rotate(90deg)}
+  #monthlyChanges .monthly-changes-title{min-width:0}
+  #monthlyChanges .monthly-changes-delta{margin-left:auto;padding:5px 8px;border-radius:999px;background:color-mix(in srgb,var(--primary) 12%,transparent);color:var(--primary);font-size:11px;font-weight:700;white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{transition:none}}
+
+@media screen and (max-width:700px){
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-gain-value.is-loss{background:transparent!important;padding:0!important;color:#f08b9c}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-gain-value.is-neutral{background:transparent!important;padding:0!important;color:#94a3b8!important}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-average-values{gap:0}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-average-item{border:0;background:transparent;border-radius:0;padding:10px}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-average-item+.dashboard-average-item{border-left:1px solid color-mix(in srgb,var(--primary) 15%,transparent)}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-average-value{font-size:clamp(20px,5.4vw,25px)}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-title{flex-basis:auto;min-width:0;grid-column:1}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-view-all{grid-column:2;grid-row:1;white-space:nowrap;font-size:11px}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-sort-control{grid-column:2;justify-self:end;margin-left:0}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-sort-label{display:none}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-sort-mobile{display:inline}
+  html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel{padding-bottom:24px}
+  html[data-app-style] body.advanced-layout #dashboard .debt-summary-share{padding:4px 7px;border-radius:999px;background:color-mix(in srgb,var(--primary) 10%,transparent)}
+  html[data-app-style] body.advanced-layout #dashboard .debt-summary-paid{color:#94a3b8}
+  html[data-app-style] body.advanced-layout #dashboard .cash-axis{font-size:11px;fill:#94a3b8}
+}
+
+#mobileSettingsShortcut{display:none}
+@media screen and (max-width:700px){
+  #mobileSettingsShortcut{display:grid;place-items:center;width:40px;height:40px;min-width:40px;border:1px solid var(--border);border-radius:50%;background:transparent;color:var(--text);cursor:pointer}
+  #mobileSettingsShortcut svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  body.advanced-layout .nav-tab-items{grid-template-columns:repeat(5,minmax(0,1fr))}
+  body.advanced-layout .nav-tab[data-tab="growth-projection"],
+  body.advanced-layout .nav-tab[data-tab="analytics"],
+  body.advanced-layout .nav-tab[data-tab="settings"]{display:none}
+  body.advanced-layout .nav-tab.active{margin:4px;border-radius:12px;box-shadow:none}
+}
+
+@media screen and (max-width:360px){body.advanced-layout > .container > header{padding-inline:6px;gap:4px}body.advanced-layout .header-controls{gap:2px}}
+
+@media screen and (max-width:360px){#mobileSettingsShortcut{width:32px;min-width:32px;height:36px}}
+
+@media screen and (max-width:360px){body.advanced-layout .header-controls{transform:translateX(-6px)}}
