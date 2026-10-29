@@ -96,12 +96,13 @@
       [...(sourceSummary?.children||[])].filter(item=>!item.classList.contains('investment-summary-chevron')).forEach(item=>(()=>{const clone=item.cloneNode(true);clone.removeAttribute?.('id');clone.querySelectorAll?.('[id]').forEach(element=>element.removeAttribute('id'));summary.appendChild(clone);})());
       const tableSource=card.querySelector('.investment-category-dialog-source .table-wrapper');
       table.replaceChildren();
-      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');table.appendChild(clone);labelInvestmentDialogCells(table);}
+      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');table.appendChild(clone);labelInvestmentDialogCells(table);renderPmsStyleModalActions(table);}
       else table.textContent='No holdings available.';
       delete dialog.dataset.stallionId;dialog.dataset.investmentType=type;
       if(show&&dialog.hidden){dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();}
     }
-    // Preserve the original account table and its actions while presenting rows as cards on phones.
+    // Preserve the original data table for mobile, and create a full-width
+    // Stallion PMS-style action area OUTSIDE the desktop table for each holding.
     function labelInvestmentDialogCells(container) {
       container.querySelectorAll('table').forEach(table=>{
         const labels=[...table.querySelectorAll('thead th')].map(cell=>cell.textContent.trim().replace(/[↕▲▼]/g,'').trim());
@@ -110,31 +111,84 @@
             if(cell.matches('td,th'))cell.dataset.mobileLabel=labels[index]||'Details';
           });
         });
-        // On desktop, put non-PMS actions in a full-width footer like the PMS panel.
-        // Keep the original action cell for mobile, without altering its layout.
-        if(container.closest('#investmentCategoryDialog') && !container.closest('[data-stallion-id]') && !table.closest('.pms-holding-details')) {
-          [...table.querySelectorAll('tbody tr')].forEach(row=>{
-            const actions=row.querySelector('td.investment-row-actions');
-            if(!actions || row.nextElementSibling?.classList.contains('investment-desktop-actions-row'))return;
-            const footer=document.createElement('tr');
-            footer.className='investment-desktop-actions-row';
-            const cell=document.createElement('td');
-            cell.colSpan=labels.length;
-            const group=actions.querySelector('.investment-row-action-group');
-            if(!group)return;
-            const buttons=[...group.querySelectorAll('button')];
-            const order=['History','Edit','Delete','Add','Update'];
-            const copy=group.cloneNode(true);
-            copy.querySelectorAll('button').forEach(button=>{
-              const name=button.dataset.shortAction||'';
-              button.dataset.shortAction=({History:'View History',Add:'Add contribution',Update:'Update value'})[name]||name;
-            });
-            [...copy.children].sort((a,b)=>order.indexOf(a.dataset.shortAction==='View History'?'History':a.dataset.shortAction==='Add contribution'?'Add':a.dataset.shortAction==='Update value'?'Update':a.dataset.shortAction)-order.indexOf(b.dataset.shortAction==='View History'?'History':b.dataset.shortAction==='Add contribution'?'Add':b.dataset.shortAction==='Update value'?'Update':b.dataset.shortAction)).forEach(button=>copy.append(button));
-            cell.append(copy);footer.append(cell);row.after(footer);
-            actions.classList.add('investment-original-actions');
-          });
-        }
       });
+    }
+    function renderPmsStyleModalActions(container) {
+      const table=container.querySelector('.investment-category-dialog-table table');
+      if(!table)return;
+      const rows=[...table.querySelectorAll('tbody tr')];
+      const entries=rows.map(row=>{
+        const cell=row.querySelector('td.investment-row-actions,td.account-action-buttons');
+        return cell?{row,cell,buttons:[...cell.querySelectorAll('button')]}:null;
+      }).filter(entry=>entry&&entry.buttons.length);
+      if(!entries.length)return;
+      const header=table.querySelector('thead tr th:last-child');
+      header?.classList.add('pms-modal-original-actions');
+      const list=document.createElement('div');
+      list.className='pms-modal-action-list';
+      list.setAttribute('aria-label','Holding actions');
+      const definitions=[
+        {key:'history',text:'View History',path:['M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18','M12 7v5l3 2']},
+        {key:'edit',text:'Edit',path:['m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z','m13.5 7 3.5 3.5']},
+        {key:'delete',text:'Delete',path:['M4 7h16','M10 11v6m4-6v6','M6 7l1 13h10l1-13','M9 7V4h6v3']},
+        {key:'add',text:'Add contribution',path:['M12 5v14','M5 12h14']},
+        {key:'update',text:'Update value',path:['m4 16 5-5 4 3 7-9','M15 5h5v5']}
+      ];
+      const kindFor=button=>{
+        const label=[button.getAttribute('aria-label'),button.getAttribute('title'),button.dataset.shortAction,button.textContent].filter(Boolean).join(' ').toLowerCase();
+        if(/histor/.test(label))return 'history';
+        if(/edit/.test(label))return 'edit';
+        if(/delet/.test(label))return 'delete';
+        if(/contribution|\badd\b/.test(label))return 'add';
+        if(/updat|valuat/.test(label))return 'update';
+        return '';
+      };
+      const svgNamespace='http://www.w3.org/2000/svg';
+      for(const {row,cell,buttons} of entries){
+        cell.classList.add('pms-modal-original-actions');
+        const section=document.createElement('section');
+        section.className='pms-modal-holding-actions';
+        if(entries.length>1){
+          const heading=document.createElement('strong');
+          heading.className='pms-modal-holding-name';
+          heading.textContent=row.children[1]?.textContent.trim()||row.children[0]?.textContent.trim()||'Holding';
+          section.append(heading);
+        }
+        const bar=document.createElement('div');
+        bar.className='pms-modal-action-bar';
+        for(const sourceButton of buttons.sort((a,b)=>{
+          const aRank=definitions.findIndex(item=>item.key===kindFor(a)),bRank=definitions.findIndex(item=>item.key===kindFor(b));
+          return (aRank<0?99:aRank)-(bRank<0?99:bRank);
+        })){
+          const definition=definitions.find(item=>item.key===kindFor(sourceButton));
+          const button=document.createElement('button');
+          button.type='button';
+          button.className='pms-modal-action-button'+(definition?.key==='delete'?' is-danger':'');
+          const label=definition?.text||sourceButton.textContent.trim()||sourceButton.getAttribute('aria-label')||'Action';
+          button.setAttribute('aria-label',label);
+          button.disabled=sourceButton.disabled;
+          if(definition){
+            const svg=document.createElementNS(svgNamespace,'svg');
+            svg.setAttribute('viewBox','0 0 24 24');
+            svg.setAttribute('aria-hidden','true');
+            for(const pathData of definition.path){
+              const path=document.createElementNS(svgNamespace,'path');
+              path.setAttribute('d',pathData);
+              svg.append(path);
+            }
+            button.append(svg);
+          }
+          const name=document.createElement('span');
+          name.textContent=label;
+          button.append(name);
+          // Delegate to the original control to preserve every account-specific action.
+          button.addEventListener('click',()=>sourceButton.click());
+          bar.append(button);
+        }
+        section.append(bar);
+        list.append(section);
+      }
+      container.append(list);
     }
     function refreshInvestmentCategoryDialog() {
       const dialog=document.getElementById('investmentCategoryDialog');
@@ -156,7 +210,7 @@
       const summary=document.getElementById('retirementCategoryDialogSummary');summary.replaceChildren();
       [...(summarySource?.children||[])].filter(item=>!item.classList.contains('investment-summary-chevron')).forEach(item=>(()=>{const clone=item.cloneNode(true);clone.removeAttribute?.('id');clone.querySelectorAll?.('[id]').forEach(element=>element.removeAttribute('id'));summary.appendChild(clone);})());
       const table=document.getElementById('retirementCategoryDialogTable');table.replaceChildren();
-      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));table.appendChild(clone);labelInvestmentDialogCells(table);}
+      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));table.appendChild(clone);labelInvestmentDialogCells(table);renderPmsStyleModalActions(table);}
       else table.textContent='No account details available.';
       const pagerSource=card.querySelector(`#accountPager-${type}`);
       if(pagerSource){const pager=pagerSource.cloneNode(true);pager.removeAttribute('id');pager.onclick=event=>{const button=event.target.closest('[data-direction]');if(!button)return;accountPages[type]=Math.max(0,(accountPages[type]||0)+Number(button.dataset.direction));({pf:renderPf,ppf:renderPpf,nps:renderNps}[type]||(()=>{}))();};table.appendChild(pager);}
