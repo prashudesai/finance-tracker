@@ -227,7 +227,9 @@
         if(!periods.length){cashSvg.innerHTML='<text x="320" y="100" text-anchor="middle" class="cash-axis">No months are available in this financial year.</text>';}
         else {
           const left=42,right=630,top=18,bottom=165,height=bottom-top,width=right-left,maxValue=Math.max(1,...periods.flatMap(row=>[row.income,row.expenses]))*1.12; const cashAxis=value=>value===0?'₹0':value>=100000?`₹${(value/100000).toFixed(1)}L`:formatCurrency(value);
-          const xAt=index=>periods.length===1?left+width/2:left+width*index/(periods.length-1),yAt=value=>bottom-height*value/maxValue;
+          const desktopBars=(window.matchMedia?.('(min-width:701px)')?.matches??window.innerWidth>700);
+          const step=width/periods.length,barWidth=Math.min(20,step*.28);
+          const xAt=index=>desktopBars?left+step*(index+.5):periods.length===1?left+width/2:left+width*index/(periods.length-1),yAt=value=>bottom-height*value/maxValue;
           const lineFor=key=>periods.map((row,index)=>`${index?'L':'M'}${xAt(index).toFixed(1)},${yAt(row[key]).toFixed(1)}`).join(' ');
           const incomePath=lineFor('income'),expensePath=lineFor('expenses');
           const grid=[0,.5,1].map(fraction=>{const y=bottom-height*fraction,value=maxValue*fraction;return `<line class="cash-grid" x1="${left}" y1="${y.toFixed(1)}" x2="${right}" y2="${y.toFixed(1)}"/><text class="cash-axis" x="${left-7}" y="${(y+3).toFixed(1)}" text-anchor="end">${cashAxis(value)}</text>`;}).join('');
@@ -235,7 +237,12 @@
           const incomePoints=periods.map((row,index)=>`<circle class="cash-point-income" cx="${xAt(index).toFixed(1)}" cy="${yAt(row.income).toFixed(1)}" r="3.2"><title>${analyticEscape(row.label)} income: ${formatCurrency(row.income)}</title></circle>`).join('');
           const expensePoints=periods.map((row,index)=>`<circle class="cash-point-expense" cx="${xAt(index).toFixed(1)}" cy="${yAt(row.expenses).toFixed(1)}" r="3"><title>${analyticEscape(row.label)} expenses: ${formatCurrency(row.expenses)}</title></circle>`).join('');
           const area=`${incomePath} L${xAt(periods.length-1).toFixed(1)},${bottom} L${xAt(0).toFixed(1)},${bottom} Z`;
-          cashSvg.innerHTML=`<g aria-hidden="true">${grid}${labels}</g><path class="cash-income-area" d="${area}"/><path class="cash-income" d="${incomePath}"/><path class="cash-expense" d="${expensePath}"/>${incomePoints}${expensePoints}<g class="cash-hover-layer" visibility="hidden" pointer-events="none"><line class="cash-hover-guide" x1="0" y1="${top}" x2="0" y2="${bottom}"/><circle class="cash-hover-income" cx="0" cy="0" r="4.5"/><circle class="cash-hover-expense" cx="0" cy="0" r="4.5"/><rect class="cash-hover-box" x="0" y="0" width="190" height="48" rx="7"/><text class="cash-hover-title" x="9" y="13"></text><text class="cash-hover-label" x="9" y="28">Income</text><text class="cash-hover-value cash-hover-income-value" x="48" y="28"></text><text class="cash-hover-label" x="9" y="40">Expenses</text><text class="cash-hover-value cash-hover-expense-value" x="56" y="40"></text></g>`;
+          const bars=desktopBars?periods.map((row,index)=>{
+            const x=xAt(index),incomeHeight=bottom-yAt(row.income),expenseHeight=bottom-yAt(row.expenses);
+            const label=analyticEscape(`${row.label}: income ${formatCurrency(row.income)}, expenses ${formatCurrency(row.expenses)}`);
+            return `<g class="cash-month-bars" tabindex="0" role="img" aria-label="${label}"><title>${label}</title><rect class="cash-bar-income" x="${(x-barWidth-2).toFixed(1)}" y="${yAt(row.income).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${incomeHeight.toFixed(1)}" rx="3"/><rect class="cash-bar-expense" x="${(x+2).toFixed(1)}" y="${yAt(row.expenses).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${expenseHeight.toFixed(1)}" rx="3"/></g>`;
+          }).join(''):'';
+          cashSvg.innerHTML=`<g aria-hidden="true">${grid}${labels}</g>${desktopBars?bars:`<path class="cash-income-area" d="${area}"/><path class="cash-income" d="${incomePath}"/><path class="cash-expense" d="${expensePath}"/>${incomePoints}${expensePoints}`}<g class="cash-hover-layer" visibility="hidden" pointer-events="none"><line class="cash-hover-guide" x1="0" y1="${top}" x2="0" y2="${bottom}"/><circle class="cash-hover-income" cx="0" cy="0" r="4.5"/><circle class="cash-hover-expense" cx="0" cy="0" r="4.5"/><rect class="cash-hover-box" x="0" y="0" width="190" height="48" rx="7"/><text class="cash-hover-title" x="9" y="13"></text><text class="cash-hover-label" x="9" y="28">Income</text><text class="cash-hover-value cash-hover-income-value" x="48" y="28"></text><text class="cash-hover-label" x="9" y="40">Expenses</text><text class="cash-hover-value cash-hover-expense-value" x="56" y="40"></text></g>`;
           const hoverLayer=cashSvg.querySelector('.cash-hover-layer');
           const hideCashTooltip=()=>{if(hoverLayer)hoverLayer.setAttribute('visibility','hidden');};
           cashSvg.onpointermove=event=>{
@@ -243,7 +250,7 @@
             const matrix=cashSvg.getScreenCTM();if(!matrix)return;
             const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(matrix.inverse());
             if(point.x<left||point.x>right||point.y<top||point.y>bottom){hideCashTooltip();return;}
-            const index=periods.length===1?0:Math.max(0,Math.min(periods.length-1,Math.round((point.x-left)/width*(periods.length-1))));
+            const index=periods.length===1?0:Math.max(0,Math.min(periods.length-1,desktopBars?Math.floor((point.x-left)/step):Math.round((point.x-left)/width*(periods.length-1))));
             const row=periods[index],x=xAt(index),incomeY=yAt(row.income),expenseY=yAt(row.expenses),boxWidth=190,boxHeight=48;
             const boxX=Math.max(left,Math.min(right-boxWidth,point.x+12));
             const boxY=point.y-top>boxHeight+10?point.y-boxHeight-8:Math.min(bottom-boxHeight-3,point.y+9);
@@ -692,3 +699,5 @@
       for(const [id,value] of [['lastMonthHouseExpense',calculated?house:null],['lastMonthFullExpense',full]]){const node=document.getElementById(id);node.textContent=value===null?'Pending':formatCurrency(value);node.style.color=value!==null&&value<0?'var(--danger)':'var(--primary)';}
     }
     window.addEventListener('resize',renderDashboardExpenseSnapshot,{passive:true});
+
+    window.matchMedia?.('(min-width:701px)')?.addEventListener('change',()=>{if(document.body.classList.contains('advanced-layout'))renderAdvancedDashboardInsights();});

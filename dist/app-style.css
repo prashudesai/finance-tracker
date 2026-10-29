@@ -3250,3 +3250,73 @@ html[data-app-style="modern"] #investmentEditModal :is(input,select,textarea){
   html[data-app-style="modern"] #dashboard .dashboard-page-caption,
   html[data-app-style="modern"] #dashboard .dashboard-page-period {display:none!important;}
 }
+
+/* Pending desktop polish: mobile keeps its existing header, cards and dialog layout. */
+.pending-desktop-page-icon{display:none}
+@media screen and (min-width:701px){
+ html[data-app-style] body.advanced-layout :is(#debts>.debt-page-intro,#settings>.settings-intro){
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  margin:14px 0 19px!important;padding:20px 23px!important;min-height:0;
+  border:1px solid color-mix(in srgb,var(--primary) 29%,var(--border))!important;border-radius:17px;
+  background:linear-gradient(115deg,color-mix(in srgb,var(--primary) 11%,var(--card-bg)),var(--card-bg) 74%)!important;
+  box-shadow:none;box-sizing:border-box;
+ }
+ html[data-app-style] body.advanced-layout :is(#debts>.debt-page-intro,#settings>.settings-intro)>div{
+  display:grid;grid-template-columns:52px minmax(0,1fr);gap:4px 14px;align-items:center;
+  padding:0!important;border:0!important;min-width:0;flex:1;
+ }
+ html[data-app-style] body.advanced-layout :is(.debt-page-intro,.settings-intro) .pending-desktop-page-icon{
+  display:grid;place-items:center;grid-column:1;grid-row:1/4;width:52px;height:52px;
+  border:1px solid color-mix(in srgb,var(--primary) 29%,var(--border));border-radius:15px;
+  background:color-mix(in srgb,var(--primary) 14%,var(--card-bg));color:var(--primary);
+ }
+ .pending-desktop-page-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ html[data-app-style] body.advanced-layout :is(.debt-page-intro,.settings-intro) :is(.debt-page-kicker,.settings-eyebrow){
+  grid-column:2;margin:0;color:var(--primary);font-size:10px;letter-spacing:1.4px;font-weight:750;
+ }
+ html[data-app-style] body.advanced-layout :is(#debts>.debt-page-intro,#settings>.settings-intro) h1{
+  grid-column:2;margin:0!important;padding:0!important;border:0!important;
+  font-size:clamp(25px,2.2vw,33px)!important;line-height:1.15;font-weight:650;letter-spacing:-.5px;
+ }
+ html[data-app-style] body.advanced-layout :is(#debts>.debt-page-intro,#settings>.settings-intro) p{
+  grid-column:2;margin:2px 0 0!important;font-size:12px;line-height:1.5;color:var(--text-light);
+ }
+ html[data-app-style] body.advanced-layout :is(.debt-page-badge,.settings-local-note){
+  flex:0 0 auto;padding:9px 13px;border:1px solid var(--border);border-radius:99px;
+  background:color-mix(in srgb,var(--bg) 28%,var(--card-bg));color:var(--text-light);font-size:12px;
+ }
+ /* Match Cash Reserve: blue edge, shared card surface and one inset summary. */
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card{
+  border:1px solid color-mix(in srgb,#538297 35%,var(--border));border-inline-start:4px solid #538297;
+  border-radius:20px;background:var(--card-bg);
+ }
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card .retirement-account-summary{
+  border:1px solid var(--border);border-radius:15px;padding:16px 30px 16px 16px;
+  background:color-mix(in srgb,var(--bg) 38%,var(--card-bg));
+ }
+ html[data-app-style] body.advanced-layout #investments .retirement-account-card .retirement-account-summary>span:not(.investment-summary-chevron){
+  min-width:0;border:0;background:transparent;
+ }
+ #retirementCategoryDialog .investment-category-dialog-shell{width:min(1120px,calc(100vw - 48px))}
+ #retirementCategoryDialogSummary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+ #retirementCategoryDialogSummary>span{min-width:0;padding:15px 18px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--primary) 5%,var(--card-bg))}
+ #retirementCategoryDialogSummary :is(strong,small){display:block;white-space:normal;overflow-wrap:anywhere}
+ #retirementCategoryDialogTable .table-wrapper{overflow:visible;max-height:none}
+ #retirementCategoryDialogTable table{display:block;width:100%;min-width:0}
+ #retirementCategoryDialogTable thead{display:none}
+ #retirementCategoryDialogTable tbody{display:grid;gap:14px}
+ #retirementCategoryDialogTable tbody tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--primary) 4%,var(--card-bg));overflow:hidden}
+ #retirementCategoryDialogTable tbody td:not(.pms-modal-original-actions){display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;min-width:0;padding:15px 18px;border:0;text-align:left;white-space:normal;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+ #retirementCategoryDialogTable tbody td:not(.pms-modal-original-actions)::before{content:attr(data-mobile-label);color:var(--text-light);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+ #retirementCategoryDialogTable .pms-modal-original-actions{display:none!important}
+ #retirementCategoryDialog .pms-modal-action-bar{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:14px 0}
+ #retirementCategoryDialog .pms-modal-action-button{min-height:44px;padding:9px 13px;border-radius:9px}
+ #advancedDashboardCashflowChart .cash-bar-income{fill:var(--primary)}
+ #advancedDashboardCashflowChart .cash-bar-expense{fill:var(--danger)}
+ #advancedDashboardCashflowChart .cash-month-bars:focus{outline:none}
+ #advancedDashboardCashflowChart .cash-month-bars:focus-visible rect{stroke:var(--text);stroke-width:1.5}
+}
+@media screen and (min-width:701px) and (max-width:1000px){
+ #retirementCategoryDialogTable tbody tr{grid-template-columns:repeat(2,minmax(0,1fr))}
+ html[data-app-style] body.advanced-layout :is(#debts>.debt-page-intro,#settings>.settings-intro){flex-wrap:wrap}
+}

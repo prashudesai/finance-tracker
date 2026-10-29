@@ -8,7 +8,6 @@
       'navy-emerald': {label:'Navy + Emerald', colors:['#127c70','#1e3346','#d5a85f','#e5f2ef'], darkHeader:['#1e3346','#142638'], light:['#127c70','#1e3346','#e5f2ef','#d5a85f'], dark:['#55c4a0','#bae6d6','#143737','#e0b766']},
       'classic-teal': {label:'Classic Teal', colors:['#0f7c7e','#084b4d','#d4976f','#e8f5f5'], darkHeader:['#0b3f40','#062a2b'], light:['#0f7c7e','#084b4d','#e8f5f5','#d4976f'], dark:['#5eead4','#b5fff0','#173e44','#99f6e4']},
       'emerald-green': {label:'Emerald Green', colors:['#059669','#064e3b','#34d399','#d1fae5'], darkHeader:['#064e3b','#032d22'], light:['#059669','#064e3b','#ecfdf5','#34d399'], dark:['#34d399','#a7f3d0','#064e3b','#6ee7b7']},
-      'warm-amber': {label:'Warm Amber', colors:['#b45309','#78350f','#f59e0b','#fef3c7'], darkHeader:['#5b3106','#351b03'], light:['#b45309','#78350f','#fffbeb','#f59e0b'], dark:['#fbbf24','#fde68a','#451a03','#fcd34d']},
       'sunset-luxe': {label:'Sunset Luxe', colors:['#e6536f','#8f2749','#f5a65b','#ffe4e6'], darkHeader:['#63253b','#3c1729'], light:['#c2415d','#7f1d3d','#fff1f2','#f5a65b'], dark:['#fb7185','#fecdd3','#4c1d2a','#fdba74']},
       'forest-gold': {label:'Forest & Gold', colors:['#357a57','#1f5139','#d4a72c','#dcfce7'], darkHeader:['#163d2b','#0b281c'], light:['#357a57','#1f5139','#f0fdf4','#d4a72c'], dark:['#86efac','#bbf7d0','#123b2a','#facc15']},
       'arctic-glass': {label:'Arctic Glass', colors:['#0e7490','#164e63','#67e8f9','#cffafe'], darkHeader:['#0b3e52','#062a39'], light:['#0e7490','#164e63','#ecfeff','#67e8f9'], dark:['#67e8f9','#a5f3fc','#083344','#a5f3fc']}
@@ -64,7 +63,7 @@
       // Modern page layout + Navy & Emerald colors, without touching finance records.
       let retiredLayout=false;
       try { retiredLayout=trackerStorage.getItem('displayStyle')==='emerald-flow'; } catch (error) {}
-      const retiredColors=savedColors==='ocean-blue'||savedColors==='midnight-aurora';
+      const retiredColors=savedColors==='ocean-blue'||savedColors==='midnight-aurora'||savedColors==='warm-amber';
       if(retiredLayout||retiredColors){
         savedColors='navy-emerald';
         try { trackerStorage.setItem('displayStyle','modern'); } catch (error) {}

@@ -33,6 +33,7 @@ const server=http.createServer(async(req,res)=>{try{
    assert.equal(await page.locator('[data-app-style-choice="emerald-flow"]').count(),0);
    assert.equal(await page.locator('#themeOptions [data-theme-key="ocean-blue"]').count(),0);
    assert.equal(await page.locator('#themeOptions [data-theme-key="midnight-aurora"]').count(),0);
+   assert.equal(await page.locator('#themeOptions [data-theme-key="warm-amber"]').count(),0);
    const previous=await page.evaluate(()=>document.documentElement.dataset.colorTheme);
    await page.evaluate(()=>applyColorTheme('ocean-blue'));
    assert.equal(await page.evaluate(()=>document.documentElement.dataset.colorTheme),'navy-emerald');
@@ -40,7 +41,7 @@ const server=http.createServer(async(req,res)=>{try{
    const migrated=await page.evaluate(()=>{
      const originalStyle=trackerStorage.getItem('displayStyle');
      const originalColor=trackerStorage.getItem('familyWealthColorTheme');
-     const cases=[['emerald-flow','classic-teal'],['modern','ocean-blue'],['obsidian-black','midnight-aurora']];
+     const cases=[['emerald-flow','classic-teal'],['modern','ocean-blue'],['obsidian-black','midnight-aurora'],['modern','warm-amber']];
      const results=[];
      for(const [style,color] of cases){
        trackerStorage.setItem('displayStyle',style);
@@ -75,6 +76,24 @@ const server=http.createServer(async(req,res)=>{try{
   await page.setViewportSize({width:390,height:844});
   const mobile=await page.locator('#growthProjectionControls .form-grid').evaluate(grid=>getComputedStyle(grid).gridTemplateColumns);
   assert.equal(mobile.trim().split(/\s+/).length,1,mobile);
+  await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());
+ });
+ await check('Pending desktop bar chart and page headers preserve mobile rendering and financial records',async()=>{
+  const before=await page.evaluate(()=>JSON.stringify(state));
+  for(const width of [390,700,701,1024,1440]){
+   await page.setViewportSize({width,height:900});
+   await page.evaluate(()=>{PFT_STYLE.apply('modern',false);document.querySelector('.nav-tab[data-tab="dashboard"]').click();renderAdvancedDashboardInsights();});
+   const chart=page.locator('#advancedDashboardCashflowChart');
+   assert.equal(await chart.locator('.cash-month-bars').count()>0,width>700);
+   assert.equal(await chart.locator('path.cash-income').count(),width>700?0:1);
+   for(const id of ['debts','settings']){
+    await page.evaluate(id=>document.querySelector('.nav-tab[data-tab="'+id+'"]').click(),id);
+    assert.equal(await page.locator('#'+id+' .pending-desktop-page-icon').isVisible(),width>700);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+   }
+  }
+  assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
+  await page.setViewportSize({width:390,height:844});
   await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());
  });
  await check('Desktop income and expense editor uses one aligned action footer',async()=>{
