@@ -168,6 +168,8 @@
       const activeCount=monthlyAssets.filter(asset=>!excluded.includes(asset.name)).length;
       const monthlyTotal=monthlyAssets.filter(asset=>!excluded.includes(asset.name)).reduce((sum,asset)=>sum+amountFor(asset),0);
       const summary=document.getElementById('growthContributionSummary');
+      const summaryRow=summary.closest('.growth-contribution-summary-row');
+      if(summaryRow)summaryRow.hidden=!includeMonthlyContributions;
       summary.textContent=includeMonthlyContributions?formatCurrency(monthlyTotal)+'/month · '+activeCount+' of '+monthlyAssets.length+' included':'Monthly contributions excluded';
       document.getElementById('growthContributionHeading').textContent=includeMonthlyContributions?summary.textContent:'Contributions are off. Your selections are remembered.';
       document.getElementById('manageGrowthContributions').disabled=!includeMonthlyContributions||!monthlyAssets.length;
