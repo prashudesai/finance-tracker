@@ -1,7 +1,7 @@
 {
-  "version": "2026.10.29.16",
+  "version": "2026.10.29.17",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Desktop: balance dashboard tiles, improve projection layout and assumptions, refine investment holding cards and dialogs, and align record actions."
+    "Desktop: refresh the Dashboard header, restore 30:70 Projection Settings, anchor the expense month menu, align Edit actions and remove the duplicate NPS header action. Retired appearances move to Modern with Navy + Emerald; financial records stay unchanged."
   ]
 }

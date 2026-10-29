@@ -1106,10 +1106,8 @@
       'obsidian-black': {label:'Obsidian Black', colors:['#000000','#171717','#a3e6cd','#a3a3a3'], darkHeader:['#111111','#000000'], light:['#242424','#000000','#ededed','#18765b'], dark:['#a3e6cd','#c6f3e2','#20352d','#c4b5fd']},
       'navy-emerald': {label:'Navy + Emerald', colors:['#127c70','#1e3346','#d5a85f','#e5f2ef'], darkHeader:['#1e3346','#142638'], light:['#127c70','#1e3346','#e5f2ef','#d5a85f'], dark:['#55c4a0','#bae6d6','#143737','#e0b766']},
       'classic-teal': {label:'Classic Teal', colors:['#0f7c7e','#084b4d','#d4976f','#e8f5f5'], darkHeader:['#0b3f40','#062a2b'], light:['#0f7c7e','#084b4d','#e8f5f5','#d4976f'], dark:['#5eead4','#b5fff0','#173e44','#99f6e4']},
-      'ocean-blue': {label:'Ocean Blue', colors:['#2563eb','#1e3a8a','#38bdf8','#dbeafe'], darkHeader:['#102b5c','#071a3b'], light:['#2563eb','#1e3a8a','#eff6ff','#38bdf8'], dark:['#60a5fa','#bfdbfe','#172554','#93c5fd']},
       'emerald-green': {label:'Emerald Green', colors:['#059669','#064e3b','#34d399','#d1fae5'], darkHeader:['#064e3b','#032d22'], light:['#059669','#064e3b','#ecfdf5','#34d399'], dark:['#34d399','#a7f3d0','#064e3b','#6ee7b7']},
       'warm-amber': {label:'Warm Amber', colors:['#b45309','#78350f','#f59e0b','#fef3c7'], darkHeader:['#5b3106','#351b03'], light:['#b45309','#78350f','#fffbeb','#f59e0b'], dark:['#fbbf24','#fde68a','#451a03','#fcd34d']},
-      'midnight-aurora': {label:'Midnight Aurora', colors:['#7c3aed','#312e81','#22d3ee','#ede9fe'], darkHeader:['#27245a','#17153a'], light:['#6d28d9','#312e81','#f5f3ff','#22d3ee'], dark:['#a78bfa','#ddd6fe','#1e1b4b','#22d3ee']},
       'sunset-luxe': {label:'Sunset Luxe', colors:['#e6536f','#8f2749','#f5a65b','#ffe4e6'], darkHeader:['#63253b','#3c1729'], light:['#c2415d','#7f1d3d','#fff1f2','#f5a65b'], dark:['#fb7185','#fecdd3','#4c1d2a','#fdba74']},
       'forest-gold': {label:'Forest & Gold', colors:['#357a57','#1f5139','#d4a72c','#dcfce7'], darkHeader:['#163d2b','#0b281c'], light:['#357a57','#1f5139','#f0fdf4','#d4a72c'], dark:['#86efac','#bbf7d0','#123b2a','#facc15']},
       'arctic-glass': {label:'Arctic Glass', colors:['#0e7490','#164e63','#67e8f9','#cffafe'], darkHeader:['#0b3e52','#062a39'], light:['#0e7490','#164e63','#ecfeff','#67e8f9'], dark:['#67e8f9','#a5f3fc','#083344','#a5f3fc']}
@@ -1161,7 +1159,18 @@
       syncThemeModeSwitch(saved);
       let savedColors = 'navy-emerald';
       try { savedColors = trackerStorage.getItem(COLOR_THEME_KEY) || 'navy-emerald'; } catch (error) { /* Use default colors when storage is unavailable. */ }
-      applyColorTheme(savedColors,!Object.prototype.hasOwnProperty.call(COLOR_THEMES,savedColors));
+      // Retired appearance choices migrate as one coherent preference pair:
+      // Modern page layout + Navy & Emerald colors, without touching finance records.
+      let retiredLayout=false;
+      try { retiredLayout=trackerStorage.getItem('displayStyle')==='emerald-flow'; } catch (error) {}
+      const retiredColors=savedColors==='ocean-blue'||savedColors==='midnight-aurora';
+      if(retiredLayout||retiredColors){
+        savedColors='navy-emerald';
+        try { trackerStorage.setItem('displayStyle','modern'); } catch (error) {}
+        applyColorTheme(savedColors,true);
+      }else{
+        applyColorTheme(savedColors,!Object.prototype.hasOwnProperty.call(COLOR_THEMES,savedColors));
+      }
     }
 
     window.PFTBlackTheme = {
@@ -2890,12 +2899,13 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       [...(sourceSummary?.children||[])].filter(item=>!item.classList.contains('investment-summary-chevron')).forEach(item=>(()=>{const clone=item.cloneNode(true);clone.removeAttribute?.('id');clone.querySelectorAll?.('[id]').forEach(element=>element.removeAttribute('id'));summary.appendChild(clone);})());
       const tableSource=card.querySelector('.investment-category-dialog-source .table-wrapper');
       table.replaceChildren();
-      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');table.appendChild(clone);labelInvestmentDialogCells(table);}
+      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');table.appendChild(clone);labelInvestmentDialogCells(table);renderPmsStyleModalActions(table);}
       else table.textContent='No holdings available.';
       delete dialog.dataset.stallionId;dialog.dataset.investmentType=type;
       if(show&&dialog.hidden){dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();}
     }
-    // Preserve the original account table and its actions while presenting rows as cards on phones.
+    // Preserve the original data table for mobile, and create a full-width
+    // Stallion PMS-style action area OUTSIDE the desktop table for each holding.
     function labelInvestmentDialogCells(container) {
       container.querySelectorAll('table').forEach(table=>{
         const labels=[...table.querySelectorAll('thead th')].map(cell=>cell.textContent.trim().replace(/[↕▲▼]/g,'').trim());
@@ -2905,6 +2915,83 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           });
         });
       });
+    }
+    function renderPmsStyleModalActions(container) {
+      const table=container.querySelector('.investment-category-dialog-table table');
+      if(!table)return;
+      const rows=[...table.querySelectorAll('tbody tr')];
+      const entries=rows.map(row=>{
+        const cell=row.querySelector('td.investment-row-actions,td.account-action-buttons');
+        return cell?{row,cell,buttons:[...cell.querySelectorAll('button')]}:null;
+      }).filter(entry=>entry&&entry.buttons.length);
+      if(!entries.length)return;
+      const header=table.querySelector('thead tr th:last-child');
+      header?.classList.add('pms-modal-original-actions');
+      const list=document.createElement('div');
+      list.className='pms-modal-action-list';
+      list.setAttribute('aria-label','Holding actions');
+      const definitions=[
+        {key:'history',text:'View History',path:['M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18','M12 7v5l3 2']},
+        {key:'edit',text:'Edit',path:['m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z','m13.5 7 3.5 3.5']},
+        {key:'delete',text:'Delete',path:['M4 7h16','M10 11v6m4-6v6','M6 7l1 13h10l1-13','M9 7V4h6v3']},
+        {key:'add',text:'Add contribution',path:['M12 5v14','M5 12h14']},
+        {key:'update',text:'Update value',path:['m4 16 5-5 4 3 7-9','M15 5h5v5']}
+      ];
+      const kindFor=button=>{
+        const label=[button.getAttribute('aria-label'),button.getAttribute('title'),button.dataset.shortAction,button.textContent].filter(Boolean).join(' ').toLowerCase();
+        if(/histor/.test(label))return 'history';
+        if(/edit/.test(label))return 'edit';
+        if(/delet/.test(label))return 'delete';
+        if(/contribution|\badd\b/.test(label))return 'add';
+        if(/updat|valuat/.test(label))return 'update';
+        return '';
+      };
+      const svgNamespace='http://www.w3.org/2000/svg';
+      for(const {row,cell,buttons} of entries){
+        cell.classList.add('pms-modal-original-actions');
+        const section=document.createElement('section');
+        section.className='pms-modal-holding-actions';
+        if(entries.length>1){
+          const heading=document.createElement('strong');
+          heading.className='pms-modal-holding-name';
+          heading.textContent=row.children[1]?.textContent.trim()||row.children[0]?.textContent.trim()||'Holding';
+          section.append(heading);
+        }
+        const bar=document.createElement('div');
+        bar.className='pms-modal-action-bar';
+        for(const sourceButton of buttons.sort((a,b)=>{
+          const aRank=definitions.findIndex(item=>item.key===kindFor(a)),bRank=definitions.findIndex(item=>item.key===kindFor(b));
+          return (aRank<0?99:aRank)-(bRank<0?99:bRank);
+        })){
+          const definition=definitions.find(item=>item.key===kindFor(sourceButton));
+          const button=document.createElement('button');
+          button.type='button';
+          button.className='pms-modal-action-button'+(definition?.key==='delete'?' is-danger':'');
+          const label=definition?.text||sourceButton.textContent.trim()||sourceButton.getAttribute('aria-label')||'Action';
+          button.setAttribute('aria-label',label);
+          button.disabled=sourceButton.disabled;
+          if(definition){
+            const svg=document.createElementNS(svgNamespace,'svg');
+            svg.setAttribute('viewBox','0 0 24 24');
+            svg.setAttribute('aria-hidden','true');
+            for(const pathData of definition.path){
+              const path=document.createElementNS(svgNamespace,'path');
+              path.setAttribute('d',pathData);
+              svg.append(path);
+            }
+            button.append(svg);
+          }
+          const name=document.createElement('span');
+          name.textContent=label;
+          button.append(name);
+          // Delegate to the original control to preserve every account-specific action.
+          button.addEventListener('click',()=>sourceButton.click());
+          bar.append(button);
+        }
+        section.append(bar);
+        list.append(section);
+      }
+      container.append(list);
     }
     function refreshInvestmentCategoryDialog() {
       const dialog=document.getElementById('investmentCategoryDialog');
@@ -2926,13 +3013,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const summary=document.getElementById('retirementCategoryDialogSummary');summary.replaceChildren();
       [...(summarySource?.children||[])].filter(item=>!item.classList.contains('investment-summary-chevron')).forEach(item=>(()=>{const clone=item.cloneNode(true);clone.removeAttribute?.('id');clone.querySelectorAll?.('[id]').forEach(element=>element.removeAttribute('id'));summary.appendChild(clone);})());
       const table=document.getElementById('retirementCategoryDialogTable');table.replaceChildren();
-      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));table.appendChild(clone);labelInvestmentDialogCells(table);}
+      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));table.appendChild(clone);labelInvestmentDialogCells(table);renderPmsStyleModalActions(table);}
       else table.textContent='No account details available.';
       const pagerSource=card.querySelector(`#accountPager-${type}`);
       if(pagerSource){const pager=pagerSource.cloneNode(true);pager.removeAttribute('id');pager.onclick=event=>{const button=event.target.closest('[data-direction]');if(!button)return;accountPages[type]=Math.max(0,(accountPages[type]||0)+Number(button.dataset.direction));({pf:renderPf,ppf:renderPpf,nps:renderNps}[type]||(()=>{}))();};table.appendChild(pager);}
       const actions=document.getElementById('retirementCategoryDialogActions');actions.replaceChildren();
       const sourceActions=card.querySelector('.retirement-account-actions');
-      if(sourceActions){const clone=sourceActions.cloneNode(true);clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));actions.appendChild(clone);}
+      // NPS balance updates live in each account's shared action footer, not the modal header.
+      if(sourceActions&&type!=='nps'){const clone=sourceActions.cloneNode(true);clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));actions.appendChild(clone);}
       document.getElementById('retirementCategoryDialogNote').textContent=card.querySelector('.retirement-account-help')?.textContent||'';
       dialog.dataset.retirementType=type;
       if(show&&dialog.hidden){dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-retirement-category-dialog]')?.focus();}
@@ -3235,7 +3323,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
             <td class="text-right ${gain >= 0 ? 'positive' : 'negative'}">${gain >= 0 ? '+' : ''}${formatCurrency(gain)}</td>
             ${hasReturnMetrics?`<td class="text-right" data-label="Absolute Return">${absoluteReturn===null?'N/A':(absoluteReturn*100).toFixed(2)+'%'}</td><td class="text-right" data-label="CAGR">${cagr===null?'N/A':(cagr*100).toFixed(2)+'%'}</td><td class="text-right" data-label="XIRR">${xirr===null?'N/A':(xirr*100).toFixed(2)+'%'}</td>`:''}
             ${investmentUsesInterestRate(category)?`<td class="text-right">${Number.isFinite(Number(inv.rate))?Number(inv.rate).toFixed(2)+'%':'—'}</td>`:''}
-            <td class="investment-row-actions"><div class="investment-row-action-group">${investmentUsesReturnMetrics(inv.type)?`<button type="button" class="investment-icon-action" aria-label="Update value" title="Update value" onclick="financeWorkbench.valuations('investments','${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 8a7 7 0 0 1 12-2l2 3M4 15l2 3a7 7 0 0 0 12-2"/></svg></button>`:''}<button type="button" class="investment-icon-action" title="View History" data-short-action="History" aria-label="View contribution history" onclick="openInvestmentContributionModal('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></button><button type="button" class="investment-icon-action" title="Add Contribution" data-short-action="Add" aria-label="Add contribution" onclick="openManualInvestmentContribution('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg></button><button type="button" class="investment-icon-action" title="Edit" data-short-action="Edit" aria-label="Edit holding" onclick="editInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"></path><path d="m13.5 7 3.5 3.5"></path></svg></button><button type="button" class="investment-icon-action is-danger" title="Delete" data-short-action="Delete" aria-label="Delete holding" onclick="deleteInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button></div></td>
+            <td class="investment-row-actions"><div class="investment-row-action-group">${investmentUsesReturnMetrics(inv.type)?`<button type="button" class="investment-icon-action" aria-label="Update value" title="Update value" data-short-action="Update" onclick="financeWorkbench.valuations('investments','${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 8a7 7 0 0 1 12-2l2 3M4 15l2 3a7 7 0 0 0 12-2"/></svg></button>`:''}<button type="button" class="investment-icon-action" title="View History" data-short-action="History" aria-label="View contribution history" onclick="openInvestmentContributionModal('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></button><button type="button" class="investment-icon-action" title="Add Contribution" data-short-action="Add" aria-label="Add contribution" onclick="openManualInvestmentContribution('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg></button><button type="button" class="investment-icon-action" title="Edit" data-short-action="Edit" aria-label="Edit holding" onclick="editInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"></path><path d="m13.5 7 3.5 3.5"></path></svg></button><button type="button" class="investment-icon-action is-danger" title="Delete" data-short-action="Delete" aria-label="Delete holding" onclick="deleteInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button></div></td>
           </tr>`;
         }).join('');
         const extraHeaders=`${hasReturnMetrics?'<th class="text-right" title="(Current value − total invested) ÷ total invested">Absolute Return</th><th class="text-right" title="Annualized return from the holding start date; contribution dates are not weighted">CAGR</th><th class="text-right" title="Annualized return using initial investment, dated contributions and current value">XIRR</th>':''}${hasRate?'<th class="text-right" title="Annual interest rate entered for this holding">Interest Rate</th>':''}`;
@@ -3310,10 +3398,10 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         pmsSource.classList.add('pms-detail-source');
         const summaries=document.createElement('div');summaries.className='pms-summary-list';
         stallionItems.forEach((inv,index)=>{
-          const gain=Number(inv.current||0)-Number(inv.invested||0),xirr=stallionXirr(inv,valuationDate,stallionContributionsById.get(inv.id)||[]);
+          const gain=Number(inv.current||0)-Number(inv.invested||0),absoluteReturn=stallionAbsoluteReturn(inv),cagr=stallionCagr(inv,valuationDate),xirr=stallionXirr(inv,valuationDate,stallionContributionsById.get(inv.id)||[]);
           const tile=document.createElement('button');tile.type='button';tile.className='pms-summary-tile';tile.setAttribute('aria-haspopup','dialog');
           tile.innerHTML='<span class="pms-summary-name">'+analyticEscape(inv.name)+'</span><span class="pms-summary-member">'+analyticEscape(inv.member||'—')+'</span><span class="pms-summary-metrics">'+[
-            ['Current value',formatCurrency(inv.current),''],['XIRR',xirr===null?'N/A':(xirr*100).toFixed(2)+'%',xirr===null||xirr===0?'':xirr>0?'positive':'negative'],['Invested',formatCurrency(inv.invested),''],['Gain / loss',(gain>0?'+':'')+formatCurrency(gain),gain===0?'':gain>0?'positive':'negative']
+            ['Current value',formatCurrency(inv.current),''],['Invested',formatCurrency(inv.invested),''],['Gain / loss',(gain>0?'+':'')+formatCurrency(gain),gain===0?'':gain>0?'positive':'negative'],['Absolute return',absoluteReturn===null?'N/A':(absoluteReturn*100).toFixed(2)+'%',absoluteReturn===null||absoluteReturn===0?'':absoluteReturn>0?'positive':'negative'],['CAGR',cagr===null?'N/A':(cagr*100).toFixed(2)+'%',cagr===null||cagr===0?'':cagr>0?'positive':'negative'],['XIRR',xirr===null?'N/A':(xirr*100).toFixed(2)+'%',xirr===null||xirr===0?'':xirr>0?'positive':'negative']
           ].map(([label,value,tone])=>'<span><small>'+label+'</small><strong class="'+tone+'">'+analyticEscape(value)+'</strong></span>').join('')+'</span>';
           tile.onclick=()=>{
             const dialog=document.getElementById('investmentCategoryDialog');delete dialog.dataset.investmentType;dialog.dataset.stallionId=inv.id;
@@ -3331,7 +3419,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
             const rowActions=wrapper.querySelector('tbody td[data-label="Actions"]');
             if(rowActions){
               rowActions.querySelectorAll('[data-pms-compact-action]').forEach(node=>node.remove());
-              pmsQuickActions.forEach(original=>{const copy=original.cloneNode(true);copy.removeAttribute('id');copy.removeAttribute('data-open-entry');copy.className='investment-icon-action';copy.onclick=()=>original.click();rowActions.append(copy);});
+              rowActions.querySelectorAll('button').forEach(button=>{button.dataset.shortAction=button.getAttribute('aria-label')||button.title||button.textContent.trim();});
+              pmsQuickActions.forEach(original=>{const copy=original.cloneNode(true);copy.removeAttribute('id');copy.removeAttribute('data-open-entry');copy.className='investment-icon-action';copy.dataset.shortAction=original.title||original.getAttribute('aria-label')||original.textContent.trim();copy.onclick=()=>original.click();rowActions.append(copy);});
             }
             target.append(wrapper);labelInvestmentDialogCells(target);
             dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();
@@ -3751,7 +3840,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const viewAccounts=profileRows(state.nps||[]);
       updateRetirementTilesVisibility();
       const tbody = document.getElementById('npsBody');
-      document.getElementById('openNpsBalanceUpdate').hidden=viewAccounts.length===0;
+      // Per-account Update value controls replace the legacy portfolio-header button.
+      document.getElementById('openNpsBalanceUpdate').hidden=true;
       updateRetirementAccountSummary('nps');
       renderInvestmentOverview();
       renderAccountPager('nps','npsBody',renderNps);
@@ -5020,6 +5110,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
     // Snapshot selection changes presentation only; it never writes financial records.
     function renderDashboardExpenseSnapshot(){
+      const period=document.getElementById('dashboardPagePeriod');
+      if(period)period.textContent=new Date().toLocaleDateString('en-IN',{month:'long',year:'numeric'});
       const select=document.getElementById('dashboardExpenseMonth'),card=document.getElementById('dashboardExpenseSnapshot');
       if(!select||!card)return;
       const defaultMonth=addMonthsClamped(currentMonthKey()+'-01',-1,1).slice(0,7);
@@ -5033,6 +5125,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const menu=document.getElementById('dashboardExpenseMonthMenu');
       const label=document.getElementById('dashboardExpenseMonthLabel');
       if(trigger&&menu&&label){
+        // Portal the menu out of transformed dashboard cards so fixed viewport
+        // coordinates are never relative to a card or animated ancestor.
+        if(menu.parentElement!==document.body)document.body.appendChild(menu);
         const selectedOption=Array.from(select.options).find(option=>option.value===selected);
         label.textContent=selected?new Date(selected+'-01T12:00:00').toLocaleDateString('en-IN',{month:'short',year:'numeric'}):'Previous month';
         trigger.title=selectedOption?.textContent||'Previous month';
@@ -5049,7 +5144,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
           const height=Math.min(290,Math.max(100,openAbove?availableAbove:availableBelow));
           menu.style.position='fixed';
           menu.style.width=Math.max(190,Math.min(270,window.innerWidth-24))+'px';
-          menu.style.left=Math.max(12,Math.min(rect.right-menu.getBoundingClientRect().width,window.innerWidth-menu.getBoundingClientRect().width-12))+'px';
+          const menuWidth=parseFloat(menu.style.width)||270;
+          menu.style.left=Math.max(12,Math.min(rect.right-menuWidth,window.innerWidth-menuWidth-12))+'px';
           menu.style.maxHeight=height+'px';
           menu.style.top=openAbove?'auto':Math.min(window.innerHeight-12,rect.bottom+7)+'px';
           menu.style.bottom=openAbove?(window.innerHeight-rect.top+7)+'px':'auto';
@@ -5061,7 +5157,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
             menu.hidden=false;
             trigger.setAttribute('aria-expanded','true');
             placeMenu();
-            menu.querySelector('[aria-selected="true"]')?.scrollIntoView({block:'nearest'});
+            // Avoid scrolling the page while bringing the selected month into view.
+            const selectedMonth=menu.querySelector('[aria-selected="true"]');
+            if(selectedMonth)menu.scrollTop=Math.max(0,selectedMonth.offsetTop-menu.offsetTop-menu.clientHeight/2);
           });
           menu.addEventListener('click',event=>{
             const option=event.target.closest('[data-month]');
@@ -5962,9 +6060,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         const editor=`<div class="growth-assumption-details">${scenarios.length?`<p class="growth-assumption-slider-hint">Drag slider or type a value in the % box.</p><div class="growth-rate-controls${group==='fixed'?' is-fixed':''}">${rateEditor}</div>`:'<div class="growth-assumption-no-return-note">No investment growth; enabled monthly contributions are added.</div>'}<div class="growth-assumption-secondary-fields">${secondaryFields}</div></div>`;
         return {group,name:asset.name,current:asset.current,monthlySummary,editor,html:`<article class="growth-assumption-tile" data-growth-assumption-tile="${name}"><button type="button" class="growth-assumption-toggle" data-toggle-growth-assumption="${name}" aria-expanded="${expanded}" aria-controls="growthAssumptionDialog"><span class="growth-assumption-topline"><span class="growth-assumption-name">${name}</span><strong class="growth-assumption-value">${formatCurrency(asset.current)}</strong></span><span class="growth-assumption-subline">${monthlySummary}</span><span class="growth-assumption-returns${group==='market'?'':' growth-assumption-returns-single'}">${returnSummary}</span><span class="growth-assumption-chevron" aria-hidden="true">⌄</span></button></article>`};
       });
-      const selectedGroup=root.dataset.activeAssumptionGroup||'';
-      const groupChoices='<div class="growth-assumption-choices" role="group" aria-label="Investment assumption groups">'+groups.map(group=>{const count=assetTiles.filter(item=>item.group===group.id).length,label={market:'Market linked',fixed:'Fixed returns','no-return':'No return'}[group.id];return `<button type="button" data-assumption-group="${group.id}" aria-expanded="${selectedGroup===group.id}" aria-controls="growthAssumptionGroup-${group.id}" ${count?'':'disabled'}><strong>${label}</strong><small>${count} ${count===1?'type':'types'}</small></button>`;}).join('')+'</div><p class="growth-assumption-choice-hint"'+(selectedGroup?' hidden':'')+'>Tap a group to show its investments.</p>';
-      const groupedMarkup=groups.map(group=>{const items=assetTiles.filter(item=>item.group===group.id);return `<section id="growthAssumptionGroup-${group.id}" data-assumption-group-panel="${group.id}" ${selectedGroup===group.id?'':'hidden'} class="growth-assumption-group growth-assumption-group-${group.accent}"><header class="growth-assumption-group-heading"><div><h3>${group.title}</h3><p>${group.caption}</p></div><span class="growth-assumption-group-count">${items.length} ${items.length===1?'type':'types'}</span></header><div class="growth-assumption-group-grid">${items.map(item=>item.html).join('')}</div></section>`;}).join('');
+      const selectedGroup=root.dataset.activeAssumptionGroup||'',desktopGroups=typeof matchMedia==='function'&&matchMedia('(min-width:1100px)').matches;
+      const groupChoices=desktopGroups?'':'<div class="growth-assumption-choices" role="group" aria-label="Investment assumption groups">'+groups.map(group=>{const count=assetTiles.filter(item=>item.group===group.id).length,label={market:'Market linked',fixed:'Fixed returns','no-return':'No return'}[group.id];return `<button type="button" data-assumption-group="${group.id}" aria-expanded="${selectedGroup===group.id}" aria-controls="growthAssumptionGroup-${group.id}" ${count?'':'disabled'}><strong>${label}</strong><small>${count} ${count===1?'type':'types'}</small></button>`;}).join('')+'</div><p class="growth-assumption-choice-hint"'+(selectedGroup?' hidden':'')+'>Tap a group to show its investments.</p>';
+      const groupedMarkup=groups.map(group=>{const items=assetTiles.filter(item=>item.group===group.id);return `<section id="growthAssumptionGroup-${group.id}" data-assumption-group-panel="${group.id}" ${desktopGroups||selectedGroup===group.id?'':'hidden'} class="growth-assumption-group growth-assumption-group-${group.accent}"><header class="growth-assumption-group-heading"><div><h3>${desktopGroups?{'market':'Market linked','fixed':'Fixed returns','no-return':'No return'}[group.id]:group.title}</h3><p>${group.caption}</p></div><span class="growth-assumption-group-count">${items.length} ${items.length===1?'type':'types'}</span></header><div class="growth-assumption-group-grid">${items.map(item=>item.html).join('')}</div></section>`;}).join('');
       const nextMonthIndex=projectionMonthIndex(currentMonthKey())+1,upcoming=(state.projectionAdjustments||[]).filter(row=>validCalendarDate(row.date)&&projectionMonthIndex(row.date.slice(0,7))>=nextMonthIndex),plannedAdds=upcoming.filter(row=>row.type==='add').reduce((sum,row)=>sum+row.amount,0),plannedWithdrawals=upcoming.filter(row=>row.type==='withdraw').reduce((sum,row)=>sum+row.amount,0),plannedExpanded=expandedGrowthAssumptionAsset===GROWTH_PLANNED_CHANGES_KEY;
       const plannedContent=`<div class="growth-planned-modal-content" data-growth-assumption-tile="${GROWTH_PLANNED_CHANGES_KEY}"><div class="growth-adjustment-form"><div class="form-group"><label for="growthAdjustmentDate">Date</label><input type="date" id="growthAdjustmentDate"></div><div class="form-group"><label for="growthAdjustmentAsset">Investment</label><select id="growthAdjustmentAsset"></select></div><div class="form-group"><label for="growthAdjustmentType">Type</label><select id="growthAdjustmentType"><option value="add">Addition</option><option value="withdraw">Withdrawal</option></select></div><div class="form-group"><label for="growthAdjustmentAmount">Amount (₹)</label><input type="number" id="growthAdjustmentAmount" min="0.01" step="0.01" placeholder="50000"></div><div class="form-group"><label for="growthAdjustmentNotes">Description (optional)</label><input type="text" id="growthAdjustmentNotes" maxlength="120" placeholder="e.g., planned lump sum"></div></div><button type="button" class="btn-primary" id="addGrowthAdjustmentBtn">+ Add planned change</button><div class="table-wrapper"><table><thead><tr><th>Date</th><th>Investment</th><th>Type</th><th class="text-right">Amount</th><th>Description</th><th>Actions</th></tr></thead><tbody id="growthAdjustmentBody"></tbody></table></div></div>`;
       const plannedTile=`<article class="growth-assumption-tile growth-planned-change-tile" data-growth-assumption-tile="${GROWTH_PLANNED_CHANGES_KEY}"><button type="button" class="growth-assumption-toggle" data-toggle-growth-assumption="${GROWTH_PLANNED_CHANGES_KEY}" aria-expanded="${plannedExpanded}" aria-controls="growthAssumptionDialog"><span class="growth-planned-summary"><span><strong>Planned one-time changes</strong><small>${upcoming.length} planned</small></span><span class="growth-planned-amounts"><span class="growth-planned-additions">Additions <strong>${formatCurrency(plannedAdds)}</strong></span><span class="growth-planned-withdrawals">Withdrawals <strong>${formatCurrency(plannedWithdrawals)}</strong></span></span></span><span class="growth-assumption-chevron" aria-hidden="true">⌄</span></button>${plannedExpanded?'':`<div hidden>${plannedContent}</div>`}</article>`;
@@ -6047,7 +6145,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       list.innerHTML=monthlyAssets.map(asset=>{const included=!excluded.includes(asset.name);return `<label class="growth-exclusion-item${included?'':' is-excluded'}"><span class="growth-exclusion-name"><strong>${analyticEscape(asset.name)}</strong><small>${formatCurrency((Number(asset.monthly)||0)+(asset.kind==='pf'?(assets.find(row=>row.kind==='eps')?.monthly||0):0))} per month${asset.kind==='pf'&&assets.some(row=>row.kind==='eps')?' · PF + EPS':''}</small></span><span class="growth-exclusion-control"><span>${included?'Included':'Excluded'}</span><span class="growth-switch growth-switch-small"><input type="checkbox" class="growth-monthly-exclude-toggle" data-asset="${analyticEscape(asset.name)}" aria-label="Include ${analyticEscape(asset.name)} monthly contribution" ${included?'checked':''}><span class="growth-switch-track"></span></span></span></label>`;}).join('')||'<p class="text-muted">No monthly contributions available.</p>';
     }
     function renderGrowthAdjustmentRows(assets) {
-      const select=document.getElementById('growthAdjustmentAsset'),previous=select.value;
+      const select=document.getElementById('growthAdjustmentAsset');
+      if(!select)return;
+      const previous=select.value;
       const options=assets.map(asset=>asset.name);
       if(!options.includes('Other'))options.push('Other');
       select.innerHTML=options.map(name=>`<option value="${analyticEscape(name)}">${analyticEscape(name)}</option>`).join('');
@@ -6302,6 +6402,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       contributionDialog.querySelector('.growth-monthly-exclude-toggle[data-asset="'+CSS.escape(asset)+'"]')?.focus({preventScroll:true});
     });
     const growthAssumptionTiles=document.getElementById('growthProjectionAssumptionTiles');
+    matchMedia('(min-width:1100px)').addEventListener('change',()=>renderGrowthProjection({preserveAssumptions:true}));
     growthAssumptionTiles.addEventListener('click',event=>{
       if(event.target.closest('#addGrowthAdjustmentBtn')){addGrowthAdjustmentFromTile();return;}
       if(handleGrowthAdjustmentRowAction(event))return;

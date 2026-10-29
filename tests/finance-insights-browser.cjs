@@ -79,28 +79,37 @@ const server=http.createServer(async(req,res)=>{try{
  });
  await check('Desktop income and expense editor uses one aligned action footer',async()=>{
    await page.setViewportSize({width:1440,height:900});
-   // Open one deterministic fixture without relying on the active history month
-   // or pagination left behind by earlier test cases.
-   await page.evaluate(()=>{
-     PFT_STYLE.apply('modern',false);
-     document.querySelector('.nav-tab[data-tab="income-expenses"]').click();
-     window.__desktopEditorExpenseBackup=JSON.stringify(state.expenses);
-     state.expenses.push({id:'desktop-editor-layout-fixture',date:currentMonthKey()+'-02',category:'Other',amount:350,notes:'Layout test'});
-     void editExpense('desktop-editor-layout-fixture');
-   });
-   const dialog=page.locator('#recordEditorDialog');
-   await dialog.waitFor({state:'visible'});
-   const boxes=await dialog.locator('.record-editor-actions button').evaluateAll(buttons=>buttons.map(b=>({text:b.textContent.trim(),x:b.getBoundingClientRect().x,y:b.getBoundingClientRect().y,width:b.getBoundingClientRect().width})));
-   assert.equal(boxes.length,3,JSON.stringify(boxes));
-   assert(boxes.every(b=>Math.abs(b.y-boxes[0].y)<2),JSON.stringify(boxes));
-   assert(boxes[2].x<boxes[0].x&&boxes[0].x<boxes[1].x,JSON.stringify(boxes));
-   await page.keyboard.press('Escape');
-   await dialog.waitFor({state:'hidden'});
-   await page.evaluate(()=>{
-     state.expenses=JSON.parse(window.__desktopEditorExpenseBackup);
-     delete window.__desktopEditorExpenseBackup;
-     renderExpenses();
-   });
+   for(const kind of ['income','expense']){
+     // Isolate layout from the history month, pagination, and previous fixtures.
+     const before=await page.evaluate(()=>JSON.stringify(state));
+     await page.evaluate(kind=>{
+       PFT_STYLE.apply('modern',false);
+       document.querySelector('.nav-tab[data-tab="income-expenses"]').click();
+       const row={id:'desktop-editor-layout-fixture',date:currentMonthKey()+'-02',amount:350,notes:'Layout test'};
+       if(kind==='income'){
+         state.income.push({...row,member:state.customValues.familyMembers[0],source:'Salary'});
+         void editIncome(row.id);
+       }else{
+         state.expenses.push({...row,category:'Other'});
+         void editExpense(row.id);
+       }
+     },kind);
+     const dialog=page.locator('#recordEditorDialog');
+     await dialog.waitFor({state:'visible'});
+     const boxes=await dialog.locator('.record-editor-actions button').evaluateAll(buttons=>buttons.map(b=>{
+       const r=b.getBoundingClientRect();return {text:b.textContent.trim(),x:r.x,y:r.y,right:r.right,width:r.width,height:r.height};
+     }));
+     assert.deepEqual(boxes.map(b=>b.text),['Delete','Cancel','Save changes']);
+     assert(boxes.every(b=>Math.abs(b.y-boxes[0].y)<2&&b.width>0&&b.height>=44),JSON.stringify({kind,boxes}));
+     assert(boxes[0].right<=boxes[1].x&&boxes[1].right<=boxes[2].x,JSON.stringify({kind,boxes}));
+     await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+     await dialog.waitFor({state:'hidden'});
+     await page.evaluate(kind=>{
+       const rows=kind==='income'?state.income:state.expenses;
+       rows.splice(rows.findIndex(row=>row.id==='desktop-editor-layout-fixture'),1);
+     },kind);
+     assert.equal(await page.evaluate(()=>JSON.stringify(state)),before,'Cancel preserves all financial records');
+   }
    await page.setViewportSize({width:390,height:844});
  });
  await check('Three-arch hero graphic fades into the dashboard without a rectangular seam',async()=>{await page.setViewportSize({width:1440,height:900});await page.evaluate(()=>{PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="dashboard"]').click();});const mask=await page.locator('.pft-style-art').evaluate(e=>getComputedStyle(e).maskImage);assert.match(mask,/linear-gradient/i);assert.equal(await page.locator('.pft-style-art i').count(),3);const hero=await page.locator('.pft-style-hero').evaluate(e=>{const s=getComputedStyle(e);return{radius:s.borderRadius,border:s.borderTopWidth,shadow:s.boxShadow,artBackground:getComputedStyle(e.querySelector('.pft-style-art')).backgroundImage};});assert.equal(hero.radius,'28px');assert.equal(hero.border,'1px');assert(hero.shadow!=='none');assert.match(hero.artBackground,/linear-gradient/i);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.setViewportSize({width:390,height:844});await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());});
