@@ -60,7 +60,18 @@
       syncThemeModeSwitch(saved);
       let savedColors = 'navy-emerald';
       try { savedColors = trackerStorage.getItem(COLOR_THEME_KEY) || 'navy-emerald'; } catch (error) { /* Use default colors when storage is unavailable. */ }
-      applyColorTheme(savedColors,!Object.prototype.hasOwnProperty.call(COLOR_THEMES,savedColors));
+      // Retired appearance choices migrate as one coherent preference pair:
+      // Modern page layout + Navy & Emerald colors, without touching finance records.
+      let retiredLayout=false;
+      try { retiredLayout=trackerStorage.getItem('displayStyle')==='emerald-flow'; } catch (error) {}
+      const retiredColors=savedColors==='ocean-blue'||savedColors==='midnight-aurora';
+      if(retiredLayout||retiredColors){
+        savedColors='navy-emerald';
+        try { trackerStorage.setItem('displayStyle','modern'); } catch (error) {}
+        applyColorTheme(savedColors,true);
+      }else{
+        applyColorTheme(savedColors,!Object.prototype.hasOwnProperty.call(COLOR_THEMES,savedColors));
+      }
     }
 
     window.PFTBlackTheme = {
