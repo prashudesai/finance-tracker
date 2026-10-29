@@ -2488,3 +2488,31 @@
         width:340px; min-width:340px; white-space:normal;
       }
     }
+
+
+    /* Consistent labeled actions across ALL investment types, including nested/source dialogs. */
+    @media (min-width:701px) {
+      :is(#investmentCategoryPanels,#investmentCategoryDialog,.investment-category-dialog-source,#stallionPmsTileBody) .investment-row-action-group,
+      :is(#investmentCategoryPanels,#investmentCategoryDialog,.investment-category-dialog-source,#stallionPmsTileBody) .investment-row-action-group:has(button:nth-of-type(4)) {
+        display:flex; flex-flow:row wrap; align-items:center; justify-content:flex-start;
+        gap:8px; width:336px; min-width:0; max-width:none;
+      }
+      :is(#investmentCategoryPanels,#investmentCategoryDialog,.investment-category-dialog-source,#stallionPmsTileBody) .investment-row-action-group > button.investment-icon-action {
+        display:inline-flex; align-items:center; justify-content:flex-start;
+        flex:0 0 104px; width:104px; min-width:104px; height:38px;
+        padding:0 9px; margin:0; gap:7px; box-sizing:border-box;
+        font-size:12px; line-height:1.2; white-space:nowrap;
+      }
+      :is(#investmentCategoryPanels,#investmentCategoryDialog,.investment-category-dialog-source,#stallionPmsTileBody) .investment-row-action-group > button.investment-icon-action svg {
+        display:block; flex:0 0 17px; width:17px; height:17px;
+      }
+      :is(#investmentCategoryPanels,#investmentCategoryDialog,.investment-category-dialog-source,#stallionPmsTileBody) .investment-row-action-group > button.investment-icon-action::before { content:none; display:none; }
+      :is(#investmentCategoryPanels,#investmentCategoryDialog,.investment-category-dialog-source,#stallionPmsTileBody) .investment-row-action-group > button.investment-icon-action::after {
+        content:attr(data-short-action); display:inline; font-size:12px;
+        line-height:1.2; font-weight:600; color:inherit;
+      }
+      :is(#investmentCategoryPanels,#investmentCategoryDialog,.investment-category-dialog-source,#stallionPmsTileBody) :is(.investment-row-actions,.investment-row-actions-header),
+      :is(#investmentCategoryPanels,#investmentCategoryDialog,.investment-category-dialog-source,#stallionPmsTileBody) .table-wrapper > table:has(.investment-row-action-group) :is(th:last-child,td:last-child) {
+        width:352px; min-width:352px; max-width:none; white-space:normal;
+      }
+    }
