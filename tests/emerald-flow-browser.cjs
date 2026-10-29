@@ -30,6 +30,37 @@ const server=http.createServer(async(req,res)=>{try{
  async function projectionGeometry(target=page){const issues=await target.evaluate(()=>{const box=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};const out=[];const controls=document.getElementById('growthProjectionControls'),c=box(controls);for(const e of controls.querySelectorAll('.form-grid > .form-group,.growth-horizon-control,.growth-contribution-toggle')){if(!e.getClientRects().length)continue;const r=box(e);if(r.x<c.x-1||r.right>c.right+1||r.bottom>c.bottom+1)out.push({type:'control outside panel',class:e.className,r,c});}const groups=[...controls.querySelectorAll('.form-grid > .form-group')].map(box);if(groups.length===2){const a=groups[0],b=groups[1];if(Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y)>1)out.push({type:'overlapping groups',groups});}const summary=document.getElementById('growthProjectionSummary'),p=box(summary),cards=[...summary.children].map(box);cards.forEach((r,i)=>{if(r.x<p.x-1||r.right>p.right+1)out.push({type:'forecast card clipped',i,r,p});});for(let i=0;i<cards.length;i++)for(let j=i+1;j<cards.length;j++){const a=cards[i],b=cards[j];if(Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y)>1)out.push({type:'forecast cards overlap',i,j});}return out;});assert.deepEqual(issues,[]);}
  async function check(name,fn){await fn();console.log('PASS '+name);results.push(name);}
  await page.goto(url+'/?user=flow&email=flow@example.test&name=Tester');await page.locator('#cloudLogin').click();await page.waitForFunction(()=>window.financeCloud&&document.getElementById('cloudGate').hidden).catch(async error=>{console.error('STARTUP DIAGNOSTIC',await page.evaluate(()=>({message:document.getElementById('cloudMessage').textContent,manage:!!document.getElementById('manageGrowthContributions'),dialog:!!document.getElementById('growthContributionDialog')})),errors);throw error;});if(await page.locator('#firstNameSetup').isVisible())await page.locator('#firstNameContinue').click();await page.evaluate(()=>window.trackerReady);if(await page.locator('#appGuideTour').isVisible())await page.locator('#appGuideTour [data-tour-skip]').click();await page.waitForFunction(()=>Boolean(window.PFT_STYLE));
+ await check('Modern desktop navigation matches Emerald Flow tab spacing and icons',async()=>{
+  const initialStyle=await page.evaluate(()=>PFT_STYLE.current);
+  await page.setViewportSize({width:1440,height:900});
+  const read=()=>page.locator('.pft-style-navigation').evaluate(nav=>{
+   const buttons=[...nav.querySelectorAll('button[data-style-page]')];
+   const style=getComputedStyle(nav),tabStyle=getComputedStyle(buttons[0]),active=nav.querySelector('button.active');
+   const boxes=buttons.map(button=>button.getBoundingClientRect());
+   return {count:buttons.length,gap:style.gap,align:style.alignItems,fontSize:tabStyle.fontSize,radius:tabStyle.borderRadius,
+    icon:getComputedStyle(buttons[0].querySelector('svg')).display,
+    topSpread:Math.max(...boxes.map(b=>b.y))-Math.min(...boxes.map(b=>b.y)),
+    activeBg:getComputedStyle(active).backgroundColor};
+  });
+  try{
+   await page.evaluate(()=>PFT_STYLE.apply('emerald-flow',false));
+   const reference=await read();
+   await page.evaluate(()=>PFT_STYLE.apply('modern',false));
+   const modern=await read();
+   assert.equal(modern.count,6);
+   for(const key of ['gap','align','fontSize','radius','icon'])assert.equal(modern[key],reference[key],key+' mismatch '+JSON.stringify({reference,modern}));
+   assert(modern.topSpread<3,JSON.stringify(modern));
+   assert.notEqual(modern.activeBg,'rgba(0, 0, 0, 0)');
+   const mobileWidth=390;
+   await page.setViewportSize({width:mobileWidth,height:844});
+   const mobile=await read();
+   assert.equal(mobile.count,6);
+   assert.equal(mobile.icon,'block');
+  }finally{
+   await page.evaluate(style=>PFT_STYLE.apply(style,false),initialStyle);
+   await page.setViewportSize({width:1440,height:1050});
+  }
+ });
  await check('Investment layout and allocation use recorded balances',async()=>{
   await page.evaluate(()=>{PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="investments"]').click();window.__savedInvestmentLayout=JSON.stringify({investments:state.investments,pf:state.pf,ppf:state.ppf,nps:state.nps});state.investments=[];state.pf=[];state.ppf=[];state.nps=[];renderInvestmentOverview();});
   assert.match(await page.locator('#investmentAllocationLegend').textContent(),/No assets added yet/);
