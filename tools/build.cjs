@@ -1,7 +1,29 @@
 // Canonical files stay readable; production HTML uses deterministic, immutable assets.
-const fs=require('fs'),path=require('path'),crypto=require('crypto'),zlib=require('zlib'),esbuild=require('esbuild');
+const fs=require('fs'),path=require('path'),vm=require('vm'),crypto=require('crypto'),zlib=require('zlib'),esbuild=require('esbuild');
 const root=path.resolve(__dirname,'..'),source=path.join(root,'src'),dist=path.join(root,'dist');
 const digest=s=>crypto.createHash('sha256').update(s).digest('hex').slice(0,16);
+function syncReleaseMetadata(){
+ const version=require(path.join(root,'package.json')).version;
+ const lockPath=path.join(root,'package-lock.json'),lock=JSON.parse(fs.readFileSync(lockPath,'utf8'));
+ if(!lock.packages?.[''])throw Error('Root package metadata is missing from package-lock.json');
+ if(lock.version!==version||lock.packages[''].version!==version){
+  lock.version=version;lock.packages[''].version=version;
+  fs.writeFileSync(lockPath,JSON.stringify(lock,null,2)+'\\n');
+ }
+ const infoPath=path.join(dist,'app-info.js'),sourceText=fs.readFileSync(infoPath,'utf8'),context={window:{}};
+ vm.runInNewContext(sourceText,context,{filename:infoPath});
+ const info=context.window.PFT_APP_INFO;
+ if(!info||!Array.isArray(info.releaseNotes))throw Error('App release metadata is invalid.');
+ const released=/^(\\d{4})\\.(\\d{2})\\.(\\d{2})\\.\\d+$/.test(version)?version.slice(0,10).replaceAll('.','-'):info.released;
+ const updatedSource=sourceText
+  .replace(/("version"\\s*:\\s*)"[^"]+"/,(_,prefix)=>prefix+JSON.stringify(version))
+  .replace(/("released"\\s*:\\s*)"[^"]+"/,(_,prefix)=>prefix+JSON.stringify(released));
+ fs.writeFileSync(infoPath,updatedSource);
+ const versionPath=path.join(dist,'version.json'),versionInfo=JSON.parse(fs.readFileSync(versionPath,'utf8'));
+ Object.assign(versionInfo,{version,released,releaseNotes:info.releaseNotes});
+ fs.writeFileSync(versionPath,JSON.stringify(versionInfo,null,2)+'\\n');
+}
+syncReleaseMetadata();
 // Keep the checked-in browser SDK aligned with the pinned npm Firebase version.
 // The package's browser bundles reference its shared app bundle by a gstatic URL;
 // rewrite that import to the local copy so auth continues to work offline.
