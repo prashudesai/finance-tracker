@@ -148,6 +148,61 @@
     setupInlineCustomValues();
     
     document.querySelector('.container').inert=true;
+
+    // A read-only walkthrough shown after new-account setup, and replayable from App info.
+    function setupAppTour(isNewUser=false){
+      const key='pft:guide-tour:v1';
+      if(window.PFTTour){window.PFTTour.maybeStart(isNewUser);return;}
+      const steps=[
+        {page:'dashboard',title:'Your finances at a glance',text:'Home brings together your assets, debts, income and expenses. Use the family profile selector to switch between an individual and the combined view.',tip:'The tour only explains the app. It does not add or change financial records.'},
+        {page:'income-expenses',title:'Record money in and out',text:'Switch between Income and Expenses, choose a month, and add an entry. Tap an existing transaction to review or edit it when you have edit access.',tip:'Monthly balances record your opening bank balance. Every amount in balance history has its own label.'},
+        {page:'income-expenses',title:'Manage recurring commitments',text:'Recurring items can record regular income, expenses and loan EMIs. Review earlier missed months before adding them, and pause a rule when it is no longer needed.',tip:'The app records entries; it does not send money or make bank payments.'},
+        {page:'investments',title:'Track your investments',text:'Add investment and retirement accounts, then tap a tile for holdings, returns and history. The actions inside each holding let you review contributions or update its value.',tip:'A contribution adds money invested. Update value or gain/loss when the market value changes.'},
+        {page:'debts',title:'Review loans and repayments',text:'Open a loan to see its outstanding balance, payment history and terms. Record EMIs or part payments, and review the preview before changing the rate, EMI or borrowing more.',tip:'Estimates help you plan. Use your bank statement to confirm repayment amounts and interest splits.'},
+        {page:'analytics',title:'Understand your reports',text:'Reports includes Analytics, Growth Projection and Date range reports. Choose the financial year for analytics or a date range for detailed records and exports.',tip:'Your selected family profile and report filters affect the records shown.'},
+        {page:'growth-projection',title:'Explore possible growth',text:'Set a time horizon and tap an investment to adjust assumptions. Stress, Base and Optimistic scenarios compare possible results. Tap a scenario below the graph for exact values and its yearly breakdown.',tip:'Projection settings are planning assumptions, not guaranteed returns or changes to your recorded investments.'},
+        {page:'settings',title:'Personalize and share access',text:'Appearance changes your page style and colors. Family access manages member names and invitations. Account settings manage your signed-in profile.',tip:'A family member name does not grant login access. Invitations and roles control access; viewers cannot edit records.'},
+        {page:'settings',title:'Keep a backup and find help',text:'Use Data & backup to export your records. Importing a backup replaces records, so keep an export first. App & updates shows your installed version and available updates.',tip:'You can replay this tour or download the full guide from App info at any time.'}
+      ];
+      const dialog=document.createElement('dialog');dialog.id='appGuideTour';dialog.setAttribute('aria-labelledby','appGuideTourTitle');dialog.setAttribute('aria-describedby','appGuideTourText');
+      dialog.innerHTML='<header><span id="appGuideTourProgress"></span><button type="button" data-tour-skip aria-label="Skip app tour">Skip</button></header><h2 id="appGuideTourTitle" tabindex="-1"></h2><p id="appGuideTourText"></p><p id="appGuideTourTip"></p><footer><button type="button" data-tour-back>Back</button><button type="button" class="btn-primary" data-tour-next>Next</button></footer>';
+      document.body.append(dialog);
+      let index=0,returnPage='dashboard',returnScroll=0,returnFocus=null;
+      const shouldOffer=newUser=>{if(!newUser)return false;try{return !trackerStorage.getItem(key);}catch(_){return false;}};
+      function remember(status){try{trackerStorage.setItem(key,status);}catch(_){}}
+      function render(){
+        const step=steps[index];
+        document.querySelector('.nav-tab[data-tab="'+step.page+'"]')?.click();
+        document.getElementById('appGuideTourProgress').textContent='App tour · '+(index+1)+' of '+steps.length;
+        document.getElementById('appGuideTourTitle').textContent=step.title;
+        document.getElementById('appGuideTourText').textContent=step.text;
+        document.getElementById('appGuideTourTip').textContent=step.tip;
+        dialog.querySelector('[data-tour-back]').disabled=index===0;
+        dialog.querySelector('[data-tour-next]').textContent=index===steps.length-1?'Finish':'Next';
+        document.getElementById('appGuideTourTitle').focus({preventScroll:true});
+      }
+      function finish(status){
+        remember(status);dialog.close();document.body.classList.remove('app-guide-open');
+        document.querySelector('.nav-tab[data-tab="'+returnPage+'"]')?.click();
+        window.scrollTo({top:returnScroll,behavior:'instant'});
+        if(returnFocus?.isConnected&&!returnFocus.closest('#settingsPanelParking'))returnFocus.focus({preventScroll:true});
+      }
+      function start(){
+        if(dialog.open)return;
+        if([...document.querySelectorAll('dialog[open]:not(#settingsTileDialog),[aria-modal="true"]:not(dialog)')].some(node=>node.getClientRects().length&&getComputedStyle(node).visibility!=='hidden'))return;
+        returnPage=document.querySelector('.nav-tab.active')?.dataset.tab||'dashboard';returnScroll=window.scrollY;returnFocus=document.activeElement;
+        window.closeSettingsTile?.();index=0;remember('started');document.body.classList.add('app-guide-open');dialog.showModal();render();
+      }
+      dialog.querySelector('[data-tour-skip]').onclick=()=>finish('skipped');
+      dialog.querySelector('[data-tour-back]').onclick=()=>{if(index>0){index--;render();}};
+      dialog.querySelector('[data-tour-next]').onclick=()=>{if(index===steps.length-1)finish('completed');else{index++;render();}};
+      dialog.addEventListener('cancel',event=>{event.preventDefault();finish('skipped');});
+      const replay=document.createElement('button');replay.type='button';replay.id='replayAppTour';replay.className='btn-secondary';replay.textContent='Take a tour';replay.onclick=start;
+      document.getElementById('downloadAppInfoPdf')?.before(replay);
+      window.PFTTour={start,shouldOffer,maybeStart(newUser){if(shouldOffer(newUser))start();}};
+      window.PFTTour.maybeStart(isNewUser);
+    }
+
     const trackerStartup=(async()=>{
     await loadData();
     if(storageLoadFailed)return;
@@ -166,7 +221,7 @@
 
 
 
-    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();window.dispatchEvent(new Event('pft:before-reveal'));window.PFTPerformance?.mark('layout-ready');document.querySelector('.container').inert=false;window.financeCloud.showApp();window.PFTPerformance?.mark('visible');window.dispatchEvent(new Event('pft:visible'));void verifyStartupRevision();await setupFirstName();applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
+    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();window.dispatchEvent(new Event('pft:before-reveal'));window.PFTPerformance?.mark('layout-ready');document.querySelector('.container').inert=false;window.financeCloud.showApp();window.PFTPerformance?.mark('visible');window.dispatchEvent(new Event('pft:visible'));void verifyStartupRevision();const newTourUser=firstNameSetupNeeded(state,profileMemberNames())&&(!window.financeCloud?.role||window.financeCloud.role==='owner');await setupFirstName();setupAppTour(newTourUser);applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
     if(window.PFTResolveTrackerReady)trackerStartup.then(window.PFTResolveTrackerReady);else window.trackerReady=trackerStartup;
 
     const tableSortChoices = {};
