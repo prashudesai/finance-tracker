@@ -61,7 +61,7 @@ const server=http.createServer(async(req,res)=>{try{
  await check('Desktop income and expense editor uses one aligned action footer',async()=>{
    await page.setViewportSize({width:1440,height:900});
    await page.evaluate(()=>{PFT_STYLE.apply('modern',false);document.querySelector('.nav-tab[data-tab="income-expenses"]').click();financeCashFlow.select('expense');});
-   await page.locator('#expenseBody tr[data-cash-record]').first().click();
+   await page.locator('#expenseBody tr[data-cash-record] button[aria-label="Edit expense"]').first().click();
    const dialog=page.locator('#recordEditorDialog');
    assert(await dialog.isVisible());
    const boxes=await dialog.locator('.record-editor-actions button').evaluateAll(buttons=>buttons.map(b=>({text:b.textContent.trim(),x:b.getBoundingClientRect().x,y:b.getBoundingClientRect().y,width:b.getBoundingClientRect().width})));
