@@ -367,7 +367,9 @@
       const colors=['#4c83a1','#138b89','#8069aa','#c47b43','#5575b9','#a45f7d'];
       container.innerHTML=Array.from(byType.entries()).map(([type,accounts],index)=>{
         const amount=accounts.reduce((sum,debt)=>sum+(Number(debt.remaining)||0),0);
+        const principal=accounts.reduce((sum,debt)=>sum+(Number(debt.principal)||Number(debt.remaining)||0),0);
         const share=total>0?amount/total*100:0;
+        const paid=principal>0?Math.max(0,Math.min(100,(principal-amount)/principal*100)):0;
         const key=`debt-summary-${index}`;
         const details=accounts.map((debt,accountIndex)=>{
           const schedule=remainingEmiEstimate(debt);
@@ -376,10 +378,10 @@
         }).join('');
         return `<section class="debt-summary-card" style="--debt-color:${colors[index%colors.length]}">
           <button type="button" class="debt-summary-card-toggle" data-debt-summary-toggle aria-expanded="false" aria-controls="${key}">
-            <span class="debt-summary-card-top"><span class="debt-summary-type"><i class="debt-summary-dot"></i>${analyticEscape(type)}</span><span class="debt-summary-share">${share.toFixed(1)}%</span></span>
-            <span class="debt-summary-card-amount"><strong>${formatCurrency(amount)}</strong><span>remaining balance</span></span>
-            <span class="debt-summary-track" aria-hidden="true"><i style="width:${Math.max(0,Math.min(100,share))}%"></i></span>
-            <span class="debt-summary-card-hint"><span>${accounts.length} account${accounts.length===1?'':'s'} · View details</span><span class="debt-summary-chevron" aria-hidden="true">⌄</span></span>
+            <span class="debt-summary-card-top"><span class="debt-summary-type"><i class="debt-summary-dot"></i>${analyticEscape(type)}</span><span class="debt-summary-share">${share.toFixed(1)}% of total debt</span></span>
+            <span class="debt-summary-card-amount"><strong>${formatCurrency(amount)}</strong></span>
+            <span class="debt-summary-track" role="img" aria-label="${paid.toFixed(1)}% paid, ${(100-paid).toFixed(1)}% remaining"><i style="width:${paid.toFixed(1)}%"></i></span>
+            <span class="debt-summary-card-hint"><span>${accounts.length} account${accounts.length===1?'':'s'} · View details <span class="debt-summary-chevron" aria-hidden="true">⌄</span></span><span class="debt-summary-paid">Paid: ${paid.toFixed(1)}%</span></span>
           </button>
           <div id="${key}" class="debt-summary-details" hidden><div class="table-wrapper"><table><thead><tr><th>Account</th><th class="text-right">Remaining</th><th class="text-right">EMI</th><th class="text-right">EMIs left</th></tr></thead><tbody>${details}</tbody></table></div></div>
         </section>`;
