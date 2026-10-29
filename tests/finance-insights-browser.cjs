@@ -79,15 +79,28 @@ const server=http.createServer(async(req,res)=>{try{
  });
  await check('Desktop income and expense editor uses one aligned action footer',async()=>{
    await page.setViewportSize({width:1440,height:900});
-   await page.evaluate(()=>{PFT_STYLE.apply('modern',false);document.querySelector('.nav-tab[data-tab="income-expenses"]').click();financeCashFlow.select('expense');});
-   await page.locator('#expenseBody tr[data-cash-record] button[aria-label="Edit expense"]').first().click();
+   // Open one deterministic fixture without relying on the active history month
+   // or pagination left behind by earlier test cases.
+   await page.evaluate(()=>{
+     PFT_STYLE.apply('modern',false);
+     document.querySelector('.nav-tab[data-tab="income-expenses"]').click();
+     window.__desktopEditorExpenseBackup=JSON.stringify(state.expenses);
+     state.expenses.push({id:'desktop-editor-layout-fixture',date:currentMonthKey()+'-02',category:'Other',amount:350,notes:'Layout test'});
+     void editExpense('desktop-editor-layout-fixture');
+   });
    const dialog=page.locator('#recordEditorDialog');
-   assert(await dialog.isVisible());
+   await dialog.waitFor({state:'visible'});
    const boxes=await dialog.locator('.record-editor-actions button').evaluateAll(buttons=>buttons.map(b=>({text:b.textContent.trim(),x:b.getBoundingClientRect().x,y:b.getBoundingClientRect().y,width:b.getBoundingClientRect().width})));
    assert.equal(boxes.length,3,JSON.stringify(boxes));
    assert(boxes.every(b=>Math.abs(b.y-boxes[0].y)<2),JSON.stringify(boxes));
    assert(boxes[2].x<boxes[0].x&&boxes[0].x<boxes[1].x,JSON.stringify(boxes));
    await page.keyboard.press('Escape');
+   await dialog.waitFor({state:'hidden'});
+   await page.evaluate(()=>{
+     state.expenses=JSON.parse(window.__desktopEditorExpenseBackup);
+     delete window.__desktopEditorExpenseBackup;
+     renderExpenses();
+   });
    await page.setViewportSize({width:390,height:844});
  });
  await check('Three-arch hero graphic fades into the dashboard without a rectangular seam',async()=>{await page.setViewportSize({width:1440,height:900});await page.evaluate(()=>{PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="dashboard"]').click();});const mask=await page.locator('.pft-style-art').evaluate(e=>getComputedStyle(e).maskImage);assert.match(mask,/linear-gradient/i);assert.equal(await page.locator('.pft-style-art i').count(),3);const hero=await page.locator('.pft-style-hero').evaluate(e=>{const s=getComputedStyle(e);return{radius:s.borderRadius,border:s.borderTopWidth,shadow:s.boxShadow,artBackground:getComputedStyle(e.querySelector('.pft-style-art')).backgroundImage};});assert.equal(hero.radius,'28px');assert.equal(hero.border,'1px');assert(hero.shadow!=='none');assert.match(hero.artBackground,/linear-gradient/i);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.setViewportSize({width:390,height:844});await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());});
