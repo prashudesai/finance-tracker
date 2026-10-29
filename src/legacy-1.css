@@ -2432,3 +2432,25 @@
       #investmentCategoryDialog .table-wrapper > table:has(.investment-row-action-group) :is(th:last-child,td:last-child),
       .investment-category-card .table-wrapper > table:has(.investment-row-action-group) :is(th:last-child,td:last-child) { width:132px; min-width:132px; }
     }
+
+
+    /* Match PMS: one compact horizontal action strip on desktop investment rows. */
+    @media (min-width:701px) {
+      #investmentCategoryDialog .investment-row-action-group,
+      .investment-category-card .investment-row-action-group,
+      #investmentCategoryDialog .investment-row-action-group:has(button:nth-of-type(4)),
+      .investment-category-card .investment-row-action-group:has(button:nth-of-type(4)) {
+        display:flex; flex-wrap:nowrap; align-items:center; justify-content:flex-end;
+        gap:6px; width:max-content; max-width:none;
+      }
+      #investmentCategoryDialog .investment-row-actions,
+      .investment-category-card .investment-row-actions,
+      #investmentCategoryDialog .table-wrapper > table:has(.investment-row-action-group) :is(th:last-child,td:last-child),
+      .investment-category-card .table-wrapper > table:has(.investment-row-action-group) :is(th:last-child,td:last-child) {
+        width:220px; min-width:220px; white-space:nowrap;
+      }
+      #investmentCategoryDialog .investment-row-action-group .investment-icon-action,
+      .investment-category-card .investment-row-action-group .investment-icon-action {
+        flex:0 0 36px; width:36px; min-width:36px; height:36px; margin:0;
+      }
+    }
