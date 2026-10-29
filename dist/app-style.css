@@ -2855,7 +2855,7 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
  body:has(>#financeBottomTools){padding-bottom:0}
  html[data-app-style="modern"] body.advanced-layout>.container{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
  html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel{padding-bottom:16px;margin-bottom:0}
- #mobileSettingsShortcut svg{transform:none!important;width:22px!important;height:22px!important;stroke-width:1.8!important}
+ #mobileSettingsShortcut svg{transform:none!important;width:19px!important;height:19px!important;stroke-width:1.8!important}
  .remaining-portfolio-dialog .portfolio-category-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;padding:12px}
  .remaining-portfolio-dialog .portfolio-value-bar{grid-column:1/-1;grid-row:2}
  .remaining-portfolio-dialog .portfolio-gain-value{grid-column:1/-1}
