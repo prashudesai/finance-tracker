@@ -2882,7 +2882,7 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 
 /* A compact row directly above navigation: Search, centred sync, Add. */
 @media screen and (max-width:700px){
- html[data-app-style="modern"] #financeBottomTools{left:max(4px,env(safe-area-inset-left));right:max(4px,env(safe-area-inset-right));bottom:calc(65px + env(safe-area-inset-bottom));height:44px;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center}
+ html[data-app-style="modern"] body #financeBottomTools{left:max(4px,env(safe-area-inset-left));right:max(4px,env(safe-area-inset-right));bottom:calc(65px + env(safe-area-inset-bottom));height:44px;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center}
  html[data-app-style="modern"] #financeBottomTools #financeBottomSync{grid-column:2;grid-row:1;justify-self:center;max-width:100%;text-align:center}
  html[data-app-style="modern"] #financeBottomTools #openRecordSearch{grid-column:1;grid-row:1;justify-self:start;width:44px;height:44px;padding:0;border:0;background:transparent;box-shadow:none;border-radius:50%}
  html[data-app-style="modern"] #financeBottomTools #openRecordSearch>span{display:none}
