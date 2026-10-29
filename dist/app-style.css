@@ -3427,3 +3427,8 @@ html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel.is-empt
 html[data-app-style] body.advanced-layout #debts .debt-list-panel tbody td.debt-empty-cell.friendly-empty-cell{padding:0!important;text-align:left!important}
 .investment-empty-state,#retirementEmptyState{flex-wrap:wrap}
 .investment-empty-state>[data-setup-action],#retirementEmptyState>[data-setup-action]{max-width:100%;margin-top:8px;white-space:normal}
+/* Keep the icon and message together; the new action gets its own row. */
+html[data-app-style] body.advanced-layout #investments :is(.investment-empty-state,#retirementEmptyState){display:grid!important;grid-template-columns:42px minmax(0,1fr);gap:10px 12px;align-items:center}
+html[data-app-style] body.advanced-layout #investments :is(.investment-empty-state,#retirementEmptyState)>.account-empty-icon{grid-column:1;grid-row:1}
+html[data-app-style] body.advanced-layout #investments :is(.investment-empty-state,#retirementEmptyState)>.account-empty-copy{grid-column:2;grid-row:1;min-width:0}
+html[data-app-style] body.advanced-layout #investments :is(.investment-empty-state,#retirementEmptyState)>[data-setup-action]{grid-column:2;grid-row:2;justify-self:start;margin:0;max-width:100%}
