@@ -437,7 +437,7 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
  await check('Projection groups disclose one list and contribution management stays compact',async()=>{
   await page.setViewportSize({width:390,height:844});
   await page.evaluate(()=>{PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="growth-projection"]').click();});
-  await page.evaluate(async()=>{const member=state.customValues.familyMembers[0]||'Tester';state.investments=[{id:'assumption-market',member,type:'Mutual Funds',name:'Tour fund',date:'2025-01-01',invested:100000,current:110000,monthly:1000,autoMonthlyContribution:true},{id:'assumption-fixed',member,type:'Bonds',name:'Test bond',date:'2025-01-01',invested:10000,current:11000,interestRate:7},{id:'assumption-cash',member,type:'Cash Reserve',name:'Test cash',date:'2025-01-01',invested:1000,current:1000}];state.projectionSettings.includeMonthlyContributions=true;await saveData('Projection control test fixture');renderGrowthProjection();});
+  await page.evaluate(async()=>{activeFamilyProfile='__combined__';const member=state.customValues.familyMembers[0]||'Tester';state.investments=[{id:'assumption-market',member,type:'Mutual Funds',name:'Tour fund',date:'2025-01-01',invested:100000,current:110000,monthly:1000,autoMonthlyContribution:true},{id:'assumption-fixed',member,type:'Bonds',name:'Test bond',date:'2025-01-01',invested:10000,current:11000,interestRate:7},{id:'assumption-cash',member,type:'Cash Reserve',name:'Test cash',date:'2025-01-01',invested:1000,current:1000}];state.projectionSettings.includeMonthlyContributions=true;await saveData('Projection control test fixture');renderGrowthProjection();});
   const before=await page.evaluate(()=>JSON.stringify(state));
   const choices=page.locator('.growth-assumption-choices [data-assumption-group]');
   assert.equal(await choices.count(),3);
@@ -454,6 +454,7 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
   assert.equal(await page.locator('#growthProjectionControls .form-group>label').filter({hasText:/^Monthly contributions$/}).count(),0);
   assert.equal(await page.locator('#growthContributionExclusionsWrap').isVisible(),false);
   const manage=page.locator('#manageGrowthContributions');
+  assert.equal(await manage.isEnabled(),true,'Saved monthly fixture is available in combined profile');
   if(await manage.isEnabled()){
     await manage.click();assert.equal(await page.locator('#growthContributionDialog').isVisible(),true);
     const toggle=page.locator('#growthContributionDialog .growth-monthly-exclude-toggle').first();
