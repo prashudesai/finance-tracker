@@ -705,9 +705,12 @@
       if(gainTotal){gainTotal.textContent=`${totalGain>=0?'+':'−'}${compact(Math.abs(totalGain))}`;gainTotal.classList.toggle('is-loss',totalGain<0);}
       if(returnTotal){returnTotal.textContent=`${totalReturn>=0?'+':''}${totalReturn.toFixed(1)}%`;returnTotal.classList.toggle('is-loss',totalReturn<0);}
       if(!rows.length){body.innerHTML='<div class="text-muted">No investments added yet.</div>';body.dataset.expandedCategory='';return;}
-      const maxValue=Math.max(...rows.map(row=>Math.max(row.current,row.invested)),1);
+      const visibleRows=rows.slice(0,5);
+      const portfolioCount=document.getElementById('completePortfolioCount');
+      if(portfolioCount)portfolioCount.textContent=`(${rows.length}) `;
+      const maxValue=Math.max(...visibleRows.map(row=>Math.max(row.current,row.invested)),1);
       const colors=['#3985a1','#ec9c52','#7566c2','#43a88c','#e06f70','#7889a7','#a16c91','#3f9b8e'];
-      body.innerHTML=rows.map((row,index)=>{
+      body.innerHTML=visibleRows.map((row,index)=>{
         const isExpanded=expandedCategory===row.category;
         const investedWidth=Math.min(100,Math.max(0,row.invested/maxValue*100));
         const currentWidth=Math.min(100,Math.max(0,row.current/maxValue*100));

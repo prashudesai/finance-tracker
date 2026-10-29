@@ -2369,3 +2369,27 @@
   .debt-summary-card-hint>span:first-child{display:flex;align-items:center;gap:4px}
   .nav-tab.active{margin:4px;border-radius:12px;border-bottom-color:transparent}
 }
+
+
+/* Release 2026.10.29.6: compact mobile dashboard navigation and portfolio */
+@media screen and (max-width:700px){
+  html[data-app-style="modern"] body.advanced-layout #dashboard.active{padding-bottom:0}
+  body.advanced-layout footer{margin-top:12px}
+  body.advanced-layout #dashboard .dashboard-portfolio-heading{grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:10px;row-gap:3px;margin-bottom:8px}
+  body.advanced-layout #dashboard .dashboard-portfolio-title{grid-column:1;grid-row:1;min-width:0}
+  body.advanced-layout #dashboard .dashboard-portfolio-title h2{margin:0;font-size:20px;line-height:1.15}
+  body.advanced-layout #dashboard .dashboard-portfolio-title p{margin:4px 0 0;font-size:11px;line-height:1.35}
+  body.advanced-layout #dashboard .portfolio-sort-control{grid-column:2;grid-row:1;align-self:center;justify-self:end;gap:4px}
+  body.advanced-layout #dashboard .portfolio-sort-control select{max-width:148px;min-height:40px;padding:7px 30px 7px 9px}
+  body.advanced-layout #dashboard .portfolio-total-summary{padding-top:2px;padding-bottom:11px;margin-bottom:6px}
+  body.advanced-layout #dashboard .portfolio-total-item>strong{font-size:20px;white-space:nowrap}
+  body.advanced-layout #dashboard .portfolio-interaction-note{margin:9px 0 7px}
+  body.advanced-layout #dashboard .dashboard-portfolio-view-all-bottom{display:flex;width:100%;min-height:44px;align-items:center;justify-content:center;gap:4px;margin:2px 0 0;border-top:1px solid var(--border);border-radius:0;font-size:12px;font-weight:750}
+  body.advanced-layout .header-controls{gap:7px}
+  body.advanced-layout .header-controls .theme-mode-option,body.advanced-layout #mobileSettingsShortcut{width:40px;height:40px;min-width:40px}
+}
+@media screen and (max-width:360px){
+  body.advanced-layout .header-controls{gap:4px;transform:none}
+  body.advanced-layout #mobileSettingsShortcut{width:36px;height:36px;min-width:36px}
+  body.advanced-layout .header-controls .theme-mode-option{width:36px;height:36px}
+}
