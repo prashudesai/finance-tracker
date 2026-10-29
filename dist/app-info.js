@@ -1,11 +1,9 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.29.8",
+  "version": "2026.10.29.9",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Compact the mobile portfolio heading and show only remaining categories after the top five.",
-    "Keep Add record clear of dashboard labels and fade it while scrolling.",
-    "Tighten the mobile page end and center the shorter active navigation highlight.",
-    "Match the Settings outline gear to the sun and moon controls."
+    "Keep Add record beside the mobile dock and hide it when it would cover content.",
+    "Remove the duplicate bottom reserve after Debt Summary and the blue dock border."
   ],
   "sections": [
     [

@@ -196,6 +196,11 @@ const server=http.createServer(async(req,res)=>{try{
     await add.waitFor({state:'visible'});
     const box=await add.boundingBox(),nav=await page.locator('.pft-style-navigation').boundingBox();
     assert.equal(box.width,44);assert.equal(box.height,44);assert(box.y+box.height<=nav.y-8);
+    assert(nav.y-(box.y+box.height)<35,'Add record must stay next to the dock, not float between cards');
+    assert.equal(await add.evaluate(e=>e.style.bottom),'','The button must not acquire a moving inline bottom position');
+    const dockStyles=await page.evaluate(()=>({pad:getComputedStyle(document.body).paddingBottom,border:getComputedStyle(document.querySelector('.pft-style-navigation')).borderTopWidth}));
+    assert.equal(dockStyles.pad,'0px','Bottom sync must not add a second page reserve');
+    assert.equal(dockStyles.border,'0px','The mobile dock must not show a colored top strip');
     assert.equal(await add.getAttribute('aria-label'),'Add record');
     assert.equal(await page.locator('.pft-dashboard-caption').isVisible(),false);
     await add.click();

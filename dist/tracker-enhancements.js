@@ -137,28 +137,25 @@
     }
     const add=el('button','+ Add record','btn-primary tracker-quick-add');add.type='button';add.id='trackerQuickAdd';add.setAttribute('aria-label','Add record');add.title='Add record';add.innerHTML='<span class="quick-add-symbol" aria-hidden="true">+</span><span class="quick-add-label"> Add record</span>';add.hidden=window.financeCloud.canEdit===false;document.getElementById('dashboard').prepend(add);
     let quickAddScrollTimer;
-    // Park the button in a clear gap, rather than relying on transparency over text.
+    // Keep Add in one predictable spot above the dock. Fade it when that spot
+    // contains content instead of moving it halfway up the dashboard.
     function placeQuickAdd(){
-      if(!window.matchMedia('(max-width:700px)').matches){add.style.bottom='';return;}
+      add.style.bottom='';
+      if(!window.matchMedia('(max-width:700px)').matches){add.classList.remove('quick-add-obscured');return;}
       const dashboard=document.getElementById('dashboard');
       if(!dashboard.classList.contains('active'))return;
-      const nav=document.querySelector('.pft-style-navigation'),navTop=nav?.getBoundingClientRect().top||innerHeight-65;
-      const x=innerWidth-Math.max(16,parseFloat(getComputedStyle(add).right)||16)-44;
-      const obstacles=[],walker=document.createTreeWalker(dashboard,NodeFilter.SHOW_TEXT);
-      while(walker.nextNode()){
-        const text=walker.currentNode;if(!text.textContent.trim()||add.contains(text)||!text.parentElement.getClientRects().length)continue;
-        const range=document.createRange();range.selectNodeContents(text);
-        for(const r of range.getClientRects())if(r.right>x-6&&r.left<x+50&&r.bottom>70&&r.top<navTop)obstacles.push(r);
+      const target=add.getBoundingClientRect();
+      if(!target.width)return;
+      const overlaps=r=>r.right>target.left-5&&r.left<target.right+5&&r.bottom>target.top-5&&r.top<target.bottom+5;
+      let blocked=false,walker=document.createTreeWalker(dashboard,NodeFilter.SHOW_TEXT);
+      while(!blocked&&walker.nextNode()){
+        const node=walker.currentNode;
+        if(!node.textContent.trim()||add.contains(node)||!node.parentElement.getClientRects().length)continue;
+        const range=document.createRange();range.selectNodeContents(node);
+        blocked=[...range.getClientRects()].some(overlaps);
       }
-      for(const e of dashboard.querySelectorAll('button,input,select,canvas,svg')){
-        if(e===add||add.contains(e)||!e.getClientRects().length)continue;
-        const r=e.getBoundingClientRect();if(r.right>x-6&&r.left<x+50&&r.bottom>70&&r.top<navTop)obstacles.push(r);
-      }
-      const preferred=navTop-60;
-      let y=preferred;
-      for(;y>=80;y-=8)if(!obstacles.some(r=>r.bottom>y-6&&r.top<y+50))break;
-      add.classList.toggle('quick-add-obscured',y<80);
-      if(y>=80)add.style.bottom=(innerHeight-y-44)+'px';
+      if(!blocked)blocked=[...dashboard.querySelectorAll('button,input,select,canvas')].some(e=>e!==add&&!add.contains(e)&&e.getClientRects().length&&overlaps(e.getBoundingClientRect()));
+      add.classList.toggle('quick-add-obscured',blocked);
     }
     const settleQuickAdd=()=>{clearTimeout(quickAddScrollTimer);quickAddScrollTimer=setTimeout(()=>{placeQuickAdd();document.body.classList.remove('quick-add-scrolling');},300);};
     window.addEventListener('scroll',()=>{

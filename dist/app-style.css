@@ -2861,3 +2861,9 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
  .remaining-portfolio-dialog .portfolio-gain-value{grid-column:1/-1}
  .remaining-portfolio-dialog .portfolio-row-chevron{display:none}
 }
+
+/* Mobile dock clearance: one bottom reserve, without the inherited 76px body pad. */
+@media screen and (max-width:700px){
+ html[data-app-style="modern"] body:has(>#financeBottomTools){padding-bottom:0!important}
+ html[data-app-style="modern"] .pft-style-navigation{border-top:0!important}
+}
