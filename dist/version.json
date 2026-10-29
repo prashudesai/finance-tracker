@@ -1,11 +1,7 @@
 {
-  "version": "2026.10.29.4",
+  "version": "2026.10.29.15",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Group projection assumptions into compact Market linked, Fixed returns and No return selectors.",
-    "Move monthly contribution inclusion controls into a compact Manage dialog and remove the redundant heading.",
-    "Hide and compact the monthly contribution summary when contributions are off.",
-    "Align the fixed-return assumption value box and slider.",
-    "Reduce the mobile projection graph height."
+    "Desktop: balance cash-flow chart and monthly changes, refine portfolio loss and summary styling, improve expense snapshot visuals, and tidy navigation and helper copy."
   ]
 }

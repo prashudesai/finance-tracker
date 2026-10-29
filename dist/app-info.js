@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.29.14",
+  "version": "2026.10.29.15",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Desktop: show the welcome once per account/browser, place expanded monthly changes beside cash-flow charts, compact portfolio rows and footer, and align loan repayment progress."
+    "Desktop: balance cash-flow chart and monthly changes, refine portfolio loss and summary styling, improve expense snapshot visuals, and tidy navigation and helper copy."
   ],
   "sections": [
     [

@@ -2926,7 +2926,38 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 }
 @media screen and (min-width:1100px){
  html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row>.advanced-dashboard-chart-panel:has(#advancedDashboardCashflowChart){display:flex;flex-direction:column;min-height:0}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row #advancedDashboardCashflowChart{flex:none;margin:auto 0;max-height:390px}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row .advanced-dashboard-legend{flex:none;margin-top:8px}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row>#monthlyChanges{padding:20px}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row #monthlyChanges>summary{padding-bottom:10px}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row #monthlyChanges .finance-insight-body{gap:10px;padding:0}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row #monthlyChanges .finance-highlights-grid{grid-auto-rows:minmax(0,1fr)}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row #monthlyChanges .finance-highlight{padding:11px 12px;gap:5px}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row #monthlyChanges .finance-highlights-explain{padding-top:0}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row #monthlyChanges .finance-insight-body>.btn-small{margin:0;min-height:44px}
 }
+@media screen and (min-width:701px){
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-category-row .portfolio-gain-value.is-loss{display:inline-flex;align-items:center;justify-content:flex-end;justify-self:end;width:fit-content;max-width:100%;margin-left:auto;padding:2px 10px;border-radius:6px;background:rgba(244,63,94,.12);color:#fb7185;text-align:right;white-space:nowrap}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-total-summary>.portfolio-total-item:not(.portfolio-total-gain){border-right:1px solid rgba(45,212,191,.15);padding-right:18px}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-total-gain>small{border:0;padding:0;justify-self:start}
+ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-grid{grid-auto-rows:minmax(0,1fr)}
+ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight{height:100%;box-sizing:border-box}
+ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-empty .finance-highlight-value{display:flex;align-items:center;gap:6px;color:#fbbf24;font-size:14px;font-weight:500;line-height:1.35}
+ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-empty .finance-highlight-value::before{content:"ⓘ";flex:none;font-size:15px;line-height:1}
+ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain>summary{display:flex;align-items:center;gap:8px;list-style:none}
+ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain>summary::-webkit-details-marker{display:none}
+ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain>summary::before{content:"›";color:var(--primary);font-size:22px;font-weight:400;line-height:1;transition:transform .18s}
+ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlights-explain[open]>summary::before{transform:rotate(90deg)}
+ html[data-app-style] body.advanced-layout #dashboardExpenseSnapshot .dashboard-expense-visual{display:grid;grid-column:1/-1;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;margin-top:2px;color:var(--text-light);font-size:11px;line-height:1.3}
+ html[data-app-style] body.advanced-layout #dashboardExpenseSnapshot .dashboard-expense-visual[hidden]{display:none}
+ html[data-app-style] body.advanced-layout #dashboardExpenseSnapshot .dashboard-expense-track{display:flex;height:6px;overflow:hidden;border-radius:999px;background:color-mix(in srgb,var(--primary) 12%,var(--card-bg))}
+ html[data-app-style] body.advanced-layout #dashboardExpenseSnapshot .dashboard-expense-track>i{display:block;height:100%;background:var(--primary);border-radius:999px}
+ html[data-app-style] body.advanced-layout #dashboardExpenseSnapshot .dashboard-expense-track-full>i:last-child{background:color-mix(in srgb,var(--primary) 32%,var(--card-bg));border-radius:0 999px 999px 0}
+}
+@media screen and (max-width:700px){#dashboardExpenseSnapshot .dashboard-expense-visual{display:none!important}}
+@media screen and (max-width:1023px){#dashboard .portfolio-note-desktop{display:none!important}}
+@media screen and (min-width:1024px){#dashboard .portfolio-note-mobile{display:none!important}}
 /* Desktop portfolio footer: explanation and remaining holdings share one row. */
 @media screen and (min-width:701px){
  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:18px;row-gap:8px}

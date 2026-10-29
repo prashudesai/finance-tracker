@@ -583,7 +583,7 @@
       infoPanel.innerHTML='<h2>App info</h2><p>Your family finance tracker: features and calculation guide.</p><button type="button" id="downloadAppInfoPdf">Download PDF</button><p id="appInfoPdfStatus" role="status"></p>';
       for(const [title,body] of window.PFT_APP_INFO.sections){const heading=document.createElement('h3'),text=document.createElement('p');heading.textContent=title;text.textContent=body;infoPanel.append(heading,text);}
       parking.append(infoPanel);
-      infoPanel.querySelector('button').addEventListener('click',async()=>{const button=infoPanel.querySelector('button');button.disabled=true;document.getElementById('appInfoPdfStatus').textContent='Preparing PDF…';try{await window.downloadTrackerGuide();document.getElementById('appInfoPdfStatus').textContent='PDF downloaded.';}catch(error){document.getElementById('appInfoPdfStatus').textContent=error.message;}finally{button.disabled=false;}});
+      infoPanel.querySelector('#downloadAppInfoPdf').addEventListener('click',async()=>{const button=infoPanel.querySelector('#downloadAppInfoPdf');button.disabled=true;document.getElementById('appInfoPdfStatus').textContent='Preparing PDF…';try{await window.downloadTrackerGuide();document.getElementById('appInfoPdfStatus').textContent='PDF downloaded.';}catch(error){document.getElementById('appInfoPdfStatus').textContent=error.message;}finally{button.disabled=false;}});
       const tiles=[
         ['settingsInfoPanel','App info','Features, calculations and PDF guide','<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/>'],
         ['settingsAccountPanel','Account','Profile details, security and account deletion','<circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>'],
@@ -599,7 +599,8 @@
       recordsDetails.append(document.getElementById('settingsRecordsPanel'));
       document.getElementById('settingsBackupPanel').append(recordsDetails);
       const appPanel=document.getElementById('settingsAppPanel'),versionInfo=document.createElement('div');
-      versionInfo.innerHTML='<p><strong>Installed version: <span id="appInstalledVersion"></span></strong></p><p id="appLatestVersion" role="status">Latest available: checking when online</p><details id="appReleaseNotes"><summary>Release notes</summary><p>Released '+window.PFT_APP_INFO.released+'</p><ul></ul></details>';
+      versionInfo.className='app-version-section';
+      versionInfo.innerHTML='<p class="app-installed-version"><span>Installed version</span><strong id="appInstalledVersion"></strong></p><p id="appLatestVersion" role="status">Latest available: checking when online</p><details id="appReleaseNotes"><summary>Release notes</summary><p>Released '+window.PFT_APP_INFO.released+'</p><ul></ul></details>';
       versionInfo.querySelector('#appInstalledVersion').textContent=window.PFT_APP_INFO.version;
       for(const note of window.PFT_APP_INFO.releaseNotes){const item=document.createElement('li');item.textContent=note;versionInfo.querySelector('ul').append(item);}appPanel.prepend(versionInfo);
       fetch('./version.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(meta=>{document.getElementById('appLatestVersion').textContent='Latest available: '+meta.version+(meta.version!==window.PFT_APP_INFO.version?' · Check for updates to install':' · Up to date');}).catch(()=>{document.getElementById('appLatestVersion').textContent='Latest available: connect to check. Installed version '+window.PFT_APP_INFO.version;});
@@ -1516,12 +1517,15 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const previousFocus=document.activeElement;
       dialog.querySelector('[data-record-delete]')?.remove();
       const remove=deleteRecord?document.createElement('button'):null;
-      if(remove){remove.type='button';remove.className='btn-small btn-danger';remove.dataset.recordDelete='';remove.textContent='Delete transaction';form.append(remove);}
+      if(remove){remove.type='button';remove.className='btn-small btn-danger';remove.dataset.recordDelete='';remove.textContent='Delete';remove.setAttribute('aria-label','Delete transaction');remove.title='Delete transaction';form.querySelector('.record-editor-actions').prepend(remove);}
+      const initialFocus=dialog.querySelector('button[aria-label*="Close"],button.modal-close-button,button');
+      initialFocus?.setAttribute('autofocus','');
       dialog.showModal();
+      initialFocus?.focus({preventScroll:true});
       return new Promise(resolve=>{
         const finish=value=>{remove?.remove();form.onsubmit=null;dialog.oncancel=null;document.getElementById('cancelRecordEditor').onclick=null;dialog.close();previousFocus?.focus();resolve(value);};
         if(remove)remove.onclick=()=>{finish(null);deleteRecord();};
-        document.getElementById('cancelRecordEditor').onclick=()=>finish(null);dialog.oncancel=event=>{event.preventDefault();finish(null);};
+        document.getElementById('cancelRecordEditor').onclick=()=>finish(null);document.getElementById('closeRecordEditor').onclick=()=>finish(null);dialog.oncancel=event=>{event.preventDefault();finish(null);};
         form.onsubmit=event=>{event.preventDefault();if(!form.reportValidity())return;const values=Object.fromEntries(new FormData(form));for(const f of fields){if(f.type==='date'&&!(f.required===false&&values[f.key]==='')&&!validCalendarDate(values[f.key])){document.getElementById('recordEditorError').textContent='Enter a valid calendar date.';return;}}
           const error=validate?.(values);if(error){document.getElementById('recordEditorError').textContent=error;return;}finish(values);};
       });
@@ -1832,7 +1836,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
               </div>
               <div style="font-size: 11px; color: var(--success); margin-top: 2px;">${percentPaid}% paid | Interest: ${formatCurrency(interestPaid)}</div>
             </td>
-            <td class="text-right" data-label="Remaining EMIs (estimate)"><strong>${schedule.label}</strong>${schedule.count > 0 ? `<div class="text-muted" style="font-size: 11px; margin-top: 4px;">Final payment: ${formatCurrency(schedule.finalPayment)}</div>` : ''}</td>
+            <td class="text-right" data-label="Remaining EMIs (estimate)"><strong>${schedule.label}</strong></td>
             <td data-label="Status"><span class="badge ${d.remaining <= 0 ? 'badge-success' : 'badge-danger'}">${d.remaining <= 0 ? 'Paid off' : 'Active'}</span></td>
             <td data-label="Actions">
               <button class="btn-small" onclick="viewDebtEmiHistory('${d.id}')">View EMI History</button>
@@ -1862,7 +1866,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         {key:'date',label:type!=='topup'?'Effective from repayment date':'Top-up date',type:'date',value:entry?.date||localDateKey()},
         ...(type==='topup'?[{key:'amount',label:'Additional principal ₹',type:'number',min:0.01,value:entry?.amount||''}]:[]),
         ...(type==='emi'?[]:[{key:'rate',label:type==='rate'?'New annual rate %':'New annual rate % (optional)',type:'number',required:type==='rate',value:entry?.rate??(type==='rate'?debt.rate:'')}]),
-        ...(type==='emi'?[]:[{key:'choice',label:'After this change',options:['tenure','emi','manual'],optionLabels:{tenure:'Keep tenure · calculate EMI',emi:'Keep EMI · revise tenure',manual:'Enter bank-confirmed EMI'},value:entry?.repaymentChoice||(entry?.emi!==undefined?'manual':'tenure')}]),
+        ...(type==='emi'?[]:[{key:'choice',label:'After this change',options:['tenure','emi','manual'],optionLabels:{tenure:'Keep tenure · calculate EMI',emi:'Keep EMI · revise tenure',manual:'Enter bank-confirmed EMI'},value:entry?.repaymentChoice||(entry?.emi!==undefined?'manual':'emi')}]),
         {key:'emi',label:type==='emi'?'Revised regular monthly EMI ₹':'Bank-confirmed monthly EMI ₹',type:'number',required:type==='emi',min:1,value:entry?.emi??(type==='emi'?debt.emi:'')},
         {key:'notes',label:'Notes',type:'textarea',maxLength:500,value:entry?.notes||''}
       ];
@@ -1885,22 +1889,32 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         if(removing&&values.confirm!=='Remove entry')return 'Choose Remove entry or press Cancel.';
         return preview(values).error||null;
       });
-      const container=document.getElementById('recordEditorFields'),note=document.createElement('div');note.setAttribute('role','status');note.setAttribute('aria-live','polite');note.style.cssText='padding:12px;line-height:1.6;border:1px solid var(--border);border-radius:10px';container.append(note);
+      const container=document.getElementById('recordEditorFields'),note=document.createElement('div');note.setAttribute('role','status');note.setAttribute('aria-live','polite');note.className='loan-change-preview';container.append(note);
       const refresh=()=>{
         const values=Object.fromEntries(new FormData(document.getElementById('recordEditorForm'))),manual=document.getElementById('recordEdit_emi');
         if(manual){const enabled=type==='emi'||values.choice==='manual';manual.parentElement.hidden=!enabled;manual.disabled=!enabled;manual.required=enabled;}
         const result=preview(values);note.replaceChildren();
         if(result.error){note.textContent=result.error;return;}
         const change=result.history.find(e=>e.id===eventId),estimate=PFT_LOAN_LEDGER.estimate(result.remaining,result.emi,result.rate);
-        const lines=change?[
-          'At the effective date: balance '+formatCurrency(change.beforeBalance)+' → '+formatCurrency(change.balance),
-          'Annual rate: '+change.beforeRate+'% → '+change.rate+'%',
-          'Monthly EMI: '+formatCurrency(change.beforeEmi)+' → '+formatCurrency(change.emi),
-          'Estimated remaining payments: '+(change.oldTerm??'Unavailable')+' → '+(change.newTerm??'Unavailable'),
-          'Current position after all recorded repayments: '+formatCurrency(result.remaining)+' outstanding · EMI '+formatCurrency(result.emi)+' · '+(estimate.count??'Unavailable')+' estimated payments.'
-        ]:['Outstanding: '+formatCurrency(result.remaining)+' · Rate '+result.rate+'% · EMI '+formatCurrency(result.emi)];
-        lines.push('Tenure is estimated from the balance, rate and EMI at this date. Whole-rupee rounding may leave a small final payment. Confirm the bank’s revised schedule when available. Earlier repayments are preserved; top-ups do not create income entries.');
-        for(const text of lines){const line=document.createElement('p');line.style.margin='0 0 8px';line.textContent=text;note.append(line);}
+        const title=document.createElement('h4');title.textContent='Change preview';note.append(title);
+        if(change){
+          const grid=document.createElement('div');grid.className='loan-change-comparison';
+          const cell=(text,kind)=>{const node=document.createElement('span');node.className=kind;node.textContent=text;grid.append(node);};
+          cell('At effective date','comparison-label');cell('Before','comparison-heading');cell('After','comparison-heading');
+          for(const [label,before,after] of [
+            ['Balance',formatCurrency(change.beforeBalance),formatCurrency(change.balance)],
+            ['Annual rate',change.beforeRate+'%',change.rate+'%'],
+            ['Monthly EMI',formatCurrency(change.beforeEmi),formatCurrency(change.emi)],
+            ['Payments left',String(change.oldTerm??'Unavailable'),String(change.newTerm??'Unavailable')]
+          ]){cell(label,'comparison-label');cell(before,'comparison-before');cell(after,'comparison-after');}
+          note.append(grid);
+        }
+        const current=document.createElement('dl');current.className='loan-change-current';
+        for(const [label,value] of [['Current outstanding',formatCurrency(result.remaining)],['Monthly EMI',formatCurrency(result.emi)],['Estimated payments',String(estimate.count??'Unavailable')]]){
+          const item=document.createElement('div'),term=document.createElement('dt'),description=document.createElement('dd');term.textContent=label;description.textContent=value;item.append(term,description);current.append(item);
+        }
+        note.append(current);
+        const help=document.createElement('p');help.className='loan-change-help';help.textContent='Tenure is an estimate. Confirm the bank’s revised schedule when available. Earlier repayments are preserved; top-ups do not create income entries.';note.append(help);
       };
       const rateInput=document.getElementById('recordEdit_rate');if(rateInput)rateInput.step='0.05';
       container.addEventListener('input',refresh);container.addEventListener('change',refresh);refresh();
@@ -1925,16 +1939,33 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const modal=document.getElementById('loanDetailsModal');modal.dataset.loanId=id;
       document.getElementById('loanDetailsTitle').textContent=debt.type;
       const schedule=remainingEmiEstimate(debt),body=document.getElementById('loanDetailsContent');body.replaceChildren();
-      for(const [label,value] of [['Family member',debt.member||'Family'],['Original principal',formatCurrency(debt.principal)],['Top-ups',formatCurrency(loanTotalPrincipal(debt)-debt.principal)],['Total borrowed',formatCurrency(loanTotalPrincipal(debt))],['Outstanding',formatCurrency(debt.remaining)],['Monthly EMI',formatCurrency(Math.round(debt.emi))],['Annual rate',debt.rate+'%'],['Interest method',debt.dailyInterestBasis?'Daily balance · month-end capitalization':'Monthly EMI calculation'],['First EMI date',debt.firstEmiDate||'Automatic schedule'],['Extra days’ interest with first EMI',formatCurrency(debt.firstEmiExtraInterest||0)],['Monthly EMI Due Date',loanDueDateLabel(debt)],['Remaining payments',schedule.label],['Notes',debt.notes||'—']].filter(([label])=>!debt.dailyInterestBasis||!['Extra days’ interest with first EMI'].includes(label))){const line=document.createElement('p');line.textContent=label+': '+value;body.appendChild(line);}
-      for(const [label,action] of [['Payment history',()=>viewDebtEmiHistory(id)],['Revise EMI',()=>editLoanChange(id,'emi')],['Update interest rate',()=>editLoanChange(id,'rate')],['Top up loan',()=>editLoanChange(id,'topup')],['Edit',()=>editDebt(id)],['Delete',()=>{deleteDebt(id);if(!state.debts.some(row=>row.id===id))closeLoanDetails();}]]){const button=document.createElement('button');button.className='btn-small';button.textContent=label;button.onclick=action;body.appendChild(button);}
+      modal.querySelector('.investment-edit-dialog>div:first-child').classList.add('loan-details-heading');
+      const metric=(container,label,value)=>{
+        const item=document.createElement('div'),term=document.createElement('dt'),description=document.createElement('dd');
+        term.textContent=label;description.textContent=value;item.append(term,description);container.append(item);
+      };
+      const balance=document.createElement('dl');balance.className='loan-details-balance';
+      metric(balance,'Outstanding balance',formatCurrency(debt.remaining));body.append(balance);
+      const metrics=document.createElement('dl');metrics.className='loan-details-metrics';
+      for(const [label,value] of [['Original principal',formatCurrency(debt.principal)],['Top-ups',formatCurrency(loanTotalPrincipal(debt)-debt.principal)],['Total borrowed',formatCurrency(loanTotalPrincipal(debt))],['Monthly EMI',formatCurrency(Math.round(debt.emi))],['Annual rate',debt.rate+'%'],['Remaining payments',schedule.label]])metric(metrics,label,value);
+      body.append(metrics);
+      const details=document.createElement('section');details.className='loan-details-section';
+      const detailsHeading=document.createElement('h3');detailsHeading.textContent='Loan details';details.append(detailsHeading);
+      const terms=document.createElement('dl');terms.className='loan-details-terms';
+      for(const [label,value] of [['Family member',debt.member||'Family'],['Interest method',debt.dailyInterestBasis?'Daily balance · month-end capitalization':'Monthly EMI calculation'],['First EMI date',debt.firstEmiDate||'Automatic schedule'],['Extra days’ interest with first EMI',formatCurrency(debt.firstEmiExtraInterest||0)],['Monthly EMI Due Date',loanDueDateLabel(debt)]].filter(([label])=>!debt.dailyInterestBasis||!['Extra days’ interest with first EMI'].includes(label)))metric(terms,label,value);
+      details.append(terms);
+      const notes=document.createElement('dl');notes.className='loan-details-notes';metric(notes,'Notes',debt.notes||'—');details.append(notes);body.append(details);
+      const actions=document.createElement('div');actions.className='loan-details-actions';actions.setAttribute('role','group');actions.setAttribute('aria-label','Loan actions');
+      for(const [label,action] of [['Payment history',()=>viewDebtEmiHistory(id)],['Revise EMI',()=>editLoanChange(id,'emi')],['Update interest rate',()=>editLoanChange(id,'rate')],['Top up loan',()=>editLoanChange(id,'topup')],['Edit',()=>editDebt(id)],['Delete',()=>{deleteDebt(id);if(!state.debts.some(row=>row.id===id))closeLoanDetails();}]]){const button=document.createElement('button');button.className=label==='Delete'?'btn-small btn-danger':'btn-small';button.textContent=label;button.onclick=action;actions.appendChild(button);}body.append(actions);
       const editable=window.financeCloud?.canEdit!==false;
       for(const button of body.querySelectorAll('button'))if(button.textContent!=='Payment history')button.disabled=!editable;
-      const heading=document.createElement('h3');heading.textContent='Rate, EMI & top-up history';body.append(heading);
-      const opening=document.createElement('p');opening.textContent='Opening terms: '+(debt.openingRate??debt.rate)+'% · EMI '+formatCurrency(debt.openingEmi??debt.repaymentBaseEmi??debt.emi);body.append(opening);
+      const history=document.createElement('section');history.className='loan-details-section loan-details-history';body.append(history);
+      const heading=document.createElement('h3');heading.textContent='Rate, EMI & top-up history';history.append(heading);
+      const opening=document.createElement('p');opening.textContent='Opening terms: '+(debt.openingRate??debt.rate)+'% · EMI '+formatCurrency(debt.openingEmi??debt.repaymentBaseEmi??debt.emi);history.append(opening);
       const ledgerHistory=Array.isArray(debt.loanChanges)?PFT_LOAN_LEDGER.rebuild(debt,loanPayments(id),undefined,localDateKey()).history||[]:[];
       for(const entry of [...(debt.loanChanges||[])].sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id))){
-        const computed=ledgerHistory.find(e=>e.id===entry.id),row=document.createElement('div'),line=document.createElement('p');line.textContent=entry.date+' · '+(entry.type==='topup'?'Top-up '+formatCurrency(entry.amount):entry.type==='emi'?'Regular EMI revision':'Rate update')+(entry.rate!==undefined?' · '+entry.rate+'%':'')+(entry.repaymentChoice?' · '+({tenure:'Keep tenure',emi:'Keep EMI',manual:'Bank-confirmed EMI'}[entry.repaymentChoice])+' · EMI '+formatCurrency(computed?.emi??entry.emi):entry.emi!==undefined?' · EMI '+formatCurrency(entry.emi):'')+(entry.notes?' · '+entry.notes:'');row.append(line);
-        for(const [label,remove] of [['Edit entry',false],['Remove entry',true]]){const button=document.createElement('button');button.className='btn-small';button.textContent=label;button.disabled=!editable;button.onclick=()=>editLoanChange(id,entry.type,entry.id,remove);row.append(button);}body.append(row);
+        const computed=ledgerHistory.find(e=>e.id===entry.id),row=document.createElement('div'),line=document.createElement('p');row.className='loan-details-history-entry';line.textContent=entry.date+' · '+(entry.type==='topup'?'Top-up '+formatCurrency(entry.amount):entry.type==='emi'?'Regular EMI revision':'Rate update')+(entry.rate!==undefined?' · '+entry.rate+'%':'')+(entry.repaymentChoice?' · '+({tenure:'Keep tenure',emi:'Keep EMI',manual:'Bank-confirmed EMI'}[entry.repaymentChoice])+' · EMI '+formatCurrency(computed?.emi??entry.emi):entry.emi!==undefined?' · EMI '+formatCurrency(entry.emi):'')+(entry.notes?' · '+entry.notes:'');row.append(line);
+        for(const [label,remove] of [['Edit entry',false],['Remove entry',true]]){const button=document.createElement('button');button.className='btn-small';button.textContent=label;button.disabled=!editable;button.onclick=()=>editLoanChange(id,entry.type,entry.id,remove);row.append(button);}history.append(row);
       }
       modal.hidden=false;syncInvestmentOverlayBodyLock();modal.querySelector('button').focus();
     }
@@ -1961,8 +1992,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       }else{
         head.innerHTML='<tr><th>Payment date</th><th>Payment type</th><th class="text-right">EMI / payment paid</th><th class="text-right">Interest</th><th class="text-right">Principal repaid</th><th class="text-right">Outstanding after payment</th><th>Notes</th></tr>';
         const balanceResult=PFT_LOAN_LEDGER.paymentBalances(debt,records,localDateKey()),balances=balanceResult.balances||new Map();
-      document.getElementById('debtEmiHistorySummary').textContent=records.length
-        ? `${records.length} recorded ${records.length===1?'payment':'payments'} · Total paid ${formatCurrency(total)} · Interest ${formatCurrency(interest)} · Principal repaid ${formatCurrency(principal)} · Current outstanding ${formatCurrency(debt.remaining)}`
+      document.getElementById('debtEmiHistorySummary').innerHTML=records.length
+        ? '<div class="loan-history-summary-grid">'+[
+          ['Payments',String(records.length)],
+          ['Total paid',formatCurrency(total)],
+          ['Interest',formatCurrency(interest)],
+          ['Principal repaid',formatCurrency(principal)],
+          ['Outstanding',formatCurrency(debt.remaining)]
+        ].map(([label,value])=>'<div class="loan-history-summary-item"><span>'+label+'</span><strong>'+value+'</strong></div>').join('')+'</div>'
         : `No EMI payments have been recorded for this debt yet. Current outstanding ${formatCurrency(debt.remaining)}.`;
         body.innerHTML=records.length?records.map(row=>`<tr><td data-label="Payment date">${row.date?calendarDate(row.date).toLocaleDateString('en-IN'):'—'}</td><td data-label="Payment type">${row.repaymentType==='part-payment'?'Part Payment'+(row.partPaymentAction==='reduce'?' · Reduce EMI':row.partPaymentAction==='keep'?' · Keep EMI':''):'Monthly EMI'}</td><td class="text-right" data-label="EMI / payment paid">${formatCurrency(row.amount)}</td><td class="text-right" data-label="Interest">${formatCurrency(row.interestPaid||0)}</td><td class="text-right" data-label="Principal repaid">${formatCurrency(row.principalPaid??row.amount)}</td><td class="text-right" data-label="Outstanding after payment">${balances.has(row.id)?formatCurrency(balances.get(row.id)):'—'}</td><td data-label="Notes">${analyticEscape(row.notes||'—')}</td></tr>`).join(''):'<tr><td colspan="7" class="text-muted">No loan payments recorded.</td></tr>';
       }
@@ -2039,7 +2076,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const colors=['#4c83a1','#138b89','#8069aa','#c47b43','#5575b9','#a45f7d'];
       container.innerHTML=Array.from(byType.entries()).map(([type,accounts],index)=>{
         const amount=accounts.reduce((sum,debt)=>sum+(Number(debt.remaining)||0),0);
+        const principal=accounts.reduce((sum,debt)=>sum+(Number(debt.principal)||Number(debt.remaining)||0),0);
         const share=total>0?amount/total*100:0;
+        const paid=principal>0?Math.max(0,Math.min(100,(principal-amount)/principal*100)):0;
         const key=`debt-summary-${index}`;
         const details=accounts.map((debt,accountIndex)=>{
           const schedule=remainingEmiEstimate(debt);
@@ -2048,10 +2087,10 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         }).join('');
         return `<section class="debt-summary-card" style="--debt-color:${colors[index%colors.length]}">
           <button type="button" class="debt-summary-card-toggle" data-debt-summary-toggle aria-expanded="false" aria-controls="${key}">
-            <span class="debt-summary-card-top"><span class="debt-summary-type"><i class="debt-summary-dot"></i>${analyticEscape(type)}</span><span class="debt-summary-share">${share.toFixed(1)}%</span></span>
-            <span class="debt-summary-card-amount"><strong>${formatCurrency(amount)}</strong><span>remaining balance</span></span>
-            <span class="debt-summary-track" aria-hidden="true"><i style="width:${Math.max(0,Math.min(100,share))}%"></i></span>
-            <span class="debt-summary-card-hint"><span>${accounts.length} account${accounts.length===1?'':'s'} · View details</span><span class="debt-summary-chevron" aria-hidden="true">⌄</span></span>
+            <span class="debt-summary-card-top"><span class="debt-summary-type"><i class="debt-summary-dot"></i>${analyticEscape(type)}</span><span class="debt-summary-share">${share.toFixed(1)}% of total debt</span></span>
+            <span class="debt-summary-card-amount"><strong>${formatCurrency(amount)}</strong></span>
+            <span class="debt-summary-track" role="img" aria-label="${paid.toFixed(1)}% paid, ${(100-paid).toFixed(1)}% remaining"><i style="width:${paid.toFixed(1)}%"></i></span>
+            <span class="debt-summary-card-hint"><span>${accounts.length} account${accounts.length===1?'':'s'} · View details <span class="debt-summary-chevron" aria-hidden="true">⌄</span></span><span class="debt-summary-paid">Paid: ${paid.toFixed(1)}%</span></span>
           </button>
           <div id="${key}" class="debt-summary-details" hidden><div class="table-wrapper"><table><thead><tr><th>Account</th><th class="text-right">Remaining</th><th class="text-right">EMI</th><th class="text-right">EMIs left</th></tr></thead><tbody>${details}</tbody></table></div></div>
         </section>`;
@@ -2754,6 +2793,37 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
 
     // INVESTMENTS
+    // Mobile-only section switcher: one view at a time; no changes to financial data.
+    const investmentSectionTabs=document.getElementById('investmentMobileSectionTabs');
+    const setInvestmentMobileSection=(section,focus=false)=>{
+      const choice=section==='retirement'?'retirement':'investments';
+      const page=document.getElementById('investments');
+      if(!page||!investmentSectionTabs)return;
+      page.dataset.mobileInvestmentView=choice;
+      for(const tab of investmentSectionTabs.querySelectorAll('[data-investment-mobile-tab]')){
+        const active=tab.dataset.investmentMobileTab===choice;
+        tab.setAttribute('aria-selected',String(active));
+        tab.tabIndex=active?0:-1;
+        if(active&&focus)tab.focus();
+      }
+      try{localStorage.setItem('pft-mobile-investment-section',choice);}catch(_){}
+    };
+    if(investmentSectionTabs){
+      let initial='investments';
+      try{initial=localStorage.getItem('pft-mobile-investment-section')||initial;}catch(_){}
+      setInvestmentMobileSection(initial);
+      investmentSectionTabs.addEventListener('click',event=>{
+        const tab=event.target.closest('[data-investment-mobile-tab]');
+        if(tab&&investmentSectionTabs.contains(tab))setInvestmentMobileSection(tab.dataset.investmentMobileTab);
+      });
+      investmentSectionTabs.addEventListener('keydown',event=>{
+        if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+        event.preventDefault();
+        const current=document.getElementById('investments')?.dataset.mobileInvestmentView;
+        const next=event.key==='Home'?'investments':event.key==='End'?'retirement':current==='investments'?'retirement':'investments';
+        setInvestmentMobileSection(next,true);
+      });
+    }
     function customInvestmentProfile(type){return state.customInvestmentProfiles?.[String(type||'').trim()]||null;}
     function investmentGrowthType(type){
       const name=String(type||'').trim();
@@ -2820,10 +2890,21 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       [...(sourceSummary?.children||[])].filter(item=>!item.classList.contains('investment-summary-chevron')).forEach(item=>(()=>{const clone=item.cloneNode(true);clone.removeAttribute?.('id');clone.querySelectorAll?.('[id]').forEach(element=>element.removeAttribute('id'));summary.appendChild(clone);})());
       const tableSource=card.querySelector('.investment-category-dialog-source .table-wrapper');
       table.replaceChildren();
-      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');table.appendChild(clone);}
+      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');table.appendChild(clone);labelInvestmentDialogCells(table);}
       else table.textContent='No holdings available.';
-      dialog.dataset.investmentType=type;
+      delete dialog.dataset.stallionId;dialog.dataset.investmentType=type;
       if(show&&dialog.hidden){dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();}
+    }
+    // Preserve the original account table and its actions while presenting rows as cards on phones.
+    function labelInvestmentDialogCells(container) {
+      container.querySelectorAll('table').forEach(table=>{
+        const labels=[...table.querySelectorAll('thead th')].map(cell=>cell.textContent.trim().replace(/[↕▲▼]/g,'').trim());
+        table.querySelectorAll('tbody tr').forEach(row=>{
+          [...row.children].forEach((cell,index)=>{
+            if(cell.matches('td,th'))cell.dataset.mobileLabel=labels[index]||'Details';
+          });
+        });
+      });
     }
     function refreshInvestmentCategoryDialog() {
       const dialog=document.getElementById('investmentCategoryDialog');
@@ -2831,7 +2912,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     }
     function closeInvestmentCategoryDialog() {
       const dialog=document.getElementById('investmentCategoryDialog');
-      if(dialog&&!dialog.hidden){dialog.hidden=true;delete dialog.dataset.investmentType;syncInvestmentOverlayBodyLock();}
+      if(dialog&&!dialog.hidden){dialog.hidden=true;delete dialog.dataset.investmentType;delete dialog.dataset.stallionId;syncInvestmentOverlayBodyLock();}
     }
     function renderRetirementCategoryDialog(type,show=false) {
       const dialog=document.getElementById('retirementCategoryDialog');
@@ -2845,7 +2926,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const summary=document.getElementById('retirementCategoryDialogSummary');summary.replaceChildren();
       [...(summarySource?.children||[])].filter(item=>!item.classList.contains('investment-summary-chevron')).forEach(item=>(()=>{const clone=item.cloneNode(true);clone.removeAttribute?.('id');clone.querySelectorAll?.('[id]').forEach(element=>element.removeAttribute('id'));summary.appendChild(clone);})());
       const table=document.getElementById('retirementCategoryDialogTable');table.replaceChildren();
-      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));table.appendChild(clone);}
+      if(tableSource){const clone=tableSource.cloneNode(true);clone.classList.add('investment-category-dialog-table');clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));table.appendChild(clone);labelInvestmentDialogCells(table);}
       else table.textContent='No account details available.';
       const pagerSource=card.querySelector(`#accountPager-${type}`);
       if(pagerSource){const pager=pagerSource.cloneNode(true);pager.removeAttribute('id');pager.onclick=event=>{const button=event.target.closest('[data-direction]');if(!button)return;accountPages[type]=Math.max(0,(accountPages[type]||0)+Number(button.dataset.direction));({pf:renderPf,ppf:renderPpf,nps:renderNps}[type]||(()=>{}))();};table.appendChild(pager);}
@@ -3154,20 +3235,20 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
             <td class="text-right ${gain >= 0 ? 'positive' : 'negative'}">${gain >= 0 ? '+' : ''}${formatCurrency(gain)}</td>
             ${hasReturnMetrics?`<td class="text-right" data-label="Absolute Return">${absoluteReturn===null?'N/A':(absoluteReturn*100).toFixed(2)+'%'}</td><td class="text-right" data-label="CAGR">${cagr===null?'N/A':(cagr*100).toFixed(2)+'%'}</td><td class="text-right" data-label="XIRR">${xirr===null?'N/A':(xirr*100).toFixed(2)+'%'}</td>`:''}
             ${investmentUsesInterestRate(category)?`<td class="text-right">${Number.isFinite(Number(inv.rate))?Number(inv.rate).toFixed(2)+'%':'—'}</td>`:''}
-            <td class="investment-row-actions"><div class="investment-row-action-group"><button type="button" class="investment-icon-action" title="View History" aria-label="View contribution history" onclick="openInvestmentContributionModal('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></button><button type="button" class="investment-icon-action" title="Add Contribution" aria-label="Add contribution" onclick="openManualInvestmentContribution('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg></button><button type="button" class="investment-icon-action" title="Edit" aria-label="Edit holding" onclick="editInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"></path><path d="m13.5 7 3.5 3.5"></path></svg></button><button type="button" class="investment-icon-action is-danger" title="Delete" aria-label="Delete holding" onclick="deleteInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button></div></td>
+            <td class="investment-row-actions"><div class="investment-row-action-group">${investmentUsesReturnMetrics(inv.type)?`<button type="button" class="investment-icon-action" aria-label="Update value" title="Update value" onclick="financeWorkbench.valuations('investments','${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 8a7 7 0 0 1 12-2l2 3M4 15l2 3a7 7 0 0 0 12-2"/></svg></button>`:''}<button type="button" class="investment-icon-action" title="View History" data-short-action="History" aria-label="View contribution history" onclick="openInvestmentContributionModal('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></button><button type="button" class="investment-icon-action" title="Add Contribution" data-short-action="Add" aria-label="Add contribution" onclick="openManualInvestmentContribution('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg></button><button type="button" class="investment-icon-action" title="Edit" data-short-action="Edit" aria-label="Edit holding" onclick="editInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"></path><path d="m13.5 7 3.5 3.5"></path></svg></button><button type="button" class="investment-icon-action is-danger" title="Delete" data-short-action="Delete" aria-label="Delete holding" onclick="deleteInvestment('${inv.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button></div></td>
           </tr>`;
         }).join('');
         const extraHeaders=`${hasReturnMetrics?'<th class="text-right" title="(Current value − total invested) ÷ total invested">Absolute Return</th><th class="text-right" title="Annualized return from the holding start date; contribution dates are not weighted">CAGR</th><th class="text-right" title="Annualized return using initial investment, dated contributions and current value">XIRR</th>':''}${hasRate?'<th class="text-right" title="Annual interest rate entered for this holding">Interest Rate</th>':''}`;
         const emptySpan=6+(hasMonthlyContribution?1:0)+(hasReturnMetrics?3:0)+(hasRate?1:0);
         return `<section class="panel investment-category-card" data-category-index="${defaultCategoryOrder.indexOf(category)}" data-investment-type="${analyticEscape(category)}">
-          <div class="panel-header"><div><h3>${analyticEscape(category)}</h3><div class="investment-category-summary">${items.length} ${items.length===1?'holding':'holdings'}</div></div></div>
+          <div class="panel-header"><div><h3>${analyticEscape(category)}</h3><div class="investment-category-summary"><span>${items.length} ${items.length===1?'holding':'holdings'}</span>${hasMonthlyContribution?`<span class="investment-monthly-inline"> · ${formatCurrency(monthlyTotal)}/mo</span>`:''}</div></div></div>
           <div class="investment-category-summary-grid" role="button" tabindex="0" aria-haspopup="dialog" aria-label="View ${analyticEscape(category)} holdings">
             <span class="investment-summary-value"><span>Current value</span><strong>${formatCurrency(currentTotal)}</strong></span>
             <span class="investment-summary-metric" data-category-summary-metric="${tileMetric.key}"${tileMetric.title?` title="${analyticEscape(tileMetric.title)}"`:''}><span>${tileMetric.label}</span><strong>${analyticEscape(tileMetric.value)}</strong></span>
             <span class="investment-summary-chevron" aria-hidden="true">›</span>
             <span class="investment-summary-detail"><span>Invested</span><strong>${formatCurrency(investedTotal)}</strong></span>
             <span class="investment-summary-detail"><span>Gain / loss</span><strong class="${gainTotal>=0?'positive':'negative'}">${gainTotal>=0?'+':''}${formatCurrency(gainTotal)}</strong></span>
-            ${hasMonthlyContribution?`<span class="investment-summary-detail"><span>Monthly</span><strong>${formatCurrency(monthlyTotal)}</strong></span>`:''}
+            ${hasMonthlyContribution?`<span class="investment-summary-detail investment-summary-monthly"><span>Monthly</span><strong>${formatCurrency(monthlyTotal)}</strong></span>`:''}
           </div><div class="investment-category-dialog-source" hidden><div class="table-wrapper"><table><thead><tr><th>Member</th><th>Name</th><th class="text-right">Invested</th><th class="text-right">Current Value</th>${hasMonthlyContribution?'<th class="text-right">Monthly Contribution</th>':''}<th class="text-right">Gain/Loss</th>${extraHeaders}<th class="investment-row-actions-header">Actions</th></tr></thead><tbody>${rows||`<tr><td colspan="${emptySpan}" class="text-muted">No holdings.</td></tr>`}</tbody></table></div></div>
         </section>`;
       }).join('');
@@ -3211,7 +3292,56 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
       stallionPanel.hidden=!hasStallion;
       const showStallionMonthly=stallionItems.some(inv=>investmentMonthlyAmount(inv)>0);
-      stallionBody.innerHTML=hasStallion?`<div class="table-wrapper"><table class="stallion-pms-holdings ${showStallionMonthly?'has-monthly':'no-monthly'}"><thead><tr><th>Member</th><th>Name</th><th class="text-right">Invested</th><th class="text-right">Current Value</th>${showStallionMonthly?'<th class="text-right">Monthly</th>':''}<th class="text-right">Gain/Loss</th><th class="text-right" title="(Current value − total invested) ÷ total invested">Absolute Return</th><th class="text-right" title="Annualized absolute return from the portfolio start date; monthly contribution dates are not weighted">CAGR</th><th class="text-right" title="Annualized return based on initial investment, dated PMS contributions and current value as of today">XIRR</th><th>Actions</th></tr></thead><tbody>${stallionItems.map(inv=>{const gain=Number(inv.current||0)-Number(inv.invested||0),absoluteReturn=stallionAbsoluteReturn(inv),cagr=stallionCagr(inv,valuationDate),xirr=stallionXirr(inv,valuationDate,stallionContributionsById.get(inv.id)||[]);return `<tr><td data-label="Member"><strong>${analyticEscape(inv.member||'—')}</strong></td><td data-label="Name">${analyticEscape(inv.name)}</td><td class="text-right" data-label="Invested">${formatCurrency(inv.invested)}</td><td class="text-right" data-label="Current Value">${formatCurrency(inv.current)}</td>${showStallionMonthly?`<td class="text-right" data-label="Monthly Contribution">${formatCurrency(investmentMonthlyAmount(inv))}</td>`:''}<td class="text-right ${gain>=0?'positive':'negative'}" data-label="Gain / Loss">${gain>=0?'+':''}${formatCurrency(gain)}</td><td class="text-right" data-label="Absolute Return">${absoluteReturn===null?'N/A':(absoluteReturn*100).toFixed(2)+'%'}</td><td class="text-right" data-label="CAGR">${cagr===null?'N/A':(cagr*100).toFixed(2)+'%'}</td><td class="text-right" data-label="XIRR">${xirr===null?'N/A':(xirr*100).toFixed(2)+'%'}</td><td class="investment-row-actions" data-label="Actions"><button class="btn-small" onclick="openStallionHistory('${inv.id}')">View History</button> <button class="btn-small" onclick="editInvestment('${inv.id}')">Edit</button> <button class="btn-small btn-danger" onclick="deleteInvestment('${inv.id}')">Delete</button></td></tr>`;}).join('')}</tbody></table></div>`:'';
+      const pmsQuickActions=[document.getElementById('openStallionContributionBtn'),document.querySelector('#stallionPmsPanel [data-open-entry="stallionProfitAddPanel"]')].filter(Boolean);
+      stallionBody.innerHTML=hasStallion?`<div class="table-wrapper"><table class="stallion-pms-holdings ${showStallionMonthly?'has-monthly':'no-monthly'}"><thead><tr><th>Member</th><th>Name</th><th class="text-right">Invested</th><th class="text-right">Current Value</th>${showStallionMonthly?'<th class="text-right">Monthly</th>':''}<th class="text-right">Gain/Loss</th><th class="text-right" title="(Current value − total invested) ÷ total invested">Absolute Return</th><th class="text-right" title="Annualized absolute return from the portfolio start date; monthly contribution dates are not weighted">CAGR</th><th class="text-right" title="Annualized return based on initial investment, dated PMS contributions and current value as of today">XIRR</th><th>Actions</th></tr></thead><tbody>${stallionItems.map(inv=>{const gain=Number(inv.current||0)-Number(inv.invested||0),absoluteReturn=stallionAbsoluteReturn(inv),cagr=stallionCagr(inv,valuationDate),xirr=stallionXirr(inv,valuationDate,stallionContributionsById.get(inv.id)||[]);return `<tr><td data-label="Member"><strong>${analyticEscape(inv.member||'—')}</strong></td><td data-label="Name">${analyticEscape(inv.name)}</td><td class="text-right" data-label="Invested">${formatCurrency(inv.invested)}</td><td class="text-right" data-label="Current Value">${formatCurrency(inv.current)}</td>${showStallionMonthly?`<td class="text-right" data-label="Monthly Contribution">${formatCurrency(investmentMonthlyAmount(inv))}</td>`:''}<td class="text-right ${gain===0?'':gain>0?'positive':'negative'}" data-label="Gain / Loss">${gain>=0?'+':''}${formatCurrency(gain)}</td><td class="text-right" data-label="Absolute Return">${absoluteReturn===null?'N/A':(absoluteReturn*100).toFixed(2)+'%'}</td><td class="text-right" data-label="CAGR">${cagr===null?'N/A':(cagr*100).toFixed(2)+'%'}</td><td class="text-right ${xirr===null||xirr===0?'':xirr>0?'positive':'negative'}" data-label="XIRR">${xirr===null?'N/A':(xirr*100).toFixed(2)+'%'}</td><td class="investment-row-actions" data-label="Actions"><button class="btn-small" onclick="openStallionHistory('${inv.id}')">View History</button> <button class="btn-small" onclick="editInvestment('${inv.id}')">Edit</button> <button class="btn-small btn-danger" onclick="deleteInvestment('${inv.id}')">Delete</button></td></tr>`;}).join('')}</tbody></table></div>`:'';
+      const pmsActionRow=stallionBody.querySelector('td[data-label="Actions"]');
+      const pmsHeaderControls=stallionPanel.querySelector('.panel-header .panel-controls');
+      for(const [index,button] of pmsQuickActions.entries()){
+        if(!button.dataset.pmsCompactAction){
+          const label=index===0?'Add contribution':'Update PMS gain/loss';
+          button.setAttribute('aria-label',label);button.title=label;button.dataset.pmsCompactAction='true';
+          button.innerHTML=index===0?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16 5-5 4 3 7-9M15 5h5v5"/></svg>';
+        }
+        (pmsActionRow||pmsHeaderControls)?.append(button);
+      }
+      if(pmsHeaderControls)pmsHeaderControls.hidden=Boolean(pmsActionRow);
+      const pmsSource=stallionBody.querySelector('.table-wrapper');
+      if(pmsSource&&hasStallion){
+        pmsSource.classList.add('pms-detail-source');
+        const summaries=document.createElement('div');summaries.className='pms-summary-list';
+        stallionItems.forEach((inv,index)=>{
+          const gain=Number(inv.current||0)-Number(inv.invested||0),xirr=stallionXirr(inv,valuationDate,stallionContributionsById.get(inv.id)||[]);
+          const tile=document.createElement('button');tile.type='button';tile.className='pms-summary-tile';tile.setAttribute('aria-haspopup','dialog');
+          tile.innerHTML='<span class="pms-summary-name">'+analyticEscape(inv.name)+'</span><span class="pms-summary-member">'+analyticEscape(inv.member||'—')+'</span><span class="pms-summary-metrics">'+[
+            ['Current value',formatCurrency(inv.current),''],['XIRR',xirr===null?'N/A':(xirr*100).toFixed(2)+'%',xirr===null||xirr===0?'':xirr>0?'positive':'negative'],['Invested',formatCurrency(inv.invested),''],['Gain / loss',(gain>0?'+':'')+formatCurrency(gain),gain===0?'':gain>0?'positive':'negative']
+          ].map(([label,value,tone])=>'<span><small>'+label+'</small><strong class="'+tone+'">'+analyticEscape(value)+'</strong></span>').join('')+'</span>';
+          tile.onclick=()=>{
+            const dialog=document.getElementById('investmentCategoryDialog');delete dialog.dataset.investmentType;dialog.dataset.stallionId=inv.id;
+            document.getElementById('investmentCategoryDialogTitle').textContent=inv.name||'Stallion PMS';
+            document.getElementById('investmentCategoryDialogSubtitle').textContent='Stallion PMS · '+(inv.member||'');
+            const summary=document.getElementById('investmentCategoryDialogSummary');summary.replaceChildren();
+            tile.querySelectorAll('.pms-summary-metrics>span').forEach(metric=>{
+              const item=document.createElement('span'),label=document.createElement('span'),value=document.createElement('strong');
+              item.className='investment-summary-detail';label.textContent=metric.querySelector('small').textContent;value.textContent=metric.querySelector('strong').textContent;value.className=metric.querySelector('strong').className;item.append(label,value);summary.append(item);
+            });
+            const target=document.getElementById('investmentCategoryDialogTable');target.replaceChildren();
+            const wrapper=pmsSource.cloneNode(true);wrapper.classList.remove('pms-detail-source');wrapper.classList.add('investment-category-dialog-table','pms-holding-details');
+            wrapper.querySelectorAll('tbody tr').forEach((row,rowIndex)=>{if(rowIndex!==index)row.remove();});
+            wrapper.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+            const rowActions=wrapper.querySelector('tbody td[data-label="Actions"]');
+            if(rowActions){
+              rowActions.querySelectorAll('[data-pms-compact-action]').forEach(node=>node.remove());
+              pmsQuickActions.forEach(original=>{const copy=original.cloneNode(true);copy.removeAttribute('id');copy.removeAttribute('data-open-entry');copy.className='investment-icon-action';copy.onclick=()=>original.click();rowActions.append(copy);});
+            }
+            target.append(wrapper);labelInvestmentDialogCells(target);
+            dialog.hidden=false;document.body.style.overflow='hidden';dialog.querySelector('[data-close-investment-category-dialog]')?.focus();
+          };
+          summaries.append(tile);
+          const activePmsDialog=document.getElementById('investmentCategoryDialog');if(!activePmsDialog.hidden&&activePmsDialog.dataset.stallionId===inv.id)tile.onclick();
+        });
+        stallionBody.prepend(summaries);
+      }
+
       if(stallionContributionAddPanel&&!entryPanelIsModal(stallionContributionAddPanel))stallionBody.appendChild(stallionContributionAddPanel);
       if(stallionHistoryPanel)stallionBody.appendChild(stallionHistoryPanel);
       if(stallionProfitPanel&&!entryPanelIsModal(stallionProfitPanel))stallionBody.appendChild(stallionProfitPanel);
@@ -3374,13 +3504,16 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       modal.dataset.investmentId=investmentId;modal.dataset.mode='history';delete modal.dataset.editContributionId;
       document.getElementById('investmentContributionEntryForm').hidden=true;document.getElementById('investmentContributionHistoryPanel').hidden=false;
       document.getElementById('investmentContributionTitle').textContent=`${investment.type} Contributions — ${investment.name}`;
-      document.getElementById('investmentContributionSummary').textContent=`Invested ${formatCurrency(investment.invested)} · Current ${formatCurrency(investment.current)}${investmentUsesReturnMetrics(investment.type)?` · Absolute return ${investmentAbsoluteReturn(investment)===null?'N/A':(investmentAbsoluteReturn(investment)*100).toFixed(2)+'%'} · CAGR ${investmentCagr(investment)===null?'N/A':(investmentCagr(investment)*100).toFixed(2)+'%'} · XIRR ${investmentXirr(investment)===null?'N/A':(investmentXirr(investment)*100).toFixed(2)+'%'}`:''}`;
+      const summary=document.getElementById('investmentContributionSummary');summary.replaceChildren();
+      const figures=[['Invested',formatCurrency(investment.invested)],['Current value',formatCurrency(investment.current)]];
+      if(investmentUsesReturnMetrics(investment.type))for(const [label,value] of [['Absolute return',investmentAbsoluteReturn(investment)],['CAGR',investmentCagr(investment)],['XIRR',investmentXirr(investment)]])figures.push([label,value===null?'N/A':(value*100).toFixed(2)+'%']);
+      for(const [label,value] of figures){const item=document.createElement('span'),caption=document.createElement('span'),amount=document.createElement('strong');item.className='contribution-summary-metric';caption.textContent=label;amount.textContent=value;item.append(caption,amount);summary.append(item);}
       document.getElementById('investmentContributionDate').value=localDateKey();
       document.getElementById('investmentContributionAmount').value='';
       document.getElementById('investmentContributionFilter').value='all';
       document.getElementById('saveInvestmentContribution').textContent='Add Contribution';
       renderInvestmentContributionHistory(investmentId);
-      modal.hidden=false;syncInvestmentOverlayBodyLock();document.getElementById('investmentContributionFilter').focus();
+      modal.hidden=false;syncInvestmentOverlayBodyLock();modal.querySelector('button[data-close-investment-contribution]')?.focus();
     }
     function openManualInvestmentContribution(investmentId){
       const investment=state.investments.find(row=>row.id===investmentId);if(!investment||investment.type==='Stallion PMS')return;
@@ -3391,16 +3524,20 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const contributionDate=document.getElementById('investmentContributionDate');contributionDate.min=investment.date||'';contributionDate.max=localDateKey();contributionDate.value=localDateKey();document.getElementById('investmentContributionAmount').value='';document.getElementById('saveInvestmentContribution').textContent='Add Contribution';
       modal.hidden=false;syncInvestmentOverlayBodyLock();document.getElementById('investmentContributionDate').focus();
     }
-    function openManualPpfContribution(accountId){
-      const account=(state.ppf||[]).find(row=>row.id===accountId);if(!account)return;
-      const modal=document.getElementById('investmentContributionModal');modal.dataset.mode='retirement-manual';modal.dataset.retirementType='ppf';modal.dataset.investmentId=accountId;delete modal.dataset.editContributionId;
-      document.getElementById('investmentContributionTitle').textContent=`Add Contribution — ${account.account||'PPF Account'}`;
-      document.getElementById('investmentContributionSummary').textContent=`PPF · Invested ${formatCurrency(account.invested)} · Current ${formatCurrency(account.current)}`;
+    function openManualRetirementContribution(kind,accountId){
+      if(!['pf','ppf'].includes(kind))return;
+      const account=(state[kind]||[]).find(row=>row.id===accountId);if(!account)return;
+      if(typeof window!=='undefined'&&window.financeCloud?.canEdit===false)return;
+      const modal=document.getElementById('investmentContributionModal');modal.dataset.mode='retirement-manual';modal.dataset.retirementType=kind;modal.dataset.investmentId=accountId;delete modal.dataset.editContributionId;
+      document.getElementById('investmentContributionTitle').textContent=`Add Contribution — ${account.account||kind.toUpperCase()+' Account'}`;
+      document.getElementById('investmentContributionSummary').textContent=`${kind.toUpperCase()} · One-off additional contribution · Invested ${formatCurrency(account.invested)} · Current ${formatCurrency(account.current)} · Automatic monthly credits remain separate`;
       document.getElementById('investmentContributionFilter').value='all';document.getElementById('investmentContributionEntryForm').hidden=false;document.getElementById('investmentContributionHistoryPanel').hidden=true;
       const date=document.getElementById('investmentContributionDate');date.value=localDateKey();date.min=account.date||'';date.max=localDateKey();
       document.getElementById('investmentContributionAmount').value='';document.getElementById('saveInvestmentContribution').textContent='Add Contribution';
       modal.hidden=false;syncInvestmentOverlayBodyLock();date.focus();
     }
+    function openManualPpfContribution(accountId){openManualRetirementContribution('ppf',accountId);}
+    function openManualPfContribution(accountId){openManualRetirementContribution('pf',accountId);}
     function renderInvestmentContributionHistory(investmentId) {
       const filter=document.getElementById('investmentContributionFilter')?.value||'all';
       const allRows=(state.investmentContributions||[]).filter(row=>row.investmentId===investmentId).sort((a,b)=>b.date.localeCompare(a.date));
@@ -3424,12 +3561,16 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const amount=Number(document.getElementById('investmentContributionAmount').value),date=document.getElementById('investmentContributionDate').value;
       if(!Number.isFinite(amount)||amount<=0){alert('Enter a contribution amount greater than zero.');return;}
       if(modal.dataset.mode==='retirement-manual'){
-        const account=(state.ppf||[]).find(row=>row.id===modal.dataset.investmentId);
+        const kind=modal.dataset.retirementType;
+        if(!['pf','ppf'].includes(kind))return;
+        if(typeof window!=='undefined'&&window.financeCloud?.canEdit===false)return;
+        const account=(state[kind]||[]).find(row=>row.id===modal.dataset.investmentId);
         if(!account)return;
-        if(!validCalendarDate(date)||date<account.date||date>localDateKey()){alert('Choose a valid contribution date between the PPF opening date and today.');return;}
-        state.retirementContributions.push({id:generateId(),investmentType:'ppf',accountId:account.id,member:account.member||'',accountName:account.account||'PPF',amount,date,automatic:false});
+        if(!validCalendarDate(date)||date<account.date||date>localDateKey()){alert('Choose a valid contribution date between the '+kind.toUpperCase()+' opening date and today.');return;}
+        // One-off credits do not change the recurring PF/PPF amount, EPS, or annual interest.
+        state.retirementContributions.push({id:generateId(),investmentType:kind,accountId:account.id,member:account.member||'',accountName:account.account||kind.toUpperCase(),amount,date,automatic:false});
         account.invested=(Number(account.invested)||0)+amount;account.current=(Number(account.current)||0)+amount;
-        saveData();closeInvestmentContributionModal();renderInvestments();renderPpf();updateDashboard();viewRetirementContributionHistory('ppf',account.id);return;
+        saveData();closeInvestmentContributionModal();renderInvestments();if(kind==='pf')renderPf();else renderPpf();updateDashboard();viewRetirementContributionHistory(kind,account.id);return;
       }
       const investment=state.investments.find(row=>row.id===modal.dataset.investmentId);if(!investment)return;
       if(!validCalendarDate(date)||date<investment.date||date>localDateKey()){alert('Choose a valid contribution date between the investment start date and today.');return;}
@@ -3641,7 +3782,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
             <td class="text-right">${cagr===null?'N/A':(cagr*100).toFixed(2)+'%'}</td>
             <td class="text-right">${xirr===null?'N/A':(xirr*100).toFixed(2)+'%'}</td>
             <td class="account-action-buttons">
-              <button class="btn-small" onclick="editNps('${nps.id}')">Edit</button>
+              <button type="button" class="investment-icon-action" aria-label="Update value" title="Update value" onclick="financeWorkbench.valuations('nps','${nps.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 8a7 7 0 0 1 12-2l2 3M4 15l2 3a7 7 0 0 0 12-2"/></svg></button><button class="btn-small" onclick="editNps('${nps.id}')">Edit</button>
               <button class="btn-small btn-danger" onclick="deleteNps('${nps.id}')">Delete</button>
               <button class="btn-small" onclick="viewRetirementContributionHistory('nps','${nps.id}')">View History</button>
             </td>
@@ -3847,6 +3988,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
             <td class="account-action-buttons"><div class="pf-actions-grid">
               <button class="btn-small" onclick="editPf('${pf.id}')">Edit</button>
               <button class="btn-small btn-danger" onclick="deletePf('${pf.id}')">Delete</button>
+              <button class="btn-small" onclick="openManualPfContribution('${pf.id}')">Add Contribution</button>
               <button class="btn-small" onclick="viewRetirementContributionHistory('pf','${pf.id}')">View History</button>
             </div></td>
           </tr>
@@ -4157,7 +4299,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const button = document.getElementById('toggleBalanceForm');
       const opening = form.hidden;
       form.hidden = !opening;
-      button.textContent = opening ? 'Cancel' : '+ Add Monthly Surplus';
+      button.textContent = opening ? 'Cancel' : '+ Set bank balance';
       button.setAttribute('aria-expanded', String(opening));
       if (opening) {
         if (!document.getElementById('balanceMonth').value) document.getElementById('balanceMonth').value = currentMonthKey();
@@ -4169,14 +4311,14 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const startBalance = Number(document.getElementById('balanceStartAmount').value);
 
       if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || document.getElementById('balanceStartAmount').value.trim() === '' || !Number.isFinite(startBalance) || startBalance < 0) {
-        alert('Please enter month and valid start balance');
+        alert('Select a month and enter a valid bank balance.');
         return;
       }
 
       // Check if record already exists for this month
       const existingIndex = state.monthlyBalances.findIndex(b => b.month === month);
       if (existingIndex !== -1) {
-        if (confirm('Record already exists for this month. Replace it?')) {
+        if (confirm('A bank balance already exists for this month. Update the same record?')) {
           state.monthlyBalances[existingIndex].startBalance = startBalance;
         } else {
           return;
@@ -4195,7 +4337,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       document.getElementById('balanceMonth').value = currentMonthKey();
       document.getElementById('balanceStartAmount').value = '';
       document.getElementById('balanceEntryForm').hidden = true;
-      document.getElementById('toggleBalanceForm').textContent = '+ Add Monthly Surplus';
+      document.getElementById('toggleBalanceForm').textContent = '+ Set bank balance';
       document.getElementById('toggleBalanceForm').setAttribute('aria-expanded', 'false');
 
       saveData();
@@ -4211,7 +4353,9 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const rows = state.monthlyBalances.filter(b => b.month >= startMonth && b.month <= endMonth && b.month < currentMonthKey()).map(b => {
         const t = monthTotalsFromIndex(totalsIndex,b.month);
         const h = b.houseExpense;
-        return `<tr><td>${b.month}</td><td>${formatCurrency(b.startBalance)}</td><td>${formatCurrency(t.income)}</td><td>${formatCurrency(t.expenses)}</td><td>${formatCurrency(t.stallion)}</td><td>${formatCurrency(t.retirement)}</td><td>${formatCurrency(b.startBalance + t.income - t.expenses - t.stallion)}</td><td>${h === null ? 'Pending next month balance' : formatCurrency(h)}</td><td><button class="btn-small" onclick="deleteBalance('${b.id}')">Delete</button></td></tr>`;
+        const monthLabel = new Date(b.month + '-01T12:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+        const cell = (label, value, extra = '') => `<td data-label="${label}" class="balance-history-value ${extra}"><span class="balance-history-label">${label}</span><span class="balance-history-amount">${value}</span></td>`;
+        return `<tr class="balance-history-record"><td class="balance-history-month" data-sort="${b.month}"><time datetime="${b.month}">${monthLabel}</time></td>${cell('Opening balance', formatCurrency(b.startBalance))}${cell('Monthly income', formatCurrency(t.income))}${cell('Expenses', formatCurrency(t.expenses))}${cell('Stallion PMS contributions', formatCurrency(t.stallion))}${cell('NPS + PPF contributions', formatCurrency(t.retirement))}${cell('Surplus balance', formatCurrency(b.startBalance + t.income - t.expenses - t.stallion), 'balance-history-surplus')}${cell('House expense', h === null ? 'Awaiting next month’s opening balance' : formatCurrency(h))}<td class="balance-history-actions"><button class="btn-small" aria-label="Delete opening balance for ${monthLabel}" onclick="deleteBalance('${b.id}')">Delete</button></td></tr>`;
       }).join('');
       document.getElementById('balanceHistoryBody').innerHTML = rows || '<tr><td colspan="9" class="text-muted">No completed monthly surplus records for this financial year.</td></tr>';
       document.getElementById('houseExpenseBody').innerHTML = state.monthlyBalances.map(b => `<tr><td>${b.month}</td><td>${b.houseExpense === null ? 'Pending' : formatCurrency(b.houseExpense)}</td><td>${b.houseExpense === null ? 'Enter next calendar month opening balance' : b.houseExpense < 0 ? 'Negative difference: review balances / missing inflows' : 'Calculated and recorded'}</td></tr>`).join('') || '<tr><td colspan="3">Add monthly opening balances to calculate house expenses.</td></tr>';
@@ -4226,6 +4370,44 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       }
     }
 
+    function renderCashFlowTrend(month) {
+      const host=document.getElementById('cashFlowTrendChart');
+      if(!host||!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(month))return;
+      const [year,number]=month.split('-').map(Number);
+      const months=Array.from({length:6},(_,index)=>{
+        const day=new Date(year,number-1-(5-index),1);
+        const key=`${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}`;
+        return {key,label:day.toLocaleDateString('en-IN',{month:'short'}),income:0,expenses:0};
+      });
+      const byMonth=new Map(months.map(row=>[row.key,row]));
+      for(const row of profileRows(state.income)){
+        const found=byMonth.get(String(row.date||'').slice(0,7));
+        if(found)found.income+=Number(row.amount)||0;
+      }
+      for(const row of state.expenses){
+        const found=byMonth.get(String(row.date||'').slice(0,7));
+        if(found)found.expenses+=Number(row.amount)||0;
+      }
+      const hasRecords=months.some(row=>row.income!==0||row.expenses!==0);
+      if(!hasRecords){
+        host.replaceChildren();
+        const note=document.createElement('p');
+        note.className='cash-flow-trend-empty';
+        note.textContent='No income or expenses recorded across these six months.';
+        host.append(note);
+        host.setAttribute('aria-label',note.textContent);
+        return;
+      }
+      const maximum=Math.max(1,...months.flatMap(row=>[row.income,row.expenses]));
+      const x=index=>34+index*52;
+      const y=value=>126-Math.max(0,value)/maximum*100;
+      const points=kind=>months.map((row,index)=>`${x(index)},${y(row[kind]).toFixed(2)}`).join(' ');
+      const incomePoints=points('income'),expensePoints=points('expenses');
+      const grid=[0,0.5,1].map(fraction=>`<line x1="26" y1="${126-fraction*100}" x2="302" y2="${126-fraction*100}" class="cash-flow-trend-grid"/>`).join('');
+      const labels=months.map((row,index)=>`<text x="${x(index)}" y="146" text-anchor="middle">${row.label}</text>`).join('');
+      host.innerHTML=`<svg viewBox="0 0 320 156" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">${grid}<polyline class="cash-flow-trend-income" points="${incomePoints}"/><polyline class="cash-flow-trend-expense" points="${expensePoints}"/>${labels}</svg>`;
+      host.setAttribute('aria-label',`Recorded cash flow for ${months.map(row=>`${row.key}: income ${formatCurrency(row.income)}, expenses ${formatCurrency(row.expenses)}`).join('; ')}. Profile-filtered income and household expenses; future or missing months have no recorded transactions.`);
+    }
     function renderTransactionOverview() {
       const cashKind=document.getElementById('income-expenses')?.dataset.cashKind;
       const month=document.getElementById('income-expenses')?.dataset.cashMonth||(cashKind&&document.getElementById(cashKind+'HistoryMonth')?.value)||currentMonthKey();
@@ -4242,8 +4424,23 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(expenseTotal) expenseTotal.textContent=formatCurrency(expenses);
       if(netTotal) netTotal.textContent=`${net<0?'−':''}${formatCurrency(Math.abs(net))}`;
       if(netCard) netCard.classList.toggle('is-negative',net<0);
+      renderCashFlowTrend(month);
+      window.financeWorkbench?.refreshCommitmentsPreview?.();
       window.financeCashFlow?.refreshMonthFilter();
       window.financeCashFlow?.updateBar(income,expenses);
+    }
+
+    function updateDashboardExpenseVisual(house, full) {
+      const visual=document.querySelectorAll('#dashboardExpenseSnapshot .dashboard-expense-visual');
+      const valid=Number.isFinite(house)&&Number.isFinite(full)&&house>=0&&full>0&&house<=full;
+      visual.forEach(node=>{node.hidden=!valid;});
+      if(!valid)return;
+      const share=Math.min(100,Math.max(0,house/full*100));
+      document.getElementById('houseExpenseShareBar').style.width=share+'%';
+      document.getElementById('fullExpenseHouseBar').style.width=share+'%';
+      document.getElementById('fullExpenseRecordedBar').style.width=(100-share)+'%';
+      document.getElementById('houseExpenseShareLabel').textContent=share.toFixed(1)+'% of full expense';
+      document.getElementById('fullExpenseShareLabel').textContent=(100-share).toFixed(1)+'% recorded expenses';
     }
 
     // DASHBOARD UPDATE
@@ -4341,6 +4538,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const fullExpenseNote = document.getElementById('lastMonthFullExpenseNote');
       const lastRecordedExpenses = monthTotals(previousMonthKey).expenses;
       const fullExpense = houseAmount == null ? null : houseAmount + lastRecordedExpenses;
+      updateDashboardExpenseVisual(houseAmount,fullExpense);
       window.PFT_DASHBOARD_INSIGHTS={profile:isCombinedFamilyProfile()?'Combined family':activeFamilyProfile,totalInvestment,npsTotal,ppfTotal,pfTotal,totalAssets,totalDebts,netWorth,currentMonthStr,householdMonthlyIncome,monthlyExpenses,stallionPmsExpenses,surplusBalance,opening:currentMonthBalance?.startBalance??0,hasOpening:!!currentMonthBalance,previousOpening:previousBalance?.startBalance??null,previousMonthKey,previousTotals:monthTotals(previousMonthKey),houseAmount:houseAmount??null,fullExpense,accounts:[...viewInvestments.map(r=>({name:(r.member||'')+' · '+(r.name||r.type),value:r.current})),...['nps','ppf','pf'].flatMap(kind=>profileRows(state[kind]).map(r=>({name:kind.toUpperCase()+' · '+(r.member||'')+' · '+(r.account||r.scheme||''),value:r.current}))),...viewDebts.map(r=>({name:'Debt · '+r.type,value:r.remaining}))]};
       if (fullExpenseCard) {
         fullExpenseCard.textContent = fullExpense == null ? 'Pending' : formatCurrency(fullExpense);
@@ -4363,6 +4561,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       };
 
       if (els.netWorth) els.netWorth.textContent = formatCurrency(netWorth);
+      const netWorthRatio=document.getElementById('dashboardNetWorthRatio');
+      if(netWorthRatio){netWorthRatio.hidden=true;netWorthRatio.textContent='';netWorthRatio.removeAttribute('title');}
       if (els.totalAssets) els.totalAssets.textContent = formatCurrency(totalAssets);
       if (els.monthlyExpenses) els.monthlyExpenses.textContent = formatCurrency(monthlyExpenses);
       const dashboardAssetsValue=document.getElementById('dashboardAssetsValue');
@@ -4458,11 +4658,11 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(cashSvg){
         if(!periods.length){cashSvg.innerHTML='<text x="320" y="100" text-anchor="middle" class="cash-axis">No months are available in this financial year.</text>';}
         else {
-          const left=48,right=625,top=18,bottom=165,height=bottom-top,width=right-left,maxValue=Math.max(1,...periods.flatMap(row=>[row.income,row.expenses]))*1.12;
+          const left=42,right=630,top=18,bottom=165,height=bottom-top,width=right-left,maxValue=Math.max(1,...periods.flatMap(row=>[row.income,row.expenses]))*1.12; const cashAxis=value=>value===0?'₹0':value>=100000?`₹${(value/100000).toFixed(1)}L`:formatCurrency(value);
           const xAt=index=>periods.length===1?left+width/2:left+width*index/(periods.length-1),yAt=value=>bottom-height*value/maxValue;
           const lineFor=key=>periods.map((row,index)=>`${index?'L':'M'}${xAt(index).toFixed(1)},${yAt(row[key]).toFixed(1)}`).join(' ');
           const incomePath=lineFor('income'),expensePath=lineFor('expenses');
-          const grid=[0,.5,1].map(fraction=>{const y=bottom-height*fraction,value=maxValue*fraction;return `<line class="cash-grid" x1="${left}" y1="${y.toFixed(1)}" x2="${right}" y2="${y.toFixed(1)}"/><text class="cash-axis" x="${left-7}" y="${(y+3).toFixed(1)}" text-anchor="end">${analyticCompact(value)}</text>`;}).join('');
+          const grid=[0,.5,1].map(fraction=>{const y=bottom-height*fraction,value=maxValue*fraction;return `<line class="cash-grid" x1="${left}" y1="${y.toFixed(1)}" x2="${right}" y2="${y.toFixed(1)}"/><text class="cash-axis" x="${left-7}" y="${(y+3).toFixed(1)}" text-anchor="end">${cashAxis(value)}</text>`;}).join('');
           const labels=periods.map((row,index)=>`<text class="cash-axis" x="${xAt(index).toFixed(1)}" y="188" text-anchor="middle">${analyticEscape(row.label)}</text>`).join('');
           const incomePoints=periods.map((row,index)=>`<circle class="cash-point-income" cx="${xAt(index).toFixed(1)}" cy="${yAt(row.income).toFixed(1)}" r="3.2"><title>${analyticEscape(row.label)} income: ${formatCurrency(row.income)}</title></circle>`).join('');
           const expensePoints=periods.map((row,index)=>`<circle class="cash-point-expense" cx="${xAt(index).toFixed(1)}" cy="${yAt(row.expenses).toFixed(1)}" r="3"><title>${analyticEscape(row.label)} expenses: ${formatCurrency(row.expenses)}</title></circle>`).join('');
@@ -4829,6 +5029,80 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(select.dataset.months!==signature){select.replaceChildren(...months.map(month=>{const option=document.createElement('option');option.value=month;option.textContent=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'}).toLocaleUpperCase();return option;}));select.dataset.months=signature;}
       select.value=selected;
       select.onchange=()=>{select.dataset.selectedMonth=select.value;renderDashboardExpenseSnapshot();};
+      const trigger=document.getElementById('dashboardExpenseMonthTrigger');
+      const menu=document.getElementById('dashboardExpenseMonthMenu');
+      const label=document.getElementById('dashboardExpenseMonthLabel');
+      if(trigger&&menu&&label){
+        const selectedOption=Array.from(select.options).find(option=>option.value===selected);
+        label.textContent=selected?new Date(selected+'-01T12:00:00').toLocaleDateString('en-IN',{month:'short',year:'numeric'}):'Previous month';
+        trigger.title=selectedOption?.textContent||'Previous month';
+        const closeMenu=(returnFocus=false)=>{
+          menu.hidden=true;
+          trigger.setAttribute('aria-expanded','false');
+          if(returnFocus)trigger.focus();
+        };
+        const placeMenu=()=>{
+          const rect=trigger.getBoundingClientRect();
+          const availableBelow=window.innerHeight-rect.bottom-12;
+          const availableAbove=rect.top-12;
+          const openAbove=availableBelow<230&&availableAbove>availableBelow;
+          const height=Math.min(290,Math.max(100,openAbove?availableAbove:availableBelow));
+          menu.style.position='fixed';
+          menu.style.width=Math.max(190,Math.min(270,window.innerWidth-24))+'px';
+          menu.style.left=Math.max(12,Math.min(rect.right-menu.getBoundingClientRect().width,window.innerWidth-menu.getBoundingClientRect().width-12))+'px';
+          menu.style.maxHeight=height+'px';
+          menu.style.top=openAbove?'auto':Math.min(window.innerHeight-12,rect.bottom+7)+'px';
+          menu.style.bottom=openAbove?(window.innerHeight-rect.top+7)+'px':'auto';
+        };
+        if(!trigger.dataset.monthPickerReady){
+          trigger.dataset.monthPickerReady='true';
+          trigger.addEventListener('click',()=>{
+            if(!menu.hidden){closeMenu();return;}
+            menu.hidden=false;
+            trigger.setAttribute('aria-expanded','true');
+            placeMenu();
+            menu.querySelector('[aria-selected="true"]')?.scrollIntoView({block:'nearest'});
+          });
+          menu.addEventListener('click',event=>{
+            const option=event.target.closest('[data-month]');
+            if(!option||!menu.contains(option))return;
+            select.value=option.dataset.month;
+            select.dispatchEvent(new Event('change',{bubbles:true}));
+            closeMenu(true);
+          });
+          document.addEventListener('pointerdown',event=>{
+            if(!menu.hidden&&!menu.contains(event.target)&&!trigger.contains(event.target))closeMenu();
+          });
+          document.addEventListener('keydown',event=>{
+            if(menu.hidden)return;
+            if(event.key==='Escape'){event.preventDefault();closeMenu(true);}
+            if(event.key==='ArrowDown'||event.key==='ArrowUp'){
+              event.preventDefault();
+              const options=Array.from(menu.querySelectorAll('[role="option"]'));
+              const current=options.indexOf(document.activeElement);
+              const index=current<0?options.findIndex(node=>node.getAttribute('aria-selected')==='true'):current;
+              options[(index+(event.key==='ArrowDown'?1:-1)+options.length)%options.length]?.focus();
+            }
+            if(event.key==='Tab')closeMenu();
+          });
+          window.addEventListener('resize',()=>{if(!menu.hidden)placeMenu();},{passive:true});
+          window.addEventListener('scroll',()=>{if(!menu.hidden)placeMenu();},{passive:true,capture:true});
+        }
+        menu.replaceChildren(...Array.from(select.options).map(option=>{
+          const button=document.createElement('button');
+          button.type='button';
+          button.setAttribute('role','option');
+          button.setAttribute('aria-selected',String(option.value===selected));
+          button.dataset.month=option.value;
+          button.className='dashboard-month-option';
+          const name=document.createElement('span');
+          name.textContent=option.textContent;
+          button.append(name);
+          if(option.value===selected){const check=document.createElement('span');check.className='dashboard-month-check';check.textContent='✓';check.setAttribute('aria-hidden','true');button.append(check);}
+          return button;
+        }));
+        if(!menu.hidden)placeMenu();
+      }
       const balance=state.monthlyBalances.find(r=>r.month===selected),house=balance?.houseExpense;
       const calculated=Number.isFinite(house);
       card.hidden=!calculated&&window.innerWidth<=700;
@@ -4838,6 +5112,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       document.getElementById('houseExpenseLabel').textContent=name+' House Expense';
       document.getElementById('fullExpenseLabel').textContent=name+' Full Expense';
       const full=calculated?house+monthTotals(selected).expenses:null;
+      updateDashboardExpenseVisual(house,full);
       for(const [id,value] of [['lastMonthHouseExpense',calculated?house:null],['lastMonthFullExpense',full]]){const node=document.getElementById(id);node.textContent=value===null?'Pending':formatCurrency(value);node.style.color=value!==null&&value<0?'var(--danger)':'var(--primary)';}
     }
     window.addEventListener('resize',renderDashboardExpenseSnapshot,{passive:true});
@@ -5547,28 +5822,52 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(investedTotal)investedTotal.textContent=compact(totalInvested);
       if(gainTotal){gainTotal.textContent=`${totalGain>=0?'+':'−'}${compact(Math.abs(totalGain))}`;gainTotal.classList.toggle('is-loss',totalGain<0);}
       if(returnTotal){returnTotal.textContent=`${totalReturn>=0?'+':''}${totalReturn.toFixed(1)}%`;returnTotal.classList.toggle('is-loss',totalReturn<0);}
+      const remainingButton=document.getElementById('openRemainingInvestments');
+      if(remainingButton){remainingButton.hidden=rows.length<=5;remainingButton.onclick=()=>openRemainingPortfolio();}
+      document.getElementById('remainingPortfolioDialog')?.close();
       if(!rows.length){body.innerHTML='<div class="text-muted">No investments added yet.</div>';body.dataset.expandedCategory='';return;}
-      const maxValue=Math.max(...rows.map(row=>Math.max(row.current,row.invested)),1);
+      const visibleRows=rows.slice(0,5);
+      const portfolioCount=document.getElementById('completePortfolioCount');
+      if(portfolioCount)portfolioCount.textContent='';
+      if(remainingButton)remainingButton.textContent=`View remaining ${rows.length-5} investments ›`;
+      function paintPortfolio(target,visibleRows,prefix){
+      const maxValue=Math.max(...visibleRows.map(row=>Math.max(row.current,row.invested)),1);
       const colors=['#3985a1','#ec9c52','#7566c2','#43a88c','#e06f70','#7889a7','#a16c91','#3f9b8e'];
-      body.innerHTML=rows.map((row,index)=>{
+      target.innerHTML=visibleRows.map((row,index)=>{
         const isExpanded=expandedCategory===row.category;
         const investedWidth=Math.min(100,Math.max(0,row.invested/maxValue*100));
         const currentWidth=Math.min(100,Math.max(0,row.current/maxValue*100));
         const changeLeft=Math.min(investedWidth,currentWidth),changeWidth=Math.abs(currentWidth-investedWidth);
-        const changeClass=row.gain>=0?'is-gain':'is-loss';
-        const detailId=`completePortfolioDetail${index}`;
+        const changeClass=row.gain>0?'is-gain':row.gain<0?'is-loss':'is-neutral';
+        const detailId=`${prefix}Detail${index}`;
         const holdingRows=row.holdings.map(holding=>{
           const gain=holding.current-holding.invested;
           return `<tr><td>${analyticEscape(holding.member||'—')}</td><td>${analyticEscape(holding.label||'Holding')}</td><td class="text-right">${formatCurrency(holding.invested)}</td><td class="text-right">${formatCurrency(holding.current)}</td><td class="text-right ${gain>=0?'positive':'negative'}">${gain>=0?'+':''}${formatCurrency(gain)}</td></tr>`;
         }).join('');
-        return `<div class="portfolio-category-group"><button type="button" class="portfolio-category-row" data-portfolio-category="${analyticEscape(row.category)}" aria-expanded="${isExpanded}" aria-controls="${detailId}"><span class="portfolio-category-label"><i class="portfolio-category-dot" style="background:${colors[index%colors.length]}"></i>${analyticEscape(row.category)}</span><span class="portfolio-value-bar" title="Invested ${formatCurrency(row.invested)} · Current ${formatCurrency(row.current)} · Gain ${formatCurrency(row.gain)}"><span class="portfolio-bar-invested" style="width:${investedWidth}%"></span><span class="portfolio-bar-change ${changeClass}" style="left:${changeLeft}%;width:${changeWidth}%"></span></span><span class="portfolio-current-value">${compact(row.current)}</span><span class="portfolio-gain-value ${changeClass}">${row.gain>=0?'+':'−'}${compact(Math.abs(row.gain))} · ${row.return>=0?'+':''}${row.return.toFixed(1)}%</span><span class="portfolio-row-chevron" aria-hidden="true">›</span></button><div class="portfolio-holdings-details" id="${detailId}"${isExpanded?'':' hidden'}><div class="portfolio-holdings-title">${row.holdings.length} ${row.holdings.length===1?'holding':'holdings'}</div><div class="table-wrapper"><table class="portfolio-holdings-table"><thead><tr><th>Member</th><th>Holding</th><th class="text-right">Invested</th><th class="text-right">Current value</th><th class="text-right">Gain / loss</th></tr></thead><tbody>${holdingRows}</tbody></table></div></div></div>`;
+        return `<div class="portfolio-category-group"><button type="button" class="portfolio-category-row" data-portfolio-category="${analyticEscape(row.category)}" aria-expanded="${isExpanded}" aria-controls="${detailId}"><span class="portfolio-category-label"><i class="portfolio-category-dot" style="background:${colors[index%colors.length]}"></i>${analyticEscape(row.category)}</span><span class="portfolio-value-bar" title="Invested ${formatCurrency(row.invested)} · Current ${formatCurrency(row.current)} · Gain ${formatCurrency(row.gain)}"><span class="portfolio-bar-invested" style="width:${investedWidth}%"></span><span class="portfolio-bar-change ${changeClass}" style="left:${changeLeft}%;width:${changeWidth}%"></span></span><span class="portfolio-current-value">${compact(row.current)}</span><span class="portfolio-gain-value ${changeClass}">${row.gain>0?'+':row.gain<0?'−':''}${compact(Math.abs(row.gain))} · ${row.return>0?'+':''}${row.return.toFixed(1)}%${row.gain===0?' · No growth':''}</span><span class="portfolio-row-chevron" aria-hidden="true">›</span></button><div class="portfolio-holdings-details" id="${detailId}"${isExpanded?'':' hidden'}><div class="portfolio-holdings-title">${row.holdings.length} ${row.holdings.length===1?'holding':'holdings'}</div><div class="table-wrapper"><table class="portfolio-holdings-table"><thead><tr><th>Member</th><th>Holding</th><th class="text-right">Invested</th><th class="text-right">Current value</th><th class="text-right">Gain / loss</th></tr></thead><tbody>${holdingRows}</tbody></table></div></div></div>`;
       }).join('');
-      body.dataset.expandedCategory=expandedCategory;
-      body.querySelectorAll('[data-portfolio-category]').forEach(button=>button.addEventListener('click',()=>{
-        body.dataset.expandedCategory=button.getAttribute('aria-expanded')==='true'?'':button.dataset.portfolioCategory;
-        renderCompletePortfolio();
+      target.querySelectorAll('[data-portfolio-category]').forEach(button=>button.addEventListener('click',()=>{
+        const expanded=button.getAttribute('aria-expanded')!=='true';
+        target.querySelectorAll('[data-portfolio-category]').forEach(other=>{
+          const open=other===button&&expanded;other.setAttribute('aria-expanded',String(open));
+          document.getElementById(other.getAttribute('aria-controls')).hidden=!open;
+        });
+        if(target===body)body.dataset.expandedCategory=expanded?button.dataset.portfolioCategory:'';
       }));
+      }
+      paintPortfolio(body,visibleRows,'completePortfolio');
+      function openRemainingPortfolio(){
+        let dialog=document.getElementById('remainingPortfolioDialog');
+        if(!dialog){
+          dialog=document.createElement('dialog');dialog.id='remainingPortfolioDialog';dialog.className='remaining-portfolio-dialog';
+          dialog.setAttribute('aria-labelledby','remainingPortfolioTitle');
+          dialog.innerHTML='<div class="remaining-portfolio-heading"><h2 id="remainingPortfolioTitle">Remaining investments</h2><button type="button" class="btn-secondary">Close</button></div><p>Categories outside the top five, in your selected sort order.</p><div class="portfolio-category-list"></div>';
+          dialog.querySelector('button').onclick=()=>dialog.close();document.body.append(dialog);
+        }
+        paintPortfolio(dialog.querySelector('.portfolio-category-list'),rows.slice(5),'remainingPortfolio');dialog.showModal();
+      }
     }
+
 
     // GROWTH PROJECTION
     let growthProjectionChartInstance = null;
@@ -5663,14 +5962,24 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         const editor=`<div class="growth-assumption-details">${scenarios.length?`<p class="growth-assumption-slider-hint">Drag slider or type a value in the % box.</p><div class="growth-rate-controls${group==='fixed'?' is-fixed':''}">${rateEditor}</div>`:'<div class="growth-assumption-no-return-note">No investment growth; enabled monthly contributions are added.</div>'}<div class="growth-assumption-secondary-fields">${secondaryFields}</div></div>`;
         return {group,name:asset.name,current:asset.current,monthlySummary,editor,html:`<article class="growth-assumption-tile" data-growth-assumption-tile="${name}"><button type="button" class="growth-assumption-toggle" data-toggle-growth-assumption="${name}" aria-expanded="${expanded}" aria-controls="growthAssumptionDialog"><span class="growth-assumption-topline"><span class="growth-assumption-name">${name}</span><strong class="growth-assumption-value">${formatCurrency(asset.current)}</strong></span><span class="growth-assumption-subline">${monthlySummary}</span><span class="growth-assumption-returns${group==='market'?'':' growth-assumption-returns-single'}">${returnSummary}</span><span class="growth-assumption-chevron" aria-hidden="true">⌄</span></button></article>`};
       });
-      const groupedMarkup=groups.map(group=>{const items=assetTiles.filter(item=>item.group===group.id);return items.length?`<section class="growth-assumption-group growth-assumption-group-${group.accent}"><header class="growth-assumption-group-heading"><div><h3>${group.title}</h3><p>${group.caption}</p></div><span class="growth-assumption-group-count">${items.length} ${items.length===1?'type':'types'}</span></header><div class="growth-assumption-group-grid">${items.map(item=>item.html).join('')}</div></section>`:'';}).join('');
+      const selectedGroup=root.dataset.activeAssumptionGroup||'';
+      const groupChoices='<div class="growth-assumption-choices" role="group" aria-label="Investment assumption groups">'+groups.map(group=>{const count=assetTiles.filter(item=>item.group===group.id).length,label={market:'Market linked',fixed:'Fixed returns','no-return':'No return'}[group.id];return `<button type="button" data-assumption-group="${group.id}" aria-expanded="${selectedGroup===group.id}" aria-controls="growthAssumptionGroup-${group.id}" ${count?'':'disabled'}><strong>${label}</strong><small>${count} ${count===1?'type':'types'}</small></button>`;}).join('')+'</div><p class="growth-assumption-choice-hint"'+(selectedGroup?' hidden':'')+'>Tap a group to show its investments.</p>';
+      const groupedMarkup=groups.map(group=>{const items=assetTiles.filter(item=>item.group===group.id);return `<section id="growthAssumptionGroup-${group.id}" data-assumption-group-panel="${group.id}" ${selectedGroup===group.id?'':'hidden'} class="growth-assumption-group growth-assumption-group-${group.accent}"><header class="growth-assumption-group-heading"><div><h3>${group.title}</h3><p>${group.caption}</p></div><span class="growth-assumption-group-count">${items.length} ${items.length===1?'type':'types'}</span></header><div class="growth-assumption-group-grid">${items.map(item=>item.html).join('')}</div></section>`;}).join('');
       const nextMonthIndex=projectionMonthIndex(currentMonthKey())+1,upcoming=(state.projectionAdjustments||[]).filter(row=>validCalendarDate(row.date)&&projectionMonthIndex(row.date.slice(0,7))>=nextMonthIndex),plannedAdds=upcoming.filter(row=>row.type==='add').reduce((sum,row)=>sum+row.amount,0),plannedWithdrawals=upcoming.filter(row=>row.type==='withdraw').reduce((sum,row)=>sum+row.amount,0),plannedExpanded=expandedGrowthAssumptionAsset===GROWTH_PLANNED_CHANGES_KEY;
       const plannedContent=`<div class="growth-planned-modal-content" data-growth-assumption-tile="${GROWTH_PLANNED_CHANGES_KEY}"><div class="growth-adjustment-form"><div class="form-group"><label for="growthAdjustmentDate">Date</label><input type="date" id="growthAdjustmentDate"></div><div class="form-group"><label for="growthAdjustmentAsset">Investment</label><select id="growthAdjustmentAsset"></select></div><div class="form-group"><label for="growthAdjustmentType">Type</label><select id="growthAdjustmentType"><option value="add">Addition</option><option value="withdraw">Withdrawal</option></select></div><div class="form-group"><label for="growthAdjustmentAmount">Amount (₹)</label><input type="number" id="growthAdjustmentAmount" min="0.01" step="0.01" placeholder="50000"></div><div class="form-group"><label for="growthAdjustmentNotes">Description (optional)</label><input type="text" id="growthAdjustmentNotes" maxlength="120" placeholder="e.g., planned lump sum"></div></div><button type="button" class="btn-primary" id="addGrowthAdjustmentBtn">+ Add planned change</button><div class="table-wrapper"><table><thead><tr><th>Date</th><th>Investment</th><th>Type</th><th class="text-right">Amount</th><th>Description</th><th>Actions</th></tr></thead><tbody id="growthAdjustmentBody"></tbody></table></div></div>`;
       const plannedTile=`<article class="growth-assumption-tile growth-planned-change-tile" data-growth-assumption-tile="${GROWTH_PLANNED_CHANGES_KEY}"><button type="button" class="growth-assumption-toggle" data-toggle-growth-assumption="${GROWTH_PLANNED_CHANGES_KEY}" aria-expanded="${plannedExpanded}" aria-controls="growthAssumptionDialog"><span class="growth-planned-summary"><span><strong>Planned one-time changes</strong><small>${upcoming.length} planned</small></span><span class="growth-planned-amounts"><span class="growth-planned-additions">Additions <strong>${formatCurrency(plannedAdds)}</strong></span><span class="growth-planned-withdrawals">Withdrawals <strong>${formatCurrency(plannedWithdrawals)}</strong></span></span></span><span class="growth-assumption-chevron" aria-hidden="true">⌄</span></button>${plannedExpanded?'':`<div hidden>${plannedContent}</div>`}</article>`;
       const expandedAsset=assetTiles.find(item=>item.name===expandedGrowthAssumptionAsset),open=Boolean(expandedAsset||plannedExpanded),title=plannedExpanded?'Planned one-time changes':expandedAsset?`${expandedAsset.name} assumptions`:'';
       const content=plannedExpanded?plannedContent:expandedAsset?`<article class="growth-assumption-tile growth-assumption-expanded-panel is-expanded" data-growth-assumption-tile="${analyticEscape(expandedAsset.name)}"><div class="growth-assumption-expanded-header"><div class="growth-assumption-expanded-heading"><strong>Current value</strong><span>${expandedAsset.monthlySummary}</span></div><strong class="growth-assumption-value">${formatCurrency(expandedAsset.current)}</strong></div>${expandedAsset.editor}</article>`:'';
       const assumptionDialog=`<div id="growthAssumptionDialog" role="dialog" aria-modal="true" aria-labelledby="growthAssumptionDialogTitle"${open?'':' hidden'}>${open?`<section class="growth-assumption-modal-shell"><header class="growth-assumption-modal-header"><h2 id="growthAssumptionDialogTitle">${analyticEscape(title)}</h2><button type="button" data-collapse-growth-assumption aria-label="Close assumptions"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="growth-assumption-modal-body">${content}</div></section>`:''}</div>`;
-      root.innerHTML=`${groupedMarkup||'<div class="text-muted">No investment balances found. Add investments to begin a projection.</div>'}${plannedTile}${assumptionDialog}`;
+      root.innerHTML=`${groupChoices}${groupedMarkup}${plannedTile}${assumptionDialog}`;
+      root.querySelectorAll('[data-assumption-group]').forEach(button=>button.addEventListener('click',event=>{
+        event.preventDefault();event.stopPropagation();
+        const selected=root.dataset.activeAssumptionGroup===button.dataset.assumptionGroup?'':button.dataset.assumptionGroup;
+        root.dataset.activeAssumptionGroup=selected;
+        root.querySelectorAll('[data-assumption-group]').forEach(option=>option.setAttribute('aria-expanded',String(option.dataset.assumptionGroup===selected)));
+        root.querySelectorAll('[data-assumption-group-panel]').forEach(panel=>panel.hidden=panel.dataset.assumptionGroupPanel!==selected);
+        root.querySelector('.growth-assumption-choice-hint').hidden=Boolean(selected);
+      }));
       syncInvestmentOverlayBodyLock();
       const writeReturn=(asset,field,value)=>{
         state.projectionSettings=state.projectionSettings||{years:5,includeMonthlyContributions:true,monthlyContributions:{},returns:{}};
@@ -5724,11 +6033,18 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     function renderGrowthContributionExclusions(assets,includeMonthlyContributions) {
       const wrap=document.getElementById('growthContributionExclusionsWrap'),list=document.getElementById('growthContributionExclusions');
       const monthlyAssets=assets.filter(asset=>asset.kind!=='eps'&&(Number(asset.monthly)>0||(asset.kind==='pf'&&assets.some(row=>row.kind==='eps'&&row.monthly>0))));
-      wrap.hidden=!includeMonthlyContributions||!monthlyAssets.length;
+      wrap.hidden=false;
+      const amountFor=asset=>(Number(asset.monthly)||0)+(asset.kind==='pf'?(assets.find(row=>row.kind==='eps')?.monthly||0):0);
       const excluded=state.projectionSettings?.excludedMonthlyContributions||[];
       const activeCount=monthlyAssets.filter(asset=>!excluded.includes(asset.name)).length;
-      document.getElementById('growthContributionHeading').textContent=`Active monthly contributions (${activeCount}/${monthlyAssets.length})`;
-      list.innerHTML=monthlyAssets.map(asset=>{const included=!excluded.includes(asset.name);return `<label class="growth-exclusion-item${included?'':' is-excluded'}"><span class="growth-exclusion-name"><strong>${analyticEscape(asset.name)}</strong><small>${formatCurrency((Number(asset.monthly)||0)+(asset.kind==='pf'?(assets.find(row=>row.kind==='eps')?.monthly||0):0))} per month${asset.kind==='pf'&&assets.some(row=>row.kind==='eps')?' · PF + EPS':''}</small></span><span class="growth-exclusion-control"><span>${included?'Included':'Excluded'}</span><span class="growth-switch growth-switch-small"><input type="checkbox" class="growth-monthly-exclude-toggle" data-asset="${analyticEscape(asset.name)}" aria-label="Include ${analyticEscape(asset.name)} monthly contribution" ${included?'checked':''}><span class="growth-switch-track"></span></span></span></label>`;}).join('');
+      const monthlyTotal=monthlyAssets.filter(asset=>!excluded.includes(asset.name)).reduce((sum,asset)=>sum+amountFor(asset),0);
+      const summary=document.getElementById('growthContributionSummary');
+      const summaryRow=summary.closest('.growth-contribution-summary-row');
+      if(summaryRow)summaryRow.hidden=!includeMonthlyContributions;
+      summary.textContent=includeMonthlyContributions?formatCurrency(monthlyTotal)+'/month · '+activeCount+' of '+monthlyAssets.length+' included':'Monthly contributions excluded';
+      document.getElementById('growthContributionHeading').textContent=includeMonthlyContributions?summary.textContent:'Contributions are off. Your selections are remembered.';
+      document.getElementById('manageGrowthContributions').disabled=!includeMonthlyContributions||!monthlyAssets.length;
+      list.innerHTML=monthlyAssets.map(asset=>{const included=!excluded.includes(asset.name);return `<label class="growth-exclusion-item${included?'':' is-excluded'}"><span class="growth-exclusion-name"><strong>${analyticEscape(asset.name)}</strong><small>${formatCurrency((Number(asset.monthly)||0)+(asset.kind==='pf'?(assets.find(row=>row.kind==='eps')?.monthly||0):0))} per month${asset.kind==='pf'&&assets.some(row=>row.kind==='eps')?' · PF + EPS':''}</small></span><span class="growth-exclusion-control"><span>${included?'Included':'Excluded'}</span><span class="growth-switch growth-switch-small"><input type="checkbox" class="growth-monthly-exclude-toggle" data-asset="${analyticEscape(asset.name)}" aria-label="Include ${analyticEscape(asset.name)} monthly contribution" ${included?'checked':''}><span class="growth-switch-track"></span></span></span></label>`;}).join('')||'<p class="text-muted">No monthly contributions available.</p>';
     }
     function renderGrowthAdjustmentRows(assets) {
       const select=document.getElementById('growthAdjustmentAsset'),previous=select.value;
@@ -5915,6 +6231,19 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const selectedScenario=['stress','base','optimistic'].includes(summary.dataset.scenario)?summary.dataset.scenario:'base';
       summary.innerHTML='<h3 class="growth-scenario-heading">'+years+'-year scenario comparison</h3>'+['stress','base','optimistic'].map(scenario=>`<button type="button" data-projection-scenario="${scenario}" class="stat-card growth-projection-stat-card growth-projection-stat-card-${scenario}" aria-pressed="${scenario===selectedScenario}"><span class="stat-label">${labels[scenario]}</span><strong class="stat-value">${formatProjectionLakh(projections[scenario].ending)}</strong></button>`).join('');
 
+      const chartWrap=document.getElementById('growthProjectionChartWrap');
+      if(chartWrap)chartWrap.after(summary);
+      summary.insertAdjacentHTML('beforeend','<p class="growth-scenario-help">Tap a scenario for exact values and its yearly breakdown.</p><div id="growthScenarioDetails" class="growth-scenario-details" role="status" aria-live="polite"></div>');
+      function showScenarioDetails(scenario){
+        const result=projections[scenario],details=document.getElementById('growthScenarioDetails');
+        const metrics=[['Projected value',result.ending],['Monthly contributions',result.totalContributions],['Projected growth',result.totalGrowth],...(result.totalAdditions?[['Planned additions',result.totalAdditions]]:[]),...(result.totalWithdrawals?[['Withdrawals',result.totalWithdrawals]]:[])];
+        details.innerHTML='<strong>'+labels[scenario]+' · '+years+'-year projection</strong><dl>'+metrics.map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+formatCurrency(value)+'</dd></div>').join('')+'</dl>';
+        summary.querySelectorAll('[data-projection-scenario]').forEach(button=>button.dataset.preview=String(button.dataset.projectionScenario===scenario));
+        if(growthProjectionChartInstance){
+          growthProjectionChartInstance.data.datasets.forEach((dataset,index)=>{const active=['stress','base','optimistic'][index]===scenario;dataset.borderWidth=active?4:2;dataset.pointRadius=active?4:2;});
+          growthProjectionChartInstance.update('none');
+        }
+      }
       const baseRows=projections.base.rows;
 
       const todayLabel=`Today · ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
@@ -5923,10 +6252,11 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(typeof Chart==='undefined')requestChartLibrary(()=>renderGrowthProjection({preserveAssumptions:true}));
       if(typeof Chart!=='undefined'){
         if(growthProjectionChartInstance)growthProjectionChartInstance.destroy();
-        growthProjectionChartInstance=new Chart(document.getElementById('growthProjectionChart'),{type:'line',data:chartData,options:{responsive:true,interaction:{mode:'nearest',intersect:false,axis:'xy'},plugins:{legend:{position:'top',labels:{color:style.getPropertyValue('--text-light').trim()||'#9ca3af',usePointStyle:true,pointStyle:'line',padding:20,font:{size:12}}},analyticLabels:{display:false},tooltip:{enabled:false}},scales:{x:{title:{display:false},ticks:{color:style.getPropertyValue('--text-light').trim()||'#9ca3af',maxRotation:0,autoSkip:true,maxTicksLimit:4,callback:(value,index)=>index===0?'Today':labelsForChart[value]},grid:{color:'rgba(94,234,212,.10)',borderDash:[3,6],drawBorder:false}},y:{beginAtZero:true,suggestedMax:Math.max(100000,...chartData.datasets.flatMap(d=>d.data)),title:{display:false},ticks:{color:style.getPropertyValue('--text-light').trim()||'#9ca3af',maxTicksLimit:5,callback:value=>formatProjectionLakh(value)},grid:{color:'rgba(94,234,212,.10)',borderDash:[5,6],drawBorder:false}}}}});
+        growthProjectionChartInstance=new Chart(document.getElementById('growthProjectionChart'),{type:'line',data:chartData,options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'nearest',intersect:false,axis:'xy'},plugins:{legend:{position:'top',labels:{color:style.getPropertyValue('--text-light').trim()||'#9ca3af',usePointStyle:true,pointStyle:'line',padding:20,font:{size:12}}},analyticLabels:{display:false},tooltip:{enabled:false}},scales:{x:{title:{display:false},ticks:{color:style.getPropertyValue('--text-light').trim()||'#9ca3af',maxRotation:0,autoSkip:true,maxTicksLimit:4,callback:(value,index)=>index===0?'Today':labelsForChart[value]},grid:{color:'rgba(94,234,212,.10)',borderDash:[3,6],drawBorder:false}},y:{beginAtZero:true,suggestedMax:Math.max(100000,...chartData.datasets.flatMap(d=>d.data)),title:{display:false},ticks:{color:style.getPropertyValue('--text-light').trim()||'#9ca3af',maxTicksLimit:5,callback:value=>formatProjectionLakh(value)},grid:{color:'rgba(94,234,212,.10)',borderDash:[5,6],drawBorder:false}}}}});
         bindGrowthProjectionCursorTooltip(growthProjectionChartInstance);
       }
       function renderScenarioBreakdown(scenario){
+      showScenarioDetails(scenario);
       summary.dataset.scenario=scenario;summary.querySelectorAll('[data-projection-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.projectionScenario===scenario)));
       const takeaway=document.getElementById('growthProjectionTakeaway'),base=projections[scenario];
       const table=document.getElementById('growthProjectionResultsTable');
@@ -5948,9 +6278,20 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       takeaway.setAttribute('aria-label',breakdownLabel);
       takeaway.innerHTML=flowItems.map(item=>`<span class="growth-takeaway-item" data-operator="${item.operator||''}"><span class="growth-takeaway-label">${item.label}</span><span class="growth-takeaway-value">${formatProjectionLakh(item.value)}</span></span>`).join('')+`<span class="growth-takeaway-item is-projected" data-operator="="><span class="growth-takeaway-label">Projected value</span><span class="growth-takeaway-value">${formatProjectionLakh(base.ending)}</span></span><span class="growth-takeaway-note">Breakdown uses ${labels[scenario]} scenario values.${gratuityBreakdownNote}</span>`;
       }
-      summary.querySelectorAll('[data-projection-scenario]').forEach(button=>button.onclick=()=>renderScenarioBreakdown(button.dataset.projectionScenario));
+      summary.querySelectorAll('[data-projection-scenario]').forEach(button=>{
+        button.setAttribute('aria-controls','growthScenarioDetails growthProjectionResultsTable');
+        button.onclick=()=>renderScenarioBreakdown(button.dataset.projectionScenario);
+        button.onpointerenter=event=>{if(event.pointerType==='mouse')showScenarioDetails(button.dataset.projectionScenario);};
+        button.onfocus=()=>showScenarioDetails(button.dataset.projectionScenario);
+      });
+      summary.onpointerleave=()=>showScenarioDetails(summary.dataset.scenario||selectedScenario);
+      summary.onfocusout=event=>{if(!summary.contains(event.relatedTarget))showScenarioDetails(summary.dataset.scenario||selectedScenario);};
       renderScenarioBreakdown(selectedScenario);
     }
+    const contributionDialog=document.getElementById('growthContributionDialog');
+    document.getElementById('manageGrowthContributions').addEventListener('click',()=>{contributionDialog.showModal();contributionDialog.querySelector('[data-close-contribution-dialog]').focus();});
+    contributionDialog.querySelectorAll('[data-close-contribution-dialog]').forEach(button=>button.addEventListener('click',()=>contributionDialog.close()));
+    contributionDialog.addEventListener('close',()=>document.getElementById('manageGrowthContributions').focus({preventScroll:true}));
     document.getElementById('growthContributionExclusions').addEventListener('change',event=>{
       const toggle=event.target.closest('.growth-monthly-exclude-toggle');if(!toggle)return;
       const asset=toggle.dataset.asset;if(!asset)return;
@@ -5958,6 +6299,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       state.projectionSettings.excludedMonthlyContributions=state.projectionSettings.excludedMonthlyContributions||[];
       state.projectionSettings.excludedMonthlyContributions=toggle.checked?state.projectionSettings.excludedMonthlyContributions.filter(name=>name!==asset):[...new Set([...state.projectionSettings.excludedMonthlyContributions,asset])];
       saveData();renderGrowthProjection();
+      contributionDialog.querySelector('.growth-monthly-exclude-toggle[data-asset="'+CSS.escape(asset)+'"]')?.focus({preventScroll:true});
     });
     const growthAssumptionTiles=document.getElementById('growthProjectionAssumptionTiles');
     growthAssumptionTiles.addEventListener('click',event=>{
@@ -6398,7 +6740,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       });
       if(kind==='investment')updateInvestmentEditVisibility(fields,record.type);
       else if(['pf','ppf','nps'].includes(kind))updateRetirementEditMonthlyVisibility(fields,kind);
-      modal.hidden=false;syncInvestmentOverlayBodyLock();modal.querySelector('input,select')?.focus();
+      modal.hidden=false;syncInvestmentOverlayBodyLock();modal.querySelector('button')?.focus({preventScroll:true});
     }
     function updateInvestmentEditVisibility(fields,type){
       const growthType=investmentGrowthType(type),groupFor=key=>fields.querySelector(`[data-edit-group="${key}"]`),rate=groupFor('rate'),current=groupFor('current'),monthly=groupFor('monthly'),monthlyDate=groupFor('monthlyContributionDate'),automatic=groupFor('autoMonthlyContribution');
@@ -6645,10 +6987,10 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         const original=[...growthPage.children],controls=growthPage.querySelector('#growthProjectionControls'),assumptions=growthPage.querySelector('.growth-assumptions-panel'),chart=growthPage.querySelector('.growth-projection-chart-panel'),summary=growthPage.querySelector('#growthProjectionSummary');
         if(controls&&assumptions&&chart){
           const workspace=document.createElement('section');workspace.className='advanced-growth-workspace';workspace.setAttribute('aria-label','Growth projection simulator');
-          const rail=document.createElement('div');rail.className='advanced-growth-rail';const exclusions=document.getElementById('growthContributionExclusionsWrap');rail.append(controls);const takeaway=chart.querySelector('.growth-projection-takeaway');const comparison=document.createElement('section');comparison.className='panel growth-scenario-panel';if(summary)comparison.append(summary);if(takeaway)comparison.append(takeaway);workspace.append(rail,chart);
+          const rail=document.createElement('div');rail.className='advanced-growth-rail';rail.append(controls);const takeaway=chart.querySelector('.growth-projection-takeaway');const comparison=document.createElement('section');comparison.className='panel growth-scenario-panel';if(summary)comparison.append(summary);if(takeaway)comparison.append(takeaway);workspace.append(rail,chart);
           growthPage.replaceChildren(...original.filter(node=>node!==controls&&node!==assumptions&&node!==chart&&node!==summary));
           const intro=original.find(node=>node.classList.contains('growth-page-intro'));if(intro){intro.after(workspace);}else{growthPage.prepend(workspace);}
-          workspace.after(assumptions);if(exclusions){exclusions.classList.add('panel');assumptions.after(exclusions);exclusions.after(comparison);}else assumptions.after(comparison);
+          workspace.after(assumptions);assumptions.after(comparison);
           advancedStructureState.growth=true;
         }
       }
@@ -6683,6 +7025,61 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
     setupInlineCustomValues();
     
     document.querySelector('.container').inert=true;
+
+    // A read-only walkthrough shown after new-account setup, and replayable from App info.
+    function setupAppTour(isNewUser=false){
+      const key='pft:guide-tour:v1';
+      if(window.PFTTour){window.PFTTour.maybeStart(isNewUser);return;}
+      const steps=[
+        {page:'dashboard',title:'Your finances at a glance',text:'Home brings together your assets, debts, income and expenses. Use the family profile selector to switch between an individual and the combined view.',tip:'The tour only explains the app. It does not add or change financial records.'},
+        {page:'income-expenses',title:'Record money in and out',text:'Switch between Income and Expenses, choose a month, and add an entry. Tap an existing transaction to review or edit it when you have edit access.',tip:'Monthly balances record your opening bank balance. Every amount in balance history has its own label.'},
+        {page:'income-expenses',title:'Manage recurring commitments',text:'Recurring items can record regular income, expenses and loan EMIs. Review earlier missed months before adding them, and pause a rule when it is no longer needed.',tip:'The app records entries; it does not send money or make bank payments.'},
+        {page:'investments',title:'Track your investments',text:'Add investment and retirement accounts, then tap a tile for holdings, returns and history. The actions inside each holding let you review contributions or update its value.',tip:'A contribution adds money invested. Update value or gain/loss when the market value changes.'},
+        {page:'debts',title:'Review loans and repayments',text:'Open a loan to see its outstanding balance, payment history and terms. Record EMIs or part payments, and review the preview before changing the rate, EMI or borrowing more.',tip:'Estimates help you plan. Use your bank statement to confirm repayment amounts and interest splits.'},
+        {page:'analytics',title:'Understand your reports',text:'Reports includes Analytics, Growth Projection and Date range reports. Choose the financial year for analytics or a date range for detailed records and exports.',tip:'Your selected family profile and report filters affect the records shown.'},
+        {page:'growth-projection',title:'Explore possible growth',text:'Set a time horizon and tap an investment to adjust assumptions. Stress, Base and Optimistic scenarios compare possible results. Tap a scenario below the graph for exact values and its yearly breakdown.',tip:'Projection settings are planning assumptions, not guaranteed returns or changes to your recorded investments.'},
+        {page:'settings',title:'Personalize and share access',text:'Appearance changes your page style and colors. Family access manages member names and invitations. Account settings manage your signed-in profile.',tip:'A family member name does not grant login access. Invitations and roles control access; viewers cannot edit records.'},
+        {page:'settings',title:'Keep a backup and find help',text:'Use Data & backup to export your records. Importing a backup replaces records, so keep an export first. App & updates shows your installed version and available updates.',tip:'You can replay this tour or download the full guide from App info at any time.'}
+      ];
+      const dialog=document.createElement('dialog');dialog.id='appGuideTour';dialog.setAttribute('aria-labelledby','appGuideTourTitle');dialog.setAttribute('aria-describedby','appGuideTourText');
+      dialog.innerHTML='<header><span id="appGuideTourProgress"></span><button type="button" data-tour-skip aria-label="Skip app tour">Skip</button></header><h2 id="appGuideTourTitle" tabindex="-1"></h2><p id="appGuideTourText"></p><p id="appGuideTourTip"></p><footer><button type="button" data-tour-back>Back</button><button type="button" class="btn-primary" data-tour-next>Next</button></footer>';
+      document.body.append(dialog);
+      let index=0,returnPage='dashboard',returnScroll=0,returnFocus=null;
+      const shouldOffer=newUser=>{if(!newUser)return false;try{return !trackerStorage.getItem(key);}catch(_){return false;}};
+      function remember(status){try{trackerStorage.setItem(key,status);}catch(_){}}
+      function render(){
+        const step=steps[index];
+        document.querySelector('.nav-tab[data-tab="'+step.page+'"]')?.click();
+        document.getElementById('appGuideTourProgress').textContent='App tour · '+(index+1)+' of '+steps.length;
+        document.getElementById('appGuideTourTitle').textContent=step.title;
+        document.getElementById('appGuideTourText').textContent=step.text;
+        document.getElementById('appGuideTourTip').textContent=step.tip;
+        dialog.querySelector('[data-tour-back]').disabled=index===0;
+        dialog.querySelector('[data-tour-next]').textContent=index===steps.length-1?'Finish':'Next';
+        document.getElementById('appGuideTourTitle').focus({preventScroll:true});
+      }
+      function finish(status){
+        remember(status);dialog.close();document.body.classList.remove('app-guide-open');
+        document.querySelector('.nav-tab[data-tab="'+returnPage+'"]')?.click();
+        window.scrollTo({top:returnScroll,behavior:'instant'});
+        if(returnFocus?.isConnected&&!returnFocus.closest('#settingsPanelParking'))returnFocus.focus({preventScroll:true});
+      }
+      function start(){
+        if(dialog.open)return;
+        if([...document.querySelectorAll('dialog[open]:not(#settingsTileDialog),[aria-modal="true"]:not(dialog)')].some(node=>node.getClientRects().length&&getComputedStyle(node).visibility!=='hidden'))return;
+        returnPage=document.querySelector('.nav-tab.active')?.dataset.tab||'dashboard';returnScroll=window.scrollY;returnFocus=document.activeElement;
+        window.closeSettingsTile?.();index=0;remember('started');document.body.classList.add('app-guide-open');dialog.showModal();render();
+      }
+      dialog.querySelector('[data-tour-skip]').onclick=()=>finish('skipped');
+      dialog.querySelector('[data-tour-back]').onclick=()=>{if(index>0){index--;render();}};
+      dialog.querySelector('[data-tour-next]').onclick=()=>{if(index===steps.length-1)finish('completed');else{index++;render();}};
+      dialog.addEventListener('cancel',event=>{event.preventDefault();finish('skipped');});
+      const replay=document.createElement('button');replay.type='button';replay.id='replayAppTour';replay.className='btn-secondary';replay.textContent='Take a tour';replay.onclick=start;
+      document.getElementById('downloadAppInfoPdf')?.before(replay);
+      window.PFTTour={start,shouldOffer,maybeStart(newUser){if(shouldOffer(newUser))start();}};
+      window.PFTTour.maybeStart(isNewUser);
+    }
+
     const trackerStartup=(async()=>{
     await loadData();
     if(storageLoadFailed)return;
@@ -6701,7 +7098,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
 
 
-    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();window.dispatchEvent(new Event('pft:before-reveal'));window.PFTPerformance?.mark('layout-ready');document.querySelector('.container').inert=false;window.financeCloud.showApp();window.PFTPerformance?.mark('visible');window.dispatchEvent(new Event('pft:visible'));void verifyStartupRevision();await setupFirstName();applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
+    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();window.dispatchEvent(new Event('pft:before-reveal'));window.PFTPerformance?.mark('layout-ready');document.querySelector('.container').inert=false;window.financeCloud.showApp();window.PFTPerformance?.mark('visible');window.dispatchEvent(new Event('pft:visible'));void verifyStartupRevision();const newTourUser=firstNameSetupNeeded(state,profileMemberNames())&&(!window.financeCloud?.role||window.financeCloud.role==='owner');await setupFirstName();setupAppTour(newTourUser);applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
     if(window.PFTResolveTrackerReady)trackerStartup.then(window.PFTResolveTrackerReady);else window.trackerReady=trackerStartup;
 
     const tableSortChoices = {};

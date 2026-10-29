@@ -60,7 +60,8 @@ export function installFinanceInsights(){
   const spendingValue=spending===null?'Comparison unavailable':money(Math.abs(spending))+(spending<0?' less':spending>0?' more':' · unchanged');
   card('Recorded spending',spendingValue,spending===null?'neutral':spending<0?'positive':spending>0?'negative':'neutral','Compared with '+previousLabel+' · household-wide');
   const pmsValue=r.pmsGain===null?'Dated snapshots needed':(r.pmsGain>=0?'+ ':'− ')+money(Math.abs(r.pmsGain));
-  card('PMS gain change',pmsValue,'pms',r.pmsGain===null?'Opening and closing valuations required':'Based on '+r.pmsCovered+' of '+r.pmsTotal+' holdings');
+  const pmsCard=card('PMS gain change',pmsValue,'pms',r.pmsGain===null?'Opening and closing valuations required':'Based on '+r.pmsCovered+' of '+r.pmsTotal+' holdings');
+  if(r.pmsGain===null)pmsCard.classList.add('finance-highlight-empty');
   const explain=append(changes.body,'details',undefined,'finance-highlights-explain');
   append(explain,'summary','How these figures are calculated');
   note(explain,'Contributions and debt follow the selected profile; expenses are household-wide. Spending compares recorded month totals, including an incomplete current month.');

@@ -41,7 +41,7 @@
     header.children[0].after(brand);
     nav=document.createElement('nav');nav.className='pft-style-navigation';nav.setAttribute('aria-label','Main tracker pages');
     for(const [id,label,short,path] of pages){
-      const b=document.createElement('button');b.type='button';b.dataset.stylePage=id;b.setAttribute('aria-label',label===short?label:short+' · '+label);b.title=label;
+      const b=document.createElement('button');b.type='button';b.dataset.stylePage=id;b.setAttribute('aria-label',label===short?label:short+' · '+label);
       b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+path+'</svg><span class="pft-desktop-label"></span><span class="pft-mobile-label"></span>';
       b.querySelector('.pft-desktop-label').textContent=label;b.querySelector('.pft-mobile-label').textContent=short;
       b.addEventListener('click',()=>openPage(id));nav.append(b);

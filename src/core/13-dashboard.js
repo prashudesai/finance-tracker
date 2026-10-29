@@ -1,3 +1,16 @@
+    function updateDashboardExpenseVisual(house, full) {
+      const visual=document.querySelectorAll('#dashboardExpenseSnapshot .dashboard-expense-visual');
+      const valid=Number.isFinite(house)&&Number.isFinite(full)&&house>=0&&full>0&&house<=full;
+      visual.forEach(node=>{node.hidden=!valid;});
+      if(!valid)return;
+      const share=Math.min(100,Math.max(0,house/full*100));
+      document.getElementById('houseExpenseShareBar').style.width=share+'%';
+      document.getElementById('fullExpenseHouseBar').style.width=share+'%';
+      document.getElementById('fullExpenseRecordedBar').style.width=(100-share)+'%';
+      document.getElementById('houseExpenseShareLabel').textContent=share.toFixed(1)+'% of full expense';
+      document.getElementById('fullExpenseShareLabel').textContent=(100-share).toFixed(1)+'% recorded expenses';
+    }
+
     // DASHBOARD UPDATE
     function updateDashboard() {
       renderBalanceHistory();
@@ -93,6 +106,7 @@
       const fullExpenseNote = document.getElementById('lastMonthFullExpenseNote');
       const lastRecordedExpenses = monthTotals(previousMonthKey).expenses;
       const fullExpense = houseAmount == null ? null : houseAmount + lastRecordedExpenses;
+      updateDashboardExpenseVisual(houseAmount,fullExpense);
       window.PFT_DASHBOARD_INSIGHTS={profile:isCombinedFamilyProfile()?'Combined family':activeFamilyProfile,totalInvestment,npsTotal,ppfTotal,pfTotal,totalAssets,totalDebts,netWorth,currentMonthStr,householdMonthlyIncome,monthlyExpenses,stallionPmsExpenses,surplusBalance,opening:currentMonthBalance?.startBalance??0,hasOpening:!!currentMonthBalance,previousOpening:previousBalance?.startBalance??null,previousMonthKey,previousTotals:monthTotals(previousMonthKey),houseAmount:houseAmount??null,fullExpense,accounts:[...viewInvestments.map(r=>({name:(r.member||'')+' · '+(r.name||r.type),value:r.current})),...['nps','ppf','pf'].flatMap(kind=>profileRows(state[kind]).map(r=>({name:kind.toUpperCase()+' · '+(r.member||'')+' · '+(r.account||r.scheme||''),value:r.current}))),...viewDebts.map(r=>({name:'Debt · '+r.type,value:r.remaining}))]};
       if (fullExpenseCard) {
         fullExpenseCard.textContent = fullExpense == null ? 'Pending' : formatCurrency(fullExpense);
@@ -666,6 +680,7 @@
       document.getElementById('houseExpenseLabel').textContent=name+' House Expense';
       document.getElementById('fullExpenseLabel').textContent=name+' Full Expense';
       const full=calculated?house+monthTotals(selected).expenses:null;
+      updateDashboardExpenseVisual(house,full);
       for(const [id,value] of [['lastMonthHouseExpense',calculated?house:null],['lastMonthFullExpense',full]]){const node=document.getElementById(id);node.textContent=value===null?'Pending':formatCurrency(value);node.style.color=value!==null&&value<0?'var(--danger)':'var(--primary)';}
     }
     window.addEventListener('resize',renderDashboardExpenseSnapshot,{passive:true});
