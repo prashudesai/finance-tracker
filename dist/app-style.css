@@ -2804,3 +2804,5 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 @media screen and (max-width:360px){body.advanced-layout > .container > header{padding-inline:6px;gap:4px}body.advanced-layout .header-controls{gap:2px}}
 
 @media screen and (max-width:360px){#mobileSettingsShortcut{width:32px;min-width:32px;height:36px}}
+
+@media screen and (max-width:360px){body.advanced-layout .header-controls{transform:translateX(-6px)}}
