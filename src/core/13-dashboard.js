@@ -11,6 +11,17 @@
       document.getElementById('fullExpenseShareLabel').textContent=(100-share).toFixed(1)+'% recorded expenses';
     }
 
+    // Match the existing Savings contributions card: retirement (excluding EPS)
+    // and PMS only. General investment contributions are a different metric.
+    function dashboardSavingsContributionAverage(now=new Date()){
+      const year=now.getFullYear(),month=now.getMonth(),startYear=month>=3?year:year-1;
+      const from=startYear+'-04-01',through=year+'-'+String(month+1).padStart(2,'0'),totals=new Map();
+      const pmsIds=new Set(profileRows(state.investments||[]).filter(row=>row.type==='Stallion PMS').map(row=>row.id));
+      const rows=[...profileRows(state.retirementContributions||[]),...(state.stallionContributions||[]).filter(row=>pmsIds.has(row.stallionId))];
+      for(const row of rows){if(!row.date||row.date<from||row.date.slice(0,7)>through)continue;const key=row.date.slice(0,7);totals.set(key,(totals.get(key)||0)+(Number(row.amount)||0));}
+      return {months:totals.size,average:totals.size?[...totals.values()].reduce((sum,value)=>sum+value,0)/totals.size:0};
+    }
+
     // DASHBOARD UPDATE
     function updateDashboard() {
       renderBalanceHistory();
@@ -166,6 +177,15 @@
       if(fyIncome) fyIncome.textContent=formatCurrency(fyAverage.averageIncome);
       if(fyExpense) fyExpense.textContent=formatCurrency(fyAverage.averageExpense);
       if(fyNote) fyNote.textContent=`April–${fyAverage.through}; income avg uses ${fyAverage.incomeMonths} reported month${fyAverage.incomeMonths===1?'':'s'}, expense avg uses ${fyAverage.expenseMonths} reported month${fyAverage.expenseMonths===1?'':'s'}`;
+      const overviewYear=`FY ${String(fyAverage.startYear).slice(-2)}–${String(fyAverage.endYear).slice(-2)}`;
+      const setOverviewText=(id,text,title)=>{const node=document.getElementById(id);if(node){node.textContent=text;if(title)node.title=title;}};
+      const averageText=(value,months)=>`Avg ${months?formatCurrency(value):'—'} · ${overviewYear}`;
+      setOverviewText('dashboardMonthlyPeriod',new Date().toLocaleDateString('en-IN',{month:'long',year:'numeric'}));
+      setOverviewText('dashboardIncomeAverage',averageText(fyAverage.averageIncome,fyAverage.incomeMonths),'Average across '+fyAverage.incomeMonths+' months with recorded income; follows the selected profile.');
+      setOverviewText('dashboardExpenseAverage',averageText(fyAverage.averageExpense,fyAverage.expenseMonths),'Average across '+fyAverage.expenseMonths+' months with recorded household expenses.');
+      const savingsAverage=dashboardSavingsContributionAverage();
+      setOverviewText('dashboardSavingsAverage',averageText(savingsAverage.average,savingsAverage.months),'Recorded retirement and PMS contributions across '+savingsAverage.months+' months; excludes EPS and other investment contributions.');
+      setOverviewText('dashboardOpeningBalance',currentMonthBalance?'Opening '+formatCurrency(currentMonthBalance.startBalance):'Opening not set','Available balance and opening balance are household-wide.');
       const analyticsYear=Number(document.getElementById('analyticsFinancialYear')?.value)||fyAverage.startYear;
       renderAnalyticsAverageSnapshot(analyticsYear===fyAverage.startYear?fyAverage:financialYearAverages(new Date(analyticsYear+1,2,31)));
 
