@@ -2818,11 +2818,11 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
   html[data-layout-style="emerald-flow"] body.advanced-layout>.container{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
   html[data-app-style="modern"] body.advanced-layout #dashboard.active{padding-bottom:0}
   html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{
-    background:color-mix(in srgb,var(--primary) 42%,transparent)!important;
-    border:1px solid color-mix(in srgb,var(--primary) 72%,transparent)!important;
+    background:color-mix(in srgb,var(--primary) 14%,transparent)!important;
+    border:1px solid color-mix(in srgb,var(--primary) 38%,transparent)!important;
     color:var(--text)!important;
-    -webkit-backdrop-filter:blur(7px) saturate(1.15);
-    backdrop-filter:blur(7px) saturate(1.15);
+    -webkit-backdrop-filter:blur(2px);
+    backdrop-filter:blur(2px);
     box-shadow:0 3px 12px #0002!important;
   }
 }
