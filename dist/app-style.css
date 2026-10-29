@@ -3113,3 +3113,65 @@ html[data-app-style="modern"] #investmentEditModal :is(input,select,textarea){
   display:block;width:18px;height:18px;flex:none;
  }
 }
+
+
+/* Modern desktop navigation: use Emerald Flow's icon, spacing, and selected-pill pattern.
+   Deliberately scope to Modern and >700px; Emerald, Obsidian and mobile remain unchanged. */
+@media screen and (min-width:701px) {
+  html[data-appearance-choice="modern"] .pft-style-navigation {
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  html[data-appearance-choice="modern"] .pft-style-navigation > button {
+    display:inline-flex;
+    flex:0 1 auto;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    min-height:44px;
+    padding:10px 12px;
+    border:0;
+    border-radius:10px;
+    background:transparent;
+    color:var(--text-light);
+    font-size:12px;
+    font-weight:500;
+    line-height:1.25;
+    white-space:nowrap;
+  }
+  html[data-appearance-choice="modern"] .pft-style-navigation > button:hover {
+    color:var(--primary-dark);
+    background:color-mix(in srgb,var(--primary-light) 45%,transparent);
+  }
+  html[data-appearance-choice="modern"] .pft-style-navigation > button.active {
+    color:var(--primary-dark);
+    background:var(--primary-light);
+    border-bottom:0;
+    box-shadow:none;
+  }
+  html[data-appearance-choice="modern"] .pft-style-navigation > button svg {
+    display:block;
+    flex:0 0 18px;
+    width:18px;
+    height:18px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.7;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+}
+@media screen and (min-width:701px) and (max-width:1150px) {
+  html[data-appearance-choice="modern"] .pft-style-navigation {
+    justify-content:space-between;
+    gap:4px;
+  }
+  html[data-appearance-choice="modern"] .pft-style-navigation > button {
+    gap:6px;
+    padding:9px 8px;
+    font-size:11px;
+  }
+  html[data-appearance-choice="modern"] .pft-style-navigation .pft-desktop-label { display:none; }
+  html[data-appearance-choice="modern"] .pft-style-navigation .pft-mobile-label { display:block; }
+}
