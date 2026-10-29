@@ -2407,3 +2407,9 @@
   html body.advanced-layout .nav-tab[data-tab="debts"],
   html body.advanced-layout .nav-tab[data-tab="reports"]{display:flex!important;min-width:0!important;width:auto!important}
 }
+
+
+/* Match the Settings glyph to the lighter Appearance control. */
+@media screen and (max-width:700px){
+  body.advanced-layout #mobileSettingsShortcut svg{width:19px;height:19px;stroke-width:1.65}
+}
