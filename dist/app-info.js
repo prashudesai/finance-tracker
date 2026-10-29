@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.29.12",
+  "version": "2026.10.29.13",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Align compact matching Search and Add circles above mobile navigation, with sync status centred between them."
+    "Increase the matching Search and Add circles and icons by 50%, keeping their dock positions."
   ],
   "sections": [
     [

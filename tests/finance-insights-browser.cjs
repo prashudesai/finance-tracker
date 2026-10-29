@@ -198,8 +198,8 @@ const server=http.createServer(async(req,res)=>{try{
     assert.equal(box.width,44);assert.equal(box.height,44);assert(box.y+box.height<=nav.y+1);
     assert(nav.y-(box.y+box.height)<5,'Add touch area must sit directly above the dock');
     const visual=await add.evaluate(e=>({inset:getComputedStyle(e,'::before').top,symbol:getComputedStyle(e.querySelector('.quick-add-symbol')).fontSize,right:innerWidth-e.getBoundingClientRect().right}));
-    assert.equal(visual.inset,'11px','The visible circle must be half the 44px touch area');
-    assert.equal(visual.symbol,'13px');assert(visual.right<=5);
+    assert.equal(visual.inset,'5.5px','The visible circle must be 33px inside the 44px touch area');
+    assert.equal(visual.symbol,'19.5px');assert(visual.right<=5);
     assert.equal(await add.evaluate(e=>e.style.bottom),'','The button must not acquire a moving inline bottom position');
     const dockStyles=await page.evaluate(()=>({pad:getComputedStyle(document.body).paddingBottom,border:getComputedStyle(document.querySelector('.pft-style-navigation')).borderTopWidth}));
     assert.equal(dockStyles.pad,'0px','Bottom sync must not add a second page reserve');

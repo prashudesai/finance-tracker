@@ -2876,8 +2876,8 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 /* Smaller visible Add circle near the right dock corner, retaining its touch area. */
 @media screen and (max-width:700px){
  html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{right:max(4px,env(safe-area-inset-right));bottom:calc(65px + env(safe-area-inset-bottom));background:transparent!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none;backdrop-filter:none}
- html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd::before{content:"";position:absolute;inset:11px;border-radius:50%;background:var(--card-bg);border:1px solid var(--primary);box-shadow:0 2px 6px #0002;pointer-events:none}
- html[data-app-style="modern"] #trackerQuickAdd .quick-add-symbol{position:relative;font-size:13px}
+ html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd::before{content:"";position:absolute;inset:5.5px;border-radius:50%;background:var(--card-bg);border:1px solid var(--primary);box-shadow:0 2px 6px #0002;pointer-events:none}
+ html[data-app-style="modern"] #trackerQuickAdd .quick-add-symbol{position:relative;font-size:19.5px}
 }
 
 /* A compact row directly above navigation: Search, centred sync, Add. */
@@ -2888,9 +2888,9 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
  html[data-app-style="modern"] #financeBottomTools #openRecordSearch>span{display:none}
  html[data-app-style="modern"] #financeBottomTools #openRecordSearch svg{width:18px;height:18px;flex:0 0 18px}
 }
-/* Match Search and Add with equal 22px circles inside 44px touch areas. */
+/* Match Search and Add with equal 33px circles inside 44px touch areas. */
 @media screen and (max-width:700px){
  html[data-app-style="modern"] #financeBottomTools #openRecordSearch{position:relative;inset:auto}
- html[data-app-style="modern"] #financeBottomTools #openRecordSearch::before{content:"";position:absolute;inset:11px;border-radius:50%;background:var(--card-bg);border:1px solid var(--primary);box-shadow:0 2px 6px #0002;pointer-events:none}
- html[data-app-style="modern"] #financeBottomTools #openRecordSearch svg{position:relative;width:13px;height:13px;flex:0 0 13px}
+ html[data-app-style="modern"] #financeBottomTools #openRecordSearch::before{content:"";position:absolute;inset:5.5px;border-radius:50%;background:var(--card-bg);border:1px solid var(--primary);box-shadow:0 2px 6px #0002;pointer-events:none}
+ html[data-app-style="modern"] #financeBottomTools #openRecordSearch svg{position:relative;width:19.5px;height:19.5px;flex:0 0 19.5px}
 }
