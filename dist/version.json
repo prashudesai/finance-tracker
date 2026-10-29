@@ -1,12 +1,9 @@
 {
-  "version": "2026.10.29.1",
+  "version": "2026.10.29.2",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Align Stallion PMS details and action icons with other investment modals.",
-    "Compact cash-flow cards and label every amount in monthly balance history.",
-    "Simplify Appearance, App info, App updates and Data and backup layouts.",
-    "Match projection headers to the active theme and compact assumption editors.",
-    "Move interactive scenario comparison below the graph with exact values and line highlighting.",
-    "Remove the redundant net-worth share percentage and its spacing."
+    "Add a first-login app tour with Back, Next, Skip and Finish, replayable from App info.",
+    "Enlarge the projection graph and make better use of mobile screen width.",
+    "Match Stallion PMS gain/loss and XIRR colours to positive and negative returns."
   ]
 }
