@@ -454,6 +454,7 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
   assert.equal(await page.locator('#growthProjectionControls .form-group>label').filter({hasText:/^Monthly contributions$/}).count(),0);
   assert.equal(await page.locator('#growthContributionExclusionsWrap').isVisible(),false);
   const manage=page.locator('#manageGrowthContributions');
+  console.log('CONTRIBUTION DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>({profile:activeFamilyProfile,settings:state.projectionSettings,investments:state.investments,assets:growthProjectionAssets(),summary:document.getElementById('growthContributionSummary').textContent,disabled:document.getElementById('manageGrowthContributions').disabled,canEdit:window.financeCloud.canEdit}))));
   assert.equal(await manage.isEnabled(),true,'Saved monthly fixture is available in combined profile');
   if(await manage.isEnabled()){
     await manage.click();assert.equal(await page.locator('#growthContributionDialog').isVisible(),true);
