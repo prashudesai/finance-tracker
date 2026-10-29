@@ -601,6 +601,9 @@
       const menu=document.getElementById('dashboardExpenseMonthMenu');
       const label=document.getElementById('dashboardExpenseMonthLabel');
       if(trigger&&menu&&label){
+        // Portal the menu out of transformed dashboard cards so fixed viewport
+        // coordinates are never relative to a card or animated ancestor.
+        if(menu.parentElement!==document.body)document.body.appendChild(menu);
         const selectedOption=Array.from(select.options).find(option=>option.value===selected);
         label.textContent=selected?new Date(selected+'-01T12:00:00').toLocaleDateString('en-IN',{month:'short',year:'numeric'}):'Previous month';
         trigger.title=selectedOption?.textContent||'Previous month';
@@ -617,7 +620,8 @@
           const height=Math.min(290,Math.max(100,openAbove?availableAbove:availableBelow));
           menu.style.position='fixed';
           menu.style.width=Math.max(190,Math.min(270,window.innerWidth-24))+'px';
-          menu.style.left=Math.max(12,Math.min(rect.right-menu.getBoundingClientRect().width,window.innerWidth-menu.getBoundingClientRect().width-12))+'px';
+          const menuWidth=parseFloat(menu.style.width)||270;
+          menu.style.left=Math.max(12,Math.min(rect.right-menuWidth,window.innerWidth-menuWidth-12))+'px';
           menu.style.maxHeight=height+'px';
           menu.style.top=openAbove?'auto':Math.min(window.innerHeight-12,rect.bottom+7)+'px';
           menu.style.bottom=openAbove?(window.innerHeight-rect.top+7)+'px':'auto';
@@ -629,7 +633,9 @@
             menu.hidden=false;
             trigger.setAttribute('aria-expanded','true');
             placeMenu();
-            menu.querySelector('[aria-selected="true"]')?.scrollIntoView({block:'nearest'});
+            // Avoid scrolling the page while bringing the selected month into view.
+            const selectedMonth=menu.querySelector('[aria-selected="true"]');
+            if(selectedMonth)menu.scrollTop=Math.max(0,selectedMonth.offsetTop-menu.offsetTop-menu.clientHeight/2);
           });
           menu.addEventListener('click',event=>{
             const option=event.target.closest('[data-month]');
