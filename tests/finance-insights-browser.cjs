@@ -437,6 +437,7 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
  await check('Projection groups disclose one list and contribution management stays compact',async()=>{
   await page.setViewportSize({width:390,height:844});
   await page.evaluate(()=>{PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="growth-projection"]').click();});
+  await page.evaluate(async()=>{const member=state.customValues.familyMembers[0]||'Tester';state.investments=[{id:'assumption-market',member,type:'Mutual Funds',name:'Tour fund',date:'2025-01-01',invested:100000,current:110000,monthly:1000,autoMonthlyContribution:true},{id:'assumption-fixed',member,type:'Bonds',name:'Test bond',date:'2025-01-01',invested:10000,current:11000,interestRate:7},{id:'assumption-cash',member,type:'Cash Reserve',name:'Test cash',date:'2025-01-01',invested:1000,current:1000}];state.projectionSettings.includeMonthlyContributions=true;await saveData('Projection control test fixture');renderGrowthProjection();});
   const before=await page.evaluate(()=>JSON.stringify(state));
   const choices=page.locator('.growth-assumption-choices [data-assumption-group]');
   assert.equal(await choices.count(),3);
@@ -465,9 +466,9 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
   const master=page.locator('#growthIncludeMonthlyContributions'),masterBefore=await master.isChecked();
   if(masterBefore){
     const exclusions=await page.evaluate(()=>JSON.stringify(state.projectionSettings.excludedMonthlyContributions));
-    await master.click();assert.match(await page.locator('#growthContributionSummary').textContent(),/excluded/);assert.equal(await manage.isDisabled(),true);
+    await master.uncheck();assert.match(await page.locator('#growthContributionSummary').textContent(),/excluded/);assert.equal(await manage.isDisabled(),true);
     assert.equal(await page.evaluate(()=>JSON.stringify(state.projectionSettings.excludedMonthlyContributions)),exclusions);
-    await master.click();assert.equal(await manage.isEnabled(),true);
+    await master.check();assert.equal(await manage.isEnabled(),true);
   }
   for(const width of [320,390,700,1440]){
     await page.setViewportSize({width,height:844});
