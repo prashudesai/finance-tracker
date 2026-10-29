@@ -588,6 +588,8 @@
 
     // Snapshot selection changes presentation only; it never writes financial records.
     function renderDashboardExpenseSnapshot(){
+      const period=document.getElementById('dashboardPagePeriod');
+      if(period)period.textContent=new Date().toLocaleDateString('en-IN',{month:'long',year:'numeric'});
       const select=document.getElementById('dashboardExpenseMonth'),card=document.getElementById('dashboardExpenseSnapshot');
       if(!select||!card)return;
       const defaultMonth=addMonthsClamped(currentMonthKey()+'-01',-1,1).slice(0,7);
