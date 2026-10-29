@@ -2925,8 +2925,9 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
  html[data-app-style] body.advanced-layout #dashboard .portfolio-list-head>span:nth-child(4){text-align:right}
 }
 @media screen and (min-width:1100px){
- html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
- html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row>.advanced-dashboard-chart-panel:has(#advancedDashboardCashflowChart){display:flex;flex-direction:column;min-height:0}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+ html[data-app-style] body.advanced-layout #dashboard .advanced-dashboard-insights.desktop-changes-row:not([hidden]){grid-template-columns:repeat(2,minmax(0,1fr))}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row>.advanced-dashboard-chart-panel:has(#advancedDashboardCashflowChart){display:flex;flex-direction:column;align-self:stretch;min-height:0;margin:0;box-sizing:border-box}
  html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row #advancedDashboardCashflowChart{flex:none;margin:auto 0;max-height:390px}
  html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row .advanced-dashboard-legend{flex:none;margin-top:8px}
  html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row>#monthlyChanges{padding:20px}
@@ -2955,6 +2956,37 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
  html[data-app-style] body.advanced-layout #dashboardExpenseSnapshot .dashboard-expense-track>i{display:block;height:100%;background:var(--primary);border-radius:999px}
  html[data-app-style] body.advanced-layout #dashboardExpenseSnapshot .dashboard-expense-track-full>i:last-child{background:color-mix(in srgb,var(--primary) 32%,var(--card-bg));border-radius:0 999px 999px 0}
 }
+/* Keep projection controls beside the chart on wide desktop screens. */
+@media screen and (min-width:1100px){
+ html[data-layout-style="emerald-flow"] body.advanced-layout #growth-projection .flow-growth>.flow-full{grid-template-columns:minmax(280px,3fr) minmax(0,7fr);align-items:stretch}
+ html[data-layout-style="emerald-flow"] body.advanced-layout #growth-projection .flow-growth>.flow-full>#growthProjectionControls{grid-column:1!important;grid-row:1;align-self:stretch}
+ html[data-layout-style="emerald-flow"] body.advanced-layout #growth-projection .flow-growth>.flow-full>.growth-projection-chart-panel{grid-column:2!important;grid-row:1;align-self:stretch}
+ html[data-layout-style="emerald-flow"] body.advanced-layout #growth-projection .flow-growth>.flow-full>.growth-assumptions-panel{grid-column:1/-1!important;grid-row:2}
+ html[data-layout-style="emerald-flow"] body.advanced-layout #growth-projection .flow-growth>.flow-full>.growth-breakdown-panel{grid-column:1/-1!important;grid-row:3}
+ html[data-layout-style="emerald-flow"] body.advanced-layout #growth-projection .flow-growth #growthProjectionControls .form-grid{grid-template-columns:minmax(0,1fr);gap:18px}
+ html[data-layout-style="emerald-flow"] body.advanced-layout #growth-projection .flow-growth .growth-contribution-summary-row{flex-wrap:wrap}
+ html[data-app-style] body.advanced-layout #growth-projection #growthProjectionSummary .growth-scenario-details{order:0;padding:16px;border-radius:12px;background:color-mix(in srgb,var(--primary) 4%,var(--card-bg))}
+ html[data-app-style] body.advanced-layout #growth-projection #growthProjectionSummary .growth-scenario-help{order:1;margin:0}
+ html[data-app-style] body.advanced-layout #growth-projection #growthScenarioDetails>strong{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:14px}
+ html[data-app-style] body.advanced-layout #growth-projection #growthScenarioDetails>strong::before{content:"";width:8px;height:8px;flex:none;border-radius:50%;background:var(--scenario-detail-color,var(--primary))}
+ html[data-app-style] body.advanced-layout #growth-projection #growthProjectionSummary[data-scenario="stress"]{--scenario-detail-color:#e89497}
+ html[data-app-style] body.advanced-layout #growth-projection #growthProjectionSummary[data-scenario="base"]{--scenario-detail-color:#38bdf8}
+ html[data-app-style] body.advanced-layout #growth-projection #growthProjectionSummary[data-scenario="optimistic"]{--scenario-detail-color:#34d399}
+ html[data-app-style] body.advanced-layout #growth-projection #growthScenarioDetails dl{gap:10px}
+ html[data-app-style] body.advanced-layout #growth-projection #growthScenarioDetails dl>div{padding:11px 12px;border:1px solid var(--border);border-radius:9px;background:var(--card-bg)}
+ html[data-app-style] body.advanced-layout #growth-projection #growthScenarioDetails dl>div:first-child{border-color:color-mix(in srgb,var(--scenario-detail-color,var(--primary)) 45%,var(--border))}
+ html[data-app-style] body.advanced-layout #growth-projection #growthScenarioDetails dd{font-size:16px;font-variant-numeric:tabular-nums}
+}
+@media screen and (min-width:1500px){html[data-app-style] body.advanced-layout #growth-projection #growthScenarioDetails dl{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media screen and (min-width:701px){
+ html[data-app-style] body.advanced-layout #growth-projection>.growth-page-intro h1{border-inline-start:4px solid var(--primary);padding-inline-start:14px}
+}
+@media screen and (min-width:1100px){
+ html[data-app-style] body.advanced-layout #growth-projection #growthProjectionAssumptionTiles{grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:stretch}
+ html[data-app-style] body.advanced-layout #growth-projection #growthProjectionAssumptionTiles>[data-assumption-group-panel]{grid-column:auto!important;padding:14px!important;border:1px solid var(--border)!important;border-radius:12px!important;background:var(--card-bg)!important}
+ html[data-app-style] body.advanced-layout #growth-projection [data-assumption-group-panel]>.growth-assumption-group-heading{display:flex!important}
+ html[data-app-style] body.advanced-layout #growth-projection #growthProjectionAssumptionTiles>.growth-planned-change-tile{grid-column:1/-1!important}
+}
 @media screen and (max-width:700px){#dashboardExpenseSnapshot .dashboard-expense-visual{display:none!important}}
 @media screen and (max-width:1023px){#dashboard .portfolio-note-desktop{display:none!important}}
 @media screen and (min-width:1024px){#dashboard .portfolio-note-mobile{display:none!important}}
@@ -2978,4 +3010,106 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
  html[data-app-style] body.advanced-layout #dashboard .debt-summary-card-hint{display:contents}
  html[data-app-style] body.advanced-layout #dashboard .debt-summary-paid{grid-column:2;grid-row:3;align-self:center;font-size:11px;font-weight:400}
  html[data-app-style] body.advanced-layout #dashboard .debt-summary-card-hint>span:first-child{grid-column:1/-1;grid-row:4;color:var(--primary);font-size:11px;font-weight:500}
+}
+/* Use the desktop PMS width for a clear holding summary and readable detail actions. */
+@media screen and (min-width:701px){
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-tile{position:relative;padding:20px 22px;border-color:color-mix(in srgb,var(--primary) 28%,var(--border));background:linear-gradient(120deg,color-mix(in srgb,var(--primary) 7%,var(--card-bg)),var(--card-bg));transition:border-color .18s,background .18s}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-tile:hover{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,var(--card-bg))}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-tile:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-name{font-size:18px;font-weight:700}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-member{margin-top:5px;font-size:12px}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-metrics{grid-template-columns:repeat(6,minmax(0,1fr));gap:0;margin-top:19px;border:1px solid var(--border);border-radius:11px;background:color-mix(in srgb,var(--primary) 3%,var(--card-bg));overflow:hidden}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-metrics>span{padding:15px 18px}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-metrics>span+span{border-left:1px solid var(--border)}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-metrics small{font-size:11px;letter-spacing:.02em}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-metrics strong{font-size:19px;font-variant-numeric:tabular-nums}
+ #investmentCategoryDialog[data-stallion-id] .investment-category-dialog-shell{width:min(1120px,calc(100vw - 48px))}
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details{max-height:none;overflow:visible}
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details table{display:block;width:100%;min-width:0}
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details thead{display:none}
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody{display:block}
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--primary) 4%,var(--card-bg));overflow:hidden}
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody td{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;min-width:0;padding:15px 18px;border:0;text-align:left;white-space:normal;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody td:not([data-label="Actions"])::before{content:attr(data-mobile-label);color:var(--text-light);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody td[data-label="Actions"]{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:9px;padding:14px 18px;border-top:1px solid var(--border)}
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody td[data-label="Actions"] button{flex:0 0 44px}
+}
+@media screen and (min-width:701px) and (max-width:1050px){
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-metrics>span:nth-child(4){border-left:0}
+ html[data-app-style] body.advanced-layout #stallionPmsPanel .pms-summary-metrics>span:nth-child(n+4){border-top:1px solid var(--border)}
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody tr{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* Investment detail headers use the same green surface as their page. */
+html[data-app-style="modern"] :is(#investmentCategoryDialog,#retirementCategoryDialog) .investment-category-dialog-header{
+ background:linear-gradient(110deg,color-mix(in srgb,var(--primary) 12%,var(--card-bg)),var(--card-bg) 75%)!important;
+ background-image:linear-gradient(110deg,color-mix(in srgb,var(--primary) 12%,var(--card-bg)),var(--card-bg) 75%)!important;
+ border-top-color:var(--primary)!important;border-bottom-color:var(--border)!important;
+ color:var(--text)!important;
+}
+html[data-app-style="modern"] :is(#investmentCategoryDialog,#retirementCategoryDialog) .investment-category-dialog-close{
+ background:color-mix(in srgb,var(--primary) 7%,var(--card-bg))!important;
+ border-color:var(--border)!important;color:var(--text)!important;
+}
+html[data-app-style="modern"] #investmentEditModal .investment-edit-backdrop{background:rgba(3,23,21,.7)!important}
+html[data-app-style="modern"] #investmentEditModal .investment-edit-dialog{
+ background:var(--card-bg)!important;color:var(--text)!important;
+ border:1px solid color-mix(in srgb,var(--primary) 28%,var(--border))!important;
+ box-shadow:0 24px 70px rgba(0,16,14,.42)!important;
+}
+html[data-app-style="modern"] #investmentEditModal .investment-edit-dialog>.modal-heading{
+ background:var(--card-bg)!important;border-bottom-color:var(--border)!important;
+}
+html[data-app-style="modern"] #investmentEditModal :is(input,select,textarea){
+ background:color-mix(in srgb,var(--primary) 3%,var(--card-bg))!important;
+ color:var(--text)!important;border-color:var(--border)!important;
+}
+/* Desktop holding actions sit in a labeled row beneath the figures. */
+@media screen and (min-width:1100px){
+ #investmentCategoryDialog:not([data-stallion-id]) .investment-category-dialog-table{max-height:48vh;overflow:auto}
+ #investmentCategoryDialog:not([data-stallion-id]) .investment-category-dialog-table table{display:block;min-width:0;width:100%}
+ #investmentCategoryDialog:not([data-stallion-id]) .investment-category-dialog-table thead{display:none}
+ #investmentCategoryDialog:not([data-stallion-id]) .investment-category-dialog-table tbody{display:grid;gap:10px}
+ #investmentCategoryDialog:not([data-stallion-id]) .investment-category-dialog-table tbody tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:11px;background:color-mix(in srgb,var(--primary) 4%,var(--card-bg));overflow:hidden}
+ #investmentCategoryDialog:not([data-stallion-id]) .investment-category-dialog-table tbody td{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;width:auto;min-width:0;padding:13px 15px;border:0;text-align:left;white-space:normal;overflow-wrap:anywhere}
+ #investmentCategoryDialog:not([data-stallion-id]) .investment-category-dialog-table tbody td:not(.investment-row-actions)::before{content:attr(data-mobile-label);color:var(--text-light);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+ #investmentCategoryDialog .investment-category-dialog-table tbody td.investment-row-actions{grid-column:1/-1;display:block;width:100%;min-width:0;padding:12px 15px;border-top:1px solid var(--border);text-align:left}
+ #investmentCategoryDialog .investment-category-dialog-table tbody td.investment-row-actions::before{display:none}
+ #investmentCategoryDialog .investment-category-dialog-table .investment-row-action-group{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:8px;width:100%;max-width:none}
+ #investmentCategoryDialog .investment-category-dialog-table .investment-row-action-group .investment-icon-action,
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody td[data-label="Actions"] button{display:inline-flex!important;flex-direction:row;align-items:center;justify-content:center;gap:7px;flex:0 0 auto!important;width:auto!important;min-width:0!important;height:40px!important;min-height:40px!important;padding:8px 11px!important;margin:0!important;border:1px solid var(--border)!important;border-radius:9px!important;background:color-mix(in srgb,var(--primary) 6%,var(--card-bg))!important;color:var(--text)!important}
+ #investmentCategoryDialog .investment-category-dialog-table .investment-row-action-group .investment-icon-action svg,
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody td[data-label="Actions"] button svg{width:17px!important;height:17px!important;flex:none}
+ #investmentCategoryDialog .investment-category-dialog-table .investment-row-action-group .investment-icon-action::after,
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody td[data-label="Actions"] button::after{content:attr(data-short-action);font-size:11px;font-weight:600;white-space:nowrap}
+ #investmentCategoryDialog .investment-category-dialog-table .investment-row-action-group .is-danger,
+ #investmentCategoryDialog[data-stallion-id] .pms-holding-details tbody td[data-label="Actions"] button.btn-danger{color:var(--danger)!important}
+}
+/* Income and expense actions share one centered, evenly spaced desktop row. */
+@media screen and (min-width:701px){
+ #income-expenses .history-section th:last-child,#income-expenses .history-section td.transaction-actions{width:112px;min-width:112px;text-align:center;white-space:nowrap}
+ #income-expenses .history-section td.transaction-actions{vertical-align:middle;padding:9px 6px}
+ #income-expenses .history-section td.transaction-actions>.btn-small{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;box-sizing:border-box;width:42px;min-width:42px;height:42px;min-height:42px;margin:0 3px;padding:8px;border-radius:9px}
+ #income-expenses .history-section td.transaction-actions>.btn-small svg{display:block;width:17px;height:17px;flex:none}
+}
+@media screen and (min-width:1100px){
+ html body #investmentCategoryDialog #investmentCategoryDialogTable .pms-holding-details tbody tr>td[data-label="Actions"]{
+  display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
+  align-items:center!important;justify-content:flex-start!important;grid-column:1/-1!important;
+  box-sizing:border-box!important;width:100%!important;max-width:none!important;min-width:0!important;
+  gap:8px!important;padding:14px 18px!important;margin:0!important;
+  border-top:1px solid var(--border)!important;
+ }
+}
+@media screen and (min-width:701px){
+ #investments :is(.investment-category-card,.retirement-account-card) .investment-icon-action,
+ #retirementCategoryDialog :is(.investment-icon-action,.pf-actions-grid>button){
+  box-sizing:border-box;display:inline-grid;place-items:center;
+  width:40px;min-width:40px;height:40px;min-height:40px;
+  margin:2px;padding:9px;border-radius:9px;
+ }
+ #investments :is(.investment-category-card,.retirement-account-card) .investment-icon-action svg,
+ #retirementCategoryDialog :is(.investment-icon-action,.pf-actions-grid>button) svg{
+  display:block;width:18px;height:18px;flex:none;
+ }
 }

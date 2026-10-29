@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.29.15",
+  "version": "2026.10.29.16",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Desktop: balance cash-flow chart and monthly changes, refine portfolio loss and summary styling, improve expense snapshot visuals, and tidy navigation and helper copy."
+    "Desktop: balance dashboard tiles, improve projection layout and assumptions, refine investment holding cards and dialogs, and align record actions."
   ],
   "sections": [
     [
