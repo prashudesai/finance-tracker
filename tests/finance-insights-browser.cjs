@@ -64,18 +64,29 @@ const server=http.createServer(async(req,res)=>{try{
   assert(await page.locator('#dashboard .dashboard-page-icon').isVisible());
   assert.equal(await page.locator('#dashboardPagePeriod').textContent(),await page.evaluate(()=>new Date().toLocaleDateString('en-IN',{month:'long',year:'numeric'})));
   await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="growth-projection"]').click());
-  const sizes=await page.locator('#growthProjectionControls .form-grid').evaluate(grid=>{
-    const cells=[...grid.children].filter(node=>node.matches('.form-group'));
-    const parent=grid.getBoundingClientRect();
-    return {width:parent.width,cols:cells.map(node=>node.getBoundingClientRect().width),gap:parseFloat(getComputedStyle(grid).columnGap)};
-  });
-  assert.equal(sizes.cols.length,2);
-  const available=sizes.width-sizes.gap;
-  assert(Math.abs(sizes.cols[0]/available-.3)<.03,JSON.stringify(sizes));
-  assert(Math.abs(sizes.cols[1]/available-.7)<.03,JSON.stringify(sizes));
-  await page.setViewportSize({width:390,height:844});
-  const mobile=await page.locator('#growthProjectionControls .form-grid').evaluate(grid=>getComputedStyle(grid).gridTemplateColumns);
-  assert.equal(mobile.trim().split(/\s+/).length,1,mobile);
+  for(const width of [701,800,1024,1440]){
+   await page.setViewportSize({width,height:900});
+   const sizes=await page.locator('.advanced-growth-workspace').evaluate(grid=>{
+    const settings=grid.querySelector('.advanced-growth-rail').getBoundingClientRect(),chart=grid.querySelector(':scope>.growth-projection-chart-panel').getBoundingClientRect();
+    return {width:grid.getBoundingClientRect().width,gap:parseFloat(getComputedStyle(grid).columnGap),settings:settings.toJSON(),chart:chart.toJSON()};
+   });
+   const available=sizes.width-sizes.gap;
+   assert(Math.abs(sizes.settings.width/available-.3)<.01,JSON.stringify({width,sizes}));
+   assert(Math.abs(sizes.chart.width/available-.7)<.01,JSON.stringify({width,sizes}));
+   assert(Math.abs(sizes.settings.top-sizes.chart.top)<2,JSON.stringify({width,sizes}));
+   assert(sizes.settings.right<=sizes.chart.left,JSON.stringify({width,sizes}));
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  }
+  for(const width of [320,390,700]){
+   await page.setViewportSize({width,height:844});
+   const mobile=await page.locator('.advanced-growth-workspace').evaluate(grid=>{
+    const rail=grid.querySelector('.advanced-growth-rail').getBoundingClientRect(),chart=grid.querySelector(':scope>.growth-projection-chart-panel').getBoundingClientRect();
+    return {columns:getComputedStyle(grid).gridTemplateColumns,rail:rail.toJSON(),chart:chart.toJSON()};
+   });
+   assert.equal(mobile.columns.trim().split(/\s+/).length,1,JSON.stringify({width,mobile}));
+   assert(mobile.chart.top>=mobile.rail.bottom-1,JSON.stringify({width,mobile}));
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  }
   await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());
  });
  await check('Pending desktop bar chart and page headers preserve mobile rendering and financial records',async()=>{

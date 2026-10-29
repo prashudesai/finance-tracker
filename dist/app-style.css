@@ -3176,17 +3176,23 @@ html[data-app-style="modern"] #investmentEditModal :is(input,select,textarea){
   html[data-appearance-choice="modern"] .pft-style-navigation .pft-mobile-label { display:block; }
 }
 
-/* Release: desktop Projection Settings 30:70 split; mobile remains stacked. */
+/* Desktop: Projection Settings occupies 30%, the graph 70%. Mobile stays stacked. */
 @media screen and (min-width:701px) {
-  html[data-app-style="modern"] body.advanced-layout #growth-projection #growthProjectionControls .form-grid,
+  html[data-app-style="modern"] body.advanced-layout #growth-projection .advanced-growth-workspace {
+    display:grid;grid-template-columns:minmax(0,3fr) minmax(0,7fr);gap:18px;align-items:stretch;
+  }
+  html[data-app-style="modern"] body.advanced-layout #growth-projection .advanced-growth-rail {
+    display:flex;flex-direction:column;min-width:0;width:100%;
+  }
   html[data-app-style="modern"] body.advanced-layout #growth-projection .advanced-growth-rail #growthProjectionControls .form-grid {
-    display:grid;
-    grid-template-columns:minmax(0,3fr) minmax(0,7fr)!important;
-    align-items:center;
-    gap:18px;
+    display:grid;grid-template-columns:minmax(0,1fr)!important;align-items:start;gap:18px;
   }
   html[data-app-style="modern"] #growthProjectionControls .form-grid > .form-group { min-width:0; }
-  html[data-app-style="modern"] #growthProjectionControls .growth-horizon-control input[type="range"] { min-width:0; }
+  html[data-app-style="modern"] #growthProjectionControls .growth-horizon-control {display:flex;min-width:0;gap:8px;flex-wrap:wrap}
+  html[data-app-style="modern"] #growthProjectionControls .growth-horizon-control input[type="range"] { flex:1 1 70px;min-width:0;width:0;max-width:100%; }
+  html[data-app-style="modern"] #growthProjectionControls .growth-contribution-toggle {min-width:0;gap:8px}
+  html[data-app-style="modern"] #growthProjectionControls .growth-contribution-toggle>span:first-child {min-width:0;white-space:normal;overflow-wrap:anywhere}
+  html[data-app-style="modern"] #growthProjectionControls .growth-contribution-summary-row {flex-wrap:wrap;gap:8px}
   /* Match Stallion-style footer: Delete left, ordinary actions grouped right. */
   #recordEditorDialog .record-editor-actions:has([data-record-delete]) {
     display:grid!important;
