@@ -711,6 +711,17 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
   await page.setViewportSize({width:390,height:844});
  });
 
+ await check('New-user checklist, quiet Dashboard, empty actions and zero opening balance work on desktop and mobile',async()=>{
+  const fresh=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'});fresh.on('pageerror',e=>errors.push(e.message));
+  await fresh.goto(url+'/?user=setup-new&email=setup-new@example.test&name=Setup');await fresh.locator('#cloudLogin').click();await fresh.waitForFunction(()=>window.financeCloud&&document.getElementById('cloudGate').hidden);
+  if(await fresh.locator('#firstNameSetup').isVisible())await fresh.locator('#firstNameContinue').click();await fresh.evaluate(()=>window.trackerReady);if(await fresh.locator('#appGuideTour').isVisible())await fresh.locator('#appGuideTour [data-tour-skip]').click();await fresh.waitForFunction(()=>Boolean(window.PFTGettingStarted));
+  for(const width of [320,390,700,1024,1440]){await fresh.setViewportSize({width,height:900});await fresh.evaluate(()=>{document.querySelector('.nav-tab[data-tab="dashboard"]').click();renderGettingStarted();});assert(await fresh.locator('#gettingStartedChecklist').isVisible());assert(await fresh.locator('#dashboardFirstRecord').isVisible());assert.equal(await fresh.locator('#dashboardMonthlyOverview').isVisible(),false);assert.equal(await fresh.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
+  await fresh.locator('#dashboardFirstRecord [data-setup-action="income"]').click();assert(await fresh.locator('#cashEntryDialog').isVisible());await fresh.locator('#cashEntryDialog .cash-entry-close').click();await fresh.evaluate(()=>document.querySelector('.nav-tab[data-tab="dashboard"]').click());
+  await fresh.locator('#gettingStartedChecklist [data-setup-action="no-loans"]').click();assert.equal(await fresh.locator('#gettingStartedChecklist [data-setup-action="no-loans"]').count(),0);
+  await fresh.locator('#gettingStartedChecklist [data-setup-action="skip"]').click();assert.equal(await fresh.locator('#gettingStartedChecklist').isVisible(),false);await fresh.evaluate(()=>document.querySelector('.nav-tab[data-tab="settings"]').click());await fresh.locator('#resumeGettingStarted').click();assert(await fresh.locator('#gettingStartedChecklist').isVisible());
+  await fresh.evaluate(()=>{state.monthlyBalances=[{id:'setup-zero',month:currentMonthKey(),startBalance:0}];updateDashboard();});assert.equal(await fresh.locator('#dashboardFirstRecord').isVisible(),false);assert(await fresh.locator('#dashboardMonthlyOverview').isVisible());
+  await fresh.evaluate(()=>{window.financeCloud.canEdit=false;renderGettingStarted();PFTGettingStarted.enhance();});assert.equal(await fresh.locator('#gettingStartedChecklist').isVisible(),false);await fresh.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());await fresh.waitForTimeout(100);assert.equal(await fresh.locator('#incomeBody [data-setup-action]:visible').count(),0);await fresh.close();
+ });
  assert.deepEqual(errors,[]);await browser.close();server.close();console.log(JSON.stringify({passed:results.length,failed:0}));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});
 

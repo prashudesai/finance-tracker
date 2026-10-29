@@ -211,6 +211,7 @@
       if (reportSavings) reportSavings.textContent = formatCurrency(savings);
       if (reportGains) reportGains.textContent = formatCurrency(totalInvestmentGains);
 
+      if(typeof renderGettingStarted==='function')renderGettingStarted();
       console.log(' updateDashboard - all elements updated successfully');
 
       // Render complete investment portfolio

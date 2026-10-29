@@ -357,7 +357,8 @@
       const totalEl=document.getElementById('debtSummaryTotal');
       if(totalEl) totalEl.textContent=formatCurrency(total);
       if(!container) return;
-      if(!debts.length) { container.innerHTML='<p class="text-muted">No debts recorded</p>'; return; }
+      container.closest('.debt-summary-panel')?.classList.toggle('is-empty',!debts.length);
+      if(!debts.length) { container.innerHTML='<p class="debt-free-message">No debts, nice!</p>'; return; }
       const byType=new Map();
       debts.forEach(debt=>{
         const type=String(debt.type||'Other');

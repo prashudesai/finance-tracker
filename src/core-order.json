@@ -16,5 +16,6 @@
   "core/14-analytics.js",
   "core/15-projections.js",
   "core/16-backup.js",
-  "core/17-startup.js"
+  "core/17-startup.js",
+  "core/18-getting-started.js"
 ]

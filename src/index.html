@@ -97,8 +97,8 @@
 
     <div id="house-expenses" class="tab-content">
       <div class="panel"><div class="panel-header"><h2>Monthly House Expenses</h2></div>
-      <p>House expense = starting balance + income − recorded expenses − Stallion contributions − next calendar month starting balance. Each amount is recorded against its own month and recalculated when inputs change. Do not enter these same household costs again as expenses.</p>
-      <div class="table-wrapper"><table><thead><tr><th>Month</th><th>House Expense</th><th>Status</th></tr></thead><tbody id="houseExpenseBody"></tbody></table></div></div>
+      <details class="house-expense-help"><summary>How is this calculated?</summary><p>House expense = starting balance + income − recorded expenses − Stallion contributions − next calendar month starting balance. Each amount belongs to its own month and recalculates when inputs change.</p></details>
+      <div class="table-wrapper"><table><thead><tr><th>Month</th><th>House Expense</th><th>Status</th></tr></thead><tbody id="houseExpenseBody"></tbody></table></div><p class="house-expense-hint">Already included here? Don’t record the same household costs again as expenses.</p></div>
     </div>
     <!-- DASHBOARD TAB -->
     <div id="dashboard" class="tab-content active">
