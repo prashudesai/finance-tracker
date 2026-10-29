@@ -3423,3 +3423,7 @@ html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel .debt-s
 html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel.is-empty{padding:10px 0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important}
 html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel.is-empty>.panel-header{display:none!important}
 .debt-free-message{margin:0;color:var(--text-light);font-size:13px;line-height:1.5}
+/* Preserve full-width Debt empty content when adding its inline call to action. */
+html[data-app-style] body.advanced-layout #debts .debt-list-panel tbody td.debt-empty-cell.friendly-empty-cell{padding:0!important;text-align:left!important}
+.investment-empty-state,#retirementEmptyState{flex-wrap:wrap}
+.investment-empty-state>[data-setup-action],#retirementEmptyState>[data-setup-action]{max-width:100%;margin-top:8px;white-space:normal}
