@@ -68,7 +68,26 @@ export function installFinanceInsights(){
   action(changes.body,'View cash-flow details',()=>{document.querySelector('.nav-tab[data-tab="income-expenses"]').click();breakdown.d.open=true;breakdown.d.scrollIntoView({block:'nearest'});});
   placeChanges();
  }
- function placeChanges(){const flow=dashboard.querySelector('.flow-home:not([hidden]) .flow-summary');const target=flow||dashboard.querySelector('.dashboard');if(target&&changes.d.previousElementSibling!==target)target.after(changes.d);}
+ const changesDesktop=window.matchMedia('(min-width:701px)');
+ let desktopChanges=false,mobileChangesOpen=changes.d.open;
+ function placeChanges(){
+  const flow=dashboard.querySelector('.flow-home:not([hidden])');
+  const group=flow?.querySelector('.flow-insights')||dashboard.querySelector('.advanced-dashboard-insights');
+  if(changesDesktop.matches&&group){
+   if(!desktopChanges){mobileChangesOpen=changes.d.open;desktopChanges=true;}
+   dashboard.querySelectorAll('.desktop-changes-row').forEach(node=>{if(node!==group)node.classList.remove('desktop-changes-row');});
+   group.classList.add('desktop-changes-row');
+   if(changes.d.parentElement!==group)group.append(changes.d);
+   changes.d.open=true;
+  }else{
+   dashboard.querySelectorAll('.desktop-changes-row').forEach(node=>node.classList.remove('desktop-changes-row'));
+   if(desktopChanges){changes.d.open=mobileChangesOpen;desktopChanges=false;}
+   const target=flow?.querySelector('.flow-summary')||dashboard.querySelector('.dashboard');
+   if(target&&changes.d.previousElementSibling!==target)target.after(changes.d);
+  }
+ }
+ const onChangesResize=()=>placeChanges();changesDesktop.addEventListener('change',onChangesResize);cleanups.push(()=>changesDesktop.removeEventListener('change',onChangesResize));
+ changes.d.querySelector('summary').addEventListener('click',event=>{if(desktopChanges)event.preventDefault();});
  function valuationFooter(host,accounts){
   host.querySelector(':scope > .finance-valuation-footer')?.remove();
   host.querySelector(':scope > .panel-header .finance-valuation-review')?.remove();

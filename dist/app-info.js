@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.29.13",
+  "version": "2026.10.29.14",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Increase the matching Search and Add circles and icons by 50%, keeping their dock positions."
+    "Desktop: show the welcome once per account/browser, place expanded monthly changes beside cash-flow charts, compact portfolio rows and footer, and align loan repayment progress."
   ],
   "sections": [
     [

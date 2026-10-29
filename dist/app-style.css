@@ -2894,3 +2894,57 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
  html[data-app-style="modern"] #financeBottomTools #openRecordSearch::before{content:"";position:absolute;inset:5.5px;border-radius:50%;background:var(--card-bg);border:1px solid var(--primary);box-shadow:0 2px 6px #0002;pointer-events:none}
  html[data-app-style="modern"] #financeBottomTools #openRecordSearch svg{position:relative;width:19.5px;height:19.5px;flex:0 0 19.5px}
 }
+
+/* The desktop welcome is shown only on the first visit for this account/browser. */
+@media screen and (min-width:701px){html[data-app-style] .pft-style-hero[data-welcome-seen="true"]{display:none!important}}
+
+/* Desktop dashboard: cash-flow chart with its monthly context alongside it. */
+@media screen and (min-width:701px){
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:stretch}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row>.flow-allocation{display:none}
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row>#monthlyChanges{margin:0;padding:20px;min-width:0;box-sizing:border-box;border-radius:16px}
+ html[data-app-style] body.advanced-layout #monthlyChanges>summary{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;list-style:none;cursor:default;pointer-events:none;font-size:18px;font-weight:600;padding:0 0 16px}
+ html[data-app-style] body.advanced-layout #monthlyChanges>summary::-webkit-details-marker{display:none}
+ html[data-app-style] body.advanced-layout #monthlyChanges .monthly-changes-delta{font-size:11px;color:var(--primary);font-weight:500}
+ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight{padding:12px;gap:5px;border-radius:10px}
+ html[data-app-style] body.advanced-layout #monthlyChanges .finance-highlight-value{font-size:20px}
+ html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-panel{padding:22px;border-radius:16px}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-total-summary{display:grid;grid-template-columns:1fr 1fr 1.2fr auto;gap:18px;padding:16px;margin:16px 0 18px;align-items:center}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-total-item{border:0;padding:0}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-total-item strong{font-size:24px}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-total-gain{display:grid;gap:4px}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-total-gain small{font-size:12px}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-list-head,
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-category-row{grid-template-columns:minmax(130px,1.2fr) minmax(100px,2fr) minmax(95px,.8fr) minmax(135px,1fr) 16px;gap:16px}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-category-row{min-height:54px;padding:10px 12px;border-radius:6px;background:transparent}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-category-row:hover{background:var(--primary-light)}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-current-value,
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-gain-value{text-align:right;background:transparent;font-size:13px}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-value-bar{height:8px}
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-list-head>span:nth-child(3),
+ html[data-app-style] body.advanced-layout #dashboard .portfolio-list-head>span:nth-child(4){text-align:right}
+}
+@media screen and (min-width:1100px){
+ html[data-app-style] body.advanced-layout #dashboard .desktop-changes-row{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+}
+/* Desktop portfolio footer: explanation and remaining holdings share one row. */
+@media screen and (min-width:701px){
+ html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:18px;row-gap:8px}
+ html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-panel>*{grid-column:1/-1;min-width:0}
+ html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-panel>.portfolio-interaction-note{grid-column:1;align-self:center;margin:8px 0 0;padding:0;font-size:12px;line-height:1.5;color:var(--text-light)}
+ html[data-app-style] body.advanced-layout #dashboard #openRemainingInvestments:not([hidden]){grid-column:2;align-self:center;justify-self:end;display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto;min-height:40px;margin:8px 0 0;padding:8px 14px;border:1px solid var(--border);border-radius:9px;background:transparent;color:var(--primary);font-size:12px;font-weight:500;white-space:nowrap;text-decoration:none}
+ html[data-app-style] body.advanced-layout #dashboard #openRemainingInvestments:hover{background:var(--primary-light);border-color:var(--primary)}
+}
+/* Desktop loan cards keep balances, repayment progress and actions together. */
+@media screen and (min-width:701px){
+ html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel{padding:22px}
+ html[data-app-style] body.advanced-layout #dashboard .debt-summary-card-toggle{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px 12px;padding:14px 16px;min-height:0}
+ html[data-app-style] body.advanced-layout #dashboard .debt-summary-card-top{grid-column:1/-1;gap:12px}
+ html[data-app-style] body.advanced-layout #dashboard .debt-summary-share{color:var(--text-light);font-size:10px;font-weight:400}
+ html[data-app-style] body.advanced-layout #dashboard .debt-summary-card-amount{grid-column:1/-1;margin:0}
+ html[data-app-style] body.advanced-layout #dashboard .debt-summary-card-amount strong{font-size:22px}
+ html[data-app-style] body.advanced-layout #dashboard .debt-summary-track{display:block;grid-column:1;grid-row:3;height:5px;align-self:center;margin:0}
+ html[data-app-style] body.advanced-layout #dashboard .debt-summary-card-hint{display:contents}
+ html[data-app-style] body.advanced-layout #dashboard .debt-summary-paid{grid-column:2;grid-row:3;align-self:center;font-size:11px;font-weight:400}
+ html[data-app-style] body.advanced-layout #dashboard .debt-summary-card-hint>span:first-child{grid-column:1/-1;grid-row:4;color:var(--primary);font-size:11px;font-weight:500}
+}

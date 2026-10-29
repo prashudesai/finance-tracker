@@ -49,7 +49,23 @@
     header.insertBefore(nav,header.querySelector('.header-controls'));
     const hero=document.createElement('section');hero.className='pft-style-hero';hero.setAttribute('aria-labelledby','pftStyleHeroTitle');
     hero.innerHTML='<div><h1 id="pftStyleHeroTitle">My finances</h1><p class="pft-style-hero-subtitle">All your money in one place</p><p>Track your income, expenses, investments and debts<br>for a clearer financial picture.</p></div><div class="pft-style-art" aria-hidden="true"><i></i><i></i><i></i><span>BUILDING YOUR TOMORROW</span></div>';
-    const dashboard=document.getElementById('dashboard'),quick=document.getElementById('trackerQuickAdd');dashboard.prepend(hero);if(quick){
+    const dashboard=document.getElementById('dashboard'),quick=document.getElementById('trackerQuickAdd');dashboard.prepend(hero);
+    // Only consume the welcome on an actual desktop dashboard visit.
+    const welcomeMedia=window.matchMedia('(min-width:701px)');
+    const welcomeKey='desktopWelcomeSeen:'+window.financeCloud.uid;
+    let welcomeDecided=false;
+    const updateWelcome=()=>{
+      if(welcomeDecided||!welcomeMedia.matches||!dashboard.classList.contains('active'))return;
+      welcomeDecided=true;
+      try{
+        if(window.trackerStorage.getItem(welcomeKey)==='1')hero.dataset.welcomeSeen='true';
+        else window.trackerStorage.setItem(welcomeKey,'1');
+      }catch(_){/* Keep the welcome available if preference storage is unavailable. */}
+    };
+    welcomeMedia.addEventListener('change',updateWelcome);
+    new MutationObserver(updateWelcome).observe(dashboard,{attributes:true,attributeFilter:['class']});
+    updateWelcome();
+    if(quick){
       const toolbar=document.createElement('div');toolbar.className='pft-dashboard-toolbar';
       const caption=document.createElement('div');caption.className='pft-dashboard-caption';
       caption.innerHTML='<p>Your family. Your future.</p><h1>Your financial life,<br><span>beautifully in sync.</span></h1>';
