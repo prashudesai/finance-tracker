@@ -8,20 +8,20 @@ function syncReleaseMetadata(){
  if(!lock.packages?.[''])throw Error('Root package metadata is missing from package-lock.json');
  if(lock.version!==version||lock.packages[''].version!==version){
   lock.version=version;lock.packages[''].version=version;
-  fs.writeFileSync(lockPath,JSON.stringify(lock,null,2)+'\\n');
+  fs.writeFileSync(lockPath,JSON.stringify(lock,null,2)+'\n');
  }
  const infoPath=path.join(dist,'app-info.js'),sourceText=fs.readFileSync(infoPath,'utf8'),context={window:{}};
  vm.runInNewContext(sourceText,context,{filename:infoPath});
  const info=context.window.PFT_APP_INFO;
  if(!info||!Array.isArray(info.releaseNotes))throw Error('App release metadata is invalid.');
- const released=/^(\\d{4})\\.(\\d{2})\\.(\\d{2})\\.\\d+$/.test(version)?version.slice(0,10).replaceAll('.','-'):info.released;
+ const released=/^(\d{4})\.(\d{2})\.(\d{2})\.\d+$/.test(version)?version.slice(0,10).replaceAll('.','-'):info.released;
  const updatedSource=sourceText
-  .replace(/("version"\\s*:\\s*)"[^"]+"/,(_,prefix)=>prefix+JSON.stringify(version))
-  .replace(/("released"\\s*:\\s*)"[^"]+"/,(_,prefix)=>prefix+JSON.stringify(released));
+  .replace(/("version"\s*:\s*)"[^"]+"/,(_,prefix)=>prefix+JSON.stringify(version))
+  .replace(/("released"\s*:\s*)"[^"]+"/,(_,prefix)=>prefix+JSON.stringify(released));
  fs.writeFileSync(infoPath,updatedSource);
  const versionPath=path.join(dist,'version.json'),versionInfo=JSON.parse(fs.readFileSync(versionPath,'utf8'));
  Object.assign(versionInfo,{version,released,releaseNotes:info.releaseNotes});
- fs.writeFileSync(versionPath,JSON.stringify(versionInfo,null,2)+'\\n');
+ fs.writeFileSync(versionPath,JSON.stringify(versionInfo,null,2)+'\n');
 }
 syncReleaseMetadata();
 // Keep the checked-in browser SDK aligned with the pinned npm Firebase version.
