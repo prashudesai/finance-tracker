@@ -433,5 +433,48 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
   await page.setViewportSize({width:390,height:844});
  });
 
+
+ await check('Projection groups disclose one list and contribution management stays compact',async()=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>{PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="growth-projection"]').click();});
+  const before=await page.evaluate(()=>JSON.stringify(state));
+  const choices=page.locator('.growth-assumption-choices [data-assumption-group]');
+  assert.equal(await choices.count(),3);
+  for(let i=0;i<3;i++){
+    const choice=choices.nth(i);if(await choice.isDisabled())continue;
+    await choice.click();const group=await choice.getAttribute('data-assumption-group');
+    assert.equal(await page.locator('[data-assumption-group-panel]:visible').count(),1);
+    assert.equal(await page.locator('[data-assumption-group-panel]:visible').getAttribute('data-assumption-group-panel'),group);
+    await page.evaluate(()=>renderGrowthProjection({preserveAssumptions:true}));
+    assert.equal(await choice.getAttribute('aria-expanded'),'true');
+    await choice.click();assert.equal(await page.locator('[data-assumption-group-panel]:visible').count(),0);
+  }
+  assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
+  assert.equal(await page.locator('#growthProjectionControls .form-group>label').filter({hasText:/^Monthly contributions$/}).count(),0);
+  assert.equal(await page.locator('#growthContributionExclusionsWrap').isVisible(),false);
+  const manage=page.locator('#manageGrowthContributions');
+  if(await manage.isEnabled()){
+    await manage.click();assert.equal(await page.locator('#growthContributionDialog').isVisible(),true);
+    const toggle=page.locator('#growthContributionDialog .growth-monthly-exclude-toggle').first();
+    const checked=await toggle.isChecked();await toggle.click();assert.equal(await toggle.isChecked(),!checked);
+    assert.equal(await page.locator('#growthContributionDialog').isVisible(),true);
+    await toggle.click();
+    await page.locator('#growthContributionDialog [data-close-contribution-dialog]').first().click();
+    await page.keyboard.press('Tab');
+  }
+  const master=page.locator('#growthIncludeMonthlyContributions'),masterBefore=await master.isChecked();
+  if(masterBefore){
+    const exclusions=await page.evaluate(()=>JSON.stringify(state.projectionSettings.excludedMonthlyContributions));
+    await master.click();assert.match(await page.locator('#growthContributionSummary').textContent(),/excluded/);assert.equal(await manage.isDisabled(),true);
+    assert.equal(await page.evaluate(()=>JSON.stringify(state.projectionSettings.excludedMonthlyContributions)),exclusions);
+    await master.click();assert.equal(await manage.isEnabled(),true);
+  }
+  for(const width of [320,390,700,1440]){
+    await page.setViewportSize({width,height:844});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  }
+  await page.setViewportSize({width:390,height:844});
+ });
+
  assert.deepEqual(errors,[]);await browser.close();server.close();console.log(JSON.stringify({passed:results.length,failed:0}));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});
