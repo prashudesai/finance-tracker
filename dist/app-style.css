@@ -2770,3 +2770,22 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
   #monthlyChanges .monthly-changes-delta{margin-left:auto;padding:5px 8px;border-radius:999px;background:color-mix(in srgb,var(--primary) 12%,transparent);color:var(--primary);font-size:11px;font-weight:700;white-space:nowrap}
 }
 @media(prefers-reduced-motion:reduce){html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{transition:none}}
+
+@media screen and (max-width:700px){
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-gain-value.is-loss{background:transparent!important;padding:0!important;color:#f08b9c}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-gain-value.is-neutral{background:transparent!important;padding:0!important;color:#94a3b8!important}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-average-values{gap:0}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-average-item{border:0;background:transparent;border-radius:0;padding:10px}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-average-item+.dashboard-average-item{border-left:1px solid color-mix(in srgb,var(--primary) 15%,transparent)}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-average-value{font-size:clamp(20px,5.4vw,25px)}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-title{flex-basis:auto;min-width:0;grid-column:1}
+  html[data-app-style] body.advanced-layout #dashboard .dashboard-portfolio-view-all{grid-column:2;grid-row:1;white-space:nowrap;font-size:11px}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-sort-control{grid-column:2;justify-self:end;margin-left:0}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-sort-label{display:none}
+  html[data-app-style] body.advanced-layout #dashboard .portfolio-sort-mobile{display:inline}
+  html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel{padding-bottom:24px}
+  html[data-app-style] body.advanced-layout #dashboard .debt-summary-share{padding:4px 7px;border-radius:999px;background:color-mix(in srgb,var(--primary) 10%,transparent)}
+  html[data-app-style] body.advanced-layout #dashboard .debt-summary-paid{color:#94a3b8}
+  html[data-app-style] body.advanced-layout #dashboard .cash-axis{font-size:11px;fill:#94a3b8}
+}
