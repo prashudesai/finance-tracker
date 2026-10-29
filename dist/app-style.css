@@ -403,7 +403,7 @@ html[data-app-style="modern"] .pft-dashboard-caption{display:none}
 html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(84px + env(safe-area-inset-bottom));z-index:41;display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;margin:0;border-radius:50%;box-shadow:0 3px 12px #0003;font-family:inherit;line-height:1}
 html[data-app-style="modern"] #trackerQuickAdd .quick-add-symbol{font-size:26px;font-weight:400;line-height:1}
 html[data-app-style="modern"] #trackerQuickAdd .quick-add-label{display:none}
-html[data-app-style="modern"] body:has(#openRecordSearch.at-page-bottom) #dashboard #trackerQuickAdd{opacity:0;visibility:hidden;pointer-events:none}
+html[data-app-style="modern"] body:has(#openRecordSearch.at-page-bottom) #dashboard #trackerQuickAdd{display:none!important}
 html[data-app-style="modern"] body.cloud-pending #trackerQuickAdd,html[data-app-style="modern"] body:has(dialog[open],.investment-edit-modal:not([hidden]),input:focus,textarea:focus,select:focus) #dashboard #trackerQuickAdd{visibility:hidden;pointer-events:none}
 }
 @media screen and (max-width:700px){
