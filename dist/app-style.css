@@ -2806,3 +2806,23 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 @media screen and (max-width:360px){#mobileSettingsShortcut{width:32px;min-width:32px;height:36px}}
 
 @media screen and (max-width:360px){body.advanced-layout .header-controls{transform:translateX(-6px)}}
+
+
+/* Mobile dashboard finishing fixes: five-tab dock, optically centered Settings, compact page end and frosted FAB. */
+@media screen and (max-width:700px){
+  html[data-app-style="modern"] .pft-style-navigation{grid-template-columns:repeat(5,minmax(0,1fr))}
+  html[data-app-style="modern"] .pft-style-navigation>button[data-tab="settings"]{display:none!important}
+  #mobileSettingsShortcut{display:grid!important;place-items:center!important;padding:0!important;line-height:0!important}
+  #mobileSettingsShortcut svg{display:block!important;width:20px!important;height:20px!important;margin:0!important;transform:translate(-.5px,.5px)}
+  html[data-app-style="modern"] body.advanced-layout>.container{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  html[data-layout-style="emerald-flow"] body.advanced-layout>.container{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  html[data-app-style="modern"] body.advanced-layout #dashboard.active{padding-bottom:0}
+  html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{
+    background:color-mix(in srgb,var(--primary) 42%,transparent)!important;
+    border:1px solid color-mix(in srgb,var(--primary) 72%,transparent)!important;
+    color:var(--text)!important;
+    -webkit-backdrop-filter:blur(7px) saturate(1.15);
+    backdrop-filter:blur(7px) saturate(1.15);
+    box-shadow:0 3px 12px #0002!important;
+  }
+}
