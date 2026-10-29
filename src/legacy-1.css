@@ -2413,3 +2413,22 @@
 @media screen and (max-width:700px){
   body.advanced-layout #mobileSettingsShortcut svg{width:19px;height:19px;stroke-width:1.65}
 }
+
+
+    /* Desktop investment actions: keep every control in its own hit target. */
+    @media (min-width:701px) {
+      #investmentCategoryDialog .investment-row-actions,
+      .investment-category-card .investment-row-actions { width:132px; min-width:132px; white-space:normal; }
+      #investmentCategoryDialog .investment-row-action-group,
+      .investment-category-card .investment-row-action-group { display:grid; grid-template-columns:repeat(3,36px); gap:8px; width:max-content; max-width:none; justify-content:start; align-items:center; }
+      #investmentCategoryDialog .investment-row-action-group .investment-icon-action,
+      .investment-category-card .investment-row-action-group .investment-icon-action { display:grid; place-items:center; box-sizing:border-box; width:36px; min-width:36px; height:36px; margin:0; padding:0; font-size:0; line-height:0; }
+      #investmentCategoryDialog .investment-row-action-group .investment-icon-action svg,
+      .investment-category-card .investment-row-action-group .investment-icon-action svg { display:block; width:17px; height:17px; }
+      #investmentCategoryDialog .investment-row-action-group .investment-icon-action::before,
+      #investmentCategoryDialog .investment-row-action-group .investment-icon-action::after,
+      .investment-category-card .investment-row-action-group .investment-icon-action::before,
+      .investment-category-card .investment-row-action-group .investment-icon-action::after { content:none; display:none; }
+      #investmentCategoryDialog .table-wrapper > table:has(.investment-row-action-group) :is(th:last-child,td:last-child),
+      .investment-category-card .table-wrapper > table:has(.investment-row-action-group) :is(th:last-child,td:last-child) { width:132px; min-width:132px; }
+    }
