@@ -2871,3 +2871,8 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 @media screen and (max-width:700px){
  html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{z-index:1010;background:var(--card-bg)!important;border:1px solid var(--primary)!important;opacity:1;pointer-events:auto}
 }
+@media screen and (max-width:700px){
+ html[data-app-style="modern"] body:has(#dashboard.active #trackerQuickAdd:not([hidden])) #financeBottomTools{right:calc(72px + env(safe-area-inset-right));grid-template-columns:minmax(0,1fr) auto}
+ html[data-app-style="modern"] body:has(#dashboard.active #trackerQuickAdd:not([hidden])) #financeBottomTools #financeBottomSync{grid-column:1;justify-self:start;max-width:calc(100vw - 200px)}
+ html[data-app-style="modern"] body:has(#dashboard.active #trackerQuickAdd:not([hidden])) #financeBottomTools #openRecordSearch{grid-column:2}
+}
