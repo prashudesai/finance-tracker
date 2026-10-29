@@ -1023,12 +1023,12 @@ html[data-app-style] body.advanced-layout #dashboard > .dashboard-page-intro h1 
 #dashboardExpenseSnapshot .dashboard-month-trigger:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
 #dashboardExpenseSnapshot .dashboard-month-chevron{color:var(--primary);font-size:19px;line-height:1;transition:transform .15s ease}
 #dashboardExpenseSnapshot .dashboard-month-trigger[aria-expanded="true"] .dashboard-month-chevron{transform:rotate(180deg)}
-#dashboardExpenseSnapshot .dashboard-month-menu{z-index:1100;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;padding:6px;border:1px solid color-mix(in srgb,var(--primary) 27%,var(--border));border-radius:15px;background:color-mix(in srgb,var(--card-bg) 92%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:0 14px 36px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.08);scrollbar-width:thin}
-#dashboardExpenseSnapshot .dashboard-month-menu[hidden]{display:none!important}
-#dashboardExpenseSnapshot .dashboard-month-option{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--text);font:inherit;font-size:12px;text-align:left;cursor:pointer}
-#dashboardExpenseSnapshot .dashboard-month-option:hover,#dashboardExpenseSnapshot .dashboard-month-option:focus-visible{outline:none;background:color-mix(in srgb,var(--primary) 12%,var(--card-bg))}
-#dashboardExpenseSnapshot .dashboard-month-option[aria-selected="true"]{background:color-mix(in srgb,var(--primary) 17%,var(--card-bg));font-weight:600}
-#dashboardExpenseSnapshot .dashboard-month-check{color:var(--primary);font-size:15px}
+#dashboardExpenseMonthMenu{z-index:1100;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;padding:6px;border:1px solid color-mix(in srgb,var(--primary) 27%,var(--border));border-radius:15px;background:color-mix(in srgb,var(--card-bg) 92%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:0 14px 36px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.08);scrollbar-width:thin}
+#dashboardExpenseMonthMenu[hidden]{display:none!important}
+#dashboardExpenseMonthMenu .dashboard-month-option{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:transparent;color:var(--text);font:inherit;font-size:12px;text-align:left;cursor:pointer}
+#dashboardExpenseMonthMenu .dashboard-month-option:hover,#dashboardExpenseMonthMenu .dashboard-month-option:focus-visible{outline:none;background:color-mix(in srgb,var(--primary) 12%,var(--card-bg))}
+#dashboardExpenseMonthMenu .dashboard-month-option[aria-selected="true"]{background:color-mix(in srgb,var(--primary) 17%,var(--card-bg));font-weight:600}
+#dashboardExpenseMonthMenu .dashboard-month-check{color:var(--primary);font-size:15px}
 @media(max-width:700px){
  #dashboardExpenseSnapshot .dashboard-wide-header{display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
  #dashboardExpenseSnapshot .dashboard-wide-header>.dashboard-card-heading{min-width:0;flex:1}
@@ -3174,4 +3174,79 @@ html[data-app-style="modern"] #investmentEditModal :is(input,select,textarea){
   }
   html[data-appearance-choice="modern"] .pft-style-navigation .pft-desktop-label { display:none; }
   html[data-appearance-choice="modern"] .pft-style-navigation .pft-mobile-label { display:block; }
+}
+
+/* Release: desktop Projection Settings 30:70 split; mobile remains stacked. */
+@media screen and (min-width:701px) {
+  html[data-app-style="modern"] body.advanced-layout #growth-projection #growthProjectionControls .form-grid,
+  html[data-app-style="modern"] body.advanced-layout #growth-projection .advanced-growth-rail #growthProjectionControls .form-grid {
+    display:grid;
+    grid-template-columns:minmax(0,3fr) minmax(0,7fr)!important;
+    align-items:center;
+    gap:18px;
+  }
+  html[data-app-style="modern"] #growthProjectionControls .form-grid > .form-group { min-width:0; }
+  html[data-app-style="modern"] #growthProjectionControls .growth-horizon-control input[type="range"] { min-width:0; }
+  /* Match Stallion-style footer: Delete left, ordinary actions grouped right. */
+  #recordEditorDialog .record-editor-actions:has([data-record-delete]) {
+    display:grid!important;
+    grid-template-columns:minmax(90px,1fr) minmax(100px,1fr) minmax(130px,1.25fr)!important;
+    gap:10px!important;
+    align-items:stretch!important;
+  }
+  #recordEditorDialog .record-editor-actions:has([data-record-delete]) button[data-record-delete] {
+    grid-column:1!important;grid-row:1!important;
+    width:100%!important;
+    justify-self:stretch!important;
+    padding:10px 12px!important;
+  }
+  #recordEditorDialog .record-editor-actions:has([data-record-delete]) #cancelRecordEditor {grid-column:2!important;grid-row:1!important;}
+  #recordEditorDialog .record-editor-actions:has([data-record-delete]) button[type="submit"] {grid-column:3!important;grid-row:1!important;}
+  #recordEditorDialog #closeRecordEditor {width:40px;height:40px;min-height:40px;font-size:23px;}
+  /* Richer Dashboard heading: small editorial intro, not a second oversized card. */
+  html[data-app-style="modern"] body.advanced-layout #dashboard>.dashboard-page-intro {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin:14px 0 19px!important;
+    padding:20px 23px!important;
+    border:1px solid color-mix(in srgb,var(--primary) 29%,var(--border))!important;
+    border-radius:17px;
+    background:linear-gradient(115deg,color-mix(in srgb,var(--primary) 11%,var(--card-bg)),var(--card-bg) 74%)!important;
+    box-sizing:border-box;
+  }
+  html[data-app-style="modern"] #dashboard .dashboard-page-heading {display:flex;align-items:center;gap:14px;min-width:0;}
+  html[data-app-style="modern"] #dashboard .dashboard-page-icon {
+    width:52px;height:52px;flex:0 0 52px;display:grid;place-items:center;
+    border:1px solid color-mix(in srgb,var(--primary) 29%,var(--border));
+    border-radius:15px;background:color-mix(in srgb,var(--primary) 14%,var(--card-bg));color:var(--primary);
+  }
+  html[data-app-style="modern"] #dashboard .dashboard-page-icon svg {
+    width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+  }
+  html[data-app-style="modern"] #dashboard .dashboard-page-kicker {
+    display:block;margin:0 0 4px;color:var(--primary);font-size:10px;letter-spacing:1.4px;font-weight:750;
+  }
+  html[data-app-style="modern"] #dashboard>.dashboard-page-intro h1 {
+    padding:0!important;margin:0!important;border:0!important;
+    font-size:clamp(25px,2.2vw,33px);line-height:1.15;font-weight:650;
+  }
+  html[data-app-style="modern"] #dashboard .dashboard-page-caption {
+    margin:6px 0 0;color:var(--text-light);font-size:12px;line-height:1.4;
+  }
+  html[data-app-style="modern"] #dashboard .dashboard-page-period {
+    display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+    padding:9px 13px;border:1px solid var(--border);border-radius:999px;
+    color:var(--text-light);font-size:12px;font-weight:650;white-space:nowrap;
+    background:color-mix(in srgb,var(--bg) 28%,var(--card-bg));
+  }
+}
+/* The live month menu is portalled to body, avoiding transformed-card offsets. */
+#dashboardExpenseMonthMenu {position:fixed;z-index:1100;}
+@media screen and (max-width:700px) {
+  html[data-app-style="modern"] #dashboard .dashboard-page-icon,
+  html[data-app-style="modern"] #dashboard .dashboard-page-kicker,
+  html[data-app-style="modern"] #dashboard .dashboard-page-caption,
+  html[data-app-style="modern"] #dashboard .dashboard-page-period {display:none!important;}
 }
