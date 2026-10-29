@@ -52,6 +52,7 @@
             let cell=body.rows.length===1&&body.rows[0].cells.length===1?body.rows[0].cells[0]:null;
             if(!body.rows.length){const row=body.insertRow();cell=row.insertCell();cell.colSpan=Math.max(1,body.closest('table')?.querySelectorAll('thead th').length||1);cell.textContent='No records here yet.';}
             if(!cell||cell.dataset.emptyEnhanced||!/^No\b/i.test(cell.textContent.trim()))continue;
+            if(cell.querySelector('button')){cell.dataset.emptyEnhanced='true';continue;}
             cell.dataset.emptyEnhanced='true';cell.classList.add('friendly-empty-cell');
             const mapping={incomeBody:['income','Add income'],expenseBody:['expense','Add expense'],debtsBody:['loan','Add loan'],pfBody:['pf','Add PF account'],ppfBody:['ppf','Add PPF account'],npsBody:['nps','Add NPS account'],balanceHistoryBody:['opening','Set opening balance'],houseExpenseBody:['opening','Set opening balance'],investmentContributionBody:['contribution','Add contribution'],stallionContribBody:['investment','View investments'],debtEmiHistoryBody:['expense','Record a payment']};
             let match=mapping[body.id],filtered=false;
