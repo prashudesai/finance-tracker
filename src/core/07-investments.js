@@ -110,6 +110,30 @@
             if(cell.matches('td,th'))cell.dataset.mobileLabel=labels[index]||'Details';
           });
         });
+        // On desktop, put non-PMS actions in a full-width footer like the PMS panel.
+        // Keep the original action cell for mobile, without altering its layout.
+        if(container.closest('#investmentCategoryDialog') && !container.closest('[data-stallion-id]') && !table.closest('.pms-holding-details')) {
+          [...table.querySelectorAll('tbody tr')].forEach(row=>{
+            const actions=row.querySelector('td.investment-row-actions');
+            if(!actions || row.nextElementSibling?.classList.contains('investment-desktop-actions-row'))return;
+            const footer=document.createElement('tr');
+            footer.className='investment-desktop-actions-row';
+            const cell=document.createElement('td');
+            cell.colSpan=labels.length;
+            const group=actions.querySelector('.investment-row-action-group');
+            if(!group)return;
+            const buttons=[...group.querySelectorAll('button')];
+            const order=['History','Edit','Delete','Add','Update'];
+            const copy=group.cloneNode(true);
+            copy.querySelectorAll('button').forEach(button=>{
+              const name=button.dataset.shortAction||'';
+              button.dataset.shortAction=({History:'View History',Add:'Add contribution',Update:'Update value'})[name]||name;
+            });
+            [...copy.children].sort((a,b)=>order.indexOf(a.dataset.shortAction==='View History'?'History':a.dataset.shortAction==='Add contribution'?'Add':a.dataset.shortAction==='Update value'?'Update':a.dataset.shortAction)-order.indexOf(b.dataset.shortAction==='View History'?'History':b.dataset.shortAction==='Add contribution'?'Add':b.dataset.shortAction==='Update value'?'Update':b.dataset.shortAction)).forEach(button=>copy.append(button));
+            cell.append(copy);footer.append(cell);row.after(footer);
+            actions.classList.add('investment-original-actions');
+          });
+        }
       });
     }
     function refreshInvestmentCategoryDialog() {
