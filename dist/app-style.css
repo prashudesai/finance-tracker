@@ -2871,8 +2871,26 @@ html body #growthContributionDialog .growth-exclusion-item{display:flex!importan
 @media screen and (max-width:700px){
  html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{z-index:1010;background:var(--card-bg)!important;border:1px solid var(--primary)!important;opacity:1;pointer-events:auto}
 }
+
+
+/* Smaller visible Add circle near the right dock corner, retaining its touch area. */
 @media screen and (max-width:700px){
- html[data-app-style="modern"] body:has(#dashboard.active #trackerQuickAdd:not([hidden])) #financeBottomTools{right:calc(72px + env(safe-area-inset-right));grid-template-columns:minmax(0,1fr) auto}
- html[data-app-style="modern"] body:has(#dashboard.active #trackerQuickAdd:not([hidden])) #financeBottomTools #financeBottomSync{grid-column:1;justify-self:start;max-width:calc(100vw - 200px)}
- html[data-app-style="modern"] body:has(#dashboard.active #trackerQuickAdd:not([hidden])) #financeBottomTools #openRecordSearch{grid-column:2}
+ html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd{right:max(4px,env(safe-area-inset-right));bottom:calc(65px + env(safe-area-inset-bottom));background:transparent!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+ html[data-app-style="modern"] body.advanced-layout #dashboard #trackerQuickAdd::before{content:"";position:absolute;inset:11px;border-radius:50%;background:var(--card-bg);border:1px solid var(--primary);box-shadow:0 2px 6px #0002;pointer-events:none}
+ html[data-app-style="modern"] #trackerQuickAdd .quick-add-symbol{position:relative;font-size:13px}
+}
+
+/* A compact row directly above navigation: Search, centred sync, Add. */
+@media screen and (max-width:700px){
+ html[data-app-style="modern"] #financeBottomTools{left:max(4px,env(safe-area-inset-left));right:max(4px,env(safe-area-inset-right));bottom:calc(65px + env(safe-area-inset-bottom));height:44px;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center}
+ html[data-app-style="modern"] #financeBottomTools #financeBottomSync{grid-column:2;grid-row:1;justify-self:center;max-width:100%;text-align:center}
+ html[data-app-style="modern"] #financeBottomTools #openRecordSearch{grid-column:1;grid-row:1;justify-self:start;width:44px;height:44px;padding:0;border:0;background:transparent;box-shadow:none;border-radius:50%}
+ html[data-app-style="modern"] #financeBottomTools #openRecordSearch>span{display:none}
+ html[data-app-style="modern"] #financeBottomTools #openRecordSearch svg{width:18px;height:18px;flex:0 0 18px}
+}
+/* Match Search and Add with equal 22px circles inside 44px touch areas. */
+@media screen and (max-width:700px){
+ html[data-app-style="modern"] #financeBottomTools #openRecordSearch{position:relative}
+ html[data-app-style="modern"] #financeBottomTools #openRecordSearch::before{content:"";position:absolute;inset:11px;border-radius:50%;background:var(--card-bg);border:1px solid var(--primary);box-shadow:0 2px 6px #0002;pointer-events:none}
+ html[data-app-style="modern"] #financeBottomTools #openRecordSearch svg{position:relative;width:13px;height:13px;flex:0 0 13px}
 }

@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.29.11",
+  "version": "2026.10.29.12",
   "released": "2026-10-29",
   "releaseNotes": [
-    "Keep the dashboard Add button visible and clickable above the dock throughout scrolling, including the page bottom."
+    "Align compact matching Search and Add circles above mobile navigation, with sync status centred between them."
   ],
   "sections": [
     [
