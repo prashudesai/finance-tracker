@@ -158,8 +158,8 @@ const server=http.createServer(async(req,res)=>{try{
    window.__pullRestore=()=>{financeBridge.refreshRemote=oldRefresh;window.financeDrafts=oldDrafts;delete window.__pullTest;delete window.__pullRestore;};
    return{ignored,scrolled,draft,draftMessage,refreshed};
   });assert.equal(results.ignored,0);assert.equal(results.scrolled,0);assert.equal(results.draft,0);assert.match(results.draftMessage,/save your entry/);assert.equal(results.refreshed,1);
-  await page.context().setOffline(true);await page.evaluate(()=>__pullTest());assert.match(await page.locator('#mobilePullRefresh').textContent(),/Connect to the internet/);await page.context().setOffline(false);
-  await page.setViewportSize({width:1440,height:900});await page.evaluate(()=>{__pullTest();__pullRestore();});assert.equal(await page.locator('#mobilePullRefresh').isVisible(),false);
+  await page.context().setOffline(true);await page.waitForFunction(()=>!navigator.onLine);await page.evaluate(()=>__pullTest());assert.match(await page.locator('#mobilePullRefresh').textContent(),/Connect to the internet/);await page.context().setOffline(false);await page.waitForFunction(()=>navigator.onLine);
+  await page.setViewportSize({width:1440,height:900});await page.waitForFunction(()=>document.getElementById('mobilePullRefresh').hidden);await page.evaluate(()=>{__pullTest();__pullRestore();});assert.equal(await page.locator('#mobilePullRefresh').isVisible(),false);
   await page.setViewportSize({width:390,height:844});
  });
  await check('Dashboard bar chart and page headers preserve financial records at all widths',async()=>{
