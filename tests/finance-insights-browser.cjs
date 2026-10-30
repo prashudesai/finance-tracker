@@ -862,7 +862,7 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
     for(let step=3;step<=6;step++){await wizard.locator('[data-setup-action="wizard-skip"]').click();}
     assert.equal(await wizard.isVisible(),false);await fresh.locator('#appGuideTour').waitFor({state:'visible'});
     assert.equal(await fresh.locator('#appGuideTour').getAttribute('aria-modal'),'false');
-    assert(await fresh.locator('.app-tour-target').isVisible());
+    await fresh.locator('.app-tour-target').waitFor({state:'visible'});
     await fresh.locator('#appGuideTour [data-tour-next]').click();assert.match(await fresh.locator('#appGuideTourTitle').textContent(),/Record money/);
     await fresh.locator('#appGuideTour [data-tour-skip]').click();await fresh.close();
   }
