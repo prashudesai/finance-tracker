@@ -4756,9 +4756,10 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       if(!enabled)return;
       const now=new Date(),startYear=now.getMonth()>=3?now.getFullYear():now.getFullYear()-1;
       const endMonth=now.getMonth(),monthCount=(now.getFullYear()-startYear)*12+endMonth-2;
+      const mobileCash=window.matchMedia('(max-width:700px)').matches;
       const periods=[];
-      for(let offset=0;offset<monthCount;offset++){
-        const date=new Date(startYear,3+offset,1),key=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+      for(let offset=0;offset<(mobileCash?5:monthCount);offset++){
+        const date=mobileCash?new Date(now.getFullYear(),now.getMonth()-4+offset,1):new Date(startYear,3+offset,1),key=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
         periods.push({key,label:date.toLocaleDateString('en-IN',{month:'short'}),income:0,expenses:0});
       }
       const periodMap=new Map(periods.map(item=>[item.key,item]));
@@ -4767,16 +4768,17 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const cashSvg=document.getElementById('advancedDashboardCashflowChart');
       const cashPeriod=document.getElementById('advancedDashboardCashflowPeriod');
       if(cashSvg){
+        cashSvg.setAttribute('viewBox',mobileCash?'0 0 390 260':'0 0 640 205');
         if(!periods.length){cashSvg.innerHTML='<text x="320" y="100" text-anchor="middle" class="cash-axis">No months are available in this financial year.</text>';}
         else {
-          const left=42,right=630,top=18,bottom=165,height=bottom-top,width=right-left,maxValue=Math.max(1,...periods.flatMap(row=>[row.income,row.expenses]))*1.12; const cashAxis=value=>value===0?'₹0':value>=100000?`₹${(value/100000).toFixed(1)}L`:formatCurrency(value);
-          const desktopBars=(window.matchMedia?.('(min-width:701px)')?.matches??window.innerWidth>700);
+          const left=mobileCash?52:42,right=mobileCash?382:630,top=18,bottom=mobileCash?215:165,height=bottom-top,width=right-left,maxValue=Math.max(1,...periods.flatMap(row=>[row.income,row.expenses]))*1.12; const cashAxis=value=>value===0?'₹0':value>=100000?`₹${(value/100000).toFixed(1)}L`:formatCurrency(value);
+          const desktopBars=true;
           const step=width/periods.length,barWidth=Math.min(20,step*.28);
           const xAt=index=>desktopBars?left+step*(index+.5):periods.length===1?left+width/2:left+width*index/(periods.length-1),yAt=value=>bottom-height*value/maxValue;
           const lineFor=key=>periods.map((row,index)=>`${index?'L':'M'}${xAt(index).toFixed(1)},${yAt(row[key]).toFixed(1)}`).join(' ');
           const incomePath=lineFor('income'),expensePath=lineFor('expenses');
           const grid=[0,.5,1].map(fraction=>{const y=bottom-height*fraction,value=maxValue*fraction;return `<line class="cash-grid" x1="${left}" y1="${y.toFixed(1)}" x2="${right}" y2="${y.toFixed(1)}"/><text class="cash-axis" x="${left-7}" y="${(y+3).toFixed(1)}" text-anchor="end">${cashAxis(value)}</text>`;}).join('');
-          const labels=periods.map((row,index)=>`<text class="cash-axis" x="${xAt(index).toFixed(1)}" y="188" text-anchor="middle">${analyticEscape(row.label)}</text>`).join('');
+          const labels=periods.map((row,index)=>`<text class="cash-axis" x="${xAt(index).toFixed(1)}" y="${mobileCash?240:188}" text-anchor="middle">${analyticEscape(row.label)}</text>`).join('');
           const incomePoints=periods.map((row,index)=>`<circle class="cash-point-income" cx="${xAt(index).toFixed(1)}" cy="${yAt(row.income).toFixed(1)}" r="3.2"><title>${analyticEscape(row.label)} income: ${formatCurrency(row.income)}</title></circle>`).join('');
           const expensePoints=periods.map((row,index)=>`<circle class="cash-point-expense" cx="${xAt(index).toFixed(1)}" cy="${yAt(row.expenses).toFixed(1)}" r="3"><title>${analyticEscape(row.label)} expenses: ${formatCurrency(row.expenses)}</title></circle>`).join('');
           const area=`${incomePath} L${xAt(periods.length-1).toFixed(1)},${bottom} L${xAt(0).toFixed(1)},${bottom} Z`;
@@ -4801,16 +4803,16 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
             const incomeMarker=hoverLayer.querySelector('.cash-hover-income');incomeMarker.setAttribute('cx',x);incomeMarker.setAttribute('cy',incomeY);
             const expenseMarker=hoverLayer.querySelector('.cash-hover-expense');expenseMarker.setAttribute('cx',x);expenseMarker.setAttribute('cy',expenseY);
             hoverLayer.querySelector('.cash-hover-box').setAttribute('x',boxX);hoverLayer.querySelector('.cash-hover-box').setAttribute('y',boxY);
-            const texts=hoverLayer.querySelectorAll('text');texts[0].setAttribute('x',boxX+9);texts[0].setAttribute('y',boxY+13);texts[0].textContent=`${row.label} · ${financialYearLabel(startYear)}`;
+            const texts=hoverLayer.querySelectorAll('text');texts[0].setAttribute('x',boxX+9);texts[0].setAttribute('y',boxY+13);texts[0].textContent=mobileCash?`${row.label} · ${row.key.slice(0,4)}`:`${row.label} · ${financialYearLabel(startYear)}`;
             texts[1].setAttribute('x',boxX+9);texts[1].setAttribute('y',boxY+28);texts[2].setAttribute('x',boxX+48);texts[2].setAttribute('y',boxY+28);texts[2].textContent=formatCurrency(row.income);
             texts[3].setAttribute('x',boxX+9);texts[3].setAttribute('y',boxY+40);texts[4].setAttribute('x',boxX+56);texts[4].setAttribute('y',boxY+40);texts[4].textContent=formatCurrency(row.expenses);
             hoverLayer.setAttribute('visibility','visible');
           };
           cashSvg.onpointerleave=hideCashTooltip;
-          cashSvg.setAttribute('aria-label',`Income and expense trend from ${periods[0].label} through ${periods[periods.length-1].label} in financial year ${startYear}-${startYear+1}. Hover anywhere in the plot area to see the nearest month's income and expenses. Annual expenses are included in full in the month recorded.`);
+          cashSvg.setAttribute('aria-label',`Income and expense trend from ${periods[0].key} through ${periods[periods.length-1].key}. Hover anywhere in the plot area to see the nearest month's income and expenses. Annual expenses are included in full in the month recorded.`);
         }
       }
-      if(cashPeriod)cashPeriod.textContent=`${financialYearLabel(startYear)} · April to ${periods[periods.length-1]?.label||'current month'}`;
+      if(cashPeriod)cashPeriod.textContent=mobileCash?`Last 5 months · ${periods[0].label} ${periods[0].key.slice(0,4)} – ${periods.at(-1).label} ${periods.at(-1).key.slice(0,4)}`:`${financialYearLabel(startYear)} · April to ${periods[periods.length-1]?.label||'current month'}`;
       const allocations=new Map();
       for(const row of profileRows(state.investments||[])){const amount=Number(row.current)||0;if(amount>0){const name=row.type==='Stallion PMS'?'Stallion PMS':row.type||'Other';allocations.set(name,(allocations.get(name)||0)+amount);}}
       for(const [name,rows] of [['NPS',profileRows(state.nps)],['PPF',profileRows(state.ppf)],['PF',profileRows(state.pf)]]){const amount=(rows||[]).reduce((sum,row)=>sum+(Number(row.current)||0),0);if(amount>0)allocations.set(name,(allocations.get(name)||0)+amount);}

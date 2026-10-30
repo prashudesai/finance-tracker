@@ -1,3 +1,4 @@
+const {selectControl}=require('./browser-fixtures.cjs');
 const fs=require('fs'),http=require('http'),path=require('path'),assert=require('assert/strict');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'../dist'),db=new Map(),results=[];let rejectClearPublish=false;
@@ -96,14 +97,79 @@ const server=http.createServer(async(req,res)=>{try{
   }
   await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());
  });
- await check('Pending desktop bar chart and page headers preserve mobile rendering and financial records',async()=>{
+ await check('Mobile chart shows five real calendar months across the financial-year boundary',async()=>{
+  const before=await page.evaluate(()=>JSON.stringify(state));
+  await page.setViewportSize({width:390,height:844});
+  const result=await page.evaluate(()=>{
+   const RealDate=Date;const savedIncome=state.income,savedExpenses=state.expenses;
+   try{window.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[2026,3,15,12]));}};
+    state.income=[{id:'cross-fy',member:state.customValues.familyMembers[0],date:'2025-12-02',amount:12345}];state.expenses=[];
+    document.querySelector('.nav-tab[data-tab="dashboard"]').click();renderAdvancedDashboardInsights();
+    const svg=document.getElementById('advancedDashboardCashflowChart');return{months:[...svg.querySelectorAll('.cash-month-bars')].map(e=>e.getAttribute('aria-label')),period:document.getElementById('advancedDashboardCashflowPeriod').textContent,viewBox:svg.getAttribute('viewBox')};
+   }finally{window.Date=RealDate;state.income=savedIncome;state.expenses=savedExpenses;}
+  });
+  assert.equal(result.months.length,5);assert.match(result.months[0],/Dec.*12,345/);assert.match(result.months[4],/Apr/);assert.match(result.period,/Dec 2025.*Apr 2026/);assert.equal(result.viewBox,'0 0 390 260');
+  for(const width of [320,390,700,701,1440]){
+   await page.setViewportSize({width,height:844});await page.evaluate(()=>renderAdvancedDashboardInsights());
+   if(width<=700){assert.equal(await page.locator('#advancedDashboardCashflowChart .cash-month-bars').count(),5);const b=await page.locator('#advancedDashboardCashflowChart').boundingBox();assert(b.height>=220);}
+   else assert.equal(await page.locator('#advancedDashboardCashflowChart').getAttribute('viewBox'),'0 0 640 205');
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  }
+  assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
+ });
+ await check('Mobile title, Analytics accent and expandable calculation help fit without desktop changes',async()=>{
+  for(const width of [320,390,700]){
+   await page.setViewportSize({width,height:844});await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="analytics"]').click());
+   assert.equal(await page.locator('.analytics-intro-copy h1').evaluate(e=>getComputedStyle(e).borderInlineStartWidth),'4px');
+   assert.equal(await page.locator('.pft-style-brand').evaluate(e=>getComputedStyle(e).fontSize),'15px');
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  }
+  await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="income-expenses"]').click());
+  await page.locator('#cashBalanceBreakdown').evaluate(e=>e.open=true);
+  const help=page.locator('#cashBalanceBreakdown .mobile-info-help');await help.waitFor();
+  assert.equal(await help.locator('p').isVisible(),false);await help.locator('summary').click();assert(await help.locator('p').isVisible());
+  await page.setViewportSize({width:1440,height:900});await page.waitForFunction(()=>!document.querySelector('#cashBalanceBreakdown .mobile-info-help'));
+  assert(await page.locator('#cashBalanceBreakdown .finance-insight-note').last().isVisible());
+  assert.equal(await page.locator('.pft-style-brand').evaluate(e=>getComputedStyle(e).fontSize),'13px');
+ });
+ await check('Mobile form dropdowns use top-layer glass menus and restore native desktop controls',async()=>{
+  const before=await page.evaluate(()=>JSON.stringify(state));await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>financeCashFlow.open('expense'));
+  const trigger=page.locator('#expenseCategoryPopoverTrigger');await trigger.waitFor();await trigger.click();
+  const panel=page.locator('#'+await trigger.getAttribute('aria-controls'));assert(await panel.evaluate(e=>e.matches(':popover-open')));
+  const b=await panel.boundingBox();assert(b.x>=0&&b.y>=0&&b.x+b.width<=390&&b.y+b.height<=844);
+  assert.match(await panel.evaluate(e=>getComputedStyle(e).backdropFilter),/blur/);
+  await panel.getByRole('option',{name:'Other',exact:true}).click();assert.equal(await page.locator('#expenseCategory').inputValue(),'Other');
+  await page.locator('#cashEntryDialog .cash-entry-heading button').click();
+  await page.setViewportSize({width:1440,height:900});await page.waitForFunction(()=>!document.getElementById('expenseCategoryPopoverTrigger'));
+  assert.equal(await page.locator('#expenseCategory').evaluate(e=>e.classList.contains('pft-native-filter')),false);
+  assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
+ });
+ await check('Pull refresh requires top-of-page vertical intent and protects drafts, offline and desktop',async()=>{
+  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>{document.querySelector('.nav-tab[data-tab="dashboard"]').click();window.scrollTo(0,0);});
+  await page.waitForFunction(()=>scrollY===0&&Boolean(window.financeMobileExperience));
+  const results=await page.evaluate(async()=>{
+   const oldRefresh=financeBridge.refreshRemote,oldDrafts=window.financeDrafts;let count=0;financeBridge.refreshRemote=async()=>{count++;};window.financeDrafts={pending:()=>false};
+   window.__pullTest=(dx=0,dy=110,cancel=false,multi=false)=>{const target=document.querySelector('#dashboard .dashboard-page-intro');const touch=(x,y)=>new Touch({identifier:1,clientX:x,clientY:y,target});target.dispatchEvent(new TouchEvent('touchstart',{bubbles:true,touches:[touch(120,160)]}));target.dispatchEvent(new TouchEvent('touchmove',{bubbles:true,cancelable:true,touches:multi?[touch(120+dx,160+dy),touch(180,190)]:[touch(120+dx,160+dy)]}));target.dispatchEvent(new TouchEvent(cancel?'touchcancel':'touchend',{bubbles:true,changedTouches:[touch(120+dx,160+dy)]}));};
+   __pullTest(100,20);__pullTest(0,30);__pullTest(0,110,true);__pullTest(0,110,false,true);await Promise.resolve();const ignored=count;
+   window.scrollTo(0,100);__pullTest();const scrolled=count;window.scrollTo(0,0);
+   window.financeDrafts={pending:()=>true};__pullTest();await Promise.resolve();const draft=count,draftMessage=document.getElementById('mobilePullRefresh').textContent;
+   window.financeDrafts={pending:()=>false};__pullTest();await Promise.resolve();await Promise.resolve();const refreshed=count;
+   window.__pullRestore=()=>{financeBridge.refreshRemote=oldRefresh;window.financeDrafts=oldDrafts;delete window.__pullTest;delete window.__pullRestore;};
+   return{ignored,scrolled,draft,draftMessage,refreshed};
+  });assert.equal(results.ignored,0);assert.equal(results.scrolled,0);assert.equal(results.draft,0);assert.match(results.draftMessage,/save your entry/);assert.equal(results.refreshed,1);
+  await page.context().setOffline(true);await page.evaluate(()=>__pullTest());assert.match(await page.locator('#mobilePullRefresh').textContent(),/Connect to the internet/);await page.context().setOffline(false);
+  await page.setViewportSize({width:1440,height:900});await page.evaluate(()=>{__pullTest();__pullRestore();});assert.equal(await page.locator('#mobilePullRefresh').isVisible(),false);
+  await page.setViewportSize({width:390,height:844});
+ });
+ await check('Dashboard bar chart and page headers preserve financial records at all widths',async()=>{
   const before=await page.evaluate(()=>JSON.stringify(state));
   for(const width of [390,700,701,1024,1440]){
    await page.setViewportSize({width,height:900});
    await page.evaluate(()=>{PFT_STYLE.apply('modern',false);document.querySelector('.nav-tab[data-tab="dashboard"]').click();renderAdvancedDashboardInsights();});
    const chart=page.locator('#advancedDashboardCashflowChart');
-   assert.equal(await chart.locator('.cash-month-bars').count()>0,width>700);
-   assert.equal(await chart.locator('path.cash-income').count(),width>700?0:1);
+   assert.equal(await chart.locator('.cash-month-bars').count()>0,true);if(width<=700)assert.equal(await chart.locator('.cash-month-bars').count(),5);
+   assert.equal(await chart.locator('path.cash-income').count(),0);
    for(const id of ['debts','settings']){
     await page.evaluate(id=>document.querySelector('.nav-tab[data-tab="'+id+'"]').click(),id);
     assert.equal(await page.locator('#'+id+' .pending-desktop-page-icon').isVisible(),false);
@@ -291,7 +357,7 @@ const server=http.createServer(async(req,res)=>{try{
   const saved=await page.evaluate(()=>JSON.stringify(state));
   await page.evaluate(()=>{const member=state.customValues.familyMembers[0];state.pf=[];state.ppf=[];state.nps=[];state.investments=Array.from({length:10},(_,i)=>({id:'remaining-'+i,member,type:'Category '+i,name:'Holding '+i,date:'2026-01-01',invested:1000,current:(i+1)*1000}));document.querySelector('.nav-tab[data-tab="dashboard"]').click();renderCompletePortfolio();});
   for(const sort of ['current','category']){
-   await page.locator('#completePortfolioSort').selectOption(sort);
+   await selectControl(page,'#completePortfolioSort',sort);
    const top=await page.locator('#completePortfolioBody [data-portfolio-category]').evaluateAll(es=>es.map(e=>e.dataset.portfolioCategory));
    assert.equal(top.length,5);assert.equal(await page.locator('#openRemainingInvestments').textContent(),'View remaining 5 investments ›');
    await page.locator('#openRemainingInvestments').click();

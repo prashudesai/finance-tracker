@@ -1,3 +1,4 @@
+import {installMobileExperience} from './mobile-experience.js';
 import {installFilterPopovers} from './filter-popovers.js';
 import {installFinanceInsights} from './finance-insights.js';
 import {installCashFlow} from './cash-flow.js?v=86';
@@ -135,7 +136,7 @@ onAuthStateChanged(auth,async user=>{
   }
   const reviewApi={subscribe:(next,error)=>onSnapshot(reviewRef,{includeMetadataChanges:true},snapshot=>{try{next(decodeReviews(snapshot));}catch(e){error(e);}},error),load:async()=>decodeReviews(await getDocFromServer(reviewRef)),save:saveReviews,reset:resetReviews};
   window.financeCloudResolve();
-  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();installCashFlow();installFinanceInsights();installFilterPopovers();}).catch(error=>console.warn('Workbench unavailable',error));
+  Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();installCashFlow();installFinanceInsights();installMobileExperience();installFilterPopovers();}).catch(error=>console.warn('Workbench unavailable',error));
   Promise.resolve(window.trackerReady).then(installRecordRecovery).catch(error=>console.warn('Record recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(installWorkProtection).catch(error=>console.warn('Draft recovery unavailable',error));
   Promise.resolve(window.trackerReady).then(()=>installCloudNotice((next,error)=>onSnapshot(doc(db,'users/'+family.ownerUid+'/tracker/current'),snapshot=>next(snapshot.exists()?snapshot.data():null),error))).catch(error=>console.warn('Live cloud notice unavailable',error));
