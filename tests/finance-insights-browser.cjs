@@ -850,7 +850,7 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
  await check('Required first name and one-question setup work on mobile and desktop',async()=>{
   for(const width of [390,1440]){
     const fresh=await browser.newPage({viewport:{width,height:900},serviceWorkers:'block'});fresh.on('pageerror',e=>errors.push(e.message));
-    await fresh.goto(url+'/?user=setup-'+width+'&email=setup-'+width+'@example.test&name=Setup');await fresh.locator('#cloudLogin').click();await readyTracker(fresh);
+    await fresh.goto(url+'/?user=setup-'+width+'&email=setup-'+width+'@example.test&name=Setup');await fresh.locator('#cloudLogin').click();await readyTracker(fresh,{completeName:false});
     const wizard=fresh.locator('#gettingStartedChecklist');await wizard.waitFor({state:'visible'});
     assert.match(await wizard.textContent(),/Step 1 of 6/);assert.equal(await wizard.locator('[data-setup-action="wizard-skip"]').count(),0);
     await wizard.locator('[data-setup-action="wizard-next"]').click();assert.match(await wizard.locator('#quickSetupNameError').textContent(),/name/i);
