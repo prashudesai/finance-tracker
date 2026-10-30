@@ -113,30 +113,6 @@
       next.firstNameSetup={completed:true,firstName};
       return next;
     }
-    async function setupFirstName() {
-      if(window.financeCloud?.role&&window.financeCloud.role!=='owner')return;
-      if(!firstNameSetupNeeded(state,profileMemberNames()))return;
-      const mobile=window.matchMedia('(max-width:700px)').matches;
-      if(mobile&&readGettingStartedPreference()?.nameSkipped)return;
-      const dialog=document.getElementById('firstNameSetup'),form=document.getElementById('firstNameSetupForm'),input=document.getElementById('firstNameInput'),button=document.getElementById('firstNameContinue'),error=document.getElementById('firstNameError');
-      input.value=(window.financeCloud?.displayName||'').trim().split(/\s+/)[0]||'';
-      dialog.hidden=false;document.querySelector('.container').inert=true;input.focus();
-      await new Promise(resolve=>{
-        const skip=document.getElementById('firstNameSkip');
-        const finish=()=>{form.onsubmit=null;skip.onclick=null;dialog.hidden=true;document.querySelector('.container').inert=false;resolve();};
-        skip.onclick=()=>{if(!mobile||button.disabled)return;const pref=readGettingStartedPreference()||{eligible:true,dismissed:false,loanSkipped:false};pref.nameSkipped=true;writeGettingStartedPreference(pref);finish();};
-        form.onsubmit=async event=>{
-        event.preventDefault();if(button.disabled)return;error.textContent='';
-        try{
-          const builtIns=Object.values(CUSTOM_VALUE_DEFAULT_OPTIONS.familyMembers||{}).flat().map(item=>item.option.value);
-          state=withFirstNameSetup(state,input.value,builtIns);
-          button.disabled=true;button.textContent='Saving…';
-          if(!await saveData('Completed first-name setup'))throw new Error('Could not save your name on this device. Please try again.');
-          populateCustomValueSelects();renderCustomValuesPanel();initializeFamilyProfile();
-          finish();
-        }catch(e){error.textContent=e.message;button.disabled=false;button.textContent='Continue';input.focus();}
-      };});
-    }
     function createEmptyState() { return {
       recurringRules: [],
       recurringOccurrences: [],

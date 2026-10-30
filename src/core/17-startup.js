@@ -154,21 +154,21 @@
       const key='pft:guide-tour:v1';
       if(window.PFTTour){window.PFTTour.maybeStart(isNewUser);return;}
       const steps=[
-        {page:'dashboard',title:'Your finances at a glance',text:'Home brings together your assets, debts, income and expenses. Use the family profile selector to switch between an individual and the combined view.',tip:'The tour only explains the app. It does not add or change financial records.'},
-        {page:'income-expenses',title:'Record money in and out',text:'Switch between Income and Expenses, choose a month, and add an entry. Tap an existing transaction to review or edit it when you have edit access.',tip:'Monthly balances record your opening bank balance. Every amount in balance history has its own label.'},
-        {page:'income-expenses',title:'Manage recurring commitments',text:'Recurring items can record regular income, expenses and loan EMIs. Review earlier missed months before adding them, and pause a rule when it is no longer needed.',tip:'The app records entries; it does not send money or make bank payments.'},
-        {page:'investments',title:'Track your investments',text:'Add investment and retirement accounts, then tap a tile for holdings, returns and history. The actions inside each holding let you review contributions or update its value.',tip:'A contribution adds money invested. Update value or gain/loss when the market value changes.'},
-        {page:'debts',title:'Review loans and repayments',text:'Open a loan to see its outstanding balance, payment history and terms. Record EMIs or part payments, and review the preview before changing the rate, EMI or borrowing more.',tip:'Estimates help you plan. Use your bank statement to confirm repayment amounts and interest splits.'},
-        {page:'analytics',title:'Understand your reports',text:'Reports includes Analytics, Growth Projection and Date range reports. Choose the financial year for analytics or a date range for detailed records and exports.',tip:'Your selected family profile and report filters affect the records shown.'},
-        {page:'growth-projection',title:'Explore possible growth',text:'Set a time horizon and tap an investment to adjust assumptions. Stress, Base and Optimistic scenarios compare possible results. Tap a scenario below the graph for exact values and its yearly breakdown.',tip:'Projection settings are planning assumptions, not guaranteed returns or changes to your recorded investments.'},
-        {page:'settings',title:'Personalize and share access',text:'Appearance changes your page style and colors. Family access manages member names and invitations. Account settings manage your signed-in profile.',tip:'A family member name does not grant login access. Invitations and roles control access; viewers cannot edit records.'},
-        {page:'settings',title:'Keep a backup and find help',text:'Use Data & backup to export your records. Importing a backup replaces records, so keep an export first. App & updates shows your installed version and available updates.',tip:'You can replay this tour or download the full guide from App info at any time.'}
+        {page:'dashboard',target:'#dashboard .dashboard-page-intro',title:'Your finances at a glance',text:'Home brings together your assets, debts, income and expenses. Use the family profile selector to switch between an individual and the combined view.',tip:'The tour only explains the app. It does not add or change financial records.'},
+        {page:'income-expenses',target:'#income-expenses .transaction-intro',title:'Record money in and out',text:'Switch between Income and Expenses, choose a month, and add an entry. Tap an existing transaction to review or edit it when you have edit access.',tip:'Monthly balances record your opening bank balance. Every amount in balance history has its own label.'},
+        {page:'income-expenses',target:'#cashRecurringShortcut,#openRecurringBtn',title:'Manage recurring commitments',text:'Recurring items can record regular income, expenses and loan EMIs. Review earlier missed months before adding them, and pause a rule when it is no longer needed.',tip:'The app records entries; it does not send money or make bank payments.'},
+        {page:'investments',target:'#investments .investment-page-intro',title:'Track your investments',text:'Add investment and retirement accounts, then tap a tile for holdings, returns and history. The actions inside each holding let you review contributions or update its value.',tip:'A contribution adds money invested. Update value or gain/loss when the market value changes.'},
+        {page:'debts',target:'#openAddLoanBtn',title:'Review loans and repayments',text:'Open a loan to see its outstanding balance, payment history and terms. Record EMIs or part payments, and review the preview before changing the rate, EMI or borrowing more.',tip:'Estimates help you plan. Use your bank statement to confirm repayment amounts and interest splits.'},
+        {page:'analytics',target:'#analyticsFinancialYear',title:'Understand your reports',text:'Reports includes Analytics, Growth Projection and Date range reports. Choose the financial year for analytics or a date range for detailed records and exports.',tip:'Your selected family profile and report filters affect the records shown.'},
+        {page:'growth-projection',target:'#growthProjectionYears',title:'Explore possible growth',text:'Set a time horizon and tap an investment to adjust assumptions. Stress, Base and Optimistic scenarios compare possible results. Tap a scenario below the graph for exact values and its yearly breakdown.',tip:'Projection settings are planning assumptions, not guaranteed returns or changes to your recorded investments.'},
+        {page:'settings',target:'#settings .settings-intro',title:'Personalize and share access',text:'Appearance changes your page style and colors. Family access manages member names and invitations. Account settings manage your signed-in profile.',tip:'A family member name does not grant login access. Invitations and roles control access; viewers cannot edit records.'},
+        {page:'settings',target:'#settingsInfoPanel',title:'Keep a backup and find help',text:'Use Data & backup to export your records. Importing a backup replaces records, so keep an export first. App & updates shows your installed version and available updates.',tip:'You can replay this tour or download the full guide from App info at any time.'}
       ];
-      const dialog=document.createElement('dialog');dialog.id='appGuideTour';dialog.setAttribute('aria-labelledby','appGuideTourTitle');dialog.setAttribute('aria-describedby','appGuideTourText');
-      dialog.innerHTML='<header><span id="appGuideTourProgress"></span><button type="button" data-tour-skip aria-label="Skip app tour">Skip</button></header><h2 id="appGuideTourTitle" tabindex="-1"></h2><p id="appGuideTourText"></p><p id="appGuideTourTip"></p><footer><button type="button" data-tour-back>Back</button><button type="button" class="btn-primary" data-tour-next>Next</button></footer>';
+      const dialog=document.createElement('dialog');dialog.id='appGuideTour';dialog.setAttribute('aria-labelledby','appGuideTourTitle');dialog.setAttribute('aria-describedby','appGuideTourText');dialog.setAttribute('aria-modal','false');
+      dialog.innerHTML='<header><span id="appGuideTourProgress"></span><button type="button" data-tour-skip aria-label="Skip app tour">Skip</button></header><h2 id="appGuideTourTitle" tabindex="-1"></h2><p id="appGuideTourText"></p><p id="appGuideTourTip"></p><p class="app-guide-instruction">Try the highlighted area, then choose Next. Close any panel you open to continue.</p><footer><button type="button" data-tour-back>Back</button><button type="button" class="btn-primary" data-tour-next>Next</button></footer>';
       document.body.append(dialog);
-      let index=0,returnPage='dashboard',returnScroll=0,returnFocus=null;
-      const shouldOffer=newUser=>{if(!newUser||window.matchMedia('(max-width:700px)').matches&&readGettingStartedPreference()?.eligible&&!readGettingStartedPreference()?.dismissed)return false;try{return !trackerStorage.getItem(key);}catch(_){return false;}};
+      let index=0,returnPage='dashboard',returnScroll=0,returnFocus=null,highlighted=null,highlightFrame=0;
+      const shouldOffer=newUser=>{const setup=readGettingStartedPreference();if(!newUser||setup?.eligible&&!setup.dismissed)return false;try{return !trackerStorage.getItem(key);}catch(_){return false;}};
       function remember(status){try{trackerStorage.setItem(key,status);}catch(_){}}
       function render(){
         const step=steps[index];
@@ -177,12 +177,18 @@
         document.getElementById('appGuideTourTitle').textContent=step.title;
         document.getElementById('appGuideTourText').textContent=step.text;
         document.getElementById('appGuideTourTip').textContent=step.tip;
+        highlighted?.classList.remove('app-tour-target');cancelAnimationFrame(highlightFrame);
+        highlightFrame=requestAnimationFrame(()=>{
+          if(!dialog.open)return;
+          highlighted=[...document.querySelectorAll(step.target)].find(node=>node.getClientRects().length)||document.querySelector('#'+step.page+' .settings-intro, #'+step.page+' .page-intro, #'+step.page+' h1');
+          highlighted?.classList.add('app-tour-target');highlighted?.scrollIntoView({block:'center',behavior:'instant'});
+        });
         dialog.querySelector('[data-tour-back]').disabled=index===0;
         dialog.querySelector('[data-tour-next]').textContent=index===steps.length-1?'Finish':'Next';
         document.getElementById('appGuideTourTitle').focus({preventScroll:true});
       }
       function finish(status){
-        remember(status);dialog.close();document.body.classList.remove('app-guide-open');
+        remember(status);cancelAnimationFrame(highlightFrame);dialog.close();highlighted?.classList.remove('app-tour-target');highlighted=null;document.body.classList.remove('app-guide-open');
         document.querySelector('.nav-tab[data-tab="'+returnPage+'"]')?.click();
         window.scrollTo({top:returnScroll,behavior:'instant'});
         if(returnFocus?.isConnected&&!returnFocus.closest('#settingsPanelParking'))returnFocus.focus({preventScroll:true});
@@ -191,7 +197,7 @@
         if(dialog.open)return;
         if([...document.querySelectorAll('dialog[open]:not(#settingsTileDialog),[aria-modal="true"]:not(dialog)')].some(node=>node.getClientRects().length&&getComputedStyle(node).visibility!=='hidden'))return;
         returnPage=document.querySelector('.nav-tab.active')?.dataset.tab||'dashboard';returnScroll=window.scrollY;returnFocus=document.activeElement;
-        window.closeSettingsTile?.();index=0;remember('started');document.body.classList.add('app-guide-open');dialog.showModal();render();
+        window.closeSettingsTile?.();index=0;remember('started');document.body.classList.add('app-guide-open');dialog.show();render();
       }
       dialog.querySelector('[data-tour-skip]').onclick=()=>finish('skipped');
       dialog.querySelector('[data-tour-back]').onclick=()=>{if(index>0){index--;render();}};
@@ -221,7 +227,7 @@
 
 
 
-    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();window.dispatchEvent(new Event('pft:before-reveal'));window.PFTPerformance?.mark('layout-ready');document.querySelector('.container').inert=false;window.financeCloud.showApp();window.PFTPerformance?.mark('visible');window.dispatchEvent(new Event('pft:visible'));void verifyStartupRevision();const newTourUser=firstNameSetupNeeded(state,profileMemberNames())&&(!window.financeCloud?.role||window.financeCloud.role==='owner');await setupFirstName();setupAppTour(newTourUser);applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
+    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();window.dispatchEvent(new Event('pft:before-reveal'));window.PFTPerformance?.mark('layout-ready');document.querySelector('.container').inert=false;window.financeCloud.showApp();window.PFTPerformance?.mark('visible');window.dispatchEvent(new Event('pft:visible'));void verifyStartupRevision();const newTourUser=firstNameSetupNeeded(state,profileMemberNames())&&(!window.financeCloud?.role||window.financeCloud.role==='owner');setupAppTour(newTourUser||readGettingStartedPreference()?.wizardComplete===true);applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
     if(window.PFTResolveTrackerReady)trackerStartup.then(window.PFTResolveTrackerReady);else window.trackerReady=trackerStartup;
 
     const tableSortChoices = {};
