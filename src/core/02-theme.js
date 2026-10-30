@@ -21,19 +21,23 @@
 
     function applyColorTheme(key, persist = true) {
       const safeKey = Object.prototype.hasOwnProperty.call(COLOR_THEMES, key) ? key : 'navy-emerald';
-      const theme = COLOR_THEMES[safeKey];
+      let blackPalette='';
+      if(safeKey==='obsidian-black'&&window.matchMedia('(max-width:700px)').matches){try{blackPalette=trackerStorage.getItem('pft:blackPalette')||'';}catch(_){}if(!COLOR_THEMES[blackPalette]||blackPalette==='obsidian-black')blackPalette='';}
+      const theme = COLOR_THEMES[blackPalette||safeKey];
       const mode = htmlElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
       const [primary, primaryDark, primaryLight, accent] = theme[mode];
       const vars = {'primary':primary,'primary-dark':primaryDark,'primary-light':primaryLight,'accent':accent,
         'header-from':mode === 'dark' ? theme.darkHeader[0] : primary,'header-to':mode === 'dark' ? theme.darkHeader[1] : primaryDark,
         'button-text':mode === 'dark' ? '#0f172a' : '#ffffff','button-hover':primaryDark,
         'chart-secondary':theme.colors[1],'chart-tertiary':theme.colors[2],'chart-quaternary':theme.colors[3]};
-      if (safeKey === 'obsidian-black') Object.assign(vars,{'chart-secondary':mode==='dark'?'#a7bdf2':'#3157a5','chart-tertiary':mode==='dark'?'#f1c58a':'#945807','chart-quaternary':mode==='dark'?'#d8b4fe':'#7841a5'});
+      if (blackPalette) Object.assign(vars,{'black-primary':primary,'black-primary-dark':primaryDark,'black-primary-light':primaryLight,'black-accent':accent});
+      htmlElement.dataset.blackPalette=blackPalette;
+      if (safeKey === 'obsidian-black'&&!blackPalette) Object.assign(vars,{'chart-secondary':mode==='dark'?'#a7bdf2':'#3157a5','chart-tertiary':mode==='dark'?'#f1c58a':'#945807','chart-quaternary':mode==='dark'?'#d8b4fe':'#7841a5'});
       if (safeKey === 'arctic-glass') vars['card-bg'] = mode === 'dark' ? 'rgba(8, 51, 68, .88)' : 'rgba(255, 255, 255, .88)';
       else htmlElement.style.removeProperty('--card-bg');
       Object.entries(vars).forEach(([name,value]) => htmlElement.style.setProperty(`--${name}`,value));
       htmlElement.setAttribute('data-color-theme',safeKey);window.PFTPaint?.remember();
-      themeOptions?.querySelectorAll('.theme-choice').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.themeKey===safeKey)));
+      themeOptions?.querySelectorAll('.theme-choice').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.themeKey===(blackPalette||safeKey))));
       if (persist) { try { trackerStorage.setItem(COLOR_THEME_KEY,safeKey); } catch (error) { /* Theme still changes for this session. */ } }
     }
 
@@ -101,8 +105,15 @@
     themeOptions?.addEventListener('click', event => {
       const button=event.target.closest('.theme-choice');
       if(!button||!COLOR_THEMES[button.dataset.themeKey])return;
-      if(htmlElement.getAttribute('data-color-theme')==='obsidian-black')window.PFT_STYLE?.apply('modern');
-      applyColorTheme(button.dataset.themeKey);
+      if(htmlElement.getAttribute('data-color-theme')==='obsidian-black'&&window.matchMedia('(max-width:700px)').matches){
+        try{trackerStorage.setItem('pft:blackPalette',button.dataset.themeKey);}catch(_){}
+        applyColorTheme('obsidian-black');
+      }else{
+        if(htmlElement.getAttribute('data-color-theme')==='obsidian-black')window.PFT_STYLE?.apply('modern');
+        applyColorTheme(button.dataset.themeKey);
+      }
       if(document.getElementById('analytics')?.classList.contains('active'))renderCharts();
     });
 
+
+    window.matchMedia('(max-width:700px)').addEventListener('change',()=>{if(htmlElement.dataset.colorTheme==='obsidian-black')applyColorTheme('obsidian-black',false);});
