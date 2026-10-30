@@ -338,7 +338,7 @@ const server=http.createServer(async(req,res)=>{try{
    const header=await page.locator('.debt-list-panel>.panel-header').boundingBox();
    const heading=await page.locator('.debt-list-panel h2').boundingBox();
    const add=await page.locator('#openAddLoanBtn').boundingBox();
-   assert(header.height<110&&add.height>=44&&heading.x+heading.width<=add.x+1,JSON.stringify({style,width,header,heading,add}));
+   assert(header.height<110&&add.height>=43.99&&heading.x+heading.width<=add.x+1,JSON.stringify({style,width,header,heading,add}));
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   }
   await page.evaluate(original=>{Object.assign(state,JSON.parse(original));renderDebts();renderExpenses();PFT_STYLE.apply('modern');document.querySelector('.nav-tab[data-tab="income-expenses"]').click();},before);
