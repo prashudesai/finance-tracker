@@ -120,7 +120,7 @@ const server=http.createServer(async(req,res)=>{try{
  await check('Mobile title, Analytics accent and expandable calculation help fit without desktop changes',async()=>{
   for(const width of [320,390,700]){
    await page.setViewportSize({width,height:844});await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="analytics"]').click());
-   assert.equal(await page.locator('.analytics-intro-copy h1').evaluate(e=>getComputedStyle(e).borderInlineStartWidth),'4px');
+   assert.equal(await page.locator('#analytics .analytics-intro-copy h1').evaluate(e=>getComputedStyle(e).borderInlineStartWidth),'4px');
    assert.equal(await page.locator('.pft-style-brand').evaluate(e=>getComputedStyle(e).fontSize),'15px');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   }
