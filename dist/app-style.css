@@ -3493,3 +3493,6 @@ html[data-app-style] body.advanced-layout #investments :is(.investment-empty-sta
  html body :is(#investmentCategoryDialog,#retirementCategoryDialog).mobile-compact-account :is(#investmentCategoryDialogTable,#retirementCategoryDialogTable) td:is(.investment-row-actions,.account-action-buttons,[data-mobile-label="Actions"],[data-label="Actions"]){width:auto!important;max-width:none!important;min-width:0!important;justify-self:stretch!important;align-self:stretch!important;justify-items:stretch!important;align-items:stretch!important}
  html body :is(#investmentCategoryDialog,#retirementCategoryDialog).mobile-compact-account :is(#investmentCategoryDialogTable,#retirementCategoryDialogTable) button[data-mobile-account-action]{width:auto!important;max-width:none!important;justify-self:stretch!important;align-self:stretch!important;flex-direction:row!important}
 }
+@media screen and (max-width:700px){
+ html body :is(#investmentCategoryDialog,#retirementCategoryDialog).mobile-compact-account :is(#investmentCategoryDialogTable,#retirementCategoryDialogTable) button[data-mobile-account-action]{transition-property:background-color,border-color,color!important}
+}
