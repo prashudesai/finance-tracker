@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.30.4",
+  "version": "2026.10.30.5",
   "released": "2026-10-30",
   "releaseNotes": [
-    "Mobile: theme-aware first-name setup, choices for income, expense, opening balance, investments, loans and family, automatic sign-out after successful Dashboard deletion, and a later pull-to-refresh prompt with a longer deliberate refresh gesture."
+    "Mobile: a cleaner first-name welcome screen, one-step-at-a-time setup for family, opening balance, income, investments and loans with Back and Skip, no Expenses step or repeated first-name question, palette-matched setup cards without the blue accent line, and a sliders Settings icon."
   ],
   "sections": [
     [

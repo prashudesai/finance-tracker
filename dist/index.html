@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="./assets/boot.a2ca9dc9f03ee137.js"></script>
-  <script defer src="./assets/app-info.2712903e743e745d.js"></script>
+  <script defer src="./assets/app-info.9886712d5073b9a0.js"></script>
   <script defer src="./assets/loan-ledger.68deb1413e30aa08.js"></script>
   <script defer src="./assets/recurring.21005de2ca263681.js"></script>
   <script defer src="./assets/recurring-ui.7063af9db85dae04.js"></script>
@@ -28,7 +28,7 @@
 
   <link rel="stylesheet" href="./assets/legacy-3.da8e96c8d3a1dcce.css">
 <link rel="stylesheet" href="./assets/legacy-4.453862e3306d6301.css">
-  <link rel="stylesheet" href="./assets/app-style.990e31f9ef69e6dc.css">
+  <link rel="stylesheet" href="./assets/app-style.b5ab1eebe9ef604b.css">
   <link rel="stylesheet" href="./assets/workbench.ae99eb56d5654983.css">
   <link rel="stylesheet" href="./assets/cash-flow.9211ea05b78d02da.css">
   <link rel="stylesheet" href="./assets/print.e13a02846eb11264.css" media="print">
@@ -51,12 +51,12 @@
   </div><p class="cloud-login-footer"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg><span>Secure sign-in · Your records sync across devices</span></p></section>
   <section id="firstNameSetup" hidden role="dialog" aria-modal="true" aria-labelledby="firstNameTitle" style="position:fixed;inset:0;z-index:10001;display:grid;place-items:center;padding:20px;background:rgba(15,23,42,.94);font-family:inherit;">
     <form id="firstNameSetupForm" class="cloud-login-card" style="color:#e7f0f8">
-      <h1 id="firstNameTitle">What’s your first name?</h1>
-      <p>We’ll add you to Family Members so you can assign income and investments to yourself. You can add more members in Settings.</p>
-      <label for="firstNameInput" style="display:block;margin-bottom:8px">First name</label>
+      <span class="mobile-welcome-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V9m8 10V5m8 14v-7"/></svg></span><p class="mobile-welcome-step">Let’s get started · Step 1 of 6</p><h1 id="firstNameTitle">What’s your first name?</h1>
+      <p class="first-name-explanation">We’ll add you to Family Members so you can assign income and investments to yourself. You can add more members in Settings.</p>
+      <p class="mobile-welcome-copy">A name to make this space yours.</p><label for="firstNameInput" style="display:block;margin-bottom:8px">First name</label>
       <input id="firstNameInput" name="given-name" autocomplete="given-name" maxlength="60" required style="box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #64748b;border-radius:8px;background:#0f172a;color:#e7f0f8;font:inherit">
       <p id="firstNameError" role="alert" style="color:#fca5a5"></p>
-      <button id="firstNameContinue" type="submit">Continue</button>
+      <button id="firstNameContinue" type="submit">Continue</button><button id="firstNameSkip" type="button">Skip for now</button>
     </form>
   </section>
   <div class="container" role="main" id="trackerMain" tabindex="-1">
@@ -71,7 +71,7 @@
         <div class="theme-mode-switch" id="themeToggle" role="group" aria-label="Theme mode">
           <button type="button" class="theme-mode-option" data-mode="light" aria-label="Switch to light mode" title="Switch to light mode"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button>
         </div>
-        <button type="button" id="mobileSettingsShortcut" aria-label="Open Settings" title="Settings" onclick="document.querySelector('.nav-tab[data-tab=&quot;settings&quot;]')?.click()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 2.5h5l.5 2.1 1.8 1 2.1-.6 2.5 4.3-1.6 1.5v2.4l1.6 1.5-2.5 4.3-2.1-.6-1.8 1-.5 2.1h-5L9 19.4l-1.8-1-2.1.6-2.5-4.3 1.6-1.5v-2.4L2.6 9.3l2.5-4.3 2.1.6 1.8-1 .5-2.1Z"/><circle cx="12" cy="12" r="3.4"/></svg></button>
+        <button type="button" id="mobileSettingsShortcut" aria-label="Open Settings" title="Settings" onclick="document.querySelector('.nav-tab[data-tab=&quot;settings&quot;]')?.click()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h6m4 0h6M4 17h10m4 0h2"/><circle cx="12" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></svg></button>
       </div>
     </header>
 
@@ -1332,7 +1332,7 @@
   <div id="investmentCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="investmentCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="investmentCategoryDialogTitle"></h2><p id="investmentCategoryDialogSubtitle"></p></div><button type="button" class="investment-category-dialog-close" data-close-investment-category-dialog aria-label="Close investment details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><h3>Portfolio summary</h3><div id="investmentCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Holdings and actions</h3><div id="investmentCategoryDialogTable"></div></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-investment-category-dialog>Done</button></footer></div></div>
     <div id="retirementCategoryDialog" role="dialog" aria-modal="true" aria-labelledby="retirementCategoryDialogTitle" hidden><div class="investment-category-dialog-shell"><header class="investment-category-dialog-header"><div><h2 id="retirementCategoryDialogTitle"></h2><p id="retirementCategoryDialogSubtitle"></p></div><button type="button" class="investment-category-dialog-close" data-close-retirement-category-dialog aria-label="Close retirement account details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="investment-category-dialog-content"><div id="retirementCategoryDialogActions" class="retirement-account-actions"></div><h3>Account summary</h3><div id="retirementCategoryDialogSummary" class="investment-category-dialog-summary"></div><h3>Accounts and actions</h3><div id="retirementCategoryDialogTable"></div><p id="retirementCategoryDialogNote" class="retirement-account-help"></p></div><footer class="investment-category-dialog-footer"><button type="button" class="btn-secondary" data-close-retirement-category-dialog>Done</button></footer></div></div>
 
-  <script defer src="./assets/app-core.3b1b5ffc5f836a94.js"></script>
+  <script defer src="./assets/app-core.382f79bfc9305f56.js"></script>
 
 
 </body>

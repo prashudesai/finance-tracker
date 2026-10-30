@@ -1,3 +1,10 @@
+# 2026.10.30.5
+
+- Simplify the mobile first-name welcome screen and keep it aligned with the selected palette.
+- Guide mobile setup one step at a time: first name once, other family members, opening balance, income, investments and loans. Optional steps support Back and Skip; saved progress resumes after reload.
+- Use existing record editors and validation, returning to setup when each editor closes. Keep Expenses out of initial setup and keep the app tour available from Settings.
+- Remove the blue setup accent line and replace the mobile Settings shortcut with the selected sliders icon.
+
 # 2026.10.27.7
 
 - Refresh Investment overview and Analytics layouts with responsive cards, shared financial-year controls and clear empty states.
