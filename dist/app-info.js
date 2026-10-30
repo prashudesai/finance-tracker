@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.29.19",
-  "released": "2026-10-29",
+  "version": "2026.10.30.1",
+  "released": "2026-10-30",
   "releaseNotes": [
-    "Desktop: simplify Dashboard, Debt and Settings headers to match Cash Flow; compact the projection panels and show live portfolio, contribution and gratuity inputs. Preserve the 30:70 layout and mobile views."
+    "Desktop and mobile: consolidated monthly overview with financial-year averages, guided first-time setup, friendly empty states, compact Debt Summary and expandable household expense calculations."
   ],
   "sections": [
     [
