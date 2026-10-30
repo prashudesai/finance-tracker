@@ -1,0 +1,11 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),path=require('path');
+const source=fs.readFileSync(path.join(__dirname,'../src/core/18-getting-started.js'),'utf8');
+const fn=source.slice(source.indexOf('    function gettingStartedSnapshot('),source.indexOf('    function readGettingStartedPreference(')),c={};vm.runInNewContext(fn,c);
+const snapshot=c.gettingStartedSnapshot,data={customValues:{familyMembers:['Prashanth']},income:[],expenses:[],debts:[],investments:[],monthlyBalances:[]};const before=JSON.stringify(data);
+let result=snapshot(data,'2026-10');assert.equal(result.hasData,false);assert.equal(result.family,true);assert.equal(result.opening,false);assert.equal(result.loans,false);assert.equal(result.investments,false);assert.equal(JSON.stringify(data),before);
+assert.equal(snapshot(data,'2026-10',true).loans,true);
+for(const key of ['income','expenses','debts','investments','pf','ppf','nps','gratuityAccounts','retirementContributions','archivedAccounts'])assert.equal(snapshot({...data,[key]:[{amount:0,current:0}]},'2026-10').hasData,true,'Zero-valued existing '+key+' is real data');
+result=snapshot({...data,monthlyBalances:[{month:'2026-10',startBalance:0}]},'2026-10');assert.equal(result.hasData,true);assert.equal(result.opening,true);
+assert.equal(snapshot({...data,monthlyBalances:[{month:'2026-09',startBalance:0}]},'2026-10').opening,false);
+assert.equal(snapshot({...data,monthlyBalances:[{month:'2026-10',startBalance:null}]},'2026-10').opening,false);
+console.log('PASS setup state: new user, genuine zero balances, optional loans, prior-month balances, archives and read-only derivation');

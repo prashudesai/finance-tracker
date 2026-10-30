@@ -3360,3 +3360,75 @@ html[data-app-style="modern"] #investmentEditModal :is(input,select,textarea){
  #growthProjectionInputs .projection-input-help{font-size:10px;line-height:1.5;color:var(--text-light);margin:3px 0 0}
  #growthProjectionInputs .projection-input-note{font-size:10px;line-height:1.5;color:var(--text-light);margin:14px 0 0;padding-top:10px;border-top:1px solid var(--border)}
 }
+
+/* Consolidated monthly Dashboard: four desktop cards, compact 2x2 on phones. */
+#dashboardLegacyAverages{display:none!important}
+html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview{grid-column:1/-1;min-width:0;margin:0;background:none;border:0;padding:0}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-monthly-heading{position:static!important;top:auto!important;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;margin:0 0 10px;padding:0;min-height:0;background:none;border:0;border-radius:0;box-shadow:none}
+html[data-app-style] body.advanced-layout #dashboard .dashboard-monthly-heading h2{margin:0;padding:0;border:0;font-size:12px;font-weight:650;line-height:1.4;letter-spacing:.06em;text-transform:uppercase;color:var(--primary)}
+#dashboardMonthlyPeriod{font-size:11px;color:var(--text-light)}
+html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-monthly-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-stat{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;grid-area:auto!important;min-width:0;min-height:130px;padding:16px;margin:0;box-sizing:border-box;border-radius:14px}
+html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-card-heading{display:flex;align-items:center;gap:8px;min-height:34px;width:100%;min-width:0;margin:0}
+html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-icon{width:24px;height:24px;min-width:24px;flex:0 0 24px}
+html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-kicker{font-size:12px;line-height:1.4;white-space:normal;overflow-wrap:anywhere;letter-spacing:0;text-transform:none}
+html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-stat-value{margin:8px 0 0;font-size:clamp(20px,2vw,29px);line-height:1.25;white-space:normal;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-stat-secondary{margin:10px 0 0;font-size:11px;line-height:1.5;color:var(--text-light);white-space:normal;overflow-wrap:anywhere}
+html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview [data-summary-key="savings"] .dashboard-stat-value{color:var(--primary)}
+html[data-layout-style="emerald-flow"] #dashboardMonthlyOverview{display:none!important}
+@media(min-width:701px){
+ html[data-app-style="modern"] body.advanced-layout #dashboard>.dashboard{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;align-items:stretch}
+ html[data-app-style="modern"] body.advanced-layout #dashboard>.dashboard>.dashboard-net-worth{grid-column:1!important;grid-row:1!important;min-height:0}
+ html[data-app-style="modern"] body.advanced-layout #dashboard>.dashboard>#dashboardExpenseSnapshot{grid-column:2!important;grid-row:1!important;margin:0;min-width:0;box-sizing:border-box}
+ html[data-app-style="modern"] body.advanced-layout #dashboard>.dashboard>#dashboardMonthlyOverview{grid-row:2!important;margin-top:2px}
+}
+@media(max-width:700px){
+ html[data-app-style="modern"] body.advanced-layout #dashboard>.dashboard{display:grid;grid-template-columns:minmax(0,1fr)!important;gap:14px}
+ html[data-app-style="modern"] body.advanced-layout #dashboard>.dashboard>.dashboard-net-worth{grid-column:1!important;grid-row:1!important}
+ html[data-app-style="modern"] body.advanced-layout #dashboard>.dashboard>#dashboardMonthlyOverview{grid-column:1!important;grid-row:2!important}
+ html[data-app-style="modern"] body.advanced-layout #dashboard>.dashboard>#dashboardExpenseSnapshot{grid-column:1!important;grid-row:3!important}
+ html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-monthly-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-stat{min-height:123px;padding:12px}
+ html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-card-heading{gap:6px;min-height:34px}
+ html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-stat-value{font-size:22px}
+ html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-stat-secondary{font-size:10px;margin-top:7px}
+}
+@media(max-width:360px){html[data-app-style] body.advanced-layout #dashboard #dashboardMonthlyOverview .dashboard-stat-value{font-size:19px}}
+
+/* New-user guidance replaces the zero-filled Dashboard, never actual zero-valued records. */
+#dashboard[data-empty-tracker="true"]>:is(.dashboard,.advanced-dashboard-insights,.dashboard-portfolio-panel,.debt-summary-panel,.flow-home,.pft-style-hero,#monthlyChanges){display:none!important}
+#dashboard[data-empty-tracker="true"] .pft-dashboard-caption{display:none!important}
+.getting-started-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.getting-started-heading h2{margin:0 0 5px;font-size:18px}.getting-started-heading p{margin:0;color:var(--text-light);font-size:12px}
+.getting-started-steps{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:0;margin:16px 0 0}
+.getting-started-steps li{min-width:0;display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--border);border-radius:12px}
+.setup-step-state{color:var(--text-light)}.is-complete .setup-step-state{color:var(--primary)}
+.getting-started-steps strong{font-size:13px}.getting-started-steps button{min-height:44px;font-size:12px;white-space:normal}
+.getting-started-steps .setup-skip-loan{border:0;background:transparent;color:var(--text-light);cursor:pointer}
+.first-record-prompt{text-align:center;padding:32px 20px!important}.first-record-prompt h2{font-size:22px;line-height:1.35;max-width:550px;margin:0 auto 12px}.first-record-prompt p{color:var(--text-light);font-size:13px;line-height:1.6}.first-record-prompt button{min-height:44px;margin-top:8px}
+.friendly-empty-cell{text-align:center!important;white-space:normal!important;padding:20px!important;line-height:1.6!important}
+.friendly-empty-cell>button,.friendly-empty-cell>small{display:block;margin:10px auto 0;max-width:100%;white-space:normal}
+.house-expense-help{margin:0 0 12px;font-size:12px;color:var(--text-light)}.house-expense-help summary{cursor:pointer;color:var(--primary);min-height:32px;display:list-item}.house-expense-help p{line-height:1.6;max-width:760px}
+.house-expense-hint{font-size:11px;line-height:1.5;color:var(--text-light);margin:10px 0 0}
+@media(max-width:900px){.getting-started-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:400px){.getting-started-heading{flex-wrap:wrap}.getting-started-steps{gap:8px}.getting-started-steps li{padding:10px}.first-record-prompt h2{font-size:19px}}
+
+/* Dashboard debt stays a slim summary; the Debt page retains full controls. */
+html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel{padding:14px 16px!important;margin-top:16px}
+html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel>.panel-header{min-height:0;margin:0 0 10px;padding:0;align-items:center}
+html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel h2{font-size:15px!important;margin:0}
+html[data-app-style] body.advanced-layout #dashboard .debt-summary-total strong{font-size:20px}
+html[data-app-style] body.advanced-layout #dashboard .debt-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:10px}
+html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel .debt-summary-card-toggle{padding:10px 12px;min-height:0}
+html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel.is-empty{padding:10px 0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important}
+html[data-app-style] body.advanced-layout #dashboard .debt-summary-panel.is-empty>.panel-header{display:none!important}
+.debt-free-message{margin:0;color:var(--text-light);font-size:13px;line-height:1.5}
+/* Preserve full-width Debt empty content when adding its inline call to action. */
+html[data-app-style] body.advanced-layout #debts .debt-list-panel tbody td.debt-empty-cell.friendly-empty-cell{padding:0!important;text-align:left!important}
+.investment-empty-state,#retirementEmptyState{flex-wrap:wrap}
+.investment-empty-state>[data-setup-action],#retirementEmptyState>[data-setup-action]{max-width:100%;margin-top:8px;white-space:normal}
+/* Keep the icon and message together; the new action gets its own row. */
+html[data-app-style] body.advanced-layout #investments :is(.investment-empty-state,#retirementEmptyState){display:grid!important;grid-template-columns:42px minmax(0,1fr);gap:10px 12px;align-items:center}
+html[data-app-style] body.advanced-layout #investments :is(.investment-empty-state,#retirementEmptyState)>.account-empty-icon{grid-column:1;grid-row:1}
+html[data-app-style] body.advanced-layout #investments :is(.investment-empty-state,#retirementEmptyState)>.account-empty-copy{grid-column:2;grid-row:1;min-width:0}
+html[data-app-style] body.advanced-layout #investments :is(.investment-empty-state,#retirementEmptyState)>[data-setup-action]{grid-column:2;grid-row:2;justify-self:start;margin:0;max-width:100%}
