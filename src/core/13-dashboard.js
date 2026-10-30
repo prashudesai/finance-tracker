@@ -1,3 +1,14 @@
+    // Full house expense = inferred household spending + recorded expenses.
+    // Opening + household income - PMS transfers - next month's opening.
+    // Missing closing/opening records remain pending; this never writes records.
+    function dashboardFullHouseExpense(data,month){
+      if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))return null;
+      const [year,m]=month.split('-').map(Number),next=`${m===12?year+1:year}-${String(m===12?1:m+1).padStart(2,'0')}`;
+      const opening=(data.monthlyBalances||[]).find(row=>row.month===month),closing=(data.monthlyBalances||[]).find(row=>row.month===next);
+      if(!opening||!closing||!Number.isFinite(opening.startBalance)||!Number.isFinite(closing.startBalance))return null;
+      const total=rows=>(rows||[]).filter(row=>row.date?.slice(0,7)===month).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+      return opening.startBalance+total(data.income)-total(data.stallionContributions)-closing.startBalance;
+    }
     function updateDashboardExpenseVisual(house, full) {
       const visual=document.querySelectorAll('#dashboardExpenseSnapshot .dashboard-expense-visual');
       const valid=Number.isFinite(house)&&Number.isFinite(full)&&house>=0&&full>0&&house<=full;
@@ -245,30 +256,41 @@
       for(const row of state.expenses||[]){const key=row.date?.slice(0,7),period=periodMap.get(key);if(period)period.expenses+=Number(row.amount)||0;}
       const cashSvg=document.getElementById('advancedDashboardCashflowChart');
       const cashPeriod=document.getElementById('advancedDashboardCashflowPeriod');
+      const cashPanel=cashSvg?.closest('.advanced-dashboard-chart-panel');
+      if(cashPanel){cashPanel.querySelector('h2').textContent=mobileCash?'Income vs full house expense':'Income vs expenses';const legend=cashPanel.querySelector('.advanced-dashboard-legend span:last-child');if(legend)legend.innerHTML='<i class="expense-series"></i>'+(mobileCash?'Full house expense':'Expenses');}
+      const selectedValue=cashPanel?.querySelector('.mobile-chart-selection');selectedValue?.remove();
+      let tapValue=null;
+      if(mobileCash&&cashPanel){tapValue=document.createElement('p');tapValue.className='mobile-chart-selection';tapValue.setAttribute('role','status');tapValue.setAttribute('aria-live','polite');tapValue.textContent='Tap a month to see amounts. Full expense is pending until both bank balances are recorded.';cashPanel.append(tapValue);for(const row of periods)row.expenses=dashboardFullHouseExpense(state,row.key);}
+
       if(cashSvg){
         cashSvg.setAttribute('viewBox',mobileCash?'0 0 390 260':'0 0 640 205');
         if(!periods.length){cashSvg.innerHTML='<text x="320" y="100" text-anchor="middle" class="cash-axis">No months are available in this financial year.</text>';}
         else {
-          const left=mobileCash?52:42,right=mobileCash?382:630,top=18,bottom=mobileCash?215:165,height=bottom-top,width=right-left,maxValue=Math.max(1,...periods.flatMap(row=>[row.income,row.expenses]))*1.12; const cashAxis=value=>value===0?'₹0':value>=100000?`₹${(value/100000).toFixed(1)}L`:formatCurrency(value);
+          const left=mobileCash?52:42,right=mobileCash?382:630,top=18,bottom=mobileCash?215:165,height=bottom-top,width=right-left,maxValue=Math.max(1,...periods.flatMap(row=>[row.income,row.expenses??0]))*1.12,minValue=mobileCash?Math.min(0,...periods.map(row=>row.expenses??0))*1.12:0; const cashAxis=value=>value===0?'₹0':value>=100000?`₹${(value/100000).toFixed(1)}L`:formatCurrency(value);
           const desktopBars=true;
           const step=width/periods.length,barWidth=Math.min(20,step*.28);
-          const xAt=index=>desktopBars?left+step*(index+.5):periods.length===1?left+width/2:left+width*index/(periods.length-1),yAt=value=>bottom-height*value/maxValue;
+          const xAt=index=>desktopBars?left+step*(index+.5):periods.length===1?left+width/2:left+width*index/(periods.length-1),yAt=value=>bottom-height*((value??0)-minValue)/(maxValue-minValue);
           const lineFor=key=>periods.map((row,index)=>`${index?'L':'M'}${xAt(index).toFixed(1)},${yAt(row[key]).toFixed(1)}`).join(' ');
           const incomePath=lineFor('income'),expensePath=lineFor('expenses');
-          const grid=[0,.5,1].map(fraction=>{const y=bottom-height*fraction,value=maxValue*fraction;return `<line class="cash-grid" x1="${left}" y1="${y.toFixed(1)}" x2="${right}" y2="${y.toFixed(1)}"/><text class="cash-axis" x="${left-7}" y="${(y+3).toFixed(1)}" text-anchor="end">${cashAxis(value)}</text>`;}).join('');
+          const grid=[0,.5,1].map(fraction=>{const y=bottom-height*fraction,value=minValue+(maxValue-minValue)*fraction;return `<line class="cash-grid" x1="${left}" y1="${y.toFixed(1)}" x2="${right}" y2="${y.toFixed(1)}"/><text class="cash-axis" x="${left-7}" y="${(y+3).toFixed(1)}" text-anchor="end">${cashAxis(value)}</text>`;}).join('');
           const labels=periods.map((row,index)=>`<text class="cash-axis" x="${xAt(index).toFixed(1)}" y="${mobileCash?240:188}" text-anchor="middle">${analyticEscape(row.label)}</text>`).join('');
           const incomePoints=periods.map((row,index)=>`<circle class="cash-point-income" cx="${xAt(index).toFixed(1)}" cy="${yAt(row.income).toFixed(1)}" r="3.2"><title>${analyticEscape(row.label)} income: ${formatCurrency(row.income)}</title></circle>`).join('');
           const expensePoints=periods.map((row,index)=>`<circle class="cash-point-expense" cx="${xAt(index).toFixed(1)}" cy="${yAt(row.expenses).toFixed(1)}" r="3"><title>${analyticEscape(row.label)} expenses: ${formatCurrency(row.expenses)}</title></circle>`).join('');
           const area=`${incomePath} L${xAt(periods.length-1).toFixed(1)},${bottom} L${xAt(0).toFixed(1)},${bottom} Z`;
           const bars=desktopBars?periods.map((row,index)=>{
-            const x=xAt(index),incomeHeight=bottom-yAt(row.income),expenseHeight=bottom-yAt(row.expenses);
-            const label=analyticEscape(`${row.label}: income ${formatCurrency(row.income)}, expenses ${formatCurrency(row.expenses)}`);
-            return `<g class="cash-month-bars" tabindex="0" role="img" aria-label="${label}"><title>${label}</title><rect class="cash-bar-income" x="${(x-barWidth-2).toFixed(1)}" y="${yAt(row.income).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${incomeHeight.toFixed(1)}" rx="3"/><rect class="cash-bar-expense" x="${(x+2).toFixed(1)}" y="${yAt(row.expenses).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${expenseHeight.toFixed(1)}" rx="3"/></g>`;
+            const x=xAt(index),incomeHeight=Math.abs(yAt(0)-yAt(row.income)),expenseHeight=Math.abs(yAt(0)-yAt(row.expenses));
+            const label=analyticEscape(`${row.label}: income ${formatCurrency(row.income)}, ${mobileCash?'full house expense':'expenses'} ${row.expenses===null?'Pending':formatCurrency(row.expenses)}`);
+            return `<g class="cash-month-bars" data-month-index="${index}" tabindex="0" role="${mobileCash?'button':'img'}" aria-label="${label}"><title>${label}</title>${mobileCash?`<rect class="cash-month-hit" x="${(x-step/2+1).toFixed(1)}" y="${top}" width="${(step-2).toFixed(1)}" height="${height}" fill="transparent"/>`:""}<rect class="cash-bar-income" x="${(x-barWidth-2).toFixed(1)}" y="${Math.min(yAt(0),yAt(row.income)).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${incomeHeight.toFixed(1)}" rx="3"/><rect class="cash-bar-expense" x="${(x+2).toFixed(1)}" y="${Math.min(yAt(0),yAt(row.expenses)).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${expenseHeight.toFixed(1)}" rx="3"/></g>`;
           }).join(''):'';
           cashSvg.innerHTML=`<g aria-hidden="true">${grid}${labels}</g>${desktopBars?bars:`<path class="cash-income-area" d="${area}"/><path class="cash-income" d="${incomePath}"/><path class="cash-expense" d="${expensePath}"/>${incomePoints}${expensePoints}`}<g class="cash-hover-layer" visibility="hidden" pointer-events="none"><line class="cash-hover-guide" x1="0" y1="${top}" x2="0" y2="${bottom}"/><circle class="cash-hover-income" cx="0" cy="0" r="4.5"/><circle class="cash-hover-expense" cx="0" cy="0" r="4.5"/><rect class="cash-hover-box" x="0" y="0" width="190" height="48" rx="7"/><text class="cash-hover-title" x="9" y="13"></text><text class="cash-hover-label" x="9" y="28">Income</text><text class="cash-hover-value cash-hover-income-value" x="48" y="28"></text><text class="cash-hover-label" x="9" y="40">Expenses</text><text class="cash-hover-value cash-hover-expense-value" x="56" y="40"></text></g>`;
           const hoverLayer=cashSvg.querySelector('.cash-hover-layer');
+          const selectMonth=index=>{const row=periods[index];if(!mobileCash||!tapValue||!row)return;tapValue.textContent=`${row.label} ${row.key.slice(0,4)} · Income ${formatCurrency(row.income)} · Full house expense ${row.expenses===null?'Pending — add opening and next-month bank balances':formatCurrency(row.expenses)}`;cashSvg.querySelectorAll('.cash-month-bars').forEach((group,i)=>group.setAttribute('aria-pressed',String(i===index)));};
+          cashSvg.onclick=mobileCash?event=>{const group=event.target.closest?.('[data-month-index]');if(group)selectMonth(Number(group.dataset.monthIndex));}:null;
+          cashSvg.onkeydown=mobileCash?event=>{if(['Enter',' '].includes(event.key)){const group=event.target.closest?.('[data-month-index]');if(group){event.preventDefault();selectMonth(Number(group.dataset.monthIndex));}}}:null;
+
           const hideCashTooltip=()=>{if(hoverLayer)hoverLayer.setAttribute('visibility','hidden');};
           cashSvg.onpointermove=event=>{
+            if(mobileCash)return;
             if(!hoverLayer||!periods.length)return;
             const matrix=cashSvg.getScreenCTM();if(!matrix)return;
             const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(matrix.inverse());
@@ -283,13 +305,14 @@
             hoverLayer.querySelector('.cash-hover-box').setAttribute('x',boxX);hoverLayer.querySelector('.cash-hover-box').setAttribute('y',boxY);
             const texts=hoverLayer.querySelectorAll('text');texts[0].setAttribute('x',boxX+9);texts[0].setAttribute('y',boxY+13);texts[0].textContent=mobileCash?`${row.label} · ${row.key.slice(0,4)}`:`${row.label} · ${financialYearLabel(startYear)}`;
             texts[1].setAttribute('x',boxX+9);texts[1].setAttribute('y',boxY+28);texts[2].setAttribute('x',boxX+48);texts[2].setAttribute('y',boxY+28);texts[2].textContent=formatCurrency(row.income);
-            texts[3].setAttribute('x',boxX+9);texts[3].setAttribute('y',boxY+40);texts[4].setAttribute('x',boxX+56);texts[4].setAttribute('y',boxY+40);texts[4].textContent=formatCurrency(row.expenses);
+            texts[3].setAttribute('x',boxX+9);texts[3].setAttribute('y',boxY+40);texts[4].setAttribute('x',boxX+56);texts[4].setAttribute('y',boxY+40);texts[4].textContent=row.expenses===null?'Pending':formatCurrency(row.expenses);
             hoverLayer.setAttribute('visibility','visible');
           };
           cashSvg.onpointerleave=hideCashTooltip;
           cashSvg.setAttribute('aria-label',`Income and expense trend from ${periods[0].key} through ${periods[periods.length-1].key}. Hover anywhere in the plot area to see the nearest month's income and expenses. Annual expenses are included in full in the month recorded.`);
         }
       }
+      if(mobileCash&&cashSvg)cashSvg.setAttribute('aria-label','Income and full house expense for the last five months. Tap a month for values. Full expense requires opening and next-month bank balances.');
       if(cashPeriod)cashPeriod.textContent=mobileCash?`Last 5 months · ${periods[0].label} ${periods[0].key.slice(0,4)} – ${periods.at(-1).label} ${periods.at(-1).key.slice(0,4)}`:`${financialYearLabel(startYear)} · April to ${periods[periods.length-1]?.label||'current month'}`;
       const allocations=new Map();
       for(const row of profileRows(state.investments||[])){const amount=Number(row.current)||0;if(amount>0){const name=row.type==='Stallion PMS'?'Stallion PMS':row.type||'Other';allocations.set(name,(allocations.get(name)||0)+amount);}}
