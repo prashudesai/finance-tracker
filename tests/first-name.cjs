@@ -1,6 +1,6 @@
 const fs=require('./app-source.cjs').fs,vm=require('vm'),assert=require('assert/strict'),path=require('path');
 const src=fs.readFileSync(path.join(__dirname,'../dist/index.html'),'utf8');
-const start=src.indexOf('    function firstNameSetupNeeded('),end=src.indexOf('    async function setupFirstName(',start);
+const start=src.indexOf('    function firstNameSetupNeeded('),end=src.indexOf('    function createEmptyState(',start);
 const c={};vm.createContext(c);vm.runInContext(src.slice(start,end),c);
 const blank={customValues:{familyMembers:[]},removedValues:{familyMembers:[]}};
 assert(c.firstNameSetupNeeded(blank,[]));
@@ -10,5 +10,5 @@ const duplicate=c.withFirstNameSetup({customValues:{familyMembers:['Alex']},remo
 const restored=c.withFirstNameSetup({customValues:{familyMembers:[]},removedValues:{familyMembers:['Alex']}},'Alex',['Alex']);assert.equal(restored.removedValues.familyMembers.length,0);assert.equal(restored.customValues.familyMembers.length,0);
 assert.equal(c.withFirstNameSetup(blank,'ಅವ್ಯಾನ್').firstNameSetup.firstName,'ಅವ್ಯಾನ್');
 for(const name of ['', '   ', 'x'.repeat(61), '<script>', '\u0000Alex'])assert.throws(()=>c.withFirstNameSetup(blank,name));
-assert.match(src,/await setupFirstName\(\)/);assert.match(src,/name="given-name" autocomplete="given-name"/);
+assert.match(src,/id="quickSetupFirstName" name="given-name" autocomplete="given-name"/);
 console.log('PASS: new-account setup, existing-member skip, saved completion, duplicates, restored defaults, Unicode and invalid input');

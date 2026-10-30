@@ -1,7 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.30.5",
+  "version": "2026.10.30.6",
   "released": "2026-10-30",
   "releaseNotes": [
+    "First-time setup now asks for a required first name within a one-question-at-a-time flow on mobile and desktop. Optional steps open their existing editors, and the interactive app tour highlights usable controls after setup. The tour remains replayable from App info.",
     "Mobile: a cleaner first-name welcome screen, one-step-at-a-time setup for family, opening balance, income, investments and loans with Back and Skip, no Expenses step or repeated first-name question, palette-matched setup cards without the blue accent line, and a sliders Settings icon."
   ],
   "sections": [

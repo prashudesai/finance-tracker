@@ -646,30 +646,6 @@
       next.firstNameSetup={completed:true,firstName};
       return next;
     }
-    async function setupFirstName() {
-      if(window.financeCloud?.role&&window.financeCloud.role!=='owner')return;
-      if(!firstNameSetupNeeded(state,profileMemberNames()))return;
-      const mobile=window.matchMedia('(max-width:700px)').matches;
-      if(mobile&&readGettingStartedPreference()?.nameSkipped)return;
-      const dialog=document.getElementById('firstNameSetup'),form=document.getElementById('firstNameSetupForm'),input=document.getElementById('firstNameInput'),button=document.getElementById('firstNameContinue'),error=document.getElementById('firstNameError');
-      input.value=(window.financeCloud?.displayName||'').trim().split(/\s+/)[0]||'';
-      dialog.hidden=false;document.querySelector('.container').inert=true;input.focus();
-      await new Promise(resolve=>{
-        const skip=document.getElementById('firstNameSkip');
-        const finish=()=>{form.onsubmit=null;skip.onclick=null;dialog.hidden=true;document.querySelector('.container').inert=false;resolve();};
-        skip.onclick=()=>{if(!mobile||button.disabled)return;const pref=readGettingStartedPreference()||{eligible:true,dismissed:false,loanSkipped:false};pref.nameSkipped=true;writeGettingStartedPreference(pref);finish();};
-        form.onsubmit=async event=>{
-        event.preventDefault();if(button.disabled)return;error.textContent='';
-        try{
-          const builtIns=Object.values(CUSTOM_VALUE_DEFAULT_OPTIONS.familyMembers||{}).flat().map(item=>item.option.value);
-          state=withFirstNameSetup(state,input.value,builtIns);
-          button.disabled=true;button.textContent='Saving…';
-          if(!await saveData('Completed first-name setup'))throw new Error('Could not save your name on this device. Please try again.');
-          populateCustomValueSelects();renderCustomValuesPanel();initializeFamilyProfile();
-          finish();
-        }catch(e){error.textContent=e.message;button.disabled=false;button.textContent='Continue';input.focus();}
-      };});
-    }
     function createEmptyState() { return {
       recurringRules: [],
       recurringOccurrences: [],
@@ -1351,7 +1327,7 @@
           syncRecord={baseRevision:previous?.baseRevision||0,pending:true,token:crypto.randomUUID(),lastCloudUpdated:previous?.lastCloudUpdated||window.financeCloud?.updatedAt?.()||null,clearHistory:action==='Clear all data'||previous?.clearHistory===true,envelope:{data:snapshot,recovery}};const inheritedRestore=reviewRestore===false?null:reviewRestore||(!['Imported backup','Clear all data','Resolved device/cloud differences','Restored dated snapshot','Restored recovery snapshot'].includes(action)?(previous?.pending?previous.envelope?.reviewRestore:null):null);if(inheritedRestore)syncRecord.envelope.reviewRestore=inheritedRestore;syncRecord.envelope.mutationId=syncRecord.token;
           try{await commitFinance(snapshot,action,importedAudit);if(syncRecord?.envelope?.reviewRestore||window.financeReviews?.hasRestore?.())await window.financeReviews?.refreshJournal?.();}catch(error){syncRecord=previous;throw error;}
           cloudRecovery=recovery;cloudCommittedState=JSON.parse(JSON.stringify(snapshot));
-          document.getElementById('lastUpdate').textContent=snapshot.lastUpdate;persistenceDirty=pendingSaves>1;syncStatus();setTimeout(syncCloud,0);return true;
+          document.getElementById('lastUpdate').textContent=snapshot.lastUpdate;persistenceDirty=pendingSaves>1;syncStatus();setTimeout(syncCloud,0);if(typeof CustomEvent==='function')window.dispatchEvent?.(new CustomEvent('pft:record-saved',{detail:{action}}));return true;
         }catch(error){persistenceDirty=true;showImportStatus('Device save failed. Export a backup before closing. '+error.message,true);storageMessage('Not saved · Export a backup',true);return false;}
         finally{pendingSaves--;}
       });saveQueue=operation;return operation;
@@ -7233,21 +7209,21 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const key='pft:guide-tour:v1';
       if(window.PFTTour){window.PFTTour.maybeStart(isNewUser);return;}
       const steps=[
-        {page:'dashboard',title:'Your finances at a glance',text:'Home brings together your assets, debts, income and expenses. Use the family profile selector to switch between an individual and the combined view.',tip:'The tour only explains the app. It does not add or change financial records.'},
-        {page:'income-expenses',title:'Record money in and out',text:'Switch between Income and Expenses, choose a month, and add an entry. Tap an existing transaction to review or edit it when you have edit access.',tip:'Monthly balances record your opening bank balance. Every amount in balance history has its own label.'},
-        {page:'income-expenses',title:'Manage recurring commitments',text:'Recurring items can record regular income, expenses and loan EMIs. Review earlier missed months before adding them, and pause a rule when it is no longer needed.',tip:'The app records entries; it does not send money or make bank payments.'},
-        {page:'investments',title:'Track your investments',text:'Add investment and retirement accounts, then tap a tile for holdings, returns and history. The actions inside each holding let you review contributions or update its value.',tip:'A contribution adds money invested. Update value or gain/loss when the market value changes.'},
-        {page:'debts',title:'Review loans and repayments',text:'Open a loan to see its outstanding balance, payment history and terms. Record EMIs or part payments, and review the preview before changing the rate, EMI or borrowing more.',tip:'Estimates help you plan. Use your bank statement to confirm repayment amounts and interest splits.'},
-        {page:'analytics',title:'Understand your reports',text:'Reports includes Analytics, Growth Projection and Date range reports. Choose the financial year for analytics or a date range for detailed records and exports.',tip:'Your selected family profile and report filters affect the records shown.'},
-        {page:'growth-projection',title:'Explore possible growth',text:'Set a time horizon and tap an investment to adjust assumptions. Stress, Base and Optimistic scenarios compare possible results. Tap a scenario below the graph for exact values and its yearly breakdown.',tip:'Projection settings are planning assumptions, not guaranteed returns or changes to your recorded investments.'},
-        {page:'settings',title:'Personalize and share access',text:'Appearance changes your page style and colors. Family access manages member names and invitations. Account settings manage your signed-in profile.',tip:'A family member name does not grant login access. Invitations and roles control access; viewers cannot edit records.'},
-        {page:'settings',title:'Keep a backup and find help',text:'Use Data & backup to export your records. Importing a backup replaces records, so keep an export first. App & updates shows your installed version and available updates.',tip:'You can replay this tour or download the full guide from App info at any time.'}
+        {page:'dashboard',target:'#dashboard .dashboard-page-intro',title:'Your finances at a glance',text:'Home brings together your assets, debts, income and expenses. Use the family profile selector to switch between an individual and the combined view.',tip:'The tour only explains the app. It does not add or change financial records.'},
+        {page:'income-expenses',target:'#income-expenses .transaction-intro',title:'Record money in and out',text:'Switch between Income and Expenses, choose a month, and add an entry. Tap an existing transaction to review or edit it when you have edit access.',tip:'Monthly balances record your opening bank balance. Every amount in balance history has its own label.'},
+        {page:'income-expenses',target:'#cashRecurringShortcut,#openRecurringBtn',title:'Manage recurring commitments',text:'Recurring items can record regular income, expenses and loan EMIs. Review earlier missed months before adding them, and pause a rule when it is no longer needed.',tip:'The app records entries; it does not send money or make bank payments.'},
+        {page:'investments',target:'#investments .investment-page-intro',title:'Track your investments',text:'Add investment and retirement accounts, then tap a tile for holdings, returns and history. The actions inside each holding let you review contributions or update its value.',tip:'A contribution adds money invested. Update value or gain/loss when the market value changes.'},
+        {page:'debts',target:'#openAddLoanBtn',title:'Review loans and repayments',text:'Open a loan to see its outstanding balance, payment history and terms. Record EMIs or part payments, and review the preview before changing the rate, EMI or borrowing more.',tip:'Estimates help you plan. Use your bank statement to confirm repayment amounts and interest splits.'},
+        {page:'analytics',target:'#analyticsFinancialYear',title:'Understand your reports',text:'Reports includes Analytics, Growth Projection and Date range reports. Choose the financial year for analytics or a date range for detailed records and exports.',tip:'Your selected family profile and report filters affect the records shown.'},
+        {page:'growth-projection',target:'#growthProjectionYears',title:'Explore possible growth',text:'Set a time horizon and tap an investment to adjust assumptions. Stress, Base and Optimistic scenarios compare possible results. Tap a scenario below the graph for exact values and its yearly breakdown.',tip:'Projection settings are planning assumptions, not guaranteed returns or changes to your recorded investments.'},
+        {page:'settings',target:'#settings .settings-intro',title:'Personalize and share access',text:'Appearance changes your page style and colors. Family access manages member names and invitations. Account settings manage your signed-in profile.',tip:'A family member name does not grant login access. Invitations and roles control access; viewers cannot edit records.'},
+        {page:'settings',target:'#settingsInfoPanel',title:'Keep a backup and find help',text:'Use Data & backup to export your records. Importing a backup replaces records, so keep an export first. App & updates shows your installed version and available updates.',tip:'You can replay this tour or download the full guide from App info at any time.'}
       ];
-      const dialog=document.createElement('dialog');dialog.id='appGuideTour';dialog.setAttribute('aria-labelledby','appGuideTourTitle');dialog.setAttribute('aria-describedby','appGuideTourText');
-      dialog.innerHTML='<header><span id="appGuideTourProgress"></span><button type="button" data-tour-skip aria-label="Skip app tour">Skip</button></header><h2 id="appGuideTourTitle" tabindex="-1"></h2><p id="appGuideTourText"></p><p id="appGuideTourTip"></p><footer><button type="button" data-tour-back>Back</button><button type="button" class="btn-primary" data-tour-next>Next</button></footer>';
+      const dialog=document.createElement('dialog');dialog.id='appGuideTour';dialog.setAttribute('aria-labelledby','appGuideTourTitle');dialog.setAttribute('aria-describedby','appGuideTourText');dialog.setAttribute('aria-modal','false');
+      dialog.innerHTML='<header><span id="appGuideTourProgress"></span><button type="button" data-tour-skip aria-label="Skip app tour">Skip</button></header><h2 id="appGuideTourTitle" tabindex="-1"></h2><p id="appGuideTourText"></p><p id="appGuideTourTip"></p><p class="app-guide-instruction">Try the highlighted area, then choose Next. Close any panel you open to continue.</p><footer><button type="button" data-tour-back>Back</button><button type="button" class="btn-primary" data-tour-next>Next</button></footer>';
       document.body.append(dialog);
-      let index=0,returnPage='dashboard',returnScroll=0,returnFocus=null;
-      const shouldOffer=newUser=>{if(!newUser||window.matchMedia('(max-width:700px)').matches&&readGettingStartedPreference()?.eligible&&!readGettingStartedPreference()?.dismissed)return false;try{return !trackerStorage.getItem(key);}catch(_){return false;}};
+      let index=0,returnPage='dashboard',returnScroll=0,returnFocus=null,highlighted=null,highlightFrame=0;
+      const shouldOffer=newUser=>{const setup=readGettingStartedPreference();if(!newUser||setup?.eligible&&!setup.dismissed)return false;try{return !trackerStorage.getItem(key);}catch(_){return false;}};
       function remember(status){try{trackerStorage.setItem(key,status);}catch(_){}}
       function render(){
         const step=steps[index];
@@ -7256,12 +7232,18 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         document.getElementById('appGuideTourTitle').textContent=step.title;
         document.getElementById('appGuideTourText').textContent=step.text;
         document.getElementById('appGuideTourTip').textContent=step.tip;
+        highlighted?.classList.remove('app-tour-target');cancelAnimationFrame(highlightFrame);
+        highlightFrame=requestAnimationFrame(()=>{
+          if(!dialog.open)return;
+          highlighted=[...document.querySelectorAll(step.target)].find(node=>node.getClientRects().length)||document.querySelector('#'+step.page+' .settings-intro, #'+step.page+' .page-intro, #'+step.page+' h1');
+          highlighted?.classList.add('app-tour-target');highlighted?.scrollIntoView({block:'center',behavior:'instant'});
+        });
         dialog.querySelector('[data-tour-back]').disabled=index===0;
         dialog.querySelector('[data-tour-next]').textContent=index===steps.length-1?'Finish':'Next';
         document.getElementById('appGuideTourTitle').focus({preventScroll:true});
       }
       function finish(status){
-        remember(status);dialog.close();document.body.classList.remove('app-guide-open');
+        remember(status);cancelAnimationFrame(highlightFrame);dialog.close();highlighted?.classList.remove('app-tour-target');highlighted=null;document.body.classList.remove('app-guide-open');
         document.querySelector('.nav-tab[data-tab="'+returnPage+'"]')?.click();
         window.scrollTo({top:returnScroll,behavior:'instant'});
         if(returnFocus?.isConnected&&!returnFocus.closest('#settingsPanelParking'))returnFocus.focus({preventScroll:true});
@@ -7270,7 +7252,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
         if(dialog.open)return;
         if([...document.querySelectorAll('dialog[open]:not(#settingsTileDialog),[aria-modal="true"]:not(dialog)')].some(node=>node.getClientRects().length&&getComputedStyle(node).visibility!=='hidden'))return;
         returnPage=document.querySelector('.nav-tab.active')?.dataset.tab||'dashboard';returnScroll=window.scrollY;returnFocus=document.activeElement;
-        window.closeSettingsTile?.();index=0;remember('started');document.body.classList.add('app-guide-open');dialog.showModal();render();
+        window.closeSettingsTile?.();index=0;remember('started');document.body.classList.add('app-guide-open');dialog.show();render();
       }
       dialog.querySelector('[data-tour-skip]').onclick=()=>finish('skipped');
       dialog.querySelector('[data-tour-back]').onclick=()=>{if(index>0){index--;render();}};
@@ -7300,7 +7282,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
 
 
-    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();window.dispatchEvent(new Event('pft:before-reveal'));window.PFTPerformance?.mark('layout-ready');document.querySelector('.container').inert=false;window.financeCloud.showApp();window.PFTPerformance?.mark('visible');window.dispatchEvent(new Event('pft:visible'));void verifyStartupRevision();const newTourUser=firstNameSetupNeeded(state,profileMemberNames())&&(!window.financeCloud?.role||window.financeCloud.role==='owner');await setupFirstName();setupAppTour(newTourUser);applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
+    })().then(async()=>{if(!storageLoadFailed){let savedPage;try{savedPage=trackerStorage.getItem('activePage');}catch(_){}const savedTab=[...document.querySelectorAll('.nav-tab')].find(tab=>tab.dataset.tab===savedPage);savedTab?.click();window.dispatchEvent(new Event('pft:before-reveal'));window.PFTPerformance?.mark('layout-ready');document.querySelector('.container').inert=false;window.financeCloud.showApp();window.PFTPerformance?.mark('visible');window.dispatchEvent(new Event('pft:visible'));void verifyStartupRevision();const newTourUser=firstNameSetupNeeded(state,profileMemberNames())&&(!window.financeCloud?.role||window.financeCloud.role==='owner');setupAppTour(newTourUser||readGettingStartedPreference()?.wizardComplete===true);applyFamilyRoleControls();startRecurringItems();warmStartupPages();}}).catch(error=>{storageLoadFailed=true;window.financeCloud?.lock(error);});
     if(window.PFTResolveTrackerReady)trackerStartup.then(window.PFTResolveTrackerReady);else window.trackerReady=trackerStartup;
 
     const tableSortChoices = {};
@@ -7415,7 +7397,8 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
 
     // Auto-save on changes
     
-      // Presentation-only onboarding. Preference writes never enter the finance snapshot.
+  
+    // Presentation-only onboarding. Preference writes never enter the finance snapshot.
     function gettingStartedSnapshot(data,month,loanSkipped=false){
       const keys=['income','expenses','debts','investments','pf','ppf','nps','gratuityAccounts','monthlyBalances','investmentContributions','retirementContributions','stallionContributions','stallionProfitHistory','archivedAccounts'];
       return {hasData:keys.some(key=>Array.isArray(data[key])&&data[key].length>0),family:(data.customValues?.familyMembers||[]).some(name=>String(name).trim()),opening:(data.monthlyBalances||[]).some(row=>row.month===month&&Number.isFinite(row.startBalance)),loans:(data.debts||[]).length>0||loanSkipped,investments:['investments','pf','ppf','nps','gratuityAccounts'].some(key=>(data[key]||[]).length>0)};
@@ -7427,24 +7410,27 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const dashboard=document.getElementById('dashboard'),checklist=document.getElementById('gettingStartedChecklist'),empty=document.getElementById('dashboardFirstRecord');if(!dashboard||!checklist||!empty)return;
       const editable=window.financeCloud.canEdit!==false;
       let pref=readGettingStartedPreference();const current=gettingStartedSnapshot(state,currentMonthKey(),pref?.loanSkipped===true);
-      if(!pref){pref={eligible:!current.hasData,dismissed:current.hasData,loanSkipped:false};if(editable)writeGettingStartedPreference(pref);}
-      const steps=[['family','Family members','Add or review names','family'],['opening','Opening balance','Set balance','opening'],['loans','Loans (optional)','Add loan','loan'],['investments','Investments','Add investment','investment']];
-      const done=steps.filter(([key])=>current[key]).length;
-      if(done===4&&!pref.dismissed&&!window.matchMedia('(max-width:700px)').matches){pref.dismissed=true;if(editable)writeGettingStartedPreference(pref);}
+      const owner=!window.financeCloud.role||window.financeCloud.role==='owner';
+      const needsName=owner&&firstNameSetupNeeded(state,profileMemberNames());
+      if(!pref){pref={eligible:!current.hasData||needsName,dismissed:current.hasData&&!needsName,loanSkipped:false};if(editable)writeGettingStartedPreference(pref);}
+      if(needsName&&(!pref.eligible||pref.dismissed)){pref.eligible=true;pref.dismissed=false;pref.wizardStep=0;pref.wizardComplete=false;if(editable)writeGettingStartedPreference(pref);}
+      if(needsName&&pref.wizardFormat===2&&pref.wizardStep!==0){pref.wizardStep=0;if(editable)writeGettingStartedPreference(pref);}
+      if(pref.eligible&&pref.wizardFormat!==2){pref.wizardStep=needsName?0:Math.min(5,(Number.isInteger(pref.wizardStep)?pref.wizardStep:0)+1);pref.wizardFormat=2;if(editable)writeGettingStartedPreference(pref);}
       const visible=editable&&pref.eligible&&!pref.dismissed;
       const mobile=window.matchMedia('(max-width:700px)').matches;
-      checklist.classList.toggle('mobile-setup-active',mobile&&visible);
+      checklist.classList.toggle('mobile-setup-active',visible);
       checklist.hidden=!visible;
-      if(visible&&!mobile){const signature=JSON.stringify([current,pref,done]);if(checklist.dataset.signature!==signature){checklist.dataset.signature=signature;checklist.innerHTML='<div class="getting-started-heading"><div><h2>Get started</h2><p>Set up what matters to you · '+done+' of 4 complete</p></div><button type="button" class="btn-secondary" data-setup-action="skip">Skip for now</button></div><ol class="getting-started-steps">'+steps.map(([key,title,label,action])=>'<li class="'+(current[key]?'is-complete':'')+'"><span class="setup-step-state" aria-hidden="true">'+(current[key]?'✓':'○')+'</span><strong>'+title+'</strong><button type="button" class="btn-secondary" data-setup-action="'+(current[key]&&['loan','investment'].includes(action)?action+'-view':action)+'">'+(current[key]?'Review':label)+'</button>'+(key==='loans'&&!current.loans?'<button type="button" class="setup-skip-loan" data-setup-action="no-loans">Not applicable</button>':'')+'</li>').join('')+'</ol>';}}
+      
       dashboard.dataset.emptyTracker=String(!current.hasData);empty.hidden=current.hasData;
       empty.querySelectorAll('button').forEach(button=>button.hidden=!editable);
-      if(mobile&&visible){renderMobileSetupStep(checklist,pref,current);empty.hidden=true;}
+      if(visible){renderMobileSetupStep(checklist,pref,current);empty.hidden=true;}
       empty.querySelector('h2').textContent=editable?(mobile?'Start with what matters to you':'Add your first income to see your month at a glance'):'No financial records yet';
       empty.querySelector('p').textContent=editable?'Your income, expenses and balances will appear here as you add records.':'No financial records have been added yet. The owner or an editor can add records.';
-      const resume=document.getElementById('resumeGettingStarted');if(resume)resume.hidden=!editable||!pref.eligible||!pref.dismissed||(!mobile&&done===4);
+      const resume=document.getElementById('resumeGettingStarted');if(resume)resume.hidden=!editable||!pref.eligible||!pref.dismissed;
     }
-    // First name is collected once by setupFirstName; this flow starts with other family members.
+    // All first-time questions use one sequence. First name is the only required step.
     const mobileSetupSteps=[
+      {key:'name',title:'What’s your first name?',text:'A name to make this space yours. We’ll use it in your finance records.',label:'Save and continue'},
       {key:'family',title:'Anyone else in your family?',text:'Your name is already saved. Add other members if you track their finances too.',action:'family',label:'Add family members'},
       {key:'opening',title:'Set your opening balance',text:'Start with the bank balance at the beginning of this month. Zero is fine too.',action:'opening',label:'Set opening balance'},
       {key:'income',title:'Add your income',text:'Add a salary or another source of income whenever you are ready.',action:'income',label:'Add income'},
@@ -7452,36 +7438,75 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       {key:'loans',title:'Any loans to track?',text:'Add a loan to track repayments, or skip this step if it does not apply.',action:'loan',label:'Add loan'}
     ];
     function mobileSetupIndex(pref){return Math.max(0,Math.min(mobileSetupSteps.length-1,Number.isInteger(pref.wizardStep)?pref.wizardStep:0));}
+    function mobileSetupDone(step,current){if(step.key==='name')return !firstNameSetupNeeded(state,profileMemberNames());return step.key==='income'?(state.income||[]).length>0:current[step.key];}
+    function mobileSetupRecordSignature(step){
+      if(step.key==='name')return JSON.stringify(state.firstNameSetup);
+      if(step.key==='family')return JSON.stringify(profileMemberNames());
+      if(step.key==='opening')return JSON.stringify((state.monthlyBalances||[]).filter(row=>row.month===currentMonthKey()).map(row=>[row.id,row.startBalance]));
+      const key={income:'income',investments:'investments',loans:'debts'}[step.key];
+      return JSON.stringify((state[key]||[]).map(row=>row.id));
+    }
     function renderMobileSetupStep(host,pref,current){
-      const index=mobileSetupIndex(pref),step=mobileSetupSteps[index],hasIncome=(state.income||[]).length>0;
-      const completed=step.key==='income'?hasIncome:current[step.key];
+      const index=mobileSetupIndex(pref),step=mobileSetupSteps[index];
+      const completed=mobileSetupDone(step,current);
       const hasName=profileMemberNames().length>0,description=step.key==='family'&&!hasName?'Add the names you use in income, investment and loan records. You can add more later.':step.text;
       const signature=JSON.stringify(['mobile',index,completed,profileMemberNames()]);if(host.dataset.signature===signature)return;host.dataset.signature=signature;
-      host.innerHTML='<div class="mobile-setup-progress"><span>Set up your finances</span><span>Step '+(index+2)+' of 6</span></div><progress max="6" value="'+(index+2)+'" aria-label="Setup progress"></progress><h2 tabindex="-1">'+step.title+'</h2><p class="mobile-setup-description">'+description+'</p><p class="mobile-setup-status" role="status">'+(completed?(step.key==='family'?'Your saved members: '+profileMemberNames().map(analyticEscape).join(', '):'✓ Added — you can continue or add more.'):'You can always do this later from the relevant page.')+'</p><button type="button" class="btn-secondary mobile-setup-add" data-setup-action="wizard-add">'+step.label+'</button><div class="mobile-setup-controls"><button type="button" class="btn-secondary" data-setup-action="wizard-back" '+(index===0?'disabled':'')+'>Back</button><button type="button" class="btn-primary" data-setup-action="wizard-next">'+(index===mobileSetupSteps.length-1?'Finish setup':'Continue')+'</button></div><button type="button" class="mobile-setup-skip" data-setup-action="wizard-skip">Skip for now</button>';
+      host.innerHTML='<div class="mobile-setup-progress"><span>Set up your finances</span><span>Step '+(index+1)+' of '+mobileSetupSteps.length+'</span></div><progress max="'+mobileSetupSteps.length+'" value="'+(index+1)+'" aria-label="Setup progress"></progress><h2 tabindex="-1">'+step.title+'</h2><p class="mobile-setup-description">'+description+'</p>'+(step.key==='name'&&!completed?'<label class="quick-name-label" for="quickSetupFirstName">First name</label><input id="quickSetupFirstName" name="given-name" autocomplete="given-name" maxlength="80" required><p id="quickSetupNameError" class="quick-name-error" role="alert"></p>':'')+'<p class="mobile-setup-status" role="status">'+(completed?(step.key==='name'?'✓ First name saved':step.key==='family'?'Your saved members: '+profileMemberNames().map(analyticEscape).join(', '):'✓ Added — you can continue or add more.'):step.key==='name'?'Your first name is required to continue.':'Add this now, or choose Skip for now. You can come back later.')+'</p>'+(completed&&step.key!=='name'?'<button type="button" class="btn-secondary mobile-setup-add" data-setup-action="wizard-add">'+(step.key==='family'?'Add another member':'Add another')+'</button>':'')+'<div class="mobile-setup-controls"><button type="button" class="btn-secondary" data-setup-action="wizard-back" '+(index===0?'disabled':'')+'>Back</button><button type="button" class="btn-primary" data-setup-action="wizard-next">'+(completed?(index===mobileSetupSteps.length-1?'Finish setup':'Continue'):step.label)+'</button></div>'+(index===0?'':'<button type="button" class="mobile-setup-skip" data-setup-action="wizard-skip">Skip for now</button>');
     }
-    function runMobileSetupAction(action,trigger){
+    async function runMobileSetupAction(action,trigger){
       const pref=readGettingStartedPreference();if(!pref?.eligible)return;
-      const index=mobileSetupIndex(pref);
-      if(action==='wizard-add'){
-        const step=mobileSetupSteps[index];runGettingStartedAction(step.action,trigger);
+      const index=mobileSetupIndex(pref),step=mobileSetupSteps[index];
+      const current=gettingStartedSnapshot(state,currentMonthKey(),pref.loanSkipped===true);
+      if(step.key==='name'&&action==='wizard-next'&&!mobileSetupDone(step,current)){
+        const input=document.getElementById('quickSetupFirstName'),error=document.getElementById('quickSetupNameError'),button=trigger;
+        if(!input||button.disabled)return;error.textContent='';
+        let next;try{next=withFirstNameSetup(state,input.value);}catch(e){error.textContent=e.message;input.focus();return;}
+        button.disabled=true;button.textContent='Saving…';const previous=state;state=next;
+        try{if(!await saveData('Completed first-name setup'))throw Error('Could not save your name. Please try again.');
+          populateCustomValueSelects();renderCustomValuesPanel();initializeFamilyProfile();pref.wizardStep=1;writeGettingStartedPreference(pref);renderGettingStarted();document.querySelector('#gettingStartedChecklist h2')?.focus({preventScroll:true});
+        }catch(e){state=previous;error.textContent=e.message;button.disabled=false;button.textContent='Save and continue';input.focus();}return;
+      }
+      if(action==='wizard-skip'&&index===0)return;
+      if(action==='wizard-add'||action==='wizard-next'&&!mobileSetupDone(step,current)){
+        const before=mobileSetupRecordSignature(step);
+        runGettingStartedAction(step.action,trigger);
         if(step.action==='opening'){document.getElementById('balanceMonth').value=currentMonthKey();openEntryFormModal('balanceEntryForm',trigger);}
         // Reuse each existing editor and its validation, then return to this step when it closes.
         const target=document.getElementById(({family:'familyNameDetails',opening:'balanceEntryForm',income:'cashEntryDialog',investment:'entryFormModal',loan:'entryFormModal'})[step.action]);
         if(!target)return;
+        if(step.action==='income'&&!window.matchMedia('(max-width:700px)').matches){
+          window.PFTGettingStarted.incomeStepAbort?.abort();window.PFTGettingStarted.incomeStepAbort=new AbortController();
+          const onSaved=()=>{if(before===mobileSetupRecordSignature(step))return;window.removeEventListener('pft:record-saved',onSaved);setTimeout(()=>{const latest=readGettingStartedPreference();if(!latest?.eligible||latest.dismissed||mobileSetupIndex(latest)!==index)return;latest.wizardStep=index+1;writeGettingStartedPreference(latest);document.querySelector('.nav-tab[data-tab="dashboard"]')?.click();renderGettingStarted();document.querySelector('#gettingStartedChecklist h2')?.focus({preventScroll:true});},0);};
+          window.addEventListener('pft:record-saved',onSaved,{signal:window.PFTGettingStarted.incomeStepAbort.signal});
+          return;
+        }
         let sawOpen=false;
         const visible=()=>target.tagName==='DIALOG'?target.open:!target.hidden&&(step.action!=='opening'||!document.getElementById('entryFormModal').hidden);
         const observer=new MutationObserver(()=>{
           if(visible()){sawOpen=true;return;}if(!sawOpen)return;
           observer.disconnect();if(step.action==='opening')closeEntryFormModal(false);
           if(step.action==='family')window.closeSettingsTile?.();
-          document.querySelector('.nav-tab[data-tab="dashboard"]')?.click();renderGettingStarted();document.querySelector('#gettingStartedChecklist h2')?.focus({preventScroll:true});
+          document.querySelector('.nav-tab[data-tab="dashboard"]')?.click();
+          if(before!==mobileSetupRecordSignature(step)){
+            const latest=readGettingStartedPreference();
+            if(latest?.eligible&&!latest.dismissed&&mobileSetupIndex(latest)===index){
+              if(index===mobileSetupSteps.length-1){latest.dismissed=true;latest.wizardComplete=true;}
+              else latest.wizardStep=index+1;
+              writeGettingStartedPreference(latest);
+              renderGettingStarted();
+              if(latest.wizardComplete)window.PFTTour?.maybeStart(true);
+            }
+          }else renderGettingStarted();
+          document.querySelector('#gettingStartedChecklist h2')?.focus({preventScroll:true});
         });
         sawOpen=visible();observer.observe(target,{attributes:true,attributeFilter:['hidden','open']});if(step.action==='opening')observer.observe(document.getElementById('entryFormModal'),{attributes:true,attributeFilter:['hidden']});return;
       }
       if(action==='wizard-back')pref.wizardStep=Math.max(0,index-1);
       else if(index===mobileSetupSteps.length-1){pref.dismissed=true;pref.wizardComplete=true;}
       else pref.wizardStep=index+1;
-      writeGettingStartedPreference(pref);renderGettingStarted();document.querySelector('#gettingStartedChecklist h2')?.focus({preventScroll:true});
+      writeGettingStartedPreference(pref);renderGettingStarted();
+      if(pref.wizardComplete)window.PFTTour?.maybeStart(true);
+      else document.querySelector('#gettingStartedChecklist h2')?.focus({preventScroll:true});
     }
     function runGettingStartedAction(action,trigger){
       if(!window.financeCloud||window.financeCloud.canEdit===false)return;
@@ -7505,6 +7530,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const intro=dashboard.querySelector('.dashboard-page-intro');if(intro){intro.after(checklist);checklist.after(empty);}else dashboard.prepend(checklist,empty);
       const resume=document.createElement('button');resume.id='resumeGettingStarted';resume.type='button';resume.className='btn-secondary';resume.textContent='Resume setup';resume.dataset.setupAction='resume';resume.hidden=true;document.querySelector('#settings .settings-intro')?.after(resume);
       document.addEventListener('click',event=>{const button=event.target.closest('[data-setup-action]');if(button){event.preventDefault();runGettingStartedAction(button.dataset.setupAction,button);}});
+      checklist.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.id==='quickSetupFirstName'){event.preventDefault();checklist.querySelector('[data-setup-action="wizard-next"]')?.click();}});
       let frame=0;
       function enhanceEmptyTables(){
         cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{

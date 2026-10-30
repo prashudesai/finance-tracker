@@ -1,3 +1,9 @@
+# 2026.10.30.6
+
+- Make first name the required first question in quick setup on mobile and desktop.
+- Guide setup one question at a time, using existing editors for optional records.
+- Start an interactive tour after setup, highlight page controls and keep it replayable from App info.
+
 # 2026.10.30.5
 
 - Simplify the mobile first-name welcome screen and keep it aligned with the selected palette.

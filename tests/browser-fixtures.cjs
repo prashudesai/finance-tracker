@@ -18,10 +18,16 @@ exports.selectControl=async(page,selector,value)=>{
 };
 // Poll a resolved flag instead of returning a long-lived browser Promise over CDP.
 // The app reveals its shell before first-name setup, so wait for either state.
-exports.readyTracker=async page=>{
+exports.readyTracker=async (page,{completeName=true}={})=>{
  await page.evaluate(()=>{window.__testTrackerReady=false;window.__testTrackerFailure='';Promise.resolve(window.trackerReady).then(()=>window.__testTrackerReady=true,error=>window.__testTrackerFailure=error?.message||String(error));});
  await page.waitForFunction(()=>window.__testTrackerReady||window.__testTrackerFailure||document.getElementById('firstNameSetup')?.hidden===false);
  if(await page.locator('#firstNameSetup').isVisible()&&await page.locator('#firstNameContinue').isEnabled())await page.locator('#firstNameContinue').click();
  await page.waitForFunction(()=>window.__testTrackerReady||window.__testTrackerFailure);
  const error=await page.evaluate(()=>window.__testTrackerFailure);if(error)throw Error(error);
+ if(completeName&&await page.locator('#quickSetupFirstName').isVisible()){
+  const givenName=await page.evaluate(()=>new URLSearchParams(location.search).get('name')?.trim().split(/\s+/)[0]||'Tester');
+  await page.locator('#quickSetupFirstName').fill(givenName);
+  await page.locator('#gettingStartedChecklist [data-setup-action="wizard-next"]').click();
+  await page.waitForFunction(()=>state.firstNameSetup?.completed===true);
+ }
 };
