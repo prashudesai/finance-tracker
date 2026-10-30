@@ -1,3 +1,9 @@
+# 2026.10.30.7
+
+- Add bounded app-update activation retries, progress feedback and recovery after a timeout.
+- Sign out after successful dashboard deletion on desktop and mobile, and return new sign-ins to Home.
+- Replace the blue blurred Settings backdrop with neutral dimming.
+
 # 2026.10.30.6
 
 - Make first name the required first question in quick setup on mobile and desktop.
