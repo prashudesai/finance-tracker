@@ -867,6 +867,21 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
     await fresh.locator('#appGuideTour [data-tour-skip]').click();await fresh.close();
   }
  });
+ await check('Dashboard deletion signs out on desktop and mobile only after successful clearing',async()=>{
+  for(const width of [1440,390]){
+   const fresh=await browser.newPage({viewport:{width,height:900},serviceWorkers:'block'});fresh.on('pageerror',e=>errors.push(e.message));
+   try{
+    await fresh.goto(url+'/?user=owner&email=owner@example.test&name=Owner');await fresh.locator('#cloudLogin').click();await readyTracker(fresh);
+    await fresh.waitForFunction(()=>!syncBusy&&!syncRecord?.pending&&!persistenceDirty);
+    await fresh.evaluate(()=>document.querySelector('.nav-tab[data-tab="settings"]').click());
+    await fresh.locator('.settings-quick-tile').filter({has:fresh.locator('strong',{hasText:/^Account$/})}).click();const backdrop=await fresh.locator('#settingsTileDialog').evaluate(e=>({color:getComputedStyle(e,'::backdrop').backgroundColor,blur:getComputedStyle(e,'::backdrop').backdropFilter}));assert.equal(backdrop.color,'rgba(0, 0, 0, 0.42)');assert.equal(backdrop.blur,'none');await fresh.locator('#clearTrackerSection>summary').click();await fresh.locator('#clearTrackerPhrase').fill('DELETE DASHBOARD');
+    const before=await fresh.evaluate(()=>JSON.stringify(state));rejectClearPublish=true;await fresh.locator('#clearBtn').click();await fresh.waitForFunction(()=>!dataOperationBusy&&document.getElementById('clearTrackerStatus').textContent.includes('Cloud unavailable'));
+    assert.equal(await fresh.evaluate(()=>JSON.stringify(state)),before);assert(await fresh.evaluate(()=>Boolean(sessionStorage.getItem('mockGoogle'))));
+    rejectClearPublish=false;await fresh.locator('#clearBtn').click();await fresh.locator('#cloudLogin').waitFor({state:'visible'});assert.equal(await fresh.evaluate(()=>sessionStorage.getItem('mockGoogle')),null);
+    await fresh.locator('#cloudLogin').click();await readyTracker(fresh,{completeName:false});await fresh.locator('#quickSetupFirstName').waitFor({state:'visible'});assert.equal(await fresh.evaluate(()=>state.income.length),0);
+   }finally{rejectClearPublish=false;await fresh.close();}
+  }
+ });
  assert.deepEqual(errors,[]);await browser.close();server.close();console.log(JSON.stringify({passed:results.length,failed:0}));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});
 

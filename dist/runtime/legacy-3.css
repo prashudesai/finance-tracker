@@ -9,7 +9,7 @@
     .settings-tile-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
     .settings-tile-copy{flex:1;min-width:0;}.settings-tile-copy strong{display:block;font-size:14px;line-height:1.35;}.settings-tile-copy small{display:block;margin-top:5px;color:var(--text-light);font-size:11px;line-height:1.45;font-weight:400;}.settings-tile-arrow{color:var(--text-light);font-size:21px;}
     #settingsTileDialog{box-sizing:border-box;width:min(820px,calc(100% - 32px));max-width:calc(100% - 32px);max-height:86dvh;padding:0;border:1px solid var(--border);border-radius:18px;background:var(--card-bg);color:var(--text);box-shadow:0 24px 80px #0006;overflow:auto;}
-    #settingsTileDialog::backdrop{background:rgba(2,6,23,.72);backdrop-filter:blur(3px);}
+    #settingsTileDialog::backdrop{background:rgba(0,0,0,.42);backdrop-filter:none;-webkit-backdrop-filter:none;}
     #settingsTileDialog .settings-modal-heading{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;border-bottom:1px solid var(--border);background:var(--card-bg);}
     #settingsTileDialog .settings-modal-heading h2{margin:0;font-size:20px;}
     #settingsTileClose{display:grid;place-items:center;flex:0 0 36px;width:36px;min-height:36px;padding:0;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:22px;cursor:pointer;}

@@ -40,6 +40,19 @@
   });
   updateInstall();
   let registration, offlineReady = false, applying = false;
+  let activationTimer = null, activationAttempt = 0;
+  function stopActivation() { clearTimeout(activationTimer); activationTimer = null; applying = false; }
+  function activationFailed() {
+    stopActivation(); updateStatus();
+    show('The update could not finish. Your saved records are safe. Try applying the update again.');
+  }
+  function requestActivation() {
+    if (!applying) return;
+    if (++activationAttempt > 4) { activationFailed(); return; }
+    try { registration?.waiting?.postMessage({type:'SKIP_WAITING'}); }
+    catch (_) { activationFailed(); return; }
+    activationTimer = setTimeout(requestActivation, 3000);
+  }
   let lastAutomaticCheck = 0, checkingAutomatically = false;
   async function checkOnReturn() {
     if (!registration || document.hidden || navigator.onLine === false || checkingAutomatically || Date.now()-lastAutomaticCheck < 5*60*1000) return;
@@ -55,7 +68,9 @@
   function updateStatus() {
     const updateReady = Boolean(registration?.waiting);
     if (apply) {apply.hidden = !updateReady;apply.disabled = !updateReady || applying;}
-    if (notice) notice.hidden = !updateReady;
+    if (dashboardApply) { dashboardApply.disabled = !updateReady || applying; }
+    if (notice) notice.hidden = !updateReady && !applying;
+    if (applying) { show('Applying update… The app will reload when it is ready.'); return; }
     show(updateReady ? 'An app update is ready. Saved device records are kept when applying the update.' : offlineReady
       ? (navigator.onLine === false ? 'Offline · changes save on this device and sync when connected.' : 'App ready · local saving with automatic cloud sync.')
       : 'Preparing the installed app…');
@@ -68,7 +83,7 @@
   window.addEventListener('online', updateStatus);
   window.addEventListener('offline', updateStatus);
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (applying) { applying = false; location.reload(); }
+    if (applying) { stopActivation(); location.reload(); }
   });
   check?.addEventListener('click', async () => {
     if (!registration) return;
@@ -94,7 +109,7 @@
     applying = true;
     if(apply)apply.disabled = true;
     if(dashboardApply)dashboardApply.disabled = true;
-    registration.waiting.postMessage({type:'SKIP_WAITING'});
+    activationAttempt = 0; updateStatus(); requestActivation();
   }
   apply?.addEventListener('click',applyUpdate);
   dashboardApply?.addEventListener('click',applyUpdate);
