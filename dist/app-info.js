@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.30.1",
+  "version": "2026.10.30.2",
   "released": "2026-10-30",
   "releaseNotes": [
-    "Desktop and mobile: consolidated monthly overview with financial-year averages, guided first-time setup, friendly empty states, compact Debt Summary and expandable household expense calculations."
+    "Mobile: pull to refresh at the top with draft protection, five-month Dashboard bars, Analytics heading accent, a larger My finances title, compact calculation help and consistent glass menus. Desktop presentation and financial records are preserved."
   ],
   "sections": [
     [
