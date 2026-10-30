@@ -168,7 +168,7 @@
       dialog.innerHTML='<header><span id="appGuideTourProgress"></span><button type="button" data-tour-skip aria-label="Skip app tour">Skip</button></header><h2 id="appGuideTourTitle" tabindex="-1"></h2><p id="appGuideTourText"></p><p id="appGuideTourTip"></p><footer><button type="button" data-tour-back>Back</button><button type="button" class="btn-primary" data-tour-next>Next</button></footer>';
       document.body.append(dialog);
       let index=0,returnPage='dashboard',returnScroll=0,returnFocus=null;
-      const shouldOffer=newUser=>{if(!newUser)return false;try{return !trackerStorage.getItem(key);}catch(_){return false;}};
+      const shouldOffer=newUser=>{if(!newUser||window.matchMedia('(max-width:700px)').matches&&readGettingStartedPreference()?.eligible&&!readGettingStartedPreference()?.dismissed)return false;try{return !trackerStorage.getItem(key);}catch(_){return false;}};
       function remember(status){try{trackerStorage.setItem(key,status);}catch(_){}}
       function render(){
         const step=steps[index];
