@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.30.3",
+  "version": "2026.10.30.4",
   "released": "2026-10-30",
   "releaseNotes": [
-    "Mobile: deliberate pull-to-refresh, tappable Income vs Full House Expense bars, Quick Add opens forms directly, palettes preserve Black appearance, and compact investment/retirement sheets remove repeated figures with readable account actions."
+    "Mobile: theme-aware first-name setup, choices for income, expense, opening balance, investments, loans and family, automatic sign-out after successful Dashboard deletion, and a later pull-to-refresh prompt with a longer deliberate refresh gesture."
   ],
   "sections": [
     [
