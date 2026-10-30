@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.30.2",
+  "version": "2026.10.30.3",
   "released": "2026-10-30",
   "releaseNotes": [
-    "Mobile: pull to refresh at the top with draft protection, five-month Dashboard bars, Analytics heading accent, a larger My finances title, compact calculation help and consistent glass menus. Desktop presentation and financial records are preserved."
+    "Mobile: deliberate pull-to-refresh, tappable Income vs Full House Expense bars, Quick Add opens forms directly, palettes preserve Black appearance, and compact investment/retirement sheets remove repeated figures with readable account actions."
   ],
   "sections": [
     [
