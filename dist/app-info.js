@@ -1,8 +1,8 @@
 window.PFT_APP_INFO = {
-  "version": "2026.10.30.3",
+  "version": "2026.10.30.4",
   "released": "2026-10-30",
   "releaseNotes": [
-    "Mobile: deliberate pull-to-refresh, tappable Income vs Full House Expense bars, Quick Add opens forms directly, palettes preserve Black appearance, and compact investment/retirement sheets remove repeated figures with readable account actions."
+    "Mobile: theme-aware first-name setup, choices for income, expense, opening balance, investments, loans and family, automatic sign-out after successful Dashboard deletion, and a later pull-to-refresh prompt with a longer deliberate refresh gesture."
   ],
   "sections": [
     [
@@ -87,7 +87,7 @@ window.PFT_APP_INFO = {
     ],
     [
       "15. Data, backup and Records & checks",
-      "In Settings > Data & backup, export JSON for an independent copy or import a validated backup. Recovery snapshot lets you inspect the available recovery copy. Expand Records & checks for statement comparisons, archived accounts and the local change log.\nA statement check records a comparison; it does not change the balance by itself. Correct the account value or EMI split in the relevant controls when needed. Archived accounts retain history but stop contributing to current totals and projections. Restoring resumes contributions from next month without filling archived months. Change log is device-local rather than a shared audit trail.\nDelete Dashboard in Settings > Account is owner-only. It shows the affected owner email, offers Download backup, requires typing DELETE DASHBOARD, an online connection and no pending changes. The cloud clear must succeed before the local copy is cleared; a failed offline attempt is not queued for later. The login and family-access permissions remain."
+      "In Settings > Data & backup, export JSON for an independent copy or import a validated backup. Recovery snapshot lets you inspect the available recovery copy. Expand Records & checks for statement comparisons, archived accounts and the local change log.\nA statement check records a comparison; it does not change the balance by itself. Correct the account value or EMI split in the relevant controls when needed. Archived accounts retain history but stop contributing to current totals and projections. Restoring resumes contributions from next month without filling archived months. Change log is device-local rather than a shared audit trail.\nDelete Dashboard in Settings > Account is owner-only. It shows the affected owner email, offers Download backup, requires typing DELETE DASHBOARD, an online connection and no pending changes. The cloud clear must succeed before the local copy is cleared; a failed offline attempt is not queued for later. Your Google account and family-access permissions remain. On mobile, a successful clear signs you out."
     ],
     [
       "16. Family Access and permissions",
@@ -99,7 +99,7 @@ window.PFT_APP_INFO = {
     ],
     [
       "18. Account and deletion",
-      "Account shows the currently signed-in Google email. Delete Dashboard clears your own tracker records, custom values, recovery snapshot and local change log from the cloud and this device. It keeps your app login, Google account and family access. Other people\u2019s trackers and downloaded backups are unchanged. Only the owner can use it, while viewing their own tracker. Download a backup, finish syncing and type DELETE DASHBOARD to confirm. You must be online; the cloud clear must succeed before local records are cleared. This uses the regular cloud sync and does not require the account-deletion service."
+      "Account shows the currently signed-in Google email. Delete Dashboard clears your own tracker records, custom values, recovery snapshot and local change log from the cloud and this device. It keeps your Google account and family access. On mobile, it signs you out after the cloud and device clear both succeed. Other people\u2019s trackers and downloaded backups are unchanged. Only the owner can use it, while viewing their own tracker. Download a backup, finish syncing and type DELETE DASHBOARD to confirm. You must be online; the cloud clear must succeed before local records are cleared. This uses the regular cloud sync and does not require the account-deletion service."
     ],
     [
       "19. Reviewing changes and calculation details",

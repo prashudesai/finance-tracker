@@ -18,8 +18,9 @@
       checklist.hidden=!visible;
       if(visible){const signature=JSON.stringify([current,pref,done]);if(checklist.dataset.signature!==signature){checklist.dataset.signature=signature;checklist.innerHTML='<div class="getting-started-heading"><div><h2>Get started</h2><p>Set up what matters to you · '+done+' of 4 complete</p></div><button type="button" class="btn-secondary" data-setup-action="skip">Skip for now</button></div><ol class="getting-started-steps">'+steps.map(([key,title,label,action])=>'<li class="'+(current[key]?'is-complete':'')+'"><span class="setup-step-state" aria-hidden="true">'+(current[key]?'✓':'○')+'</span><strong>'+title+'</strong><button type="button" class="btn-secondary" data-setup-action="'+(current[key]&&['loan','investment'].includes(action)?action+'-view':action)+'">'+(current[key]?'Review':label)+'</button>'+(key==='loans'&&!current.loans?'<button type="button" class="setup-skip-loan" data-setup-action="no-loans">Not applicable</button>':'')+'</li>').join('')+'</ol>';}}
       dashboard.dataset.emptyTracker=String(!current.hasData);empty.hidden=current.hasData;
-      const add=empty.querySelector('button');add.hidden=!editable;
-      empty.querySelector('h2').textContent=editable?'Add your first income to see your month at a glance':'No financial records yet';
+      empty.querySelectorAll('button').forEach(button=>button.hidden=!editable);
+      const mobile=window.matchMedia('(max-width:700px)').matches;
+      empty.querySelector('h2').textContent=editable?(mobile?'Start with what matters to you':'Add your first income to see your month at a glance'):'No financial records yet';
       empty.querySelector('p').textContent=editable?'Your income, expenses and balances will appear here as you add records.':'No financial records have been added yet. The owner or an editor can add records.';
       const resume=document.getElementById('resumeGettingStarted');if(resume)resume.hidden=!editable||!pref.eligible||!pref.dismissed||done===4;
     }
@@ -40,7 +41,7 @@
       if(window.PFTGettingStarted||!window.financeCloud||typeof state==='undefined')return;
       const dashboard=document.getElementById('dashboard');if(!dashboard)return;
       const checklist=document.createElement('section');checklist.id='gettingStartedChecklist';checklist.className='panel getting-started-checklist';checklist.setAttribute('aria-label','Setup checklist');checklist.hidden=true;
-      const empty=document.createElement('section');empty.id='dashboardFirstRecord';empty.className='panel first-record-prompt';empty.hidden=true;empty.innerHTML='<h2>Add your first income to see your month at a glance</h2><p>Your income, expenses and balances will appear here as you add records.</p><button type="button" class="btn-primary" data-setup-action="income">+ Add income</button>';
+      const empty=document.createElement('section');empty.id='dashboardFirstRecord';empty.className='panel first-record-prompt';empty.hidden=true;empty.innerHTML='<h2>Add your first income to see your month at a glance</h2><p>Your income, expenses and balances will appear here as you add records.</p><button type="button" class="btn-primary" data-setup-action="income">+ Add income</button><div class="mobile-first-record-options" aria-label="Other setup options"><button type="button" class="btn-secondary" data-setup-action="expense">Add expense</button><button type="button" class="btn-secondary" data-setup-action="opening">Opening balance</button><button type="button" class="btn-secondary" data-setup-action="investment">Add investment</button><button type="button" class="btn-secondary" data-setup-action="loan">Add loan</button><button type="button" class="btn-secondary" data-setup-action="family">Family members</button></div>';
       const intro=dashboard.querySelector('.dashboard-page-intro');if(intro){intro.after(checklist);checklist.after(empty);}else dashboard.prepend(checklist,empty);
       const resume=document.createElement('button');resume.id='resumeGettingStarted';resume.type='button';resume.className='btn-secondary';resume.textContent='Resume setup';resume.dataset.setupAction='resume';resume.hidden=true;document.querySelector('#settings .settings-intro')?.after(resume);
       document.addEventListener('click',event=>{const button=event.target.closest('[data-setup-action]');if(button){event.preventDefault();runGettingStartedAction(button.dataset.setupAction,button);}});
@@ -70,7 +71,7 @@
           for(const host of document.querySelectorAll('.investment-empty-state,#retirementEmptyState')){if(host.querySelector('[data-setup-action]')||window.financeCloud?.canEdit===false)continue;const button=document.createElement('button');button.type='button';button.className='btn-secondary';button.textContent='Add your first account';button.dataset.setupAction=host.id==='retirementEmptyState'?'pf':'investment';host.append(button);}
         });
       }
-      const observer=new MutationObserver(enhanceEmptyTables);observer.observe(document.body,{childList:true,subtree:true});window.PFTGettingStarted={refresh:renderGettingStarted,enhance:enhanceEmptyTables};renderGettingStarted();enhanceEmptyTables();
+      const observer=new MutationObserver(enhanceEmptyTables);observer.observe(document.body,{childList:true,subtree:true});window.matchMedia('(max-width:700px)').addEventListener('change',renderGettingStarted);window.PFTGettingStarted={refresh:renderGettingStarted,enhance:enhanceEmptyTables};renderGettingStarted();enhanceEmptyTables();
     }
     if(typeof window!=='undefined'){
       window.addEventListener('pft:before-reveal',installGettingStarted);

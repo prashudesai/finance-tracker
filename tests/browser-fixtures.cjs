@@ -16,3 +16,12 @@ exports.selectControl=async(page,selector,value)=>{
   await panel.locator('[data-test-select=true]').click();
  }else await native.selectOption(value,{force:true});
 };
+// Poll a resolved flag instead of returning a long-lived browser Promise over CDP.
+// The app reveals its shell before first-name setup, so wait for either state.
+exports.readyTracker=async page=>{
+ await page.evaluate(()=>{window.__testTrackerReady=false;window.__testTrackerFailure='';Promise.resolve(window.trackerReady).then(()=>window.__testTrackerReady=true,error=>window.__testTrackerFailure=error?.message||String(error));});
+ await page.waitForFunction(()=>window.__testTrackerReady||window.__testTrackerFailure||document.getElementById('firstNameSetup')?.hidden===false);
+ if(await page.locator('#firstNameSetup').isVisible()&&await page.locator('#firstNameContinue').isEnabled())await page.locator('#firstNameContinue').click();
+ await page.waitForFunction(()=>window.__testTrackerReady||window.__testTrackerFailure);
+ const error=await page.evaluate(()=>window.__testTrackerFailure);if(error)throw Error(error);
+};

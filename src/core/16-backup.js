@@ -138,7 +138,8 @@
       if(phrase.value!=='DELETE DASHBOARD'){status.textContent='Type DELETE DASHBOARD to confirm.';return;}
       dataOperationBusy=true;updateClearControls();phrase.disabled=true;
       const dialog=document.getElementById('settingsTileDialog');dialog.dataset.deleting='true';document.getElementById('settingsTileClose').disabled=true;
-      let cloudCleared=false,clearOwnsSync=false;
+      let cloudCleared=false,clearOwnsSync=false,clearCompleted=false;
+      const logoutAfterClear=window.matchMedia('(max-width:700px)').matches;
       document.getElementById('settingsTileContent').inert=true;
       try{
         await saveQueue;
@@ -159,14 +160,19 @@
         cloudRecovery=null;cloudCommittedState=JSON.parse(JSON.stringify(state));lastAccepted=JSON.parse(JSON.stringify(state));
         await commitFinance(state,'Clear all data',null,true);
         persistenceDirty=false;storageLoadFailed=false;phrase.value='';
-        refreshImportedData();await renderRecovery();syncStatus();document.getElementById('lastUpdate').textContent=state.lastUpdate;
-        status.textContent='Local and cloud tracker data cleared. Your login and family access are unchanged.';
+        if(!logoutAfterClear){refreshImportedData();await renderRecovery();syncStatus();document.getElementById('lastUpdate').textContent=state.lastUpdate;}
+        clearCompleted=true;
+        status.textContent=logoutAfterClear?'Dashboard deleted. Signing you out…':'Local and cloud tracker data cleared. Your login and family access are unchanged.';
         });
       }catch(error){
         status.textContent=cloudCleared?'Cloud data was cleared, but this device could not finish updating. Reload to load the empty cloud tracker.':error.message;
         if(cloudCleared){storageLoadFailed=true;window.financeCloud.lock(new Error(status.textContent));}
       }finally{
         if(clearOwnsSync)syncBusy=false;dataOperationBusy=false;document.getElementById('settingsTileContent').inert=false;phrase.disabled=false;delete dialog.dataset.deleting;document.getElementById('settingsTileClose').disabled=false;updateClearControls();
+      }
+      if(clearCompleted&&logoutAfterClear){
+        try{await window.financeCloud.logout();}
+        catch(error){status.textContent='Dashboard deleted, but sign-out did not finish. Use Sign out in Settings. '+error.message;}
       }
     });
 

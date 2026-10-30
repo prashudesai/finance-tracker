@@ -3,7 +3,7 @@ export function installMobileExperience(){
  if(window.financeMobileExperience)return;
  const mobile=matchMedia('(max-width:700px)'),main=document.getElementById('trackerMain');
  const indicator=document.createElement('div');indicator.id='mobilePullRefresh';indicator.hidden=true;indicator.setAttribute('role','status');indicator.setAttribute('aria-live','polite');document.body.append(indicator);
- const pullThreshold=170;
+ const pullThreshold=240,pullReveal=110;
  let gesture=null,busy=false,timer=0,scanTimer=0,disposed=false;
  const ignore='button,a,input,select,textarea,summary,[contenteditable],dialog,[role=dialog],[role=listbox],[role=menu],.modal,.table-wrapper,svg,canvas';
  function blocked(target){
@@ -32,7 +32,7 @@ export function installMobileExperience(){
   if(dy<0||Math.abs(dx)>Math.max(16,dy*.65)){gesture=null;hide();return;}
   if(dy<12)return;
   if(event.cancelable)event.preventDefault(); // Avoid a second native browser refresh.
-  gesture.pull=dy;if(dy<40){hide();return;}indicator.hidden=false;indicator.textContent=dy>=pullThreshold?'Release to refresh':'Pull to refresh';indicator.dataset.ready=String(dy>=pullThreshold);
+  gesture.pull=dy;if(dy<pullReveal){hide();return;}indicator.hidden=false;indicator.textContent=dy>=pullThreshold?'Release to refresh':'Pull to refresh';indicator.dataset.ready=String(dy>=pullThreshold);
  }
  function end(){const ready=gesture?.pull>=pullThreshold;gesture=null;if(ready)void refresh();else if(!busy)hide();}
  const cancel=()=>{gesture=null;if(!busy)hide();};
