@@ -146,20 +146,26 @@ const server=http.createServer(async(req,res)=>{try{
   assert.equal(await page.evaluate(()=>JSON.stringify(state)),before);
  });
  await check('Pull refresh requires top-of-page vertical intent and protects drafts, offline and desktop',async()=>{
-  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>{document.querySelector('.nav-tab[data-tab="dashboard"]').click();window.scrollTo(0,0);});
+  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>document.querySelector('.nav-tab[data-tab="dashboard"]').click());
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   await page.waitForFunction(()=>scrollY===0&&Boolean(window.financeMobileExperience));
-  const results=await page.evaluate(async()=>{
-   const oldRefresh=financeBridge.refreshRemote,oldDrafts=window.financeDrafts;let count=0;financeBridge.refreshRemote=async()=>{count++;};window.financeDrafts={pending:()=>false};
+  await page.evaluate(()=>{
+   const oldRefresh=financeBridge.refreshRemote,oldDrafts=window.financeDrafts;window.__pullCalls=0;financeBridge.refreshRemote=async()=>{window.__pullCalls++;};window.financeDrafts={pending:()=>false};
    window.__pullTest=(dx=0,dy=110,cancel=false,multi=false)=>{const target=document.querySelector('#dashboard .dashboard-page-intro');const touch=(x,y)=>new Touch({identifier:1,clientX:x,clientY:y,target});target.dispatchEvent(new TouchEvent('touchstart',{bubbles:true,touches:[touch(120,160)]}));target.dispatchEvent(new TouchEvent('touchmove',{bubbles:true,cancelable:true,touches:multi?[touch(120+dx,160+dy),touch(180,190)]:[touch(120+dx,160+dy)]}));target.dispatchEvent(new TouchEvent(cancel?'touchcancel':'touchend',{bubbles:true,changedTouches:[touch(120+dx,160+dy)]}));};
-   __pullTest(100,20);__pullTest(0,30);__pullTest(0,110,true);__pullTest(0,110,false,true);await Promise.resolve();const ignored=count;
-   window.scrollTo(0,100);__pullTest();const scrolled=count;window.scrollTo(0,0);
-   window.financeDrafts={pending:()=>true};__pullTest();await Promise.resolve();const draft=count,draftMessage=document.getElementById('mobilePullRefresh').textContent;
-   window.financeDrafts={pending:()=>false};__pullTest();await Promise.resolve();await Promise.resolve();const refreshed=count;
-   window.__pullRestore=()=>{financeBridge.refreshRemote=oldRefresh;window.financeDrafts=oldDrafts;delete window.__pullTest;delete window.__pullRestore;};
-   return{ignored,scrolled,draft,draftMessage,refreshed};
-  });assert.equal(results.ignored,0);assert.equal(results.scrolled,0);assert.equal(results.draft,0);assert.match(results.draftMessage,/save your entry/);assert.equal(results.refreshed,1);
-  await page.context().setOffline(true);await page.waitForFunction(()=>!navigator.onLine);await page.evaluate(()=>__pullTest());assert.match(await page.locator('#mobilePullRefresh').textContent(),/Connect to the internet/);await page.context().setOffline(false);await page.waitForFunction(()=>navigator.onLine);
-  await page.setViewportSize({width:1440,height:900});await page.waitForFunction(()=>document.getElementById('mobilePullRefresh').hidden);await page.evaluate(()=>{__pullTest();__pullRestore();});assert.equal(await page.locator('#mobilePullRefresh').isVisible(),false);
+   window.__pullRestore=()=>{financeBridge.refreshRemote=oldRefresh;window.financeDrafts=oldDrafts;delete window.__pullTest;delete window.__pullRestore;delete window.__pullCalls;};
+  });
+  try{
+   await page.evaluate(()=>{__pullTest(100,20);__pullTest(0,30);__pullTest(0,110,true);__pullTest(0,110,false,true);});assert.equal(await page.evaluate(()=>__pullCalls),0);
+   await page.evaluate(()=>window.scrollTo({top:100,behavior:'instant'}));await page.waitForFunction(()=>scrollY>1);await page.evaluate(()=>__pullTest());assert.equal(await page.evaluate(()=>__pullCalls),0);
+   await page.evaluate(()=>{window.scrollTo({top:0,behavior:'instant'});window.financeDrafts={pending:()=>true};});await page.waitForFunction(()=>scrollY===0);await page.evaluate(()=>__pullTest());assert.match(await page.locator('#mobilePullRefresh').textContent(),/save your entry/);assert.equal(await page.evaluate(()=>__pullCalls),0);
+   await page.evaluate(()=>{window.financeDrafts={pending:()=>false};__pullTest();});await page.waitForFunction(()=>__pullCalls===1&&document.getElementById('mobilePullRefresh').hidden);
+   await page.context().setOffline(true);await page.waitForFunction(()=>!navigator.onLine);await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));await page.waitForFunction(()=>scrollY===0);await page.evaluate(()=>__pullTest());
+   const offline=await page.evaluate(()=>({text:document.getElementById('mobilePullRefresh').textContent,hidden:document.getElementById('mobilePullRefresh').hidden,scroll:scrollY,inert:document.getElementById('trackerMain').inert,modals:[...document.querySelectorAll('dialog[open],.investment-edit-modal:not([hidden]),[aria-modal=true]')].filter(e=>e.getClientRects().length).map(e=>e.id||e.className),calls:__pullCalls}));
+   assert.match(offline.text,/Connect to the internet/,JSON.stringify(offline));assert.equal(offline.calls,1);
+   await page.context().setOffline(false);await page.waitForFunction(()=>navigator.onLine);
+   await page.setViewportSize({width:1440,height:900});await page.waitForFunction(()=>document.getElementById('mobilePullRefresh').hidden);await page.evaluate(()=>__pullTest());assert.equal(await page.evaluate(()=>__pullCalls),1);
+  }finally{await page.context().setOffline(false);await page.evaluate(()=>__pullRestore());}
   await page.setViewportSize({width:390,height:844});
  });
  await check('Dashboard bar chart and page headers preserve financial records at all widths',async()=>{
