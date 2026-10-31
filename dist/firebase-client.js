@@ -19,6 +19,7 @@ import {initializeAccountPhoto} from './account-photo.js?v=66';
 import {createCloudStore} from './firebase-store.js?v=66';
 import {openVault} from './finance-vault.js?v=1';
 import {publicFingerprint} from './vault-device-approval.js?v=1';
+import {sendRecoveryEmail} from './recovery-email.js?v=1';
 const config={apiKey:'AIzaSyBYhF_dyyOSyHyGletR58W7bYlL0xw8dQk',authDomain:'finance-tracker-bc7c9.firebaseapp.com',projectId:'finance-tracker-bc7c9',storageBucket:'finance-tracker-bc7c9.firebasestorage.app',messagingSenderId:'720970373789',appId:'1:720970373789:web:bb792be22a462f359cd274'};
 // Safari and mobile need Firebase's auth iframe prepared before the sign-in tap.
 const app=initializeApp(config),auth=initializeAuth(app,{persistence:[indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence],popupRedirectResolver:browserPopupRedirectResolver}),db=getFirestore(app),provider=new GoogleAuthProvider();
@@ -68,8 +69,24 @@ onAuthStateChanged(auth,async user=>{
   window.PFTPerformance?.mark('access-ready');
   window.addEventListener('pft:before-reveal',()=>installCashFlow(),{once:true});
   const assertAccess=()=>{if(!family.accessValid())throw new Error('Family access changed. Reload.');};
+  const emailRecoveryKey=async recoveryKey=>{
+    if(family.role!=='owner'||family.ownerUid!==user.uid||auth.currentUser?.uid!==user.uid)throw Error('Only the signed-in vault owner can email a recovery key.');
+    const gmailProvider=new GoogleAuthProvider();
+    gmailProvider.addScope('https://www.googleapis.com/auth/gmail.send');
+    gmailProvider.setCustomParameters({prompt:'select_account consent'});
+    let result;
+    try{result=await signInWithPopup(auth,gmailProvider,browserPopupRedirectResolver);}
+    catch(error){if(error?.code==='auth/popup-closed-by-user'||error?.code==='auth/cancelled-popup-request')throw Error('Gmail permission was cancelled. Your recovery key has not been emailed.');throw error;}
+    if(result.user.uid!==user.uid||result.user.email?.toLowerCase()!==user.email?.toLowerCase()){
+      throw Error('The Google account selected for Gmail does not match your tracker account. Nothing was sent.');
+    }
+    const credential=GoogleAuthProvider.credentialFromResult(result);
+    if(!credential?.accessToken)throw Error('Gmail did not grant permission to send email.');
+    await sendRecoveryEmail(credential.accessToken,user.email,recoveryKey);
+  };
   const api={
     currentUid:()=>auth.currentUser?.uid,
+    emailRecoveryKey,
     online:()=>navigator.onLine,
     get:async path=>{const snapshot=await getDocFromServer(doc(db,path));return snapshot.exists()?snapshot.data():null;},
     create:async(path,data)=>{assertAccess();if(family.role!=='owner')throw Error('Only the owner can create a vault.');await runTransaction(db,async tx=>{const ref=doc(db,path);if((await tx.get(ref)).exists())throw Error('The vault already exists. Reload.');tx.set(ref,data);});},
@@ -175,16 +192,17 @@ onAuthStateChanged(auth,async user=>{
     if(family.role==='owner'){
       const renew=document.createElement('button');renew.type='button';renew.textContent='Replace lost recovery key';
       const recoveryCode=document.createElement('code');recoveryCode.hidden=true;
-      const emailKey=document.createElement('a');emailKey.textContent='Email to myself';emailKey.hidden=true;
+      const emailKey=document.createElement('button');emailKey.type='button';emailKey.textContent='Email to myself (Gmail)';emailKey.hidden=true;
+      const emailStatus=document.createElement('p');emailStatus.setAttribute('role','status');
       renew.onclick=async()=>{
         if(!confirm('Replace the recovery key? The previous recovery key will stop working. Save the new key immediately.'))return;
         renew.disabled=true;
         try{const value=await vault.renewRecovery();recoveryCode.textContent=value;recoveryCode.hidden=false;
-          emailKey.href='mailto:'+encodeURIComponent(user.email||'')+'?subject='+encodeURIComponent('Personal Finance Tracker recovery key')+'&body='+encodeURIComponent('Anyone who can read this email can recover your tracker.\\n\\n'+value);
           emailKey.hidden=false;
+          emailKey.onclick=async()=>{emailKey.disabled=true;emailStatus.textContent='Requesting Gmail permission…';try{await emailRecoveryKey(value);emailStatus.textContent='Gmail accepted your recovery-key email. Check your inbox and spam folder.';}catch(error){emailStatus.textContent=friendly(error);}finally{emailKey.disabled=false;}};
         }catch(error){recoveryCode.textContent=friendly(error);recoveryCode.hidden=false;}finally{renew.disabled=false;}
       };
-      section.append(renew,recoveryCode,emailKey);
+      section.append(renew,recoveryCode,emailKey,emailStatus);
     }
     pairPanel.append(section);
   }
