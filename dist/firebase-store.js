@@ -42,7 +42,7 @@ export function createCloudStore(api, uid, actorUid=uid, vault) {
       if(chunks.some(c=>!c || typeof c.payload!=='string')) {
         const current=await api.get(metaPath);
         if(current?.generation!==meta.generation)continue;
-        throw new Error('The saved snapshot is incomplete. Reload or restore a JSON backup.');
+        throw Object.assign(new Error('The saved snapshot is incomplete. Reload or start a new empty tracker if you do not need the old data.'),{code:'tracker/missing-chunks'});
       }
       const parts=chunks.map(c=>decode(c.payload));
       const length=parts.reduce((sum,p)=>sum+p.length,0);
