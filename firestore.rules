@@ -114,42 +114,17 @@ service cloud.firestore {
         && request.resource.data.expiresAt is int;
       allow delete: if canRead(uid);
     }
-    // One-time new-device approvals: verified existing members can request;
-    // only the tracker owner can see the pending queue or approve/deny.
+    // Signed-in approved family members request access; only owners decide.
     match /users/{uid}/vaultRequests/{id} {
       function validRequest() {
-        return id.matches('^[0-9a-f]{24}
-      allow read: if canRead(uid);
-      allow delete: if owns(uid);
-      allow create: if canEdit(uid)
-        && request.resource.data.keys().hasOnly(['payload'])
-        && request.resource.data.payload is string
-        && request.resource.data.payload.size() <= 250000;
-    }
-    match /{document=**} { allow read, write: if false; }
-  }
-}
-
-)
+        return id.matches('^[0-9a-f]{24}$')
           && request.resource.data.keys().hasOnly(['format','requesterUid','requesterEmail','deviceLabel','publicKey','status','createdAt','expiresAt'])
           && request.resource.data.format == 1
           && request.resource.data.requesterUid == request.auth.uid
           && request.resource.data.requesterEmail == request.auth.token.email.lower()
           && request.resource.data.deviceLabel is string && request.resource.data.deviceLabel.size() <= 80
           && request.resource.data.publicKey is string && request.resource.data.publicKey.size() <= 256
-          && request.resource.data.publicKey.matches('^[A-Za-z0-9+/=]+
-      allow read: if canRead(uid);
-      allow delete: if owns(uid);
-      allow create: if canEdit(uid)
-        && request.resource.data.keys().hasOnly(['payload'])
-        && request.resource.data.payload is string
-        && request.resource.data.payload.size() <= 250000;
-    }
-    match /{document=**} { allow read, write: if false; }
-  }
-}
-
-)
+          && request.resource.data.publicKey.matches('^[A-Za-z0-9+/=]+$')
           && request.resource.data.status == 'pending'
           && request.resource.data.createdAt == request.time
           && request.resource.data.expiresAt is timestamp
@@ -165,34 +140,10 @@ service cloud.firestore {
           && (request.resource.data.status == 'denied'
             || (request.resource.data.responseKey is string
               && request.resource.data.responseKey.size() <= 256
-              && request.resource.data.responseKey.matches('^[A-Za-z0-9+/=]+
-      allow read: if canRead(uid);
-      allow delete: if owns(uid);
-      allow create: if canEdit(uid)
-        && request.resource.data.keys().hasOnly(['payload'])
-        && request.resource.data.payload is string
-        && request.resource.data.payload.size() <= 250000;
-    }
-    match /{document=**} { allow read, write: if false; }
-  }
-}
-
-)
+              && request.resource.data.responseKey.matches('^[A-Za-z0-9+/=]+$')
               && request.resource.data.payload is string
               && request.resource.data.payload.size() <= 256
-              && request.resource.data.payload.matches('^[A-Za-z0-9+/=]+
-      allow read: if canRead(uid);
-      allow delete: if owns(uid);
-      allow create: if canEdit(uid)
-        && request.resource.data.keys().hasOnly(['payload'])
-        && request.resource.data.payload is string
-        && request.resource.data.payload.size() <= 250000;
-    }
-    match /{document=**} { allow read, write: if false; }
-  }
-}
-
-)));
+              && request.resource.data.payload.matches('^[A-Za-z0-9+/=]+$')));
       }
       allow get: if canRead(uid) && (owns(uid) || request.auth.uid == resource.data.requesterUid);
       allow list: if owns(uid);
