@@ -4,6 +4,7 @@
       return {hasData:keys.some(key=>Array.isArray(data[key])&&data[key].length>0),family:(data.customValues?.familyMembers||[]).some(name=>String(name).trim()),opening:(data.monthlyBalances||[]).some(row=>row.month===month&&Number.isFinite(row.startBalance)),loans:(data.debts||[]).length>0||loanSkipped,investments:['investments','pf','ppf','nps','gratuityAccounts'].some(key=>(data[key]||[]).length>0)};
     }
     function shouldShowResumeSetup(pref){return Boolean(pref?.eligible&&pref.dismissed&&!pref.wizardComplete);}
+    function completeSetupBySkipping(pref){pref.dismissed=true;pref.wizardComplete=true;}
     function readGettingStartedPreference(){try{return JSON.parse(trackerStorage.getItem('gettingStarted:v1')||'null');}catch(_){return null;}}
     function writeGettingStartedPreference(value){try{trackerStorage.setItem('gettingStarted:v1',JSON.stringify(value));}catch(_){}}
     function renderGettingStarted(){
@@ -113,7 +114,7 @@
       if(!window.financeCloud||window.financeCloud.canEdit===false)return;
       if(action.startsWith('wizard-')){runMobileSetupAction(action,trigger);return;}
       const nav=id=>document.querySelector('.nav-tab[data-tab="'+id+'"]')?.click();
-      if(['skip','no-loans','resume'].includes(action)){const pref=readGettingStartedPreference()||{eligible:true,dismissed:false,loanSkipped:false};if(action==='no-loans')pref.loanSkipped=true;else{pref.dismissed=action==='skip';if(action==='resume'&&pref.wizardComplete){pref.wizardStep=0;pref.wizardComplete=false;}}writeGettingStartedPreference(pref);if(action==='resume')nav('dashboard');renderGettingStarted();return;}
+      if(['skip','no-loans','resume'].includes(action)){const pref=readGettingStartedPreference()||{eligible:true,dismissed:false,loanSkipped:false};if(action==='no-loans')pref.loanSkipped=true;else if(action==='skip')completeSetupBySkipping(pref);else if(action==='resume'&&pref.wizardComplete){pref.wizardStep=0;pref.wizardComplete=false;}writeGettingStartedPreference(pref);if(action==='resume')nav('dashboard');renderGettingStarted();if(action==='skip')window.PFTTour?.maybeStart(true);return;}
 if(action==='loan-view'){nav('debts');return;}
       if(action==='investment-view'){nav('investments');return;}
       if(action==='family'){nav('settings');const tile=[...document.querySelectorAll('.settings-quick-tile')].find(node=>/family/i.test(node.querySelector('strong')?.textContent||''));tile?.click();document.querySelector('[data-family-dialog="familyNameDetails"]')?.click();return;}
