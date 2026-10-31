@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const {webcrypto}=require('node:crypto');
-global.crypto=webcrypto;
+if(!globalThis.crypto?.subtle)Object.defineProperty(globalThis,'crypto',{value:webcrypto,configurable:true});
 (async()=>{
  const {newDeviceRequest,encryptApproval,decryptApproval,publicFingerprint}=await import('../dist/vault-device-approval.js');
  const raw=crypto.getRandomValues(new Uint8Array(32));
