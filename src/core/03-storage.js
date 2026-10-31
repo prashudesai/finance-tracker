@@ -95,6 +95,8 @@
         else try{envelope=await window.financeCloud.load();freshCloud=true;syncRecord={baseRevision:window.financeCloud.revision(),pending:false,envelope,lastCloudUpdated:window.financeCloud?.updatedAt?.()||null};}
         catch(error){if(window.financeCloud?.role!=='owner'||!cached||!syncRecord)throw error;envelope={data:cached.data,recovery:syncRecord.envelope?.recovery||null};}
         cloudRecovery=envelope?.recovery||null;state=validateBackup(envelope?.data||createEmptyState());
+        // A brand-new cloud tracker must not inherit form drafts or setup progress.
+        if(!cached&&!envelope&&window.financeCloud?.role==='owner')for(const key of ['workDrafts:v1','gettingStarted:v1'])try{trackerStorage.removeItem(key);}catch(_){}
         cloudCommittedState=JSON.parse(JSON.stringify(state));
         if(window.financeCloud?.canEdit!==false){syncStallionPmsFromInvestments();}
         if(!openingCached||JSON.stringify(state)!==JSON.stringify(cached.data))await commitFinance(state,'Opened cloud account');
@@ -141,6 +143,22 @@
       reset(){clearTimeout(syncTimer);clearTimeout(startupRevisionTimer);window.financeStartupChecking=false;state=createEmptyState();lastAccepted=null;if(financeDB){financeDB.close();financeDB=null;}},
       exportUnsaved(){const blob=new Blob([JSON.stringify(makeDeviceRecoveryBackup(),null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='finance-unsaved-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},
       async refreshRemote(){await saveQueue;if(!navigator.onLine){alert('Connect to the internet to refresh cloud records.');return;}if(syncRecord?.pending){if(!confirm('This device has changes waiting to sync. Export a backup first. Replace this device’s pending changes with the latest cloud records?'))return;await window.financeCloud.load();await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').delete('cloudSync');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});}await new Promise((resolve,reject)=>{const tx=financeDB.transaction('records','readwrite');tx.objectStore('records').put(true,'forceRemoteRead');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});location.reload();},
+      async resetMissingCloud(){
+        await saveQueue;
+        if(window.financeCloud?.role!=='owner'||window.financeCloud?.canManage!==true)throw new Error('Only the owner can reset the tracker.');
+        if(syncRecord?.pending||persistenceDirty)throw new Error('Pending device changes must be resolved before resetting cloud records.');
+        if(!navigator.onLine)throw new Error('Reconnect before resetting the cloud snapshot.');
+        const empty=validateBackup(createEmptyState());
+        await window.financeCloud.resetBrokenSnapshot({data:empty,recovery:null,mutationId:crypto.randomUUID()});
+        // Force a clean server read after the replacement, never an older local cache.
+        await new Promise((resolve,reject)=>{
+          const tx=financeDB.transaction('records','readwrite'),records=tx.objectStore('records');
+          records.delete('cloudSync');records.put(true,'forceRemoteRead');
+          tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error||new Error('Could not finish resetting local sync state.'));
+        });
+        for(const key of ['workDrafts:v1','gettingStarted:v1','pft:guide-tour:v1'])try{trackerStorage.removeItem(key);}catch(_){}
+        location.reload();
+      },
       async retry(){await saveQueue;await syncCloud();}
     };
 
