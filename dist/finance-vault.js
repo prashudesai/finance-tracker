@@ -1,3 +1,4 @@
+import {newDeviceRequest,encryptApproval,decryptApproval} from './vault-device-approval.js?v=1';
 // Browser-only encryption. Firestore never receives a passphrase, recovery key, or data key.
 const enc=new TextEncoder(),dec=new TextDecoder('utf-8',{fatal:true}),ITERATIONS=600000;
 const b64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(s);};
@@ -10,7 +11,7 @@ async function seal(key,scope,bytes){const iv=crypto.getRandomValues(new Uint8Ar
 async function unseal(key,scope,text){const bytes=unb64(text);if(bytes.length<29)throw Error('Encrypted cloud record is invalid.');return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes.slice(0,12),additionalData:enc.encode(scope)},key,bytes.slice(12)));}
 export function createCipher(key,raw){return {encrypt:async(scope,value)=>seal(key,scope,enc.encode(JSON.stringify(value))),decrypt:async(scope,value)=>JSON.parse(dec.decode(await unseal(key,scope,value))),
   proof:async(scope,value)=>{const mac=await crypto.subtle.importKey('raw',raw,{name:'HMAC',hash:'SHA-256'},false,['sign']);return b64(new Uint8Array(await crypto.subtle.sign('HMAC',mac,enc.encode(scope+'\0'+JSON.stringify(value)))));}};}
-function dialog({title,note,confirm=false,recovery=false,pairing=false,remember=false,allowPair=false,allowRecovery=false}){return new Promise(resolve=>{
+function dialog({title,note,confirm=false,recovery=false,pairing=false,remember=false,allowPair=false,allowRecovery=false,allowRequest=false}){return new Promise(resolve=>{
   const gate=document.getElementById('cloudGate'),message=document.getElementById('cloudMessage');
   const form=document.createElement('form');form.className='cloud-vault-form';
   const heading=document.createElement('h2');heading.textContent=title;
@@ -20,6 +21,7 @@ function dialog({title,note,confirm=false,recovery=false,pairing=false,remember=
   const keep=document.createElement('input');keep.type='checkbox';const keepLabel=document.createElement('label');keepLabel.append(keep,' Remember this device');
   const submit=document.createElement('button');submit.type='submit';submit.textContent=confirm?'Continue':'Unlock';
   form.append(heading,description,input);if(confirm)form.append(repeat);if(remember)form.append(keepLabel);form.append(submit);
+  if(allowRequest){const request=document.createElement('button');request.type='button';request.textContent='Request approval on an unlocked device';request.onclick=()=>{form.remove();resolve({request:true,remember:keep.checked});};form.append(request);}
   if(allowPair){const pair=document.createElement('button');pair.type='button';pair.textContent='Approve with an existing device';pair.onclick=()=>{form.remove();resolve({pair:true});};form.append(pair);}
   if(allowRecovery){const forgot=document.createElement('button');forgot.type='button';forgot.textContent='Use recovery key';forgot.onclick=()=>{form.remove();resolve({recover:true});};form.append(forgot);}
   gate.append(form);message.textContent='Your vault must be unlocked to load records.';
@@ -43,6 +45,55 @@ function deviceStore(ownerUid,actorUid){
   const access=async(method,value)=>{const db=await open();try{return await new Promise((resolve,reject)=>{const tx=db.transaction('keys',method==='get'?'readonly':'readwrite'),req=tx.objectStore('keys')[method](...(method==='get'?[id]:[value,id]));req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}finally{db.close();}};
   return {async recall(){try{const record=await access('get');if(!record)return null;const raw=await unseal(record.key,'device:'+id,record.wrapped);return raw;}catch(_){return null;}},async save(raw){const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);await access('put',{key,wrapped:await seal(key,'device:'+id,raw)});}};
 }
+
+// Only an already-authorized Google account can create a request. No secret is uploaded.
+// The other device approves by encrypting the vault key to this device's ephemeral public key.
+async function waitForDeviceApproval(api,ownerUid,actorUid,email,config,device,remember){
+  const label=(typeof navigator!=='undefined'&&navigator.userAgent)?navigator.userAgent.slice(0,80):'New browser';
+  const request=await newDeviceRequest(ownerUid,actorUid,email,label);
+  await api.createDeviceRequest(request.id,request.record);
+  const gate=document.getElementById('cloudGate'),message=document.getElementById('cloudMessage');
+  const form=document.createElement('div');form.className='cloud-vault-form';
+  const heading=document.createElement('h2');heading.textContent='Waiting for device approval';
+  const note=document.createElement('p');note.textContent='Open the tracker on an already-unlocked desktop. Review the email and security check, then choose Approve. Requests expire after five minutes.';
+  const fingerprint=document.createElement('code');fingerprint.textContent='Security check: '+request.fingerprint;
+  const status=document.createElement('p');status.setAttribute('role','status');status.textContent='Waiting for an unlocked device…';
+  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel and use a different method';
+  form.append(heading,note,fingerprint,status,cancel);gate.append(form);
+  message.textContent='Waiting for approval on an unlocked device.';
+  try{
+    const approved=await new Promise((resolve,reject)=>{
+      let finished=false,timer;
+      const finish=(result,error)=>{if(finished)return;finished=true;clearTimeout(timer);if(error)reject(error);else resolve(result);};
+      cancel.onclick=()=>finish(null);
+      const deadline=Date.now()+300000;
+      const poll=async()=>{
+        if(finished)return;
+        if(Date.now()>deadline){finish(null,new Error('Device approval expired. Request a new approval or enter your vault passphrase.'));return;}
+        try{
+          const current=await api.getDeviceRequest(request.id);
+          if(!current){finish(null,new Error('This approval request is no longer available.'));return;}
+          if(current.requesterUid!==actorUid||current.publicKey!==request.record.publicKey){finish(null,new Error('The device request changed.'));return;}
+          if(current.status==='denied'){finish(null,new Error('The other device denied the request.'));return;}
+          if(current.status==='approved'){
+            const raw=await decryptApproval(request.privateKey,ownerUid,request.id,current);
+            const key=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);
+            if(dec.decode(await unseal(key,'vault-check-v1',config.verifier))!=='PFT vault v1')throw Error('Approval does not match your vault.');
+            if(remember)try{await device.save(raw);}catch(_){}
+            finish({raw,key});return;
+          }
+        }catch(error){
+          // A network interruption must not silently approve or discard a pending request.
+          status.textContent='Unable to check approval yet. Reconnecting…';
+        }
+        if(!finished)timer=setTimeout(poll,2000);
+      };
+      poll();
+    });
+    return approved;
+  }finally{form.remove();try{await api.removeDeviceRequest(request.id);}catch(_){}}
+}
+
 export async function openVault(api,ownerUid,role,actorUid,email=''){
   const path=`users/${ownerUid}/vault/config`;
   const device=deviceStore(ownerUid,actorUid);
@@ -68,7 +119,14 @@ export async function openVault(api,ownerUid,role,actorUid,email=''){
   if(config.format!==1||config.kdf!=='PBKDF2-SHA256'||config.iterations!==ITERATIONS||typeof config.salt!=='string')throw Error('Unsupported encrypted vault settings.');
   const remembered=await device.recall();if(remembered)try{const key=await crypto.subtle.importKey('raw',remembered,'AES-GCM',false,['encrypt','decrypt']);if(dec.decode(await unseal(key,'vault-check-v1',config.verifier))==='PFT vault v1')return withPairing(key,remembered,api,ownerUid);}catch(_){}
   for(;;){
-    const pass=await dialog({title:'Unlock your private vault',note:'Enter the passphrase you created for this tracker. It stays on this device.',remember:true,allowPair:true,allowRecovery:role==='owner'});
+    const pass=await dialog({title:'Unlock your private vault',note:'Enter the passphrase you created for this tracker. It stays on this device.',remember:true,allowPair:true,allowRecovery:role==='owner',allowRequest:typeof api.createDeviceRequest==='function'});
+    if(pass.request){
+      try{
+        const approved=await waitForDeviceApproval(api,ownerUid,actorUid,email,config,device,pass.remember);
+        if(approved)return withPairing(approved.key,approved.raw,api,ownerUid);
+      }catch(error){document.getElementById('cloudMessage').textContent=error.message;}
+      continue;
+    }
     if(pass.pair){
       const entry=await dialog({title:'Approve this device',note:'On your unlocked device, open Settings and choose Approve a new device. Enter its code here.',pairing:true,remember:true});
       try{const raw=await receivePair(api,ownerUid,entry.text,config);if(entry.remember)try{await device.save(raw);}catch(_){}return withPairing(await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']),raw,api,ownerUid);}catch(_){document.getElementById('cloudMessage').textContent='Pairing code invalid or expired. Try again.';continue;}
@@ -88,7 +146,7 @@ export async function openVault(api,ownerUid,role,actorUid,email=''){
     catch(_){document.getElementById('cloudMessage').textContent='Incorrect passphrase. Try again or use your recovery key.';}
   }
 }
-function withPairing(key,raw,api,ownerUid){return {...createCipher(key,raw),async renewRecovery(){
+function withPairing(key,raw,api,ownerUid){return {...createCipher(key,raw),async approveRequest(id,request){return encryptApproval(raw,ownerUid,id,request);},async renewRecovery(){
   const path=`users/${ownerUid}/vault/config`,previous=await api.get(path),recovery=makeRecovery();
   await api.rotate(path,previous,{...previous,recoveryWrapped:await seal(await recoveryKey(recovery.raw),'vault-recovery-v1',raw)});
   return recovery.display;
