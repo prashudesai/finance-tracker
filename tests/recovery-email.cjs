@@ -2,6 +2,14 @@
 const assert=require('node:assert/strict');
 (async()=>{
  const {makeRecoveryMessage,sendRecoveryEmail}=await import('../dist/recovery-email.js');
+ const fs=require('node:fs');
+ const vaultSource=fs.readFileSync('dist/finance-vault.js','utf8');
+ const clientSource=fs.readFileSync('dist/firebase-client.js','utf8');
+ assert.match(vaultSource,/showRecovery\(recovery\.display,email,role==='owner'\?api\.emailRecoveryKey:null\)/);
+ assert.match(clientSource,/gmailProvider\.addScope\('https:\/\/www\.googleapis\.com\/auth\/gmail\.send'\)/);
+ assert.match(clientSource,/result\.user\.uid!==user\.uid\|\|result\.user\.email\?\.toLowerCase\(\)!==user\.email\?\.toLowerCase\(\)/);
+ assert.match(clientSource,/emailKey\.onclick=async/);
+ assert.doesNotMatch(vaultSource,/mailto:/);
  const email='vault-owner@example.test',key='PFT-'+Array(8).fill('A1B2C3D4').join('-');
  const raw=makeRecoveryMessage(email,key);
  assert.match(raw,/^[A-Za-z0-9_-]+$/);
