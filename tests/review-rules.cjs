@@ -1,4 +1,4 @@
-const fs=require('node:fs'),assert=require('node:assert/strict');const {initializeTestEnvironment,assertSucceeds,assertFails}=require('@firebase/rules-unit-testing');const {doc,setDoc,getDoc,getDocFromServer,updateDoc,deleteDoc,serverTimestamp,runTransaction}=require('firebase/firestore');
+const fs=require('node:fs'),assert=require('node:assert/strict');const {initializeTestEnvironment,assertSucceeds,assertFails}=require('@firebase/rules-unit-testing');const {doc,setDoc,getDoc,getDocFromServer,updateDoc,deleteDoc,serverTimestamp,runTransaction,Timestamp}=require('firebase/firestore');
 (async()=>{const env=await initializeTestEnvironment({projectId:'demo-review-test',firestore:{rules:fs.readFileSync('firestore.rules','utf8')}});await env.clearFirestore();
 await env.withSecurityRulesDisabled(async c=>{const store=c.firestore();for(const [name,role]of [['editor','editor'],['viewer','viewer']])await setDoc(doc(store,'familyInvites/owner~'+name+'@example.test'),{ownerUid:'owner',ownerEmail:'owner@example.test',email:name+'@example.test',status:'accepted',role});});
 const clients=new Map();const db=name=>{if(!clients.has(name))clients.set(name,env.authenticatedContext(name,{email:name+'@example.test',email_verified:true}).firestore());return clients.get(name);};const ref=d=>doc(d,'users/owner/reviews/current');const data=(actor,revision=1)=>({format:2,revision,epoch:'initial',payload:'e30=',updatedBy:actor,updatedAt:serverTimestamp()});
@@ -19,5 +19,20 @@ await assertSucceeds(setDoc(vaultRef,vaultConfig));await assertSucceeds(getDoc(d
 await assertFails(setDoc(doc(db('viewer'),'users/owner/vault/config'),vaultConfig));await assertSucceeds(setDoc(vaultRef,{...vaultConfig,recoveryWrapped:'D'.repeat(80)}));await assertFails(setDoc(vaultRef,{...vaultConfig,verifier:'D'.repeat(80)}));
 const pairRef=doc(db('editor'),'users/owner/vaultInvites/1234567890abcdef');await assertSucceeds(setDoc(pairRef,{format:1,payload:'A'.repeat(80),expiresAt:Date.now()+300000}));
 await assertSucceeds(getDoc(doc(db('viewer'),'users/owner/vaultInvites/1234567890abcdef')));await assertFails(getDoc(doc(db('stranger'),'users/owner/vaultInvites/1234567890abcdef')));
+
+const pendingRequest=doc(db('viewer'),'users/owner/vaultRequests/1234567890abcdef12345678');
+const newRequest={format:1,requesterUid:'viewer',requesterEmail:'viewer@example.test',deviceLabel:'Chrome',publicKey:'A'.repeat(124),status:'pending',createdAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+300000)};
+await assertSucceeds(setDoc(pendingRequest,newRequest));
+await assertSucceeds(getDoc(doc(db('owner'),'users/owner/vaultRequests/1234567890abcdef12345678')));
+await assertSucceeds(getDoc(pendingRequest));
+await assertFails(getDoc(doc(db('editor'),'users/owner/vaultRequests/1234567890abcdef12345678')));
+await assertFails(getDoc(doc(db('stranger'),'users/owner/vaultRequests/1234567890abcdef12345678')));
+await assertFails(updateDoc(pendingRequest,{status:'approved',responseKey:'A'.repeat(124),payload:'B'.repeat(80),decidedAt:serverTimestamp()}));
+await assertFails(setDoc(doc(db('editor'),'users/owner/vaultRequests/abcdef1234567890abcdef12'),{...newRequest,requesterUid:'viewer'}));
+await assertFails(setDoc(doc(db('viewer'),'users/owner/vaultRequests/aabbccddeeffaabbccddeeff'),{...newRequest,expiresAt:Timestamp.fromMillis(Date.now()+3600000)}));
+const ownerRequest=doc(db('owner'),'users/owner/vaultRequests/1234567890abcdef12345678');
+await assertSucceeds(updateDoc(ownerRequest,{status:'approved',responseKey:'A'.repeat(124),payload:'B'.repeat(80),decidedAt:serverTimestamp()}));
+await assertFails(updateDoc(ownerRequest,{status:'denied',decidedAt:serverTimestamp()}));
+await assertSucceeds(deleteDoc(pendingRequest));
 await env.cleanup();console.log('PASS Firestore rules: encrypted vault, pairing, shared reviews, concurrent transactions and roles');})().catch(e=>{console.error(e);process.exit(1)});
 
