@@ -27,6 +27,13 @@
     .cloud-login-privacy svg{width:20px;height:20px;flex:none;stroke:#91d9c2;}
     .cloud-login-footer{position:fixed;left:16px;right:16px;bottom:max(24px,env(safe-area-inset-bottom));display:flex;justify-content:center;align-items:center;gap:9px;color:#92b7aa;font-size:13px;text-align:center;pointer-events:none;}
     .cloud-login-footer svg{width:18px;height:18px;stroke:#91d9c2;flex:none;}
+    #cloudLegacyDelete{margin-top:18px;padding:16px;border:1px solid rgba(255,196,139,.36);border-radius:14px;background:rgba(83,43,19,.18);}
+    #cloudLegacyDelete p{margin:0 0 12px;line-height:1.45;color:#f5d3b0;}
+    #cloudLegacyDelete label{display:block;margin-bottom:8px;color:#eaf8f3;}
+    #cloudLegacyPhrase{box-sizing:border-box;width:100%;min-height:44px;margin-bottom:10px;padding:9px 12px;border:1px solid rgba(161,223,201,.4);border-radius:10px;background:#0c2c23;color:#fff;}
+    #cloudLegacyDeleteButton{min-height:44px;}
+    #cloudLegacyDeleteButton:disabled{opacity:.55;cursor:not-allowed;}
+    #cloudLegacyStatus{margin-top:10px!important;}
     #cloudRecoveryActions{margin-top:14px;}
     #cloudRecoveryActions button{margin:6px 4px 0 0;padding:9px 12px;border:1px solid rgba(161,223,201,.24);border-radius:10px;background:rgba(255,255,255,.04);color:#eaf8f3;cursor:pointer;}
     @media(max-width:980px){#cloudGate{padding:36px 22px calc(90px + env(safe-area-inset-bottom));align-content:center;background:#031811 url('./images/signin-light-mobile.webp') center/cover no-repeat}.cloud-login-layout{width:min(480px,100%);grid-template-columns:minmax(0,1fr);gap:27px}.cloud-login-brand{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0}.cloud-login-logo{width:82px;height:82px;border-radius:23px}.cloud-login-brand h1{margin:18px 0 7px;font-size:25px;letter-spacing:-.5px}.cloud-login-brand>p{font-size:14px}.cloud-login-card{justify-self:stretch;max-width:none;padding:28px 24px;border-radius:23px}.cloud-login-card h2{font-size:30px}.cloud-login-subtitle{margin-bottom:27px!important;font-size:14px!important}.cloud-login-card #cloudLogin{min-height:58px;border-radius:15px;font-size:16px}.cloud-login-privacy{margin-top:21px!important;font-size:12px!important}.cloud-login-footer{bottom:max(18px,env(safe-area-inset-bottom));font-size:11px}}
