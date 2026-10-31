@@ -55,56 +55,6 @@ function lock(error){
   document.getElementById('cloudRecoveryActions').hidden=false;
 }
 window.financeCloudLock=lock;
-
-const LEGACY_VAULT_ERROR='This account still has unencrypted cloud records.';
-function offerLegacyAccountDeletion(user,family,error){
-  if(family.role!=='owner'||family.ownerUid!==user.uid||!String(error?.message||'').startsWith(LEGACY_VAULT_ERROR))return;
-  const card=gate.querySelector('.cloud-login-card');
-  if(!card||document.getElementById('legacyAccountDelete'))return;
-  const section=document.createElement('section');
-  section.id='legacyAccountDelete';
-  section.className='cloud-vault-form';
-  const heading=document.createElement('h2');heading.textContent='Start over with an encrypted tracker';
-  const warning=document.createElement('p');
-  warning.textContent='Your existing tracker uses the older, unencrypted format. Deleting your account permanently removes the cloud tracker, shared family access and records. Downloaded backups are not deleted, but this version cannot open old backups. Only proceed if you have safely kept any data you need.';
-  const form=document.createElement('form');
-  const label=document.createElement('label');label.textContent='Type DELETE MY ACCOUNT to permanently delete this tracker account';
-  const phrase=document.createElement('input');phrase.type='text';phrase.autocomplete='off';phrase.spellcheck=false;phrase.setAttribute('aria-label','Type DELETE MY ACCOUNT');
-  const acknowledgement=document.createElement('label'),check=document.createElement('input');check.type='checkbox';
-  acknowledgement.append(check,' I understand this permanently deletes the account and its cloud data.');
-  const button=document.createElement('button');button.type='submit';button.textContent='Delete my old account';button.disabled=true;
-  const status=document.createElement('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-  const retryLogin=document.createElement('button');retryLogin.type='button';retryLogin.textContent='Sign out and sign in again';retryLogin.onclick=async()=>{retryLogin.disabled=true;try{await signOut(auth);location.reload();}catch(error){status.textContent=friendly(error);retryLogin.disabled=false;}};
-  const update=()=>{button.disabled=phrase.value!=='DELETE MY ACCOUNT'||!check.checked||!navigator.onLine;};
-  phrase.addEventListener('input',update);check.addEventListener('change',update);
-  window.addEventListener('online',update);window.addEventListener('offline',update);
-  label.append(phrase);form.append(label,acknowledgement,button,status,retryLogin);section.append(heading,warning,form);card.append(section);
-  form.addEventListener('submit',async event=>{
-    event.preventDefault();update();
-    if(button.disabled||auth.currentUser?.uid!==user.uid||family.role!=='owner'||family.ownerUid!==user.uid)return;
-    if(!confirm('Permanently delete your existing tracker account, all cloud financial records and family invitations? This cannot be undone.'))return;
-    button.disabled=true;phrase.disabled=true;check.disabled=true;retryLogin.disabled=true;
-    status.textContent='Deleting account and cloud records… Keep this page open.';
-    try{
-      const token=await user.getIdToken(true);
-      const response=await fetch('https://us-central1-'+config.projectId+'.cloudfunctions.net/deleteTrackerAccount',{
-        method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
-        body:JSON.stringify({data:{confirmation:'DELETE MY ACCOUNT'}})
-      });
-      const payload=await response.json();
-      if(!response.ok||payload.error||payload.result?.deleted!==true){
-        throw new Error(payload.error?.message||'Account deletion was not confirmed. Nothing else will be changed by this screen.');
-      }
-      status.textContent='Account deleted. Returning to sign-in…';
-      try{await signOut(auth);}catch(_){}
-      location.reload();
-    }catch(failure){
-      status.textContent=friendly(failure)+(/sign in again|recent/i.test(friendly(failure))?' Sign out, sign in again and retry.':'');
-      phrase.disabled=false;check.disabled=false;retryLogin.disabled=false;update();
-    }
-  });
-}
-
 onAuthStateChanged(auth,async user=>{
   if(initialUid!==undefined){
     if(user?.uid!==initialUid){window.financeBridge?.reset();location.reload();}
@@ -139,7 +89,7 @@ onAuthStateChanged(auth,async user=>{
       const {resetHistory,reviewRestore,...metadata}=next;transaction.set(ref,{...metadata,previous:!resetHistory&&old?{generation:old.generation,count:old.count}:null});return old;
     })
   };
-  let vault;try{vault=await openVault(api,family.ownerUid,family.role,user.uid,user.email||'');}catch(error){lock(error);offerLegacyAccountDeletion(user,family,error);return;}
+  let vault;try{vault=await openVault(api,family.ownerUid,family.role,user.uid,user.email||'');}catch(error){lock(error);return;}
   const pairPanel=document.getElementById('settingsAccountPanel');if(pairPanel){const section=document.createElement('section');section.className='cloud-vault-form';const heading=document.createElement('h3');heading.textContent='Encrypted vault';const button=document.createElement('button');button.type='button';button.textContent='Approve a new device';const code=document.createElement('code');code.hidden=true;button.onclick=async()=>{button.disabled=true;try{code.textContent=await vault.approveDevice();code.hidden=false;button.textContent='Generate another code';}catch(error){code.textContent=friendly(error);code.hidden=false;}finally{button.disabled=false;}};const note=document.createElement('p');note.textContent='Share this code only with the person signing in on the new device. It expires in five minutes.';section.append(heading,button,note,code);if(family.role==='owner'){const renew=document.createElement('button');renew.type='button';renew.textContent='Replace lost recovery key';const recoveryCode=document.createElement('code');recoveryCode.hidden=true;const emailKey=document.createElement('a');emailKey.textContent='Email to myself';emailKey.hidden=true;renew.onclick=async()=>{if(!confirm('Replace the recovery key? The previous recovery key will stop working. Save the new key immediately.'))return;renew.disabled=true;try{const value=await vault.renewRecovery();recoveryCode.textContent=value;recoveryCode.hidden=false;emailKey.href='mailto:'+encodeURIComponent(user.email||'')+'?subject='+encodeURIComponent('Personal Finance Tracker recovery key')+'&body='+encodeURIComponent('Anyone who can read this email can recover your tracker.\n\n'+value);emailKey.hidden=false;}catch(error){recoveryCode.textContent=friendly(error);recoveryCode.hidden=false;}finally{renew.disabled=false;}};section.append(renew,recoveryCode,emailKey);}pairPanel.append(section);}
   const store=createCloudStore(api,family.ownerUid,user.uid,vault);
   // Read-only comparisons use a separate store so their load cannot change the writer revision.
