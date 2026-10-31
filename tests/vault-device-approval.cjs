@@ -1,0 +1,28 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {webcrypto}=require('node:crypto');
+global.crypto=webcrypto;
+(async()=>{
+ const {newDeviceRequest,encryptApproval,decryptApproval,publicFingerprint}=await import('../dist/vault-device-approval.js');
+ const raw=crypto.getRandomValues(new Uint8Array(32));
+ const a=await newDeviceRequest('owner','member','member@example.test','Chrome on new laptop');
+ assert.match(a.id,/^[0-9a-f]{24}$/);
+ assert.match(a.fingerprint,/^[0-9A-F]{8}$/);
+ assert.equal(a.record.status,'pending');
+ assert.equal(await publicFingerprint(a.record.publicKey),a.fingerprint);
+ assert.equal(a.record.requesterEmail,'member@example.test');
+ assert(!JSON.stringify(a.record).includes(Buffer.from(raw).toString('base64')));
+ const approval=await encryptApproval(raw,'owner',a.id,a.record);
+ assert.match(approval.responseKey,/^[A-Za-z0-9+/=]+$/);
+ assert.match(approval.payload,/^[A-Za-z0-9+/=]+$/);
+ assert(!JSON.stringify(approval).includes(Buffer.from(raw).toString('base64')));
+ const decrypted=await decryptApproval(a.privateKey,'owner',a.id,{...a.record,...approval,status:'approved'});
+ assert.deepEqual(decrypted,raw);
+ await assert.rejects(()=>decryptApproval(a.privateKey,'wrong-owner',a.id,{...a.record,...approval,status:'approved'}));
+ await assert.rejects(()=>decryptApproval(a.privateKey,'owner','f'.repeat(24),{...a.record,...approval,status:'approved'}));
+ await assert.rejects(()=>decryptApproval(a.privateKey,'owner',a.id,{...a.record,...approval,status:'denied'}));
+ const other=await newDeviceRequest('owner','member','member@example.test','Other device');
+ await assert.rejects(()=>decryptApproval(other.privateKey,'owner',a.id,{...a.record,...approval,status:'approved'}));
+ await assert.rejects(()=>encryptApproval(raw,'owner',a.id,{...a.record,status:'denied'}));
+ console.log('PASS ephemeral ECDH approval, device binding, rejection and ciphertext isolation');
+})().catch(error=>{console.error(error);process.exitCode=1;});
