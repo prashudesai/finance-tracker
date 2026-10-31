@@ -28,7 +28,7 @@ function dialog({title,note,confirm=false,recovery=false,pairing=false,remember=
   form.onsubmit=e=>{e.preventDefault();if(confirm&&(input.value.length<12||input.value!==repeat.value)){message.textContent='Use at least 12 characters and enter the same passphrase twice.';return;}const value={text:input.value,remember:keep.checked};form.remove();resolve(value);};
   input.focus();
 });}
-async function showRecovery(display,email){
+async function showRecovery(display,email,sendEmail){
   const gate=document.getElementById('cloudGate'),message=document.getElementById('cloudMessage');
   const form=document.createElement('form');form.className='cloud-vault-form';
   const heading=document.createElement('h2');heading.textContent='Save your recovery key';
@@ -36,7 +36,20 @@ async function showRecovery(display,email){
   const code=document.createElement('code');code.textContent=display;
   const label=document.createElement('label');const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.required=true;label.append(checkbox,' I saved this recovery key');
   const done=document.createElement('button');done.type='submit';done.textContent='I saved it';
-  form.append(heading,note,code);if(email){const mail=document.createElement('a');mail.href='mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent('Personal Finance Tracker recovery key')+'&body='+encodeURIComponent('Save this recovery key securely. Anyone who can read this email can recover your encrypted tracker.\n\n'+display);mail.textContent='Email to myself';form.append(mail);}form.append(label,done);gate.append(form);message.textContent='Save your recovery key before continuing.';
+  form.append(heading,note,code);
+  if(email&&typeof sendEmail==='function'){
+    const mail=document.createElement('button');mail.type='button';mail.textContent='Email recovery key to my Gmail';
+    const warning=document.createElement('p');warning.textContent='Gmail will store a copy of this recovery key in your email account. Anyone who can access that email may be able to unlock your tracker. Google will ask for send-only permission.';
+    const emailStatus=document.createElement('p');emailStatus.setAttribute('role','status');emailStatus.setAttribute('aria-live','polite');
+    mail.onclick=async()=>{
+      mail.disabled=true;emailStatus.textContent='Requesting Gmail permission…';
+      try{await sendEmail(display);emailStatus.textContent='Gmail accepted the email. Check your inbox. Keep an offline copy too.';mail.textContent='Resend recovery key';}
+      catch(error){emailStatus.textContent=error?.message||'Gmail could not send the key. Save it offline or try again.';}
+      finally{mail.disabled=false;}
+    };
+    form.append(warning,mail,emailStatus);
+  }
+  form.append(label,done);gate.append(form);message.textContent='Save your recovery key before continuing.';
   await new Promise(resolve=>{form.onsubmit=e=>{e.preventDefault();form.remove();resolve();};});
 }
 function deviceStore(ownerUid,actorUid){
@@ -114,7 +127,7 @@ export async function openVault(api,ownerUid,role,actorUid,email=''){
     const raw=crypto.getRandomValues(new Uint8Array(32)),key=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);
     const salt=b64(crypto.getRandomValues(new Uint8Array(16))),recovery=makeRecovery();
     config={format:1,kdf:'PBKDF2-SHA256',iterations:ITERATIONS,salt,wrapped:await seal(await passKey(pass.text,salt),'vault-pass-v1',raw),recoveryWrapped:await seal(await recoveryKey(recovery.raw),'vault-recovery-v1',raw),verifier:await seal(key,'vault-check-v1',enc.encode('PFT vault v1'))};
-    await api.create(path,config);await showRecovery(recovery.display,email);if(pass.remember)try{await device.save(raw);}catch(_){}return withPairing(key,raw,api,ownerUid);
+    await api.create(path,config);await showRecovery(recovery.display,email,role==='owner'?api.emailRecoveryKey:null);if(pass.remember)try{await device.save(raw);}catch(_){}return withPairing(key,raw,api,ownerUid);
   }
   if(config.format!==1||config.kdf!=='PBKDF2-SHA256'||config.iterations!==ITERATIONS||typeof config.salt!=='string')throw Error('Unsupported encrypted vault settings.');
   const remembered=await device.recall();if(remembered)try{const key=await crypto.subtle.importKey('raw',remembered,'AES-GCM',false,['encrypt','decrypt']);if(dec.decode(await unseal(key,'vault-check-v1',config.verifier))==='PFT vault v1')return withPairing(key,remembered,api,ownerUid);}catch(_){}
