@@ -35,7 +35,7 @@ function setup(role='owner',error='This account still has unencrypted cloud reco
  const card=new Element('div'),counts={requests:0,signouts:0,reloads:0};
  const context={document:{createElement:tag=>new Element(tag),getElementById:id=>card.find(el=>el.id===id)},gate:{querySelector:()=>card},
   window:{addEventListener(){}},navigator:{onLine:true},auth:{currentUser:{uid:'owner'}},
-  confirm:()=>true,signOut:async()=>{counts.signouts++;},location:{reload(){counts.reload++;}},
+  confirm:()=>true,signOut:async()=>{counts.signouts++;},location:{reload(){counts.reloads++;}},
   fetch:async()=>{counts.requests++;return {ok:true,json:async()=>({result:{deleted:true}})};},
   config:{projectId:'demo-test'},friendly:e=>e.message};
  vm.createContext(context);vm.runInContext(fragment,context);
