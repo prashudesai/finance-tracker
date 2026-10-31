@@ -3568,3 +3568,25 @@ html[data-app-style] body.advanced-layout #dashboard #gettingStartedChecklist.mo
 #quickSetupFirstName:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .quick-name-error{min-height:1.4em;margin:6px 0;color:var(--danger,#c24141);font-size:12px}
 @media(max-width:700px){html[data-app-style] body.advanced-layout #dashboard #gettingStartedChecklist.mobile-setup-active{max-width:520px;padding:22px!important}}
+
+/* Encrypted vault: compact Account section and visible live device requests. */
+.vault-settings{display:grid;gap:12px;min-width:0;margin-top:18px;padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--card-bg);color:var(--text)}
+.vault-settings h3,.vault-settings h4{margin:0;font-size:16px;line-height:1.4}
+.vault-settings h4{font-size:14px;margin-top:4px}
+.vault-settings p{margin:0;color:var(--text-light);font-size:13px;line-height:1.55}
+.vault-settings button{min-height:44px}
+.vault-code-fallback{padding:12px;border:1px solid var(--border);border-radius:12px;min-width:0}
+.vault-code-fallback summary{cursor:pointer;font-weight:600;font-size:13px;margin-bottom:8px}
+.vault-code-fallback button{margin-top:12px}
+.vault-code-fallback code,.vault-settings>code{display:block;padding:12px;max-width:100%;word-break:break-all;white-space:normal;background:var(--bg);border-radius:10px}
+.vault-approval-notification{position:fixed;right:20px;bottom:20px;z-index:19000;box-sizing:border-box;width:min(390px,calc(100vw - 32px));max-height:min(70vh,560px);overflow:auto;padding:18px;border:1px solid var(--primary);border-radius:16px;background:var(--card-bg);box-shadow:0 14px 48px #00120d66;color:var(--text)}
+.vault-approval-notification[hidden]{display:none!important}
+.vault-approval-notification h3{margin:0 0 12px;font-size:16px}
+.vault-approval-list{display:grid;gap:10px;font-size:13px;color:var(--text-light)}
+.vault-approval-card{display:grid;gap:8px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
+.vault-approval-card strong{font-size:13px;color:var(--text)}
+.vault-approval-card p{margin:0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.vault-approval-card code{padding:8px;font-size:12px;overflow-wrap:anywhere}
+.vault-approval-actions{display:flex;flex-wrap:wrap;gap:8px}
+.vault-approval-actions button{min-height:42px;flex:1}
+@media(max-width:700px){.vault-settings{padding:14px}.vault-approval-notification{right:12px;bottom:max(12px,env(safe-area-inset-bottom));width:calc(100vw - 24px);max-height:60dvh}}

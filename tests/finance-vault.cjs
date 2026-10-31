@@ -1,12 +1,12 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');
 (async()=>{
   const source=fs.readFileSync('dist/finance-vault.js','utf8');
-  const {openVault}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+  const {openVault}=await import('../dist/finance-vault.js');
   const keys=new Map();let initialized=false;
   global.indexedDB={open(){const request={result:{createObjectStore(){},transaction(){return {objectStore(){return {get(id){const r={};queueMicrotask(()=>{r.result=keys.get(id);r.onsuccess();});return r;},put(value,id){const r={};queueMicrotask(()=>{keys.set(id,value);r.onsuccess();});return r;}};}};},close(){}}};queueMicrotask(()=>{if(!initialized){initialized=true;request.onupgradeneeded();}request.onsuccess();});return request;}};
-  let recoveryCode;const records=new Map(),submissions=[],gate={append(form){queueMicrotask(()=>{if(form.children[0]?.textContent==='Save your recovery key')recoveryCode=form.children.find(child=>child.tagName==='code').textContent;const action=submissions.shift();assert(action,'Unexpected vault dialog');if(action==='PAIR'||action==='RECOVER'){form.children.find(child=>child.textContent===(action==='PAIR'?'Approve with an existing device':'Use recovery key')).onclick();return;}const inputs=form.children.flatMap(child=>[child,...(child.children||[])]).filter(child=>child.tagName==='input');for(const input of inputs){if(input.type==='checkbox')input.checked=true;else input.value=action;}form.onsubmit({preventDefault(){}});});}};
+  let recoveryCode,approvePending,approvalError;const records=new Map(),submissions=[],gate={append(form){queueMicrotask(()=>{if(form.children[0]?.textContent==='Waiting for device approval'){Promise.resolve().then(()=>approvePending()).catch(error=>{approvalError=error;});return;}if(form.children[0]?.textContent==='Save your recovery key')recoveryCode=form.children.find(child=>child.tagName==='code').textContent;const action=submissions.shift();assert(action,'Unexpected vault dialog');if(action==='PAIR'||action==='RECOVER'||action==='REQUEST'){form.children.find(child=>child.textContent===(action==='PAIR'?'Approve with an existing device':action==='REQUEST'?'Request approval on an unlocked device':'Use recovery key')).onclick();return;}const inputs=form.children.flatMap(child=>[child,...(child.children||[])]).filter(child=>child.tagName==='input');for(const input of inputs){if(input.type==='checkbox')input.checked=true;else input.value=action;}form.onsubmit({preventDefault(){}});});}};
   global.document={getElementById:id=>id==='cloudGate'?gate:{textContent:''},createElement:tag=>({tagName:tag,children:[],append(...items){this.children.push(...items);},remove(){},focus(){},setAttribute(){},value:'',checked:false})};
-  const api={get:async path=>records.get(path)||null,create:async(path,data)=>{assert(!records.has(path));records.set(path,data);},rotate:async(path,old,next)=>{assert.equal(records.get(path),old);records.set(path,next);return next;},createPair:async(owner,id,data)=>records.set(`users/${owner}/vaultInvites/${id}`,data),readPair:async(owner,id)=>records.get(`users/${owner}/vaultInvites/${id}`)};
+  const api={get:async path=>records.get(path)||null,create:async(path,data)=>{assert(!records.has(path));records.set(path,data);},rotate:async(path,old,next)=>{assert.equal(records.get(path),old);records.set(path,next);return next;},createPair:async(owner,id,data)=>records.set(`users/${owner}/vaultInvites/${id}`,data),readPair:async(owner,id)=>records.get(`users/${owner}/vaultInvites/${id}`),createDeviceRequest:async(id,request)=>records.set(`users/owner/vaultRequests/${id}`,request),getDeviceRequest:async id=>records.get(`users/owner/vaultRequests/${id}`),removeDeviceRequest:async id=>records.delete(`users/owner/vaultRequests/${id}`)};
   submissions.push('A long private vault phrase!','saved');
   const first=await openVault(api,'owner','owner','owner');
   const config=records.get('users/owner/vault/config');assert.equal(config.format,1);assert(!JSON.stringify(config).includes('A long private vault phrase'));
@@ -34,5 +34,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs');
   submissions.push('A completely new passphrase!');
   const changed=await openVault(api,'owner','viewer','new-member');
   assert.deepEqual(await changed.decrypt('tracker:owner',ciphertext),record);
-  console.log('PASS vault creation, encrypted round trip, scope isolation, remembered device, pairing, retry and recovery');
+  approvePending=async()=>{
+    const [path,request]=[...records].find(([path])=>path.includes('/vaultRequests/'));
+    const id=path.split('/').at(-1),approval=await first.approveRequest(id,request);
+    assert(!JSON.stringify(approval).includes(Buffer.from(new Uint8Array(32)).toString('base64')));
+    records.set(path,{...request,...approval,status:'approved'});
+  };
+  submissions.push('REQUEST');
+  const approved=await openVault(api,'owner','viewer','approved-member','approved@example.test');
+  assert.equal(approvalError,undefined);
+  assert.deepEqual(await approved.decrypt('tracker:owner',ciphertext),record);
+  assert.equal([...records.keys()].some(path=>path.includes('/vaultRequests/')),false);
+  console.log('PASS vault creation, encrypted round trip, scope isolation, remembered device, pairing, recovery and approved-device unlock');
 })().catch(error=>{console.error(error);process.exitCode=1;});
