@@ -4,7 +4,7 @@ import {installFinanceInsights} from './finance-insights.js';
 import {installCashFlow} from './cash-flow.js?v=86';
 import {initializeApp} from './vendor/firebase-app.js';
 import {initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence,browserPopupRedirectResolver,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
-import {getFirestore,doc,collection,query,where,getDocFromServer,setDoc,deleteDoc,writeBatch,runTransaction,onSnapshot,serverTimestamp,Timestamp} from './vendor/firebase-firestore.js';
+import {getFirestore,doc,collection,query,where,getDocFromServer,setDoc,deleteDoc,writeBatch,runTransaction,onSnapshot,serverTimestamp} from './vendor/firebase-firestore.js';
 import {installReviewSync} from './review-sync.js?v=83';
 import {reviewValues,applyReviewPatch,validateReviewRestore} from './review-model.js?v=83';
 import {installRecordSearch} from './record-search.js?v=85';
@@ -79,7 +79,7 @@ onAuthStateChanged(auth,async user=>{
     createDeviceRequest:async(id,request)=>{
       assertAccess();if(auth.currentUser?.uid!==user.uid)throw Error('Sign in to request a device approval.');
       await setDoc(doc(db,`users/${family.ownerUid}/vaultRequests/${id}`),{
-        ...request,createdAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+300000)
+        ...request,createdAt:serverTimestamp(),expiresAt:new Date(Date.now()+300000)
       });
     },
     getDeviceRequest:async id=>{
