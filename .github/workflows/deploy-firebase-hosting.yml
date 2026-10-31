@@ -133,6 +133,18 @@ jobs:
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$credentials_path"
           GOOGLE_APPLICATION_CREDENTIALS="$credentials_path" npx firebase deploy --only firestore:rules --project finance-tracker-bc7c9 --non-interactive
 
+      - name: Install account deletion function dependencies
+        run: npm ci --prefix functions --ignore-scripts
+
+      - name: Deploy account deletion function
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FINANCE_TRACKER_BC7C9 }}
+        run: |
+          credentials_path="$(mktemp)"
+          trap 'rm -f "$credentials_path"' EXIT
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$credentials_path"
+          GOOGLE_APPLICATION_CREDENTIALS="$credentials_path" npx firebase deploy --only functions:tracker-account --project finance-tracker-bc7c9 --non-interactive
+
       - name: Deploy Hosting to production
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
