@@ -159,11 +159,9 @@ onAuthStateChanged(auth,async user=>{
           actions.append(approve,deny);card.append(identity,label,code,actions,status);cards.push(card);
         }
         if(serial!==renderSerial)return;
-        requestsList.replaceChildren(...cards.map(card=>card.cloneNode(true)));
-        // The Account panel and notification both need working actions; cloneNode
-        // does not copy handlers, so render the interactive originals in the notice.
+        requestsList.textContent=cards.length?cards.length+' pending request(s). Approve or deny from the on-screen notification.':'No pending requests.';
         if(cards.length){notificationList.replaceChildren(...cards);notification.hidden=false;}
-        else{requestsList.textContent='No pending requests.';notificationList.replaceChildren();notification.hidden=true;}
+        else{notificationList.replaceChildren();notification.hidden=true;}
       };
       api.watchDeviceRequests(snapshot=>render(snapshot).catch(error=>console.warn('Approval list unavailable',error)));
     }
