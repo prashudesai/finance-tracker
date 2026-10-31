@@ -56,7 +56,7 @@ export async function openVault(api,ownerUid,role,actorUid,email=''){
     const key=await crypto.subtle.importKey('raw',remembered,'AES-GCM',false,['encrypt','decrypt']);
     return withPairing(key,remembered,api,ownerUid);
   }
-  if(legacy&&legacy.format!==2)throw Error('This account still has unencrypted cloud records. Delete the old tracker data before starting an encrypted vault.');
+  if(legacy&&legacy.format!==2)throw Object.assign(Error('This account still has unencrypted cloud records. Delete the old tracker data before starting an encrypted vault.'),{code:'tracker/legacy-unencrypted'});
   if(!config&&role!=='owner')throw Error('The owner must create the encrypted vault first.');
   if(!config){
     const pass=await dialog({title:'Create your private vault',note:'Choose a passphrase you can use on every device. Share it privately with family members who need access.',confirm:true,remember:true});
