@@ -3590,3 +3590,26 @@ html[data-app-style] body.advanced-layout #dashboard #gettingStartedChecklist.mo
 .vault-approval-actions{display:flex;flex-wrap:wrap;gap:8px}
 .vault-approval-actions button{min-height:42px;flex:1}
 @media(max-width:700px){.vault-settings{padding:14px}.vault-approval-notification{right:12px;bottom:max(12px,env(safe-area-inset-bottom));width:calc(100vw - 24px);max-height:60dvh}}
+
+/* Vault account card: clear hierarchy for requests, backup and recovery actions. */
+#settingsAccountPanel .vault-settings{gap:0;margin-top:20px;padding:24px;border:1px solid var(--border);border-radius:20px;background:var(--card-bg);box-shadow:0 8px 28px #001a1512}
+#settingsAccountPanel .vault-settings>h3{margin:0 0 7px;font-size:21px;font-weight:720;letter-spacing:-.025em;line-height:1.25}
+#settingsAccountPanel .vault-settings>h3::before{content:'';display:inline-block;width:9px;height:9px;margin:0 11px 2px 1px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 5px color-mix(in srgb,var(--primary) 14%,transparent)}
+#settingsAccountPanel .vault-settings>p:first-of-type{max-width:62ch;margin:0 0 24px;font-size:14px;line-height:1.6}
+#settingsAccountPanel .vault-settings>h4{margin:0 0 9px;font-size:14px;font-weight:700}
+#settingsAccountPanel .vault-settings>.vault-approval-list{margin-bottom:20px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--card-bg) 75%,var(--bg));font-size:13px}
+#settingsAccountPanel .vault-settings>.vault-code-fallback{margin:0 0 22px;padding:0;border:1px solid var(--border);border-radius:12px;background:transparent}
+#settingsAccountPanel .vault-code-fallback summary{margin:0;padding:13px 15px;font-size:13px;line-height:1.4;list-style-position:inside}
+#settingsAccountPanel .vault-code-fallback[open]{padding-bottom:15px}
+#settingsAccountPanel .vault-code-fallback[open] summary{border-bottom:1px solid var(--border);margin-bottom:13px}
+#settingsAccountPanel .vault-code-fallback>p,#settingsAccountPanel .vault-code-fallback>button,#settingsAccountPanel .vault-code-fallback>code{margin-left:15px;margin-right:15px}
+#settingsAccountPanel .vault-settings>button{box-sizing:border-box;width:auto!important;max-width:100%;min-height:46px;margin:0;padding:10px 17px;border-radius:11px;font-size:14px!important;font-weight:650;line-height:1.3}
+#settingsAccountPanel .vault-settings>button:first-of-type{justify-self:start;border:1px solid var(--border);background:transparent;color:var(--text)}
+#settingsAccountPanel .vault-settings>button:first-of-type:hover{background:color-mix(in srgb,var(--card-bg) 72%,var(--bg))}
+#settingsAccountPanel .vault-settings>code{margin:14px 0 0;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);font-size:13px;line-height:1.6;letter-spacing:.025em;overflow-wrap:anywhere;word-break:normal;user-select:all}
+#settingsAccountPanel .vault-settings>code[hidden]{display:none}
+#settingsAccountPanel .vault-settings>p:nth-last-of-type(2){margin:20px 0 13px;padding:11px 13px;border-left:3px solid var(--primary);border-radius:0 9px 9px 0;background:color-mix(in srgb,var(--primary) 8%,var(--card-bg));font-size:12px;line-height:1.55}
+#settingsAccountPanel .vault-settings>button:last-of-type{justify-self:start;border:1px solid var(--primary);background:var(--primary);color:var(--button-text,#fff)}
+#settingsAccountPanel .vault-settings>p:last-of-type{margin-top:12px;font-size:12px;line-height:1.5}
+#settingsAccountPanel .vault-settings>p:last-of-type:empty{display:none}
+@media(max-width:700px){#settingsAccountPanel .vault-settings{padding:18px;border-radius:16px}#settingsAccountPanel .vault-settings>h3{font-size:19px}#settingsAccountPanel .vault-settings>button{width:100%!important;justify-self:stretch;text-align:center}#settingsAccountPanel .vault-settings>code{font-size:12px}}
