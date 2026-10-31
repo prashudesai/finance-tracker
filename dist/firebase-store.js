@@ -74,6 +74,14 @@ export function createCloudStore(api, uid, actorUid=uid, vault) {
       for(let i=0;i<bytes.length;i+=CHUNK_BYTES)records.push({path:`${root}/snapshots/${generation}/chunks/${records.length}`,data:{payload:encode(bytes.subarray(i,i+CHUNK_BYTES))}});
       count=records.length;
       for(let i=0;i<records.length;i+=400) { assertUser(); await api.put(records.slice(i,i+400)); }
+      // Verify each chunk is readable from Firestore before publishing the pointer.
+      // A missing or mismatched stage must never become another device's snapshot.
+      for(let i=0;i<count;i+=4){
+        const check=await Promise.all(records.slice(i,i+4).map(row=>api.get(row.path)));
+        assertUser();
+        if(check.some((chunk,index)=>!chunk||chunk.payload!==records[i+index].data.payload))
+          throw new Error('Cloud snapshot upload is incomplete. No new snapshot was published.');
+      }
       const hash=await digest(bytes);
       const mutationProof=await vault.proof('tracker:'+uid,envelope);
       const expected=revision;
