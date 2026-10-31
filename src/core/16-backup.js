@@ -157,6 +157,9 @@
         cloudCleared=true;
         state=envelope.data;syncRecord={baseRevision:revision,pending:false,lastCloudUpdated:window.financeCloud.updatedAt?.()||new Date().toISOString(),envelope};
         cloudRecovery=null;cloudCommittedState=JSON.parse(JSON.stringify(state));lastAccepted=JSON.parse(JSON.stringify(state));
+        // Delete Dashboard is a fresh start: discard unsaved forms and onboarding hints.
+        window.financeDrafts?.discard?.();
+        for(const key of ['workDrafts:v1','gettingStarted:v1','pft:guide-tour:v1'])try{trackerStorage.removeItem(key);}catch(_){}
         await commitFinance(state,'Clear all data',null,true);
         persistenceDirty=false;storageLoadFailed=false;phrase.value='';
         try{trackerStorage.setItem('activePage','dashboard');}catch(_){}
