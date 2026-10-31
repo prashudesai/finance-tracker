@@ -133,6 +133,22 @@ jobs:
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$credentials_path"
           GOOGLE_APPLICATION_CREDENTIALS="$credentials_path" npx firebase deploy --only firestore:rules --project finance-tracker-bc7c9 --non-interactive
 
+      # The legacy-vault deletion screen requires a callable function. Deploy it
+      # before Hosting so production never shows an unusable destructive action.
+      - name: Install Cloud Functions dependencies
+        if: steps.lane.outputs.functions_changed == 'true'
+        run: npm ci --prefix functions --ignore-scripts
+
+      - name: Deploy account deletion Cloud Function before Hosting
+        if: steps.lane.outputs.functions_changed == 'true'
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FINANCE_TRACKER_BC7C9 }}
+        run: |
+          credentials_path="$(mktemp)"
+          trap 'rm -f "$credentials_path"' EXIT
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$credentials_path"
+          GOOGLE_APPLICATION_CREDENTIALS="$credentials_path" npx firebase deploy --only functions:tracker-account --project finance-tracker-bc7c9 --non-interactive
+
       - name: Deploy Hosting to production
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
