@@ -1,0 +1,27 @@
+'use strict';
+const assert=require('node:assert/strict');
+(async()=>{
+ const {makeRecoveryMessage,sendRecoveryEmail}=await import('../dist/recovery-email.js');
+ const email='vault-owner@example.test',key='PFT-'+Array(8).fill('A1B2C3D4').join('-');
+ const raw=makeRecoveryMessage(email,key);
+ assert.match(raw,/^[A-Za-z0-9_-]+$/);
+ const decoded=Buffer.from(raw,'base64url').toString('utf8');
+ assert(decoded.includes('To: '+email));
+ assert(decoded.includes('From: '+email));
+ assert(decoded.includes('Content-Transfer-Encoding: base64'));
+ assert(!decoded.includes(key),'The email body must use MIME base64 transfer encoding');
+ const body=decoded.split('\r\n\r\n')[1].replaceAll('\r\n','');
+ assert(Buffer.from(body,'base64').toString('utf8').includes(key));
+ assert.throws(()=>makeRecoveryMessage('victim@example.test\r\nBcc: attacker@example.test',key));
+ assert.throws(()=>makeRecoveryMessage(email,'fake recovery key'));
+ let captured;
+ assert.equal(await sendRecoveryEmail('test-access-token',email,key,async (url,options)=>{captured={url,options};return{ok:true,json:async()=>({id:'gmail-message-123'})};}),true);
+ assert.equal(captured.url,'https://gmail.googleapis.com/gmail/v1/users/me/messages/send');
+ assert.equal(captured.options.headers.Authorization,'Bearer test-access-token');
+ assert.deepEqual(Object.keys(JSON.parse(captured.options.body)),['raw']);
+ assert(!JSON.stringify(captured.options.headers).includes(key));
+ await assert.rejects(()=>sendRecoveryEmail('test-access-token',email,key,async()=>({ok:false,status:403})),/denied or is not configured/);
+ await assert.rejects(()=>sendRecoveryEmail('test-access-token',email,key,async()=>{throw Error('Network is down');}),/Unable to reach Gmail/);
+ await assert.rejects(()=>sendRecoveryEmail('test-access-token',email,key,async()=>({ok:true,json:async()=>({})})),/did not confirm/);
+ console.log('PASS recovery Gmail MIME, send-only request, header safety and failure handling');
+})().catch(error=>{console.error(error);process.exitCode=1;});
