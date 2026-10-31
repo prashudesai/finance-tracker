@@ -14,7 +14,8 @@
   function installInstructions() {
     if (!window.isSecureContext) return 'Open the hosted HTTPS tracker to install the app.';
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    if (ios) return 'On iPhone or iPad, open in Safari, tap Share, then Add to Home Screen.';
+    if (ios) return 'On iPhone or iPad: open this page in Safari, tap Share, choose Add to Home Screen, then tap Add.';
+    if (/Android/i.test(navigator.userAgent)) return 'On Android: tap Install app if prompted, or open Chrome’s ⋮ menu and choose Install app or Add to Home screen, then confirm.';
     return 'Chrome / Edge: open the browser menu and choose Install app or Install Personal Finance Tracker. On Mac Safari, choose File → Add to Dock. If installation is unavailable, keep using the tracker in your browser.';
   }
   function updateInstall(message) {
