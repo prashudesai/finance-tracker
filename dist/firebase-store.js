@@ -100,6 +100,24 @@ export function createCloudStore(api, uid, actorUid=uid, vault) {
       if(!published) { try {const pointer=publishAttempted?await api.get(metaPath):null;if(pointer?.generation!==generation)await removeSnapshot({generation,count});}catch(_){} }
     }
   }
-  return {uid,load,save,resume(value){assertUser();if(!Number.isInteger(value)||value<0)throw new Error('Invalid cached revision');revision=value;loaded=true;},get revision(){return revision;},get updatedAt(){return updatedAt;}};
+  async function resetBrokenSnapshot(envelope) {
+    assertUser();
+    if(api.canCleanup!==true)throw new Error('Only the tracker owner can reset a broken cloud snapshot.');
+    if(!api.online())throw new Error('Connect to the internet before resetting cloud records.');
+    const meta=await api.get(metaPath);
+    if(!meta || meta.format!==2 || !Number.isInteger(meta.revision) || meta.revision<1 ||
+       !/^[\\w-]+$/.test(meta.generation) || !Number.isInteger(meta.count) || meta.count<1 || meta.count>240)
+      throw new Error('Cloud snapshot metadata changed. Reload before resetting.');
+    let missing=false;
+    for(let i=0;i<meta.count;i+=4){
+      const reads=await Promise.all(Array.from({length:Math.min(4,meta.count-i)},(_,j)=>api.get(`${root}/snapshots/${meta.generation}/chunks/${i+j}`)));
+      if(reads.some(row=>!row||typeof row.payload!=='string'))missing=true;
+    }
+    if(!missing)throw new Error('The cloud snapshot is now complete. Reload instead of resetting.');
+    // Revision-checked publication ensures a concurrent repair is not overwritten.
+    revision=meta.revision;loaded=true;
+    return save(envelope,{clearHistory:true});
+  }
+  return {uid,load,save,resetBrokenSnapshot,resume(value){assertUser();if(!Number.isInteger(value)||value<0)throw new Error('Invalid cached revision');revision=value;loaded=true;},get revision(){return revision;},get updatedAt(){return updatedAt;}};
 }
 
