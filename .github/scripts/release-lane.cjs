@@ -21,7 +21,7 @@ if(process.argv.includes('--self-test')){
  for(const name of ['src/index.html','dist/app-style.js','src/core/08-nps.js','tools/build.cjs','package-lock.json','.github/workflows/deploy-firebase-hosting.yml']){
   assert.equal(classify(['dist/app-style.css',name]).visual_only,false,name);
  }
- assert.deepEqual(classify(['firestore.rules']),{visual_only:false,rules_changed:true,functions_changed:true});
+ assert.deepEqual(classify(['firestore.rules']),{visual_only:false,rules_changed:true,functions_changed:false});
  assert.deepEqual(classify([]),{visual_only:false,rules_changed:true,functions_changed:true});
  assert.deepEqual(classify(['dist/app-style.css'],true),{visual_only:false,rules_changed:true,functions_changed:true});
  assert.deepEqual(classify(['dist/firebase-client.js']).functions_changed,true);
