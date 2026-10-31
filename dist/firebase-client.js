@@ -3,7 +3,7 @@ import {installFilterPopovers} from './filter-popovers.js';
 import {installFinanceInsights} from './finance-insights.js';
 import {installCashFlow} from './cash-flow.js?v=86';
 import {initializeApp} from './vendor/firebase-app.js';
-import {initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence,browserPopupRedirectResolver,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
+import {initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence,browserPopupRedirectResolver,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,reauthenticateWithPopup,signOut} from './vendor/firebase-auth.js';
 import {getFirestore,doc,getDocFromServer,writeBatch,runTransaction,onSnapshot,serverTimestamp} from './vendor/firebase-firestore.js';
 import {installReviewSync} from './review-sync.js?v=83';
 import {reviewValues,applyReviewPatch,validateReviewRestore} from './review-model.js?v=83';
@@ -44,14 +44,43 @@ login.addEventListener('click',async()=>{
 const gateExport=document.getElementById('cloudEmergencyExport');
 gateExport.addEventListener('click',()=>window.financeBridge?.exportUnsaved());
 document.getElementById('cloudReload').addEventListener('click',()=>location.reload());
-let initialUid;
+const legacyPanel=document.getElementById('cloudLegacyDelete'),legacyPhrase=document.getElementById('cloudLegacyPhrase'),legacyButton=document.getElementById('cloudLegacyDeleteButton'),legacyStatus=document.getElementById('cloudLegacyStatus');
+let activeRole=null,initialUid;
+legacyPhrase.addEventListener('input',()=>{legacyButton.disabled=legacyPhrase.value!=='DELETE MY ACCOUNT';});
+legacyButton.disabled=true;
+legacyButton.addEventListener('click',async()=>{
+  if(activeRole!=='owner'||legacyPanel.hidden||legacyPhrase.value!=='DELETE MY ACCOUNT')return;
+  if(!navigator.onLine){legacyStatus.textContent='Connect to the internet before deleting this account.';return;}
+  const user=auth.currentUser;
+  if(!user){legacyStatus.textContent='Sign in again before deleting this account.';return;}
+  legacyButton.disabled=true;legacyPhrase.disabled=true;legacyStatus.textContent='Confirm your Google sign-in to delete the old tracker account.';
+  try{
+    await reauthenticateWithPopup(user,provider,browserPopupRedirectResolver);
+    const token=await user.getIdToken(true);
+    legacyStatus.textContent='Deleting old cloud records and tracker account… Keep this page open.';
+    const response=await fetch('https://us-central1-finance-tracker-bc7c9.cloudfunctions.net/deleteTrackerAccount',{
+      method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+      body:JSON.stringify({data:{confirmation:'DELETE MY ACCOUNT'}})
+    });
+    const body=await response.json();
+    if(!response.ok||body.error||body.result?.deleted!==true)throw Error(body.error?.message||'The account could not be deleted. Try again.');
+    legacyStatus.textContent='Old tracker account deleted. Sign in again to create a private vault.';
+    try{await signOut(auth);}finally{location.reload();}
+  }catch(error){
+    legacyStatus.textContent=friendly(error);
+    legacyPhrase.disabled=false;legacyButton.disabled=legacyPhrase.value!=='DELETE MY ACCOUNT';
+  }
+});
 function lock(error){
   window.closeSettingsTile?.(true);
   document.body.classList.remove('cloud-loading');
   document.querySelector('.container').inert=true;
   document.body.classList.add('cloud-pending');gate.hidden=false;login.hidden=true;
   message.textContent=friendly(error);
-  gateExport.hidden=false;document.getElementById('cloudSaveRetry').hidden=false;
+  const legacy=error?.code==='tracker/legacy-unencrypted'&&activeRole==='owner';
+  legacyPanel.hidden=!legacy;
+  gateExport.hidden=false;document.getElementById('cloudSaveRetry').hidden=legacy;
+  document.getElementById('cloudReload').hidden=legacy;
   document.getElementById('cloudRecoveryActions').hidden=false;
 }
 window.financeCloudLock=lock;
@@ -63,7 +92,7 @@ onAuthStateChanged(auth,async user=>{
   if(!user){document.body.classList.remove('cloud-loading');window.dispatchEvent(new Event('pft:signed-out'));login.hidden=false;message.textContent='';login.disabled=false;return;}
   window.PFTPerformance?.mark('auth-ready');
   initialUid=user.uid;const loadingStatus=document.getElementById('cloudLoadingIndicator');if(loadingStatus)loadingStatus.textContent='Signed in — loading your family’s financial data…';document.body.classList.add('cloud-loading');login.hidden=true;message.textContent='Opening your tracker…';
-  let family;try{family=await initializeFamilyAccess(db,user,lock);}catch(error){lock(error);return;}
+  let family;try{family=await initializeFamilyAccess(db,user,lock);activeRole=family.role;}catch(error){lock(error);return;}
   window.PFTPerformance?.mark('access-ready');
   window.addEventListener('pft:before-reveal',()=>installCashFlow(),{once:true});
   const assertAccess=()=>{if(!family.accessValid())throw new Error('Family access changed. Reload.');};
