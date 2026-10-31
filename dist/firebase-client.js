@@ -69,7 +69,7 @@ onAuthStateChanged(auth,async user=>{
   window.PFTPerformance?.mark('access-ready');
   window.addEventListener('pft:before-reveal',()=>installCashFlow(),{once:true});
   const assertAccess=()=>{if(!family.accessValid())throw new Error('Family access changed. Reload.');};
-  const emailRecoveryKey=async recoveryKey=>{
+  const authorizeRecoveryGmail=async()=>{
     if(family.role!=='owner'||family.ownerUid!==user.uid||auth.currentUser?.uid!==user.uid)throw Error('Only the signed-in vault owner can email a recovery key.');
     const gmailProvider=new GoogleAuthProvider();
     gmailProvider.addScope('https://www.googleapis.com/auth/gmail.send');
@@ -82,8 +82,9 @@ onAuthStateChanged(auth,async user=>{
     }
     const credential=GoogleAuthProvider.credentialFromResult(result);
     if(!credential?.accessToken)throw Error('Gmail did not grant permission to send email.');
-    await sendRecoveryEmail(credential.accessToken,user.email,recoveryKey);
+    return credential.accessToken;
   };
+  const emailRecoveryKey=async recoveryKey=>sendRecoveryEmail(await authorizeRecoveryGmail(),user.email,recoveryKey);
   const api={
     currentUid:()=>auth.currentUser?.uid,
     emailRecoveryKey,
@@ -192,17 +193,34 @@ onAuthStateChanged(auth,async user=>{
     if(family.role==='owner'){
       const renew=document.createElement('button');renew.type='button';renew.textContent='Replace lost recovery key';
       const recoveryCode=document.createElement('code');recoveryCode.hidden=true;
-      const emailKey=document.createElement('button');emailKey.type='button';emailKey.textContent='Email to myself (Gmail)';emailKey.hidden=true;
+      const emailKey=document.createElement('button');emailKey.type='button';emailKey.textContent='Email to myself (Gmail)';
       const emailStatus=document.createElement('p');emailStatus.setAttribute('role','status');
+      const emailWarning=document.createElement('p');emailWarning.textContent='Emailing a recovery key makes it accessible to anyone who can open your Gmail inbox. If you have not generated a replacement yet, emailing creates a new recovery key and invalidates the old one.';
+      let latestRecoveryKey='';
       renew.onclick=async()=>{
         if(!confirm('Replace the recovery key? The previous recovery key will stop working. Save the new key immediately.'))return;
-        renew.disabled=true;
-        try{const value=await vault.renewRecovery();recoveryCode.textContent=value;recoveryCode.hidden=false;
-          emailKey.hidden=false;
-          emailKey.onclick=async()=>{emailKey.disabled=true;emailStatus.textContent='Requesting Gmail permission…';try{await emailRecoveryKey(value);emailStatus.textContent='Gmail accepted your recovery-key email. Check your inbox and spam folder.';}catch(error){emailStatus.textContent=friendly(error);}finally{emailKey.disabled=false;}};
-        }catch(error){recoveryCode.textContent=friendly(error);recoveryCode.hidden=false;}finally{renew.disabled=false;}
+        renew.disabled=true;emailKey.disabled=true;
+        try{const value=await vault.renewRecovery();latestRecoveryKey=value;recoveryCode.textContent=value;recoveryCode.hidden=false;emailStatus.textContent='New recovery key ready. Save it offline or email it to yourself.';}
+        catch(error){emailStatus.textContent=friendly(error);}
+        finally{renew.disabled=false;emailKey.disabled=false;}
       };
-      section.append(renew,recoveryCode,emailKey,emailStatus);
+      emailKey.onclick=async()=>{
+        if(!latestRecoveryKey&&!confirm('Generate and email a NEW recovery key? Your previous recovery key will stop working, and anyone with access to your Gmail may be able to unlock your tracker.'))return;
+        emailKey.disabled=true;renew.disabled=true;emailStatus.textContent='Requesting Gmail send-only permission…';
+        try{
+          // Authorize while the button interaction is active so browsers allow the popup.
+          const token=await authorizeRecoveryGmail();
+          if(!latestRecoveryKey){
+            latestRecoveryKey=await vault.renewRecovery();
+            recoveryCode.textContent=latestRecoveryKey;recoveryCode.hidden=false;
+          }
+          emailStatus.textContent='Sending your recovery key via Gmail…';
+          await sendRecoveryEmail(token,user.email,latestRecoveryKey);
+          emailStatus.textContent='Gmail accepted your recovery-key email. Check your inbox and keep an offline backup.';
+        }catch(error){emailStatus.textContent=friendly(error)+(latestRecoveryKey?' Your replacement key is shown above; save it offline.':'');}
+        finally{emailKey.disabled=false;renew.disabled=false;}
+      };
+      section.append(renew,recoveryCode,emailWarning,emailKey,emailStatus);
     }
     pairPanel.append(section);
   }
