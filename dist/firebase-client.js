@@ -46,6 +46,13 @@ login.addEventListener('click',async()=>{
 const gateExport=document.getElementById('cloudEmergencyExport');
 gateExport.addEventListener('click',()=>window.financeBridge?.exportUnsaved());
 document.getElementById('cloudReload').addEventListener('click',()=>location.reload());
+const resetMissing=document.getElementById('cloudResetMissingSnapshot'),resetHint=document.getElementById('cloudResetMissingHint');
+resetMissing?.addEventListener('click',async()=>{
+  if(window.prompt('This replaces the broken cloud snapshot with an empty tracker. Old cloud records may become unrecoverable. Type START FRESH to continue.')!=='START FRESH')return;
+  resetMissing.disabled=true;message.textContent='Checking and resetting the broken cloud snapshot…';
+  try{await window.financeBridge?.resetMissingCloud();}
+  catch(error){message.textContent=friendly(error);resetMissing.disabled=false;}
+});
 let initialUid;
 function lock(error){
   window.closeSettingsTile?.(true);
@@ -55,6 +62,9 @@ function lock(error){
   message.textContent=friendly(error);
   gateExport.hidden=false;document.getElementById('cloudSaveRetry').hidden=false;
   document.getElementById('cloudRecoveryActions').hidden=false;
+  const canReset=error?.code==='tracker/missing-chunks'&&window.financeCloud?.role==='owner';
+  if(resetMissing)resetMissing.hidden=!canReset;
+  if(resetHint)resetHint.hidden=!canReset;
 }
 window.financeCloudLock=lock;
 onAuthStateChanged(auth,async user=>{
@@ -227,7 +237,7 @@ onAuthStateChanged(auth,async user=>{
   const store=createCloudStore(api,family.ownerUid,user.uid,vault);
   // Read-only comparisons use a separate store so their load cannot change the writer revision.
   const inspect=()=>{assertAccess();return createCloudStore(api,family.ownerUid,user.uid,vault).load();};
-  window.financeCloud={uid:family.role==='owner'?user.uid:'shared:'+user.uid+'|'+family.ownerUid+'|'+family.role,ownerUid:family.ownerUid,ownerEmail:family.ownerEmail,inspect,email:user.email||'',role:family.role,canEdit:family.canEdit,canManage:family.canManage,accessValid:family.accessValid,displayName:user.displayName||'',checkRevision:async()=>{assertAccess();const pointer=await api.get('users/'+family.ownerUid+'/tracker/current');assertAccess();const revision=pointer?.revision||0;if(!Number.isInteger(revision)||revision<0)throw new Error('Cloud revision is invalid.');return revision;},load:store.load,save:(envelope,options)=>{assertAccess();if(!family.canEdit)throw new Error('Viewer access cannot save changes.');return store.save(envelope,options);},resume:store.resume,revision:()=>store.revision,updatedAt:()=>store.updatedAt,lock,
+  window.financeCloud={resetBrokenSnapshot:envelope=>{assertAccess();if(family.role!=='owner')throw Error('Only the owner can reset the cloud snapshot.');return store.resetBrokenSnapshot(envelope);},uid:family.role==='owner'?user.uid:'shared:'+user.uid+'|'+family.ownerUid+'|'+family.role,ownerUid:family.ownerUid,ownerEmail:family.ownerEmail,inspect,email:user.email||'',role:family.role,canEdit:family.canEdit,canManage:family.canManage,accessValid:family.accessValid,displayName:user.displayName||'',checkRevision:async()=>{assertAccess();const pointer=await api.get('users/'+family.ownerUid+'/tracker/current');assertAccess();const revision=pointer?.revision||0;if(!Number.isInteger(revision)||revision<0)throw new Error('Cloud revision is invalid.');return revision;},load:store.load,save:(envelope,options)=>{assertAccess();if(!family.canEdit)throw new Error('Viewer access cannot save changes.');return store.save(envelope,options);},resume:store.resume,revision:()=>store.revision,updatedAt:()=>store.updatedAt,lock,
     showApp(){const label=document.getElementById('accountSignedInEmail');if(label)label.textContent=user.email||'Google account';document.body.classList.remove('cloud-pending','cloud-loading');gate.hidden=true;},
     async logout(){
       await window.financeBridge?.settle();
