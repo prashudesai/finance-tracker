@@ -23,6 +23,10 @@ export function createCloudStore(api, uid, actorUid=uid, vault) {
   async function removeSnapshot(snapshot) {
     if(api.canCleanup===false)return;
     if (!snapshot?.generation || !Number.isInteger(snapshot.count)) return;
+    // A second device may publish while this save is cleaning up. Never delete
+    // chunks still named by the live pointer, including its recovery generation.
+    const live=await api.get(metaPath);
+    if(snapshot.generation===live?.generation || snapshot.generation===live?.previous?.generation)return;
     const paths=Array.from({length:snapshot.count},(_,i)=>`${root}/snapshots/${snapshot.generation}/chunks/${i}`);
     for(let i=0;i<paths.length;i+=400) await api.remove(paths.slice(i,i+400));
   }
@@ -42,7 +46,7 @@ export function createCloudStore(api, uid, actorUid=uid, vault) {
       if(chunks.some(c=>!c || typeof c.payload!=='string')) {
         const current=await api.get(metaPath);
         if(current?.generation!==meta.generation)continue;
-        throw new Error('The saved snapshot is incomplete. Reload or restore a JSON backup.');
+        throw new Error('The cloud snapshot is incomplete. Keep your working desktop open and export its JSON backup before repairing cloud data.');
       }
       const parts=chunks.map(c=>decode(c.payload));
       const length=parts.reduce((sum,p)=>sum+p.length,0);
