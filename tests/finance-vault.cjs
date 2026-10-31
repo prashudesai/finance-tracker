@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');
 (async()=>{
   const source=fs.readFileSync('dist/finance-vault.js','utf8');
-  const {openVault}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+  const {openVault}=await import('../dist/finance-vault.js');
   const keys=new Map();let initialized=false;
   global.indexedDB={open(){const request={result:{createObjectStore(){},transaction(){return {objectStore(){return {get(id){const r={};queueMicrotask(()=>{r.result=keys.get(id);r.onsuccess();});return r;},put(value,id){const r={};queueMicrotask(()=>{keys.set(id,value);r.onsuccess();});return r;}};}};},close(){}}};queueMicrotask(()=>{if(!initialized){initialized=true;request.onupgradeneeded();}request.onsuccess();});return request;}};
   let recoveryCode;const records=new Map(),submissions=[],gate={append(form){queueMicrotask(()=>{if(form.children[0]?.textContent==='Save your recovery key')recoveryCode=form.children.find(child=>child.tagName==='code').textContent;const action=submissions.shift();assert(action,'Unexpected vault dialog');if(action==='PAIR'||action==='RECOVER'){form.children.find(child=>child.textContent===(action==='PAIR'?'Approve with an existing device':'Use recovery key')).onclick();return;}const inputs=form.children.flatMap(child=>[child,...(child.children||[])]).filter(child=>child.tagName==='input');for(const input of inputs){if(input.type==='checkbox')input.checked=true;else input.value=action;}form.onsubmit({preventDefault(){}});});}};
