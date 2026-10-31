@@ -107,7 +107,7 @@
       else if(index===mobileSetupSteps.length-1){pref.dismissed=true;pref.wizardComplete=true;}
       else pref.wizardStep=index+1;
       writeGettingStartedPreference(pref);renderGettingStarted();
-      if(pref.wizardComplete&&!window.matchMedia('(max-width:700px)').matches)window.PFTTour?.maybeStart(true);
+      if(pref.wizardComplete){if(!window.matchMedia('(max-width:700px)').matches)window.PFTTour?.maybeStart(true);}
       else document.querySelector('#gettingStartedChecklist h2')?.focus({preventScroll:true});
     }
     function runGettingStartedAction(action,trigger){
