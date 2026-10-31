@@ -3,6 +3,8 @@
       const keys=['income','expenses','debts','investments','pf','ppf','nps','gratuityAccounts','monthlyBalances','investmentContributions','retirementContributions','stallionContributions','stallionProfitHistory','archivedAccounts'];
       return {hasData:keys.some(key=>Array.isArray(data[key])&&data[key].length>0),family:(data.customValues?.familyMembers||[]).some(name=>String(name).trim()),opening:(data.monthlyBalances||[]).some(row=>row.month===month&&Number.isFinite(row.startBalance)),loans:(data.debts||[]).length>0||loanSkipped,investments:['investments','pf','ppf','nps','gratuityAccounts'].some(key=>(data[key]||[]).length>0)};
     }
+    function shouldShowResumeSetup(pref){return Boolean(pref?.eligible&&pref.dismissed&&!pref.wizardComplete);}
+    function completeSetupBySkipping(pref){pref.dismissed=true;pref.wizardComplete=true;}
     function readGettingStartedPreference(){try{return JSON.parse(trackerStorage.getItem('gettingStarted:v1')||'null');}catch(_){return null;}}
     function writeGettingStartedPreference(value){try{trackerStorage.setItem('gettingStarted:v1',JSON.stringify(value));}catch(_){}}
     function renderGettingStarted(){
@@ -26,8 +28,7 @@
       if(visible){renderMobileSetupStep(checklist,pref,current);empty.hidden=true;}
       empty.querySelector('h2').textContent=editable?(mobile?'Start with what matters to you':'Add your first income to see your month at a glance'):'No financial records yet';
       empty.querySelector('p').textContent=editable?'Your income, expenses and balances will appear here as you add records.':'No financial records have been added yet. The owner or an editor can add records.';
-      const resume=document.getElementById('resumeGettingStarted');if(resume)resume.hidden=!editable||!pref.eligible||!pref.dismissed;
-      const takeTour=document.getElementById('dashboardTakeTour');if(takeTour)takeTour.hidden=!mobile||!pref.eligible||!pref.dismissed;
+      const resume=document.getElementById('resumeGettingStarted');if(resume)resume.hidden=!editable||!shouldShowResumeSetup(pref);
     }
     // All first-time questions use one sequence. First name is the only required step.
     const mobileSetupSteps=[
@@ -113,8 +114,8 @@
       if(!window.financeCloud||window.financeCloud.canEdit===false)return;
       if(action.startsWith('wizard-')){runMobileSetupAction(action,trigger);return;}
       const nav=id=>document.querySelector('.nav-tab[data-tab="'+id+'"]')?.click();
-      if(['skip','no-loans','resume'].includes(action)){const pref=readGettingStartedPreference()||{eligible:true,dismissed:false,loanSkipped:false};if(action==='no-loans')pref.loanSkipped=true;else{pref.dismissed=action==='skip';if(action==='resume'&&pref.wizardComplete){pref.wizardStep=0;pref.wizardComplete=false;}}writeGettingStartedPreference(pref);if(action==='resume')nav('dashboard');renderGettingStarted();return;}
-      if(action==='tour'){window.PFTTour?.start();return;}if(action==='loan-view'){nav('debts');return;}
+      if(['skip','no-loans','resume'].includes(action)){const pref=readGettingStartedPreference()||{eligible:true,dismissed:false,loanSkipped:false};if(action==='no-loans')pref.loanSkipped=true;else if(action==='skip')completeSetupBySkipping(pref);else if(action==='resume'&&pref.wizardComplete){pref.wizardStep=0;pref.wizardComplete=false;}writeGettingStartedPreference(pref);if(action==='resume')nav('dashboard');renderGettingStarted();if(action==='skip')window.PFTTour?.maybeStart(true);return;}
+if(action==='loan-view'){nav('debts');return;}
       if(action==='investment-view'){nav('investments');return;}
       if(action==='family'){nav('settings');const tile=[...document.querySelectorAll('.settings-quick-tile')].find(node=>/family/i.test(node.querySelector('strong')?.textContent||''));tile?.click();document.querySelector('[data-family-dialog="familyNameDetails"]')?.click();return;}
       if(action==='opening'){nav('income-expenses');const tools=document.querySelector('#income-expenses .cash-tools');if(tools)tools.open=true;if(document.getElementById('balanceEntryForm')?.hidden)document.getElementById('toggleBalanceForm')?.click();requestAnimationFrame(()=>{document.getElementById('balanceStartAmount')?.focus();document.getElementById('balanceEntryForm')?.scrollIntoView({block:'nearest'});});return;}
@@ -130,7 +131,6 @@
       const empty=document.createElement('section');empty.id='dashboardFirstRecord';empty.className='panel first-record-prompt';empty.hidden=true;empty.innerHTML='<h2>Add your first income to see your month at a glance</h2><p>Your income, expenses and balances will appear here as you add records.</p><button type="button" class="btn-primary" data-setup-action="income">+ Add income</button><div class="mobile-first-record-options" aria-label="Other setup options"><button type="button" class="btn-secondary" data-setup-action="expense">Add expense</button><button type="button" class="btn-secondary" data-setup-action="opening">Opening balance</button><button type="button" class="btn-secondary" data-setup-action="investment">Add investment</button><button type="button" class="btn-secondary" data-setup-action="loan">Add loan</button><button type="button" class="btn-secondary" data-setup-action="family">Family members</button></div>';
       const intro=dashboard.querySelector('.dashboard-page-intro');if(intro){intro.after(checklist);checklist.after(empty);}else dashboard.prepend(checklist,empty);
       const resume=document.createElement('button');resume.id='resumeGettingStarted';resume.type='button';resume.className='btn-secondary';resume.textContent='Resume setup';resume.dataset.setupAction='resume';resume.hidden=true;document.querySelector('#settings .settings-intro')?.after(resume);
-      const takeTour=document.createElement('button');takeTour.id='dashboardTakeTour';takeTour.type='button';takeTour.className='btn-secondary';takeTour.textContent='Take a tour';takeTour.dataset.setupAction='tour';takeTour.hidden=true;empty.append(takeTour);
       document.addEventListener('click',event=>{const button=event.target.closest('[data-setup-action]');if(button){event.preventDefault();runGettingStartedAction(button.dataset.setupAction,button);}});
       checklist.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.id==='quickSetupFirstName'){event.preventDefault();checklist.querySelector('[data-setup-action="wizard-next"]')?.click();}});
       let frame=0;
