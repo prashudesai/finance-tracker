@@ -26,7 +26,7 @@ function dialog({title,note,confirm=false,recovery=false,pairing=false,remember=
   form.onsubmit=e=>{e.preventDefault();if(confirm&&(input.value.length<12||input.value!==repeat.value)){message.textContent='Use at least 12 characters and enter the same passphrase twice.';return;}const value={text:input.value,remember:keep.checked};form.remove();resolve(value);};
   input.focus();
 });}
-async function showRecovery(display){
+async function showRecovery(display,email){
   const gate=document.getElementById('cloudGate'),message=document.getElementById('cloudMessage');
   const form=document.createElement('form');form.className='cloud-vault-form';
   const heading=document.createElement('h2');heading.textContent='Save your recovery key';
@@ -34,7 +34,7 @@ async function showRecovery(display){
   const code=document.createElement('code');code.textContent=display;
   const label=document.createElement('label');const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.required=true;label.append(checkbox,' I saved this recovery key');
   const done=document.createElement('button');done.type='submit';done.textContent='I saved it';
-  form.append(heading,note,code,label,done);gate.append(form);message.textContent='Save your recovery key before continuing.';
+  form.append(heading,note,code);if(email){const mail=document.createElement('a');mail.href='mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent('Personal Finance Tracker recovery key')+'&body='+encodeURIComponent('Save this recovery key securely. Anyone who can read this email can recover your encrypted tracker.\n\n'+display);mail.textContent='Email to myself';form.append(mail);}form.append(label,done);gate.append(form);message.textContent='Save your recovery key before continuing.';
   await new Promise(resolve=>{form.onsubmit=e=>{e.preventDefault();form.remove();resolve();};});
 }
 function deviceStore(ownerUid,actorUid){
@@ -43,7 +43,7 @@ function deviceStore(ownerUid,actorUid){
   const access=async(method,value)=>{const db=await open();try{return await new Promise((resolve,reject)=>{const tx=db.transaction('keys',method==='get'?'readonly':'readwrite'),req=tx.objectStore('keys')[method](...(method==='get'?[id]:[value,id]));req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}finally{db.close();}};
   return {async recall(){try{const record=await access('get');if(!record)return null;const raw=await unseal(record.key,'device:'+id,record.wrapped);return raw;}catch(_){return null;}},async save(raw){const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);await access('put',{key,wrapped:await seal(key,'device:'+id,raw)});}};
 }
-export async function openVault(api,ownerUid,role,actorUid){
+export async function openVault(api,ownerUid,role,actorUid,email=''){
   const path=`users/${ownerUid}/vault/config`;
   const device=deviceStore(ownerUid,actorUid);
   let config=await api.get(path);
@@ -55,7 +55,7 @@ export async function openVault(api,ownerUid,role,actorUid){
     const raw=crypto.getRandomValues(new Uint8Array(32)),key=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);
     const salt=b64(crypto.getRandomValues(new Uint8Array(16))),recovery=makeRecovery();
     config={format:1,kdf:'PBKDF2-SHA256',iterations:ITERATIONS,salt,wrapped:await seal(await passKey(pass.text,salt),'vault-pass-v1',raw),recoveryWrapped:await seal(await recoveryKey(recovery.raw),'vault-recovery-v1',raw),verifier:await seal(key,'vault-check-v1',enc.encode('PFT vault v1'))};
-    await api.create(path,config);await showRecovery(recovery.display);if(pass.remember)try{await device.save(raw);}catch(_){}return withPairing(key,raw,api,ownerUid);
+    await api.create(path,config);await showRecovery(recovery.display,email);if(pass.remember)try{await device.save(raw);}catch(_){}return withPairing(key,raw,api,ownerUid);
   }
   if(config.format!==1||config.kdf!=='PBKDF2-SHA256'||config.iterations!==ITERATIONS||typeof config.salt!=='string')throw Error('Unsupported encrypted vault settings.');
   const remembered=await device.recall();if(remembered)try{const key=await crypto.subtle.importKey('raw',remembered,'AES-GCM',false,['encrypt','decrypt']);if(dec.decode(await unseal(key,'vault-check-v1',config.verifier))==='PFT vault v1')return withPairing(key,remembered,api,ownerUid);}catch(_){}
