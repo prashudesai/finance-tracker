@@ -46,8 +46,16 @@ function deviceStore(ownerUid,actorUid){
 export async function openVault(api,ownerUid,role,actorUid,email=''){
   const path=`users/${ownerUid}/vault/config`;
   const device=deviceStore(ownerUid,actorUid);
-  let config=await api.get(path);
-  const legacy=await api.get(`users/${ownerUid}/tracker/current`);
+  let config,legacy;
+  try{
+    config=await api.get(path);
+    legacy=await api.get(`users/${ownerUid}/tracker/current`);
+  }catch(error){
+    const remembered=await device.recall();
+    if(!remembered)throw error;
+    const key=await crypto.subtle.importKey('raw',remembered,'AES-GCM',false,['encrypt','decrypt']);
+    return withPairing(key,remembered,api,ownerUid);
+  }
   if(legacy&&legacy.format!==2)throw Error('This account still has unencrypted cloud records. Delete the old tracker data before starting an encrypted vault.');
   if(!config&&role!=='owner')throw Error('The owner must create the encrypted vault first.');
   if(!config){
