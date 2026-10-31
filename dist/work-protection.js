@@ -16,7 +16,8 @@ export function installWorkProtection(){
    for(const [id,data]of Object.entries(saved?.values||{})){const e=document.getElementById(id);if(!e||!eligible(e)||e.type!==data.type)continue;if(e.tagName==='SELECT'&&![...e.options].some(o=>o.value===data.value))continue;e.value=data.value;if(e.type==='checkbox'||e.type==='radio')e.checked=data.checked;values.set(id,data);}
    restore.hidden=true;status('Draft restored on this device. Review the restored entries before saving.');persist();
  });
- const discard=action('Discard draft',()=>{clearTimeout(timer);values.clear();saved=null;restore.hidden=true;try{trackerStorage.removeItem(key);status('');}catch(_){status('Could not discard the stored draft.');}});
+ const discardDraft=()=>{clearTimeout(timer);values.clear();saved=null;restore.hidden=true;try{trackerStorage.removeItem(key);status('');}catch(_){status('Could not discard the stored draft.');}};
+ const discard=action('Discard draft',discardDraft);
  if(saved?.values&&Date.now()-saved.at<7*86400000&&Object.keys(saved.values).length)status('An unfinished draft is available on this device.');else{saved=null;restore.hidden=true;notice.hidden=true;}
  const edit=e=>{if(!eligible(e.target)||!e.isTrusted)return;if(saved?.values&&!values.size)for(const [id,data]of Object.entries(saved.values))values.set(id,data);saved=null;versions.set(e.target.id,(versions.get(e.target.id)||0)+1);values.set(e.target.id,read(e.target));clearTimeout(timer);timer=setTimeout(persist,250);};
  document.addEventListener('input',edit);document.addEventListener('change',edit);
@@ -29,5 +30,5 @@ export function installWorkProtection(){
  saveData=function(...args){const selected=candidate;candidate=null;const result=originalSave.apply(this,args);if(!selected)return result;return Promise.resolve(result).then(ok=>{if(ok){for(const [id,value]of selected.values)if(versions.get(id)===selected.versions.get(id)&&JSON.stringify(values.get(id))===JSON.stringify(value))values.delete(id);saved=null;clearTimeout(timer);persist();if(!values.size){restore.hidden=true;status('');}}return ok;});};
  const oldReset=window.financeBridge.reset;
  window.financeBridge.reset=function(){flush();clearTimeout(timer);document.removeEventListener('click',capture,true);document.removeEventListener('input',edit);document.removeEventListener('change',edit);window.removeEventListener('pagehide',flush);notice.remove();return oldReset.apply(this,arguments);};
- window.financeDrafts={pending:()=>values.size>0||Boolean(saved?.values&&Object.keys(saved.values).length),flush};
+ window.financeDrafts={pending:()=>values.size>0||Boolean(saved?.values&&Object.keys(saved.values).length),flush,discard:discardDraft};
 }
