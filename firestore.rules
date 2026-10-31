@@ -68,7 +68,7 @@ service cloud.firestore {
           && request.resource.data.epoch is string && request.resource.data.epoch.size() > 0 && request.resource.data.epoch.size() <= 100
           && request.resource.data.revision is int
           && request.resource.data.payload is string
-          && request.resource.data.payload.size() <= 200000
+          && request.resource.data.payload.size() <= 300000
           && request.resource.data.updatedBy == request.auth.uid
           && request.resource.data.updatedAt == request.time;
       }

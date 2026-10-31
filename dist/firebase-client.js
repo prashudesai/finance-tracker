@@ -111,6 +111,7 @@ onAuthStateChanged(auth,async user=>{
   document.getElementById('cloudSaveRetry').addEventListener('click',()=>window.financeBridge?.retry());
   document.getElementById('cloudRefresh').addEventListener('click',()=>window.financeBridge?.refreshRemote().catch(error=>alert(friendly(error))));
   window.financeCloud.inspectVersion=async()=>{assertAccess();const reader=createCloudStore(api,family.ownerUid,user.uid,vault);const envelope=await reader.load();return {envelope,revision:reader.revision};};
+  window.financeCloud.reviewPayload={encrypt:value=>vault.encrypt('reviews:'+family.ownerUid,value),decrypt:value=>vault.decrypt('reviews:'+family.ownerUid,value)};
   const reviewRef=doc(db,'users/'+family.ownerUid+'/reviews/current');
   const decodeReviews=async snapshot=>{const data=snapshot.exists()?snapshot.data():null;if(data&&data.format!==2)throw Error('Old shared reviews are not encrypted. Delete old data before opening the vault.');return {values:reviewValues(data?await vault.decrypt('reviews:'+family.ownerUid,data.payload):{}),revision:data?.revision||0,epoch:data?.epoch||'initial',fromCache:snapshot.metadata?.fromCache===true};};
   async function applyBackupReviewRestore(transaction,input){

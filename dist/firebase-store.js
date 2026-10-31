@@ -1,7 +1,8 @@
 // Immutable, per-user snapshots. A revision-checked pointer publishes a complete
 // snapshot atomically; a large import never becomes partially visible.
 const CHUNK_BYTES = 180000;
-const MAX_BYTES = 30 * 1024 * 1024;
+const MAX_PLAIN_BYTES = 30 * 1024 * 1024;
+const MAX_BYTES = 42 * 1024 * 1024; // Base64-wrapped AES-GCM ciphertext.
 function encode(bytes) {
   let result = '';
   for (let i=0; i<bytes.length; i+=8192) result += String.fromCharCode(...bytes.subarray(i,i+8192));
@@ -30,7 +31,7 @@ export function createCloudStore(api, uid, actorUid=uid, vault) {
     for(let attempt=0;attempt<3;attempt++) {
       const meta=await api.get(metaPath);assertUser();
       if (!meta) { revision=0;updatedAt=null;loaded=true;return null; }
-      if(meta.format!==2 || !Number.isInteger(meta.revision) || meta.revision<1 || !/^[\w-]+$/.test(meta.generation) || !Number.isInteger(meta.count) || meta.count<1 || meta.count>180) throw new Error('This snapshot is not encrypted. Delete old cloud data before opening the vault.');
+      if(meta.format!==2 || !Number.isInteger(meta.revision) || meta.revision<1 || !/^[\w-]+$/.test(meta.generation) || !Number.isInteger(meta.count) || meta.count<1 || meta.count>240) throw new Error('This snapshot is not encrypted or its metadata is invalid. Delete old cloud data before opening the vault.');
       // Bound parallel reads to four; retain chunk order and existing digest checks.
       const chunks=[];
       for(let i=0;i<meta.count;i+=4){
@@ -66,8 +67,9 @@ export function createCloudStore(api, uid, actorUid=uid, vault) {
     busy=true;
     const generation=crypto.randomUUID();let count=0,published=false,publishAttempted=false;
     try {
+      if(new TextEncoder().encode(JSON.stringify(envelope)).length>MAX_PLAIN_BYTES)throw new Error('Backup is larger than the supported 30 MB limit.');
       const bytes=new TextEncoder().encode(await vault.encrypt('tracker:'+uid,envelope));
-      if(bytes.length>MAX_BYTES)throw new Error('Backup is larger than the supported 30 MB limit.');
+      if(bytes.length>MAX_BYTES)throw new Error('Encrypted backup exceeds the supported size.');
       const records=[];
       for(let i=0;i<bytes.length;i+=CHUNK_BYTES)records.push({path:`${root}/snapshots/${generation}/chunks/${records.length}`,data:{payload:encode(bytes.subarray(i,i+CHUNK_BYTES))}});
       count=records.length;
