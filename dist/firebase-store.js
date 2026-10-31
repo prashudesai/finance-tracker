@@ -11,7 +11,7 @@ function decode(text) { return Uint8Array.from(atob(text), c=>c.charCodeAt(0)); 
 async function digest(bytes) {
   return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(n=>n.toString(16).padStart(2,'0')).join('');
 }
-export function createCloudStore(api, uid, actorUid=uid) {
+export function createCloudStore(api, uid, actorUid=uid, vault) {
   if (!uid || !/^[A-Za-z0-9_-]+$/.test(uid)) throw new Error('Invalid account identifier.');
   const root = `users/${uid}`;
   const metaPath = `${root}/tracker/current`;
@@ -30,7 +30,7 @@ export function createCloudStore(api, uid, actorUid=uid) {
     for(let attempt=0;attempt<3;attempt++) {
       const meta=await api.get(metaPath);assertUser();
       if (!meta) { revision=0;updatedAt=null;loaded=true;return null; }
-      if(meta.format!==1 || !Number.isInteger(meta.revision) || meta.revision<1 || !/^[\w-]+$/.test(meta.generation) || !Number.isInteger(meta.count) || meta.count<1 || meta.count>180) throw new Error('Cloud snapshot metadata is invalid.');
+      if(meta.format!==2 || !Number.isInteger(meta.revision) || meta.revision<1 || !/^[\w-]+$/.test(meta.generation) || !Number.isInteger(meta.count) || meta.count<1 || meta.count>180) throw new Error('This snapshot is not encrypted. Delete old cloud data before opening the vault.');
       // Bound parallel reads to four; retain chunk order and existing digest checks.
       const chunks=[];
       for(let i=0;i<meta.count;i+=4){
@@ -51,7 +51,7 @@ export function createCloudStore(api, uid, actorUid=uid) {
       if(await digest(bytes)!==meta.digest)throw new Error('Cloud snapshot verification failed. Records were not loaded.');
       const current=await api.get(metaPath);
       if(current?.generation!==meta.generation)continue;
-      const envelope=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+      const envelope=await vault.decrypt('tracker:'+uid,new TextDecoder('utf-8',{fatal:true}).decode(bytes));
       if(!envelope || typeof envelope.data!=='object' || !envelope.data)throw new Error('Invalid tracker snapshot.');
       assertUser();revision=meta.revision;updatedAt=meta.updatedAt||null;loaded=true;
       return envelope;
@@ -66,17 +66,18 @@ export function createCloudStore(api, uid, actorUid=uid) {
     busy=true;
     const generation=crypto.randomUUID();let count=0,published=false,publishAttempted=false;
     try {
-      const bytes=new TextEncoder().encode(JSON.stringify(envelope));
+      const bytes=new TextEncoder().encode(await vault.encrypt('tracker:'+uid,envelope));
       if(bytes.length>MAX_BYTES)throw new Error('Backup is larger than the supported 30 MB limit.');
       const records=[];
       for(let i=0;i<bytes.length;i+=CHUNK_BYTES)records.push({path:`${root}/snapshots/${generation}/chunks/${records.length}`,data:{payload:encode(bytes.subarray(i,i+CHUNK_BYTES))}});
       count=records.length;
       for(let i=0;i<records.length;i+=400) { assertUser(); await api.put(records.slice(i,i+400)); }
       const hash=await digest(bytes);
+      const mutationProof=await vault.proof('tracker:'+uid,envelope);
       const expected=revision;
       assertUser();publishAttempted=true;
       const savedAt=new Date().toISOString();
-      const old=await api.publish(metaPath,expected,{format:1,mutationId:envelope.mutationId||generation,revision:expected+1,generation,count,digest:hash,resetHistory:options.clearHistory===true,updatedAt:savedAt,...(envelope.reviewRestore?{reviewRestore:envelope.reviewRestore}:{})});
+      const old=await api.publish(metaPath,expected,{format:2,mutationId:envelope.mutationId||generation,mutationProof,revision:expected+1,generation,count,digest:hash,resetHistory:options.clearHistory===true,updatedAt:savedAt,...(envelope.reviewRestore?{reviewRestore:envelope.reviewRestore}:{})});
       published=true;
       if(old?.acknowledged){revision=old.acknowledged.revision;updatedAt=old.acknowledged.updatedAt||null;try{await removeSnapshot({generation,count});}catch(_){}return revision;}
       revision=expected+1;updatedAt=savedAt;
@@ -91,3 +92,4 @@ export function createCloudStore(api, uid, actorUid=uid) {
   }
   return {uid,load,save,resume(value){assertUser();if(!Number.isInteger(value)||value<0)throw new Error('Invalid cached revision');revision=value;loaded=true;},get revision(){return revision;},get updatedAt(){return updatedAt;}};
 }
+

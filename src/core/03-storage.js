@@ -6,7 +6,8 @@
     function storageMessage(message,error=false){const status=document.getElementById('cloudSyncStatus');if(status){status.textContent=message;status.hidden=message==='All changes synced';}const e=document.getElementById('storageHealth');if(e){e.textContent=message;e.style.color=error?'var(--danger)':'var(--text-muted)';}}
     function openFinanceDB(){return new Promise((resolve,reject)=>{
       if(!window.indexedDB)return reject(new Error('IndexedDB is unavailable'));
-      const r=indexedDB.open('PersonalFinanceTracker:'+window.financeCloud.uid,1);
+      // Never import an older device's unencrypted records into a fresh vault.
+      const r=indexedDB.open('PersonalFinanceTracker:encrypted-v1:'+window.financeCloud.uid,1);
       r.onupgradeneeded=()=>{const db=r.result;db.createObjectStore('records');db.createObjectStore('changes',{keyPath:'sequence',autoIncrement:true});};
       r.onerror=()=>reject(r.error);r.onblocked=()=>reject(new Error('Close other tracker windows and reload to finish opening storage.'));
       r.onsuccess=()=>{r.result.onversionchange=()=>{r.result.close();storageLoadFailed=true;storageMessage('Storage changed in another window. Reload before editing.',true);};resolve(r.result);};
@@ -505,6 +506,7 @@ const total=Math.max(1,Math.ceil(rows.length/8));const page=Math.max(0,Math.min(
       const display=value=>calendarDate(value).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
       return confirm(`This Monthly EMI is dated ${display(paymentDate)}, after its scheduled due date (${display(dueDate)}). Recorded part payments are prorated within the EMI interval; late-payment fees are not added. Continue with this date?`);
     }
+
 
 
 
