@@ -788,8 +788,10 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
     const fits=await tour.evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1&&e.scrollWidth<=e.clientWidth+1;});
     assert.equal(fits,true,'Tour fits '+width);
   }
-  for(let i=0;i<8;i++)await tour.locator('[data-tour-next]').click();
-  assert.match(await page.locator('#appGuideTourTitle').textContent(),/backup/);
+  for(let i=0;i<9;i++)await tour.locator('[data-tour-next]').click();
+  assert.match(await page.locator('#appGuideTourTitle').textContent(),/install the app on your phone/i);
+  assert.equal(await page.locator('#appGuideTourInstallGuide').isVisible(),true);
+  assert.equal(await page.locator('#settingsQuickTiles .settings-quick-tile[data-settings-panel="settingsAppPanel"]').evaluate(e=>e.classList.contains('app-tour-target')),true);
   assert.equal(await tour.locator('[data-tour-next]').textContent(),'Finish');
   await tour.locator('[data-tour-next]').click();assert.equal(await tour.isVisible(),false);
   assert.equal(await page.evaluate(()=>PFTTour.shouldOffer(true)),false);
