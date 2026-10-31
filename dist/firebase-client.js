@@ -74,15 +74,16 @@ function offerLegacyAccountDeletion(user,family,error){
   acknowledgement.append(check,' I understand this permanently deletes the account and its cloud data.');
   const button=document.createElement('button');button.type='submit';button.textContent='Delete my old account';button.disabled=true;
   const status=document.createElement('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+  const retryLogin=document.createElement('button');retryLogin.type='button';retryLogin.textContent='Sign out and sign in again';retryLogin.onclick=async()=>{retryLogin.disabled=true;try{await signOut(auth);location.reload();}catch(error){status.textContent=friendly(error);retryLogin.disabled=false;}};
   const update=()=>{button.disabled=phrase.value!=='DELETE MY ACCOUNT'||!check.checked||!navigator.onLine;};
   phrase.addEventListener('input',update);check.addEventListener('change',update);
   window.addEventListener('online',update);window.addEventListener('offline',update);
-  label.append(phrase);form.append(label,acknowledgement,button,status);section.append(heading,warning,form);card.append(section);
+  label.append(phrase);form.append(label,acknowledgement,button,status,retryLogin);section.append(heading,warning,form);card.append(section);
   form.addEventListener('submit',async event=>{
     event.preventDefault();update();
     if(button.disabled||auth.currentUser?.uid!==user.uid||family.role!=='owner'||family.ownerUid!==user.uid)return;
     if(!confirm('Permanently delete your existing tracker account, all cloud financial records and family invitations? This cannot be undone.'))return;
-    button.disabled=true;phrase.disabled=true;check.disabled=true;
+    button.disabled=true;phrase.disabled=true;check.disabled=true;retryLogin.disabled=true;
     status.textContent='Deleting account and cloud records… Keep this page open.';
     try{
       const token=await user.getIdToken(true);
@@ -99,7 +100,7 @@ function offerLegacyAccountDeletion(user,family,error){
       location.reload();
     }catch(failure){
       status.textContent=friendly(failure)+(/sign in again|recent/i.test(friendly(failure))?' Sign out, sign in again and retry.':'');
-      phrase.disabled=false;check.disabled=false;update();
+      phrase.disabled=false;check.disabled=false;retryLogin.disabled=false;update();
     }
   });
 }
