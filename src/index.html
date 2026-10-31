@@ -48,6 +48,8 @@
       <button id="cloudEmergencyExport" type="button">Export current session</button>
       <button id="cloudSaveRetry" type="button">Retry save</button>
       <button id="cloudReload" type="button">Reload cloud records</button>
+      <p id="cloudResetMissingHint" hidden>The encrypted cloud snapshot is missing required records. If you do not need the old data, the owner can start again with an empty tracker.</p>
+      <button id="cloudResetMissingSnapshot" type="button" hidden>Start fresh with an empty tracker</button>
     </div>
   </div><p class="cloud-login-footer"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg><span>Secure sign-in · Your records sync across devices</span></p></section>
   <div class="container" role="main" id="trackerMain" tabindex="-1">
