@@ -8,4 +8,5 @@ for(const key of ['income','expenses','debts','investments','pf','ppf','nps','gr
 result=snapshot({...data,monthlyBalances:[{month:'2026-10',startBalance:0}]},'2026-10');assert.equal(result.hasData,true);assert.equal(result.opening,true);
 assert.equal(snapshot({...data,monthlyBalances:[{month:'2026-09',startBalance:0}]},'2026-10').opening,false);
 assert.equal(snapshot({...data,monthlyBalances:[{month:'2026-10',startBalance:null}]},'2026-10').opening,false);
-console.log('PASS setup state: new user, genuine zero balances, optional loans, prior-month balances, archives and read-only derivation');
+const actionSource=source.slice(source.indexOf('    function gettingStartedSettingsAction('),source.indexOf('    function readGettingStartedPreference(')),actions={};vm.runInNewContext(actionSource,actions);assert.equal(actions.gettingStartedSettingsAction({wizardComplete:false}),'resume');assert.equal(actions.gettingStartedSettingsAction({wizardComplete:true}),'tour');
+console.log('PASS setup and tour state: new user, genuine zero balances, optional loans, prior-month balances, archives, read-only derivation and completed setup tour action');

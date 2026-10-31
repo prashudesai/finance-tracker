@@ -3,6 +3,7 @@
       const keys=['income','expenses','debts','investments','pf','ppf','nps','gratuityAccounts','monthlyBalances','investmentContributions','retirementContributions','stallionContributions','stallionProfitHistory','archivedAccounts'];
       return {hasData:keys.some(key=>Array.isArray(data[key])&&data[key].length>0),family:(data.customValues?.familyMembers||[]).some(name=>String(name).trim()),opening:(data.monthlyBalances||[]).some(row=>row.month===month&&Number.isFinite(row.startBalance)),loans:(data.debts||[]).length>0||loanSkipped,investments:['investments','pf','ppf','nps','gratuityAccounts'].some(key=>(data[key]||[]).length>0)};
     }
+    function gettingStartedSettingsAction(pref){return pref?.wizardComplete===true?'tour':'resume';}
     function readGettingStartedPreference(){try{return JSON.parse(trackerStorage.getItem('gettingStarted:v1')||'null');}catch(_){return null;}}
     function writeGettingStartedPreference(value){try{trackerStorage.setItem('gettingStarted:v1',JSON.stringify(value));}catch(_){}}
     function renderGettingStarted(){
@@ -26,7 +27,7 @@
       if(visible){renderMobileSetupStep(checklist,pref,current);empty.hidden=true;}
       empty.querySelector('h2').textContent=editable?(mobile?'Start with what matters to you':'Add your first income to see your month at a glance'):'No financial records yet';
       empty.querySelector('p').textContent=editable?'Your income, expenses and balances will appear here as you add records.':'No financial records have been added yet. The owner or an editor can add records.';
-      const resume=document.getElementById('resumeGettingStarted');if(resume)resume.hidden=!editable||!pref.eligible||!pref.dismissed;
+      const resume=document.getElementById('resumeGettingStarted');if(resume){const tourReady=pref.wizardComplete===true;resume.hidden=!editable||!pref.eligible||!pref.dismissed;resume.textContent=tourReady?'Take a tour':'Resume setup';resume.dataset.setupAction=gettingStartedSettingsAction(pref);}
       const takeTour=document.getElementById('dashboardTakeTour');if(takeTour)takeTour.hidden=!mobile||!pref.eligible||!pref.dismissed;
     }
     // All first-time questions use one sequence. First name is the only required step.
@@ -106,7 +107,7 @@
       else if(index===mobileSetupSteps.length-1){pref.dismissed=true;pref.wizardComplete=true;}
       else pref.wizardStep=index+1;
       writeGettingStartedPreference(pref);renderGettingStarted();
-      if(pref.wizardComplete)window.PFTTour?.maybeStart(true);
+      if(pref.wizardComplete&&!window.matchMedia('(max-width:700px)').matches)window.PFTTour?.maybeStart(true);
       else document.querySelector('#gettingStartedChecklist h2')?.focus({preventScroll:true});
     }
     function runGettingStartedAction(action,trigger){
