@@ -4,7 +4,7 @@ import {installFinanceInsights} from './finance-insights.js';
 import {installCashFlow} from './cash-flow.js?v=86';
 import {initializeApp} from './vendor/firebase-app.js';
 import {initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence,browserPopupRedirectResolver,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from './vendor/firebase-auth.js';
-import {getFirestore,doc,getDocFromServer,writeBatch,runTransaction,onSnapshot,serverTimestamp} from './vendor/firebase-firestore.js';
+import {getFirestore,doc,collection,query,where,getDocFromServer,setDoc,deleteDoc,writeBatch,runTransaction,onSnapshot,serverTimestamp,Timestamp} from './vendor/firebase-firestore.js';
 import {installReviewSync} from './review-sync.js?v=83';
 import {reviewValues,applyReviewPatch,validateReviewRestore} from './review-model.js?v=83';
 import {installRecordSearch} from './record-search.js?v=85';
@@ -18,6 +18,7 @@ import {initializeFamilyAccess} from './family-access.js?v=66';
 import {initializeAccountPhoto} from './account-photo.js?v=66';
 import {createCloudStore} from './firebase-store.js?v=66';
 import {openVault} from './finance-vault.js?v=1';
+import {publicFingerprint} from './vault-device-approval.js?v=1';
 const config={apiKey:'AIzaSyBYhF_dyyOSyHyGletR58W7bYlL0xw8dQk',authDomain:'finance-tracker-bc7c9.firebaseapp.com',projectId:'finance-tracker-bc7c9',storageBucket:'finance-tracker-bc7c9.firebasestorage.app',messagingSenderId:'720970373789',appId:'1:720970373789:web:bb792be22a462f359cd274'};
 // Safari and mobile need Firebase's auth iframe prepared before the sign-in tap.
 const app=initializeApp(config),auth=initializeAuth(app,{persistence:[indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence],popupRedirectResolver:browserPopupRedirectResolver}),db=getFirestore(app),provider=new GoogleAuthProvider();
@@ -75,6 +76,31 @@ onAuthStateChanged(auth,async user=>{
     rotate:async(path,previous,next)=>{assertAccess();if(family.role!=='owner')throw Error('Only the owner can reset the vault passphrase.');await runTransaction(db,async tx=>{const ref=doc(db,path),snapshot=await tx.get(ref);if(!snapshot.exists()||snapshot.data().wrapped!==previous.wrapped)throw Error('Vault settings changed on another device. Reload.');tx.set(ref,next);});return next;},
     createPair:async(owner,id,data)=>{assertAccess();if(owner!==family.ownerUid)throw Error('Wrong tracker.');await runTransaction(db,async tx=>{const ref=doc(db,`users/${owner}/vaultInvites/${id}`);if((await tx.get(ref)).exists())throw Error('Pairing code already exists.');tx.set(ref,data);});},
     readPair:async(owner,id)=>{assertAccess();if(owner!==family.ownerUid)throw Error('Wrong tracker.');return api.get(`users/${owner}/vaultInvites/${id}`);},
+    createDeviceRequest:async(id,request)=>{
+      assertAccess();if(auth.currentUser?.uid!==user.uid)throw Error('Sign in to request a device approval.');
+      await setDoc(doc(db,`users/${family.ownerUid}/vaultRequests/${id}`),{
+        ...request,createdAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+300000)
+      });
+    },
+    getDeviceRequest:async id=>{
+      assertAccess();const snapshot=await getDocFromServer(doc(db,`users/${family.ownerUid}/vaultRequests/${id}`));
+      return snapshot.exists()?snapshot.data():null;
+    },
+    removeDeviceRequest:async id=>{
+      assertAccess();await deleteDoc(doc(db,`users/${family.ownerUid}/vaultRequests/${id}`));
+    },
+    watchDeviceRequests:callback=>{
+      assertAccess();if(family.role!=='owner'||family.ownerUid!==user.uid)throw Error('Only the owner can approve devices.');
+      return onSnapshot(query(collection(db,`users/${family.ownerUid}/vaultRequests`),where('status','==','pending')),callback,error=>console.warn('Device approval requests unavailable',error));
+    },
+    decideDeviceRequest:async(id,expected,approval)=>{
+      assertAccess();if(family.role!=='owner'||family.ownerUid!==user.uid||auth.currentUser?.uid!==user.uid)throw Error('Only the signed-in tracker owner can approve devices.');
+      await runTransaction(db,async transaction=>{
+        const ref=doc(db,`users/${family.ownerUid}/vaultRequests/${id}`),snap=await transaction.get(ref),current=snap.exists()?snap.data():null;
+        if(!current||current.status!=='pending'||current.publicKey!==expected.publicKey||current.requesterUid!==expected.requesterUid||current.expiresAt?.toMillis()<=Date.now())throw Error('This device approval request expired or changed.');
+        transaction.update(ref,{status:approval?'approved':'denied',decidedAt:serverTimestamp(),...(approval||{})});
+      });
+    },
     canCleanup:family.canManage,
     put:async records=>{assertAccess();if(!family.canEdit)throw new Error('Viewer access cannot save changes.');const batch=writeBatch(db);for(const record of records)batch.set(doc(db,record.path),record.data);await batch.commit();},
     remove:async paths=>{assertAccess();if(!family.canManage)return;const batch=writeBatch(db);for(const path of paths)batch.delete(doc(db,path));await batch.commit();},
@@ -90,7 +116,80 @@ onAuthStateChanged(auth,async user=>{
     })
   };
   let vault;try{vault=await openVault(api,family.ownerUid,family.role,user.uid,user.email||'');}catch(error){lock(error);return;}
-  const pairPanel=document.getElementById('settingsAccountPanel');if(pairPanel){const section=document.createElement('section');section.className='cloud-vault-form';const heading=document.createElement('h3');heading.textContent='Encrypted vault';const button=document.createElement('button');button.type='button';button.textContent='Approve a new device';const code=document.createElement('code');code.hidden=true;button.onclick=async()=>{button.disabled=true;try{code.textContent=await vault.approveDevice();code.hidden=false;button.textContent='Generate another code';}catch(error){code.textContent=friendly(error);code.hidden=false;}finally{button.disabled=false;}};const note=document.createElement('p');note.textContent='Share this code only with the person signing in on the new device. It expires in five minutes.';section.append(heading,button,note,code);if(family.role==='owner'){const renew=document.createElement('button');renew.type='button';renew.textContent='Replace lost recovery key';const recoveryCode=document.createElement('code');recoveryCode.hidden=true;const emailKey=document.createElement('a');emailKey.textContent='Email to myself';emailKey.hidden=true;renew.onclick=async()=>{if(!confirm('Replace the recovery key? The previous recovery key will stop working. Save the new key immediately.'))return;renew.disabled=true;try{const value=await vault.renewRecovery();recoveryCode.textContent=value;recoveryCode.hidden=false;emailKey.href='mailto:'+encodeURIComponent(user.email||'')+'?subject='+encodeURIComponent('Personal Finance Tracker recovery key')+'&body='+encodeURIComponent('Anyone who can read this email can recover your tracker.\n\n'+value);emailKey.hidden=false;}catch(error){recoveryCode.textContent=friendly(error);recoveryCode.hidden=false;}finally{renew.disabled=false;}};section.append(renew,recoveryCode,emailKey);}pairPanel.append(section);}
+  const pairPanel=document.getElementById('settingsAccountPanel');
+  if(pairPanel){
+    const section=document.createElement('section');section.className='cloud-vault-form vault-settings';
+    const heading=document.createElement('h3');heading.textContent='Encrypted vault';
+    const info=document.createElement('p');info.textContent='Approve signed-in devices using an unlocked desktop. You can still use a private pairing code if needed.';
+    section.append(heading,info);
+    if(family.role==='owner'&&family.ownerUid===user.uid){
+      const requestsHeading=document.createElement('h4');requestsHeading.textContent='Device approval requests';
+      const requestsList=document.createElement('div');requestsList.className='vault-approval-list';requestsList.textContent='No pending requests.';
+      section.append(requestsHeading,requestsList);
+      const notification=document.createElement('aside');notification.className='vault-approval-notification';notification.setAttribute('role','region');notification.setAttribute('aria-label','New device approval requests');notification.hidden=true;
+      const notificationHeading=document.createElement('h3');notificationHeading.textContent='New device approval requested';
+      const notificationList=document.createElement('div');notificationList.className='vault-approval-list';
+      notification.append(notificationHeading,notificationList);document.body.append(notification);
+      let renderSerial=0;
+      const render=async snapshot=>{
+        const serial=++renderSerial;
+        const requests=snapshot.docs.map(docSnap=>({id:docSnap.id,...docSnap.data()})).filter(request=>request.expiresAt?.toMillis()>Date.now());
+        const cards=[];
+        for(const request of requests){
+          const fingerprint=await publicFingerprint(request.publicKey).catch(()=> 'Unavailable');
+          if(serial!==renderSerial)return;
+          const card=document.createElement('div');card.className='vault-approval-card';
+          const identity=document.createElement('strong');identity.textContent=request.requesterEmail||'Authorized family member';
+          const label=document.createElement('p');label.textContent='Device: '+(request.deviceLabel||'New browser');
+          const code=document.createElement('code');code.textContent='Security check: '+fingerprint;
+          const actions=document.createElement('div');actions.className='vault-approval-actions';
+          const approve=document.createElement('button');approve.type='button';approve.textContent='Approve';
+          const deny=document.createElement('button');deny.type='button';deny.className='btn-secondary';deny.textContent='Deny';
+          const status=document.createElement('p');status.setAttribute('role','status');
+          const decide=async allow=>{
+            if(allow&&!confirm('Approve the new device for '+request.requesterEmail+'? Check that its security check matches '+fingerprint+'.'))return;
+            approve.disabled=true;deny.disabled=true;
+            try{
+              const response=allow?await vault.approveRequest(request.id,request):null;
+              await api.decideDeviceRequest(request.id,request,response);
+              status.textContent=allow?'Approved. The new device can now unlock.':'Request denied.';
+            }catch(error){status.textContent=friendly(error);approve.disabled=false;deny.disabled=false;}
+          };
+          approve.onclick=()=>decide(true);deny.onclick=()=>decide(false);
+          actions.append(approve,deny);card.append(identity,label,code,actions,status);cards.push(card);
+        }
+        if(serial!==renderSerial)return;
+        requestsList.replaceChildren(...cards.map(card=>card.cloneNode(true)));
+        // The Account panel and notification both need working actions; cloneNode
+        // does not copy handlers, so render the interactive originals in the notice.
+        if(cards.length){notificationList.replaceChildren(...cards);notification.hidden=false;}
+        else{requestsList.textContent='No pending requests.';notificationList.replaceChildren();notification.hidden=true;}
+      };
+      api.watchDeviceRequests(snapshot=>render(snapshot).catch(error=>console.warn('Approval list unavailable',error)));
+    }
+    const backup=document.createElement('details');backup.className='vault-code-fallback';
+    const summary=document.createElement('summary');summary.textContent='Use a pairing code instead';
+    const codeButton=document.createElement('button');codeButton.type='button';codeButton.textContent='Generate a pairing code';
+    const code=document.createElement('code');code.hidden=true;
+    codeButton.onclick=async()=>{codeButton.disabled=true;try{code.textContent=await vault.approveDevice();code.hidden=false;}catch(error){code.textContent=friendly(error);code.hidden=false;}finally{codeButton.disabled=false;}};
+    const note=document.createElement('p');note.textContent='Share this private code only with the person signing in. It expires in five minutes.';
+    backup.append(summary,note,codeButton,code);section.append(backup);
+    if(family.role==='owner'){
+      const renew=document.createElement('button');renew.type='button';renew.textContent='Replace lost recovery key';
+      const recoveryCode=document.createElement('code');recoveryCode.hidden=true;
+      const emailKey=document.createElement('a');emailKey.textContent='Email to myself';emailKey.hidden=true;
+      renew.onclick=async()=>{
+        if(!confirm('Replace the recovery key? The previous recovery key will stop working. Save the new key immediately.'))return;
+        renew.disabled=true;
+        try{const value=await vault.renewRecovery();recoveryCode.textContent=value;recoveryCode.hidden=false;
+          emailKey.href='mailto:'+encodeURIComponent(user.email||'')+'?subject='+encodeURIComponent('Personal Finance Tracker recovery key')+'&body='+encodeURIComponent('Anyone who can read this email can recover your tracker.\\n\\n'+value);
+          emailKey.hidden=false;
+        }catch(error){recoveryCode.textContent=friendly(error);recoveryCode.hidden=false;}finally{renew.disabled=false;}
+      };
+      section.append(renew,recoveryCode,emailKey);
+    }
+    pairPanel.append(section);
+  }
   const store=createCloudStore(api,family.ownerUid,user.uid,vault);
   // Read-only comparisons use a separate store so their load cannot change the writer revision.
   const inspect=()=>{assertAccess();return createCloudStore(api,family.ownerUid,user.uid,vault).load();};
