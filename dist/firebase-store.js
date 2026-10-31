@@ -106,7 +106,7 @@ export function createCloudStore(api, uid, actorUid=uid, vault) {
     if(!api.online())throw new Error('Connect to the internet before resetting cloud records.');
     const meta=await api.get(metaPath);
     if(!meta || meta.format!==2 || !Number.isInteger(meta.revision) || meta.revision<1 ||
-       !/^[\\w-]+$/.test(meta.generation) || !Number.isInteger(meta.count) || meta.count<1 || meta.count>240)
+       !/^[\w-]+$/.test(meta.generation) || !Number.isInteger(meta.count) || meta.count<1 || meta.count>240)
       throw new Error('Cloud snapshot metadata changed. Reload before resetting.');
     let missing=false;
     for(let i=0;i<meta.count;i+=4){
