@@ -44,6 +44,13 @@
     <p id="cloudMessage" role="status">Connecting to Google sign-in…</p>
     <button id="cloudLogin" type="button"><svg class="cloud-google-mark" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M43.6 24.5c0-1.5-.1-3-.4-4.5H24v8.5h11a9.4 9.4 0 0 1-4.1 6.2v5.2h6.7c3.9-3.6 6-8.8 6-15.4Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.7-5.2c-1.8 1.2-4.1 2-6.8 2-5.2 0-9.7-3.5-11.3-8.2H5.8v5.4A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.7 27.7a12 12 0 0 1 0-7.4v-5.4H5.8a20 20 0 0 0 0 18.2l6.9-5.4Z"/><path fill="#EA4335" d="M24 12.1c3 0 5.7 1 7.8 3.1l5.9-5.9A19.7 19.7 0 0 0 24 4 20 20 0 0 0 5.8 14.9l6.9 5.4c1.6-4.7 6.1-8.2 11.3-8.2Z"/></svg><span>Continue with Google</span></button>
     <p class="cloud-login-privacy"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg><span>Your tracker is private to your family</span></p>
+    <div id="cloudLegacyDelete" hidden>
+      <p>This older account must be deleted before a new encrypted vault can be created. Save any backup you need first. This deletes the tracker account, its cloud records, and family invitations; it does not delete your Google account.</p>
+      <label for="cloudLegacyPhrase">Type <strong>DELETE MY ACCOUNT</strong> to confirm</label>
+      <input id="cloudLegacyPhrase" type="text" autocomplete="off" spellcheck="false">
+      <button id="cloudLegacyDeleteButton" type="button" class="btn-danger">Delete old tracker account</button>
+      <p id="cloudLegacyStatus" role="status" aria-live="polite"></p>
+    </div>
     <div id="cloudRecoveryActions" hidden>
       <button id="cloudEmergencyExport" type="button">Export current session</button>
       <button id="cloudSaveRetry" type="button">Retry save</button>
