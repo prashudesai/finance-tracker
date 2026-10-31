@@ -162,10 +162,11 @@
         {page:'analytics',target:'#analyticsFinancialYear',title:'Understand your reports',text:'Reports includes Analytics, Growth Projection and Date range reports. Choose the financial year for analytics or a date range for detailed records and exports.',tip:'Your selected family profile and report filters affect the records shown.'},
         {page:'growth-projection',target:'#growthProjectionYears',title:'Explore possible growth',text:'Set a time horizon and tap an investment to adjust assumptions. Stress, Base and Optimistic scenarios compare possible results. Tap a scenario below the graph for exact values and its yearly breakdown.',tip:'Projection settings are planning assumptions, not guaranteed returns or changes to your recorded investments.'},
         {page:'settings',target:'#settings .settings-intro',title:'Personalize and share access',text:'Appearance changes your page style and colors. Family access manages member names and invitations. Account settings manage your signed-in profile.',tip:'A family member name does not grant login access. Invitations and roles control access; viewers cannot edit records.'},
-        {page:'settings',target:'#settingsInfoPanel',title:'Keep a backup and find help',text:'Use Data & backup to export your records. Importing a backup replaces records, so keep an export first. App & updates shows your installed version and available updates.',tip:'You can replay this tour or download the full guide from App info at any time.'}
+        {page:'settings',target:'#settingsInfoPanel',title:'Keep a backup and find help',text:'Use Data & backup to export your records. Importing a backup replaces records, so keep an export first. App & updates shows your installed version and available updates.',tip:'You can replay this tour or download the full guide from App info at any time.'},
+        {page:'settings',target:'#pwaInstall',title:'Install the app on your phone',text:'This is the Install app section. Open Settings, then App & updates to find it any time.',tip:'iPhone: open this page in Safari, tap Share, then Add to Home Screen. Android: in Chrome, tap ⋮, choose Install app or Add to Home screen, then confirm.',installGuide:true}
       ];
       const dialog=document.createElement('dialog');dialog.id='appGuideTour';dialog.setAttribute('aria-labelledby','appGuideTourTitle');dialog.setAttribute('aria-describedby','appGuideTourText');dialog.setAttribute('aria-modal','false');
-      dialog.innerHTML='<header><span id="appGuideTourProgress"></span><button type="button" data-tour-skip aria-label="Skip app tour">Skip</button></header><h2 id="appGuideTourTitle" tabindex="-1"></h2><p id="appGuideTourText"></p><p id="appGuideTourTip"></p><p class="app-guide-instruction">Try the highlighted area, then choose Next. Close any panel you open to continue.</p><footer><button type="button" data-tour-back>Back</button><button type="button" class="btn-primary" data-tour-next>Next</button></footer>';
+      dialog.innerHTML='<header><span id="appGuideTourProgress"></span><button type="button" data-tour-skip aria-label="Skip app tour">Skip</button></header><h2 id="appGuideTourTitle" tabindex="-1"></h2><p id="appGuideTourText"></p><p id="appGuideTourTip"></p><section id="appGuideTourInstallGuide" hidden aria-label="Install app screenshot guide" style="margin:10px 0;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--bg)"><strong style="display:block;margin-bottom:8px;font-size:12px">Where to find it</strong><div style="padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--card-bg)"><span style="display:block;color:var(--text-light);font-size:11px">Settings › App &amp; updates</span><strong style="display:block;margin-top:7px;font-size:13px">Install app</strong><span style="display:inline-block;margin-top:7px;padding:5px 10px;border:1px solid var(--primary);border-radius:7px;color:var(--primary);font-size:11px">Install app</span></div></section><p class="app-guide-instruction">Try the highlighted area, then choose Next. Close any panel you open to continue.</p><footer><button type="button" data-tour-back>Back</button><button type="button" class="btn-primary" data-tour-next>Next</button></footer>';
       document.body.append(dialog);
       let index=0,returnPage='dashboard',returnScroll=0,returnFocus=null,highlighted=null,highlightFrame=0;
       const shouldOffer=newUser=>{const setup=readGettingStartedPreference();if(!newUser||setup?.eligible&&!setup.dismissed)return false;try{return !trackerStorage.getItem(key);}catch(_){return false;}};
@@ -173,6 +174,8 @@
       function render(){
         const step=steps[index];
         document.querySelector('.nav-tab[data-tab="'+step.page+'"]')?.click();
+        if(step.installGuide){const appTile=[...document.querySelectorAll('.settings-quick-tile')].find(node=>/App & updates/i.test(node.querySelector('strong')?.textContent||''));appTile?.click();}
+        document.getElementById('appGuideTourInstallGuide').hidden=!step.installGuide;
         document.getElementById('appGuideTourProgress').textContent='App tour · '+(index+1)+' of '+steps.length;
         document.getElementById('appGuideTourTitle').textContent=step.title;
         document.getElementById('appGuideTourText').textContent=step.text;
@@ -189,7 +192,7 @@
       }
       function finish(status){
         remember(status);cancelAnimationFrame(highlightFrame);dialog.close();highlighted?.classList.remove('app-tour-target');highlighted=null;document.body.classList.remove('app-guide-open');
-        document.querySelector('.nav-tab[data-tab="'+returnPage+'"]')?.click();
+        window.closeSettingsTile?.();document.querySelector('.nav-tab[data-tab="'+returnPage+'"]')?.click();
         window.scrollTo({top:returnScroll,behavior:'instant'});
         if(returnFocus?.isConnected&&!returnFocus.closest('#settingsPanelParking'))returnFocus.focus({preventScroll:true});
       }
