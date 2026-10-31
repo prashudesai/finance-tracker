@@ -791,7 +791,7 @@ const buttons=await page.locator('#growthProjectionSummary [data-projection-scen
   for(let i=0;i<9;i++)await tour.locator('[data-tour-next]').click();
   assert.match(await page.locator('#appGuideTourTitle').textContent(),/install the app on your phone/i);
   assert.equal(await page.locator('#appGuideTourInstallGuide').isVisible(),true);
-  assert.equal(await page.locator('#pwaInstall').evaluate(e=>e.classList.contains('app-tour-target')),true);
+  assert.equal(await page.locator('#settingsQuickTiles .settings-quick-tile[data-settings-panel="settingsAppPanel"]').evaluate(e=>e.classList.contains('app-tour-target')),true);
   assert.equal(await tour.locator('[data-tour-next]').textContent(),'Finish');
   await tour.locator('[data-tour-next]').click();assert.equal(await tour.isVisible(),false);
   assert.equal(await page.evaluate(()=>PFTTour.shouldOffer(true)),false);

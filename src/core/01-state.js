@@ -72,7 +72,7 @@
       for(const note of window.PFT_APP_INFO.releaseNotes){const item=document.createElement('li');item.textContent=note;versionInfo.querySelector('ul').append(item);}appPanel.prepend(versionInfo);
       fetch('./version.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(meta=>{document.getElementById('appLatestVersion').textContent='Latest available: '+meta.version+(meta.version!==window.PFT_APP_INFO.version?' · Check for updates to install':' · Up to date');}).catch(()=>{document.getElementById('appLatestVersion').textContent='Latest available: connect to check. Installed version '+window.PFT_APP_INFO.version;});
       for(const [id,title,description,svg] of tiles){
-        const tile=document.createElement('button');tile.type='button';tile.className='settings-quick-tile';tile.setAttribute('aria-haspopup','dialog');tile.setAttribute('aria-controls','settingsTileDialog');
+        const tile=document.createElement('button');tile.type='button';tile.className='settings-quick-tile';tile.dataset.settingsPanel=id;tile.setAttribute('aria-haspopup','dialog');tile.setAttribute('aria-controls','settingsTileDialog');
         tile.innerHTML=`<span class="settings-tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24">${svg}</svg></span><span class="settings-tile-copy"><strong>${title}</strong><small>${description}</small></span><span class="settings-tile-arrow" aria-hidden="true">›</span>`;
         tile.addEventListener('click',()=>openSettingsTile(id,tile));grid.append(tile);parking.append(document.getElementById(id));
       }
