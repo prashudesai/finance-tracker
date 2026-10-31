@@ -17,7 +17,7 @@ export async function compressAccountPhoto(file){
 }
 export async function initializeAccountPhoto(api){
   const panel=document.getElementById('settingsAccountPanel');if(!panel||document.getElementById('accountPhotoSection'))return;
-  const key='pft-account-photo:'+api.uid;
+  const key='pft-account-photo:encrypted-v1:'+api.uid;
   const valid=value=>typeof value==='string'&&(value===''||value.length<=120000&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(value));
   let source='',busy=false,revision=0;
   const googlePhoto=typeof api.googlePhotoURL==='string'&&/^https:\/\//i.test(api.googlePhotoURL)?api.googlePhotoURL:'';
@@ -51,3 +51,4 @@ export async function initializeAccountPhoto(api){
   try{const remote=await api.load();if(revision===loadingRevision&&valid(remote)){source=remote;cache();render();}}
   catch{status.textContent=source?'Showing the saved photo on this device.':'Connect to the internet to load your account photo.';}
 }
+

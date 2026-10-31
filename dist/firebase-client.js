@@ -17,6 +17,7 @@ import {installCloudNotice} from './cloud-notice.js?v=75';
 import {initializeFamilyAccess} from './family-access.js?v=66';
 import {initializeAccountPhoto} from './account-photo.js?v=66';
 import {createCloudStore} from './firebase-store.js?v=66';
+import {openVault} from './finance-vault.js?v=1';
 const config={apiKey:'AIzaSyBYhF_dyyOSyHyGletR58W7bYlL0xw8dQk',authDomain:'finance-tracker-bc7c9.firebaseapp.com',projectId:'finance-tracker-bc7c9',storageBucket:'finance-tracker-bc7c9.firebasestorage.app',messagingSenderId:'720970373789',appId:'1:720970373789:web:bb792be22a462f359cd274'};
 // Safari and mobile need Firebase's auth iframe prepared before the sign-in tap.
 const app=initializeApp(config),auth=initializeAuth(app,{persistence:[indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence],popupRedirectResolver:browserPopupRedirectResolver}),db=getFirestore(app),provider=new GoogleAuthProvider();
@@ -70,6 +71,10 @@ onAuthStateChanged(auth,async user=>{
     currentUid:()=>auth.currentUser?.uid,
     online:()=>navigator.onLine,
     get:async path=>{const snapshot=await getDocFromServer(doc(db,path));return snapshot.exists()?snapshot.data():null;},
+    create:async(path,data)=>{assertAccess();if(family.role!=='owner')throw Error('Only the owner can create a vault.');await runTransaction(db,async tx=>{const ref=doc(db,path);if((await tx.get(ref)).exists())throw Error('The vault already exists. Reload.');tx.set(ref,data);});},
+    rotate:async(path,previous,next)=>{assertAccess();if(family.role!=='owner')throw Error('Only the owner can reset the vault passphrase.');await runTransaction(db,async tx=>{const ref=doc(db,path),snapshot=await tx.get(ref);if(!snapshot.exists()||snapshot.data().wrapped!==previous.wrapped)throw Error('Vault settings changed on another device. Reload.');tx.set(ref,next);});return next;},
+    createPair:async(owner,id,data)=>{assertAccess();if(owner!==family.ownerUid)throw Error('Wrong tracker.');await runTransaction(db,async tx=>{const ref=doc(db,`users/${owner}/vaultInvites/${id}`);if((await tx.get(ref)).exists())throw Error('Pairing code already exists.');tx.set(ref,data);});},
+    readPair:async(owner,id)=>{assertAccess();if(owner!==family.ownerUid)throw Error('Wrong tracker.');return api.get(`users/${owner}/vaultInvites/${id}`);},
     canCleanup:family.canManage,
     put:async records=>{assertAccess();if(!family.canEdit)throw new Error('Viewer access cannot save changes.');const batch=writeBatch(db);for(const record of records)batch.set(doc(db,record.path),record.data);await batch.commit();},
     remove:async paths=>{assertAccess();if(!family.canManage)return;const batch=writeBatch(db);for(const path of paths)batch.delete(doc(db,path));await batch.commit();},
@@ -78,15 +83,17 @@ onAuthStateChanged(auth,async user=>{
       if(next.resetHistory&&!family.canManage)throw new Error('Only the owner can clear tracker history.');
       if(auth.currentUser?.uid!==user.uid)throw new Error('The signed-in account changed. Reload.');
       const ref=doc(db,path),snapshot=await transaction.get(ref),old=snapshot.exists()?snapshot.data():null;
-      if(next.mutationId&&old?.mutationId===next.mutationId){if(old.digest!==next.digest)throw Object.assign(new Error('A save identifier was reused for different records.'),{code:'tracker/conflict'});return {acknowledged:old};}
+      if(next.mutationId&&old?.mutationId===next.mutationId){if(old.mutationProof!==next.mutationProof)throw Object.assign(new Error('A save identifier was reused for different records.'),{code:'tracker/conflict'});return {acknowledged:old};}
       if((old?.revision||0)!==expected)throw Object.assign(new Error('Another device saved newer records.'),{code:'tracker/conflict'});
       if(next.reviewRestore)await applyBackupReviewRestore(transaction,next.reviewRestore);
       const {resetHistory,reviewRestore,...metadata}=next;transaction.set(ref,{...metadata,previous:!resetHistory&&old?{generation:old.generation,count:old.count}:null});return old;
     })
   };
-  const store=createCloudStore(api,family.ownerUid,user.uid);
+  let vault;try{vault=await openVault(api,family.ownerUid,family.role,user.uid,user.email||'');}catch(error){lock(error);return;}
+  const pairPanel=document.getElementById('settingsAccountPanel');if(pairPanel){const section=document.createElement('section');section.className='cloud-vault-form';const heading=document.createElement('h3');heading.textContent='Encrypted vault';const button=document.createElement('button');button.type='button';button.textContent='Approve a new device';const code=document.createElement('code');code.hidden=true;button.onclick=async()=>{button.disabled=true;try{code.textContent=await vault.approveDevice();code.hidden=false;button.textContent='Generate another code';}catch(error){code.textContent=friendly(error);code.hidden=false;}finally{button.disabled=false;}};const note=document.createElement('p');note.textContent='Share this code only with the person signing in on the new device. It expires in five minutes.';section.append(heading,button,note,code);if(family.role==='owner'){const renew=document.createElement('button');renew.type='button';renew.textContent='Replace lost recovery key';const recoveryCode=document.createElement('code');recoveryCode.hidden=true;const emailKey=document.createElement('a');emailKey.textContent='Email to myself';emailKey.hidden=true;renew.onclick=async()=>{if(!confirm('Replace the recovery key? The previous recovery key will stop working. Save the new key immediately.'))return;renew.disabled=true;try{const value=await vault.renewRecovery();recoveryCode.textContent=value;recoveryCode.hidden=false;emailKey.href='mailto:'+encodeURIComponent(user.email||'')+'?subject='+encodeURIComponent('Personal Finance Tracker recovery key')+'&body='+encodeURIComponent('Anyone who can read this email can recover your tracker.\n\n'+value);emailKey.hidden=false;}catch(error){recoveryCode.textContent=friendly(error);recoveryCode.hidden=false;}finally{renew.disabled=false;}};section.append(renew,recoveryCode,emailKey);}pairPanel.append(section);}
+  const store=createCloudStore(api,family.ownerUid,user.uid,vault);
   // Read-only comparisons use a separate store so their load cannot change the writer revision.
-  const inspect=()=>{assertAccess();return createCloudStore(api,family.ownerUid,user.uid).load();};
+  const inspect=()=>{assertAccess();return createCloudStore(api,family.ownerUid,user.uid,vault).load();};
   window.financeCloud={uid:family.role==='owner'?user.uid:'shared:'+user.uid+'|'+family.ownerUid+'|'+family.role,ownerUid:family.ownerUid,ownerEmail:family.ownerEmail,inspect,email:user.email||'',role:family.role,canEdit:family.canEdit,canManage:family.canManage,accessValid:family.accessValid,displayName:user.displayName||'',checkRevision:async()=>{assertAccess();const pointer=await api.get('users/'+family.ownerUid+'/tracker/current');assertAccess();const revision=pointer?.revision||0;if(!Number.isInteger(revision)||revision<0)throw new Error('Cloud revision is invalid.');return revision;},load:store.load,save:(envelope,options)=>{assertAccess();if(!family.canEdit)throw new Error('Viewer access cannot save changes.');return store.save(envelope,options);},resume:store.resume,revision:()=>store.revision,updatedAt:()=>store.updatedAt,lock,
     showApp(){const label=document.getElementById('accountSignedInEmail');if(label)label.textContent=user.email||'Google account';document.body.classList.remove('cloud-pending','cloud-loading');gate.hidden=true;},
     async logout(){
@@ -103,38 +110,39 @@ onAuthStateChanged(auth,async user=>{
   document.getElementById('cloudSignOut').addEventListener('click',()=>window.financeCloud.logout().catch(error=>alert(friendly(error))));
   document.getElementById('cloudSaveRetry').addEventListener('click',()=>window.financeBridge?.retry());
   document.getElementById('cloudRefresh').addEventListener('click',()=>window.financeBridge?.refreshRemote().catch(error=>alert(friendly(error))));
-  window.financeCloud.inspectVersion=async()=>{assertAccess();const reader=createCloudStore(api,family.ownerUid,user.uid);const envelope=await reader.load();return {envelope,revision:reader.revision};};
+  window.financeCloud.inspectVersion=async()=>{assertAccess();const reader=createCloudStore(api,family.ownerUid,user.uid,vault);const envelope=await reader.load();return {envelope,revision:reader.revision};};
+  window.financeCloud.reviewPayload={encrypt:value=>vault.encrypt('reviews:'+family.ownerUid,value),decrypt:value=>vault.decrypt('reviews:'+family.ownerUid,value)};
   const reviewRef=doc(db,'users/'+family.ownerUid+'/reviews/current');
-  const decodeReviews=snapshot=>{const data=snapshot.exists()?snapshot.data():null;return {values:reviewValues(data?JSON.parse(data.payload):{}),revision:data?.revision||0,epoch:data?.epoch||'initial',fromCache:snapshot.metadata?.fromCache===true};};
+  const decodeReviews=async snapshot=>{const data=snapshot.exists()?snapshot.data():null;if(data&&data.format!==2)throw Error('Old shared reviews are not encrypted. Delete old data before opening the vault.');return {values:reviewValues(data?await vault.decrypt('reviews:'+family.ownerUid,data.payload):{}),revision:data?.revision||0,epoch:data?.epoch||'initial',fromCache:snapshot.metadata?.fromCache===true};};
   async function applyBackupReviewRestore(transaction,input){
     assertAccess();if(!family.canManage)throw Error('Only the owner can restore shared reviews.');
-    const restore=validateReviewRestore(input),current=decodeReviews(await transaction.get(reviewRef)),marker='restore-'+restore.id;
+    const restore=validateReviewRestore(input),current=await decodeReviews(await transaction.get(reviewRef)),marker='restore-'+restore.id;
     if(current.epoch===marker)return;
     if(current.revision!==restore.baseRevision||current.epoch!==restore.epoch)throw Object.assign(Error('Shared reviews changed after the backup import was prepared. Review the cloud conflict before replacing records.'),{code:'tracker/conflict'});
-    transaction.set(reviewRef,{format:1,revision:current.revision+1,epoch:marker,payload:JSON.stringify(restore.values),updatedBy:user.uid,updatedAt:serverTimestamp()});
+    transaction.set(reviewRef,{format:2,revision:current.revision+1,epoch:marker,payload:await vault.encrypt('reviews:'+family.ownerUid,restore.values),updatedBy:user.uid,updatedAt:serverTimestamp()});
   }
   async function saveReviews(patch){
     let observed=-1;
     for(let attempt=0;attempt<4;attempt++){
       try{return await runTransaction(db,async transaction=>{
         assertAccess();if(!family.canEdit)throw Error('Viewer access cannot change reviews.');
-        const current=decodeReviews(await transaction.get(reviewRef));observed=current.revision;
+        const current=await decodeReviews(await transaction.get(reviewRef));observed=current.revision;
         if(patch.some(p=>p.epoch!==current.epoch))throw Object.assign(Error('Shared reviews were reset. Export pending changes, then reload reviews.'),{code:'tracker/review-conflict'});
         const values=applyReviewPatch(current.values,patch),revision=current.revision+1;
-        transaction.set(reviewRef,{format:1,revision,epoch:current.epoch,payload:JSON.stringify(values),updatedBy:user.uid,updatedAt:serverTimestamp()});return {values,revision,epoch:current.epoch};
+        transaction.set(reviewRef,{format:2,revision,epoch:current.epoch,payload:await vault.encrypt('reviews:'+family.ownerUid,values),updatedBy:user.uid,updatedAt:serverTimestamp()});return {values,revision,epoch:current.epoch};
       });}catch(error){
         if(!/permission-denied|aborted/.test(error.code||'')||attempt===3)throw error;
-        assertAccess();const latest=decodeReviews(await getDocFromServer(reviewRef));if(!family.canEdit||latest.revision<=observed)throw error;
+        assertAccess();const latest=await decodeReviews(await getDocFromServer(reviewRef));if(!family.canEdit||latest.revision<=observed)throw error;
       }
     }
   }
   async function resetReviews(marker){
     let observed=-1;for(let attempt=0;attempt<4;attempt++){
-      try{return await runTransaction(db,async transaction=>{assertAccess();if(!family.canManage)throw Error('Only the owner can clear shared reviews.');const current=decodeReviews(await transaction.get(reviewRef));observed=current.revision;if(current.epoch===marker)return current;const revision=current.revision+1;transaction.set(reviewRef,{format:1,revision,epoch:marker,payload:'{}',updatedBy:user.uid,updatedAt:serverTimestamp()});return {values:{},revision,epoch:marker};});}
-      catch(error){if(!/permission-denied|aborted/.test(error.code||'')||attempt===3)throw error;assertAccess();const latest=decodeReviews(await getDocFromServer(reviewRef));if(!family.canManage||latest.revision<=observed)throw error;}
+      try{return await runTransaction(db,async transaction=>{assertAccess();if(!family.canManage)throw Error('Only the owner can clear shared reviews.');const current=await decodeReviews(await transaction.get(reviewRef));observed=current.revision;if(current.epoch===marker)return current;const revision=current.revision+1;transaction.set(reviewRef,{format:2,revision,epoch:marker,payload:await vault.encrypt('reviews:'+family.ownerUid,{}),updatedBy:user.uid,updatedAt:serverTimestamp()});return {values:{},revision,epoch:marker};});}
+      catch(error){if(!/permission-denied|aborted/.test(error.code||'')||attempt===3)throw error;assertAccess();const latest=await decodeReviews(await getDocFromServer(reviewRef));if(!family.canManage||latest.revision<=observed)throw error;}
     }
   }
-  const reviewApi={subscribe:(next,error)=>onSnapshot(reviewRef,{includeMetadataChanges:true},snapshot=>{try{next(decodeReviews(snapshot));}catch(e){error(e);}},error),load:async()=>decodeReviews(await getDocFromServer(reviewRef)),save:saveReviews,reset:resetReviews};
+  const reviewApi={subscribe:(next,error)=>onSnapshot(reviewRef,{includeMetadataChanges:true},snapshot=>{decodeReviews(snapshot).then(next,error);},error),load:async()=>decodeReviews(await getDocFromServer(reviewRef)),save:saveReviews,reset:resetReviews};
   window.financeCloudResolve();
   Promise.resolve(window.trackerReady).then(async()=>{await installReviewSync(reviewApi);installFinanceWorkbench();installExperience();installAttention();installRecordSearch();installCashFlow();installFinanceInsights();installMobileExperience();installFilterPopovers();}).catch(error=>console.warn('Workbench unavailable',error));
   Promise.resolve(window.trackerReady).then(installRecordRecovery).catch(error=>console.warn('Record recovery unavailable',error));
@@ -143,8 +151,8 @@ onAuthStateChanged(auth,async user=>{
   Promise.resolve(window.trackerReady).then(()=>initializeAccountPhoto({
     uid:user.uid,
     googlePhotoURL:user.photoURL || '',
-    load:async()=>{const snapshot=await getDocFromServer(doc(db,'users/'+user.uid+'/profile/photo'));return snapshot.exists()?snapshot.data().image:'';},
-    save:async image=>{if(auth.currentUser?.uid!==user.uid)throw new Error('The signed-in account changed. Reload.');const batch=writeBatch(db);batch.set(doc(db,'users/'+user.uid+'/profile/photo'),{image});await batch.commit();}
+    load:async()=>{const snapshot=await getDocFromServer(doc(db,'users/'+user.uid+'/profile/photo'));if(!snapshot.exists())return '';const data=snapshot.data();if(data.format!==2)throw Error('Old photo is not encrypted. Remove it before saving a new one.');return vault.decrypt('photo:'+user.uid,data.image);},
+    save:async image=>{if(auth.currentUser?.uid!==user.uid)throw new Error('The signed-in account changed. Reload.');const batch=writeBatch(db);batch.set(doc(db,'users/'+user.uid+'/profile/photo'),{format:2,image:await vault.encrypt('photo:'+user.uid,image)});await batch.commit();}
   })).catch(()=>{});
 },error=>{showError(error);});
 
@@ -158,3 +166,4 @@ setTimeout(()=>{
     gateExport.hidden=true;document.getElementById('cloudSaveRetry').hidden=true;
   }
 },15000);
+

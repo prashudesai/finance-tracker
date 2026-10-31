@@ -1,4 +1,20 @@
 const fs=require('node:fs'),path=require('node:path');
+// Browser regressions use a mock Firebase account. Complete the new vault gate
+// with a test-only passphrase; production has no automatic unlock path.
+const chromium=require('playwright').chromium,launch=chromium.launch.bind(chromium);
+chromium.launch=async(...args)=>{
+ const browser=await launch(...args),newContext=browser.newContext.bind(browser);
+ browser.newContext=async(...options)=>{
+  const context=await newContext(...options);
+  await context.addInitScript(()=>{
+   const answer=()=>{const form=document.querySelector('#cloudGate .cloud-vault-form');if(!form||form.dataset.testAnswered)return;
+    const title=form.querySelector('h2')?.textContent||'';if(!/Create your private vault|Unlock your private vault|Save your recovery key/.test(title))return;
+    form.dataset.testAnswered='true';for(const field of form.querySelectorAll('input[type=password]'))field.value='Browser Test Vault Passphrase 2026!';
+    const check=form.querySelector('input[type=checkbox]');if(check)check.checked=true;form.requestSubmit();};
+   new MutationObserver(answer).observe(document,{childList:true,subtree:true});answer();
+  });return context;
+ };return browser;
+};
 const manifests=new Map();
 exports.logicalURL=(root,url)=>{
  const pathname=url.split('?')[0];if(!pathname.startsWith('/assets/'))return pathname;
@@ -31,3 +47,4 @@ exports.readyTracker=async (page,{completeName=true}={})=>{
   await page.waitForFunction(()=>state.firstNameSetup?.completed===true);
  }
 };
+

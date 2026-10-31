@@ -53,21 +53,22 @@ service cloud.firestore {
     match /users/{uid}/profile/photo {
       allow read: if owns(uid);
       allow create, update: if owns(uid)
-        && request.resource.data.keys().hasOnly(['image'])
+        && request.resource.data.keys().hasOnly(['format','image'])
+        && request.resource.data.format == 2
         && request.resource.data.image is string
-        && request.resource.data.image.size() <= 120000
-        && (request.resource.data.image == '' || request.resource.data.image.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$'));
+        && request.resource.data.image.size() <= 200000
+        && request.resource.data.image.matches('^[A-Za-z0-9+/=]+$');
       allow delete: if owns(uid);
     }
     // Shared review metadata is separate so older tracker clients cannot erase it.
     match /users/{uid}/reviews/current {
       function validReview() {
         return request.resource.data.keys().hasOnly(['format','revision','epoch','payload','updatedBy','updatedAt'])
-          && request.resource.data.format == 1
+          && request.resource.data.format == 2
           && request.resource.data.epoch is string && request.resource.data.epoch.size() > 0 && request.resource.data.epoch.size() <= 100
           && request.resource.data.revision is int
           && request.resource.data.payload is string
-          && request.resource.data.payload.size() <= 200000
+          && request.resource.data.payload.size() <= 300000
           && request.resource.data.updatedBy == request.auth.uid
           && request.resource.data.updatedAt == request.time;
       }
@@ -79,12 +80,39 @@ service cloud.firestore {
     }
     match /users/{uid}/tracker/current {
       allow read: if canRead(uid);
-      allow create: if canEdit(uid) && request.resource.data.format == 1
+      allow create: if canEdit(uid) && request.resource.data.format == 2
         && request.resource.data.revision == 1;
-      allow update: if canEdit(uid) && request.resource.data.format == 1
+      allow update: if canEdit(uid) && request.resource.data.format == 2
         && request.resource.data.revision == resource.data.revision + 1
         && (owns(uid) || (request.resource.data.previous.generation == resource.data.generation
           && request.resource.data.previous.count == resource.data.count));
+    }
+    match /users/{uid}/vault/config {
+      function validVault() {
+        return request.resource.data.keys().hasOnly(['format','kdf','iterations','salt','wrapped','recoveryWrapped','verifier'])
+          && request.resource.data.format == 1
+          && request.resource.data.kdf == 'PBKDF2-SHA256'
+          && request.resource.data.iterations == 600000
+          && request.resource.data.salt is string && request.resource.data.salt.size() == 24
+          && request.resource.data.wrapped is string && request.resource.data.wrapped.size() < 256
+          && request.resource.data.recoveryWrapped is string && request.resource.data.recoveryWrapped.size() < 256
+          && request.resource.data.verifier is string && request.resource.data.verifier.size() < 256;
+      }
+      allow read: if canRead(uid);
+      allow create: if owns(uid) && validVault();
+      allow update: if owns(uid) && validVault() && request.resource.data.verifier == resource.data.verifier
+        && ((request.resource.data.recoveryWrapped == resource.data.recoveryWrapped)
+          || (request.resource.data.wrapped == resource.data.wrapped && request.resource.data.salt == resource.data.salt));
+      allow delete: if owns(uid);
+    }
+    match /users/{uid}/vaultInvites/{id} {
+      allow read: if canRead(uid);
+      allow create: if canRead(uid) && id.matches('^[0-9a-f]{16}$')
+        && request.resource.data.keys().hasOnly(['format','payload','expiresAt'])
+        && request.resource.data.format == 1
+        && request.resource.data.payload is string && request.resource.data.payload.size() < 256
+        && request.resource.data.expiresAt is int;
+      allow delete: if canRead(uid);
     }
     match /users/{uid}/snapshots/{snapshot}/chunks/{chunk} {
       allow read: if canRead(uid);
@@ -97,3 +125,4 @@ service cloud.firestore {
     match /{document=**} { allow read, write: if false; }
   }
 }
+

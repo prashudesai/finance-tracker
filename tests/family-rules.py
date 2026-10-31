@@ -44,7 +44,7 @@ check('Stranger cannot read invitation',call('GET',invite,stranger),False)
 check('Recipient cannot grant herself editor',call('PATCH',invite,wife,{**record,'role':'editor','status':'accepted'}),False)
 meta='/users/owner/tracker/current';chunk='/users/owner/snapshots/g1/chunks/0'
 check('Owner creates snapshot',call('PATCH',chunk,owner,{'payload':'test'}),True)
-pointer={'format':1,'revision':1,'generation':'g1','count':1,'digest':'test','previous':None}
+pointer={'format':2,'revision':1,'generation':'g1','count':1,'digest':'test','previous':None}
 check('Owner publishes pointer',call('PATCH',meta,owner,pointer),True)
 check('Pending invite cannot read tracker',call('GET',meta,wife),False)
 record['status']='accepted'
@@ -83,3 +83,4 @@ check('Deleted owner old token cannot read',call('GET',meta,owner),False)
 check('Deleted owner old token cannot stage data',call('PATCH','/users/owner/snapshots/after-delete/chunks/0',owner,{'payload':'bad'}),False)
 check('Deleted owner cannot create invitations',call('PATCH','/familyInvites/owner~new@example.test',owner,{**record,'email':'new@example.test','status':'pending'}),False)
 print(json.dumps({'passed' :len(passed),'failed':0,'tests':passed},indent=2))
+
