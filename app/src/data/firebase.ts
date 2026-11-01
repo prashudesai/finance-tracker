@@ -28,9 +28,10 @@ import { firestoreRepository } from './firestoreRepository';
 
 // Firebase web configuration identifies the project; it is not a secret.
 const app = initializeApp({
-  apiKey: 'AIzaSyBYhF_dyyOSyHyGletR58W7bYlL0xw8dQk',
-  authDomain: 'finance-tracker-bc7c9.firebaseapp.com',
-  projectId: 'finance-tracker-bc7c9',
+  apiKey: 'AIzaSyAecTwMoXpLt53cgbOQcdUA4-dtQiRF2iQ',
+  authDomain: 'finance-trackerp.firebaseapp.com',
+  projectId: 'finance-trackerp',
+  appId: '1:223707453815:web:2d35079b430a7ee15ae972',
 });
 
 const auth = initializeAuth(app, {
