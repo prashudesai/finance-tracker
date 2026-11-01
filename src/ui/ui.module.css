@@ -842,17 +842,6 @@ details.fold[open] > summary {
   cursor: pointer;
 }
 
-.filterInput {
-  width: 100%;
-  padding: 9px 12px;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.9rem;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-small);
-}
-
 .primaryWide {
   composes: button;
   width: 100%;

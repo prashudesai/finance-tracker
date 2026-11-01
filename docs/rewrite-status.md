@@ -44,7 +44,7 @@ Checked by hand on https://finance-trackerp.web.app, with real accounts: Google 
 
 ### Features
 
-A scripted comparison of every old page, at phone and desktop widths, found no remaining features missing from the new app. Tables in the older app's retirement pages are shown as cards here, by design.
+A scripted comparison of the visible text on every old page, at phone and desktop widths, found no remaining gaps. It didn't cover what's inside dialogs and forms. The older app's retirement tables are shown as cards here, so those accounts can't be sorted, and the loan table scrolls sideways on phones.
 
 ### Platform
 

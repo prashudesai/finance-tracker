@@ -463,7 +463,7 @@ test('the + stays on the dashboard', async () => {
   expect(screen.queryByRole('button', { name: 'Add record' })).toBeNull();
 });
 
-test('history tables sort by a column and filter by any text', async () => {
+test('history tables sort by a column, with no filter box', async () => {
   const row = (id: string, source: string, amount: number) => ({
     id,
     date: `${month}-01`,
@@ -481,13 +481,7 @@ test('history tables sort by a column and filter by any text', async () => {
   expect(sources()).toEqual(['Open Bonus', 'Open Salary']);
   fireEvent.click(within(table as HTMLElement).getByRole('button', { name: 'Amount' }));
   expect(sources()).toEqual(['Open Salary', 'Open Bonus']);
-  fireEvent.change(screen.getByLabelText('Filter Income History'), { target: { value: 'bonus' } });
-  expect(sources()).toEqual(['Open Bonus']);
-  fireEvent.change(screen.getByLabelText('Filter Income History'), {
-    target: { value: 'nothing' },
-  });
-  fireEvent.click(await screen.findByRole('button', { name: 'Clear filters' }));
-  expect(sources()).toHaveLength(2);
+  expect(screen.queryByLabelText('Filter Income History')).toBeNull();
 });
 
 test('a statement corrects one EMI split and balances follow', async () => {

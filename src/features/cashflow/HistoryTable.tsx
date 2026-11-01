@@ -42,7 +42,6 @@ export function HistoryTable<Row extends { id: string }>({
   onDelete: (row: Row) => void;
 }) {
   const [page, setPage] = useState(0);
-  const [filter, setFilter] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = rows.find((row) => row.id === selectedId);
 
@@ -51,15 +50,7 @@ export function HistoryTable<Row extends { id: string }>({
       columns.find((column) => column.header === header)?.sortValue(row) ?? '',
     [columns],
   );
-  const terms = filter.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const filtered = rows.filter((row) => {
-    const text = columns
-      .map((column) => column.sortValue(row))
-      .join(' ')
-      .toLowerCase();
-    return terms.every((term) => text.includes(term));
-  });
-  const { sorted, sort, toggle } = useSort<Row, string>(filtered, valueOf);
+  const { sorted, sort, toggle } = useSort<Row, string>(rows, valueOf);
 
   const pages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const current = Math.min(page, pages - 1);
@@ -78,19 +69,6 @@ export function HistoryTable<Row extends { id: string }>({
         </span>
         <strong>{total}</strong>
       </div>
-      {rows.length > 0 ? (
-        <input
-          aria-label={`Filter ${title}`}
-          className={ui.filterInput}
-          onChange={(event) => {
-            setFilter(event.target.value);
-            setPage(0);
-          }}
-          placeholder="Filter by any column"
-          type="search"
-          value={filter}
-        />
-      ) : null}
       <div className={ui.tableWrap}>
         <table className={ui.table}>
           <thead>
@@ -138,14 +116,7 @@ export function HistoryTable<Row extends { id: string }>({
             {sorted.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} style={{ textAlign: 'center', padding: 32 }}>
-                  {rows.length === 0 ? emptyText : 'No entries match this filter.'}
-                  {rows.length > 0 ? (
-                    <div style={{ marginTop: 10 }}>
-                      <button className={ui.quiet} onClick={() => setFilter('')} type="button">
-                        Clear filters
-                      </button>
-                    </div>
-                  ) : null}
+                  {emptyText}
                 </td>
               </tr>
             ) : null}
