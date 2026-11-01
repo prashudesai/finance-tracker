@@ -73,20 +73,7 @@ export function CashFlowPage() {
         />
       </section>
       <Commitments />
-      {phone ? (
-        <div className={ui.twoUp}>
-          <button className={ui.button} onClick={() => setAdding('income')} type="button">
-            <Plus size={16} /> Add income
-          </button>
-          <button
-            className={`${ui.button} ${ui.expense}`}
-            onClick={() => setAdding('expense')}
-            type="button"
-          >
-            <Plus size={16} /> Add expense
-          </button>
-        </div>
-      ) : (
+      {phone ? null : (
         <div className={ui.twoColumn}>
           <section className={ui.card}>
             <div>
@@ -105,19 +92,28 @@ export function CashFlowPage() {
         </div>
       )}
       {phone ? (
-        <div className={ui.segmented} role="group" aria-label="History">
-          {(['income', 'expense'] as const).map((key) => (
-            <button
-              aria-pressed={history === key}
-              className={history === key ? ui.segmentActive : ui.segment}
-              key={key}
-              onClick={() => setHistory(key)}
-              type="button"
-            >
-              {key === 'income' ? 'Income' : 'Expenses'}
-            </button>
-          ))}
-        </div>
+        <>
+          <div className={ui.segmented} role="group" aria-label="History">
+            {(['income', 'expense'] as const).map((key) => (
+              <button
+                aria-pressed={history === key}
+                className={history === key ? ui.segmentActive : ui.segment}
+                key={key}
+                onClick={() => setHistory(key)}
+                type="button"
+              >
+                {key === 'income' ? 'Income' : 'Expenses'}
+              </button>
+            ))}
+          </div>
+          <button
+            className={history === 'income' ? ui.button : `${ui.button} ${ui.expense}`}
+            onClick={() => setAdding(history)}
+            type="button"
+          >
+            <Plus size={16} /> {history === 'income' ? 'Add Income' : 'Add Expense'}
+          </button>
+        </>
       ) : null}
       <div className={ui.twoColumn}>
         {!phone || history === 'income' ? (

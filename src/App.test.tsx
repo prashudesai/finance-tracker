@@ -376,15 +376,19 @@ describe('on a phone', () => {
     Reflect.deleteProperty(window, 'matchMedia');
   });
 
-  test('entry forms open on their own screen and one history shows at a time', async () => {
+  test('each history tab offers only its own add button', async () => {
     renderApp('/cash-flow');
     expect(await screen.findByRole('heading', { name: 'Income History' })).toBeDefined();
     expect(screen.queryByRole('heading', { name: 'Expense History' })).toBeNull();
     expect(screen.queryByLabelText('Amount (₹)')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Add Income' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Add Expense' })).toBeNull();
+
     fireEvent.click(screen.getByRole('button', { name: 'Expenses' }));
     expect(await screen.findByRole('heading', { name: 'Expense History' })).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Add income' }));
-    expect(await screen.findByRole('dialog', { name: 'Add Income', hidden: true })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Add Income' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Add Expense' }));
+    expect(await screen.findByRole('dialog', { name: 'Add Expense', hidden: true })).toBeDefined();
   });
 
   test('investments and retirement are separate tabs', async () => {
