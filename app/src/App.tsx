@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter } from 'react-router';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { createMemoryRepository } from './data/memoryRepository';
 import type { TrackerRepository } from './data/repository';
 import { previewData } from './data/previewData';
+import { SignIn } from './features/auth/SignIn';
 import { Shell } from './Shell';
 
 type Session =
@@ -51,17 +52,9 @@ function useFirebaseSession(): Session {
 
 function SignedInApp() {
   const session = useFirebaseSession();
-  if (session.status === 'loading') return <p>Loading…</p>;
+  if (session.status === 'loading') return null;
   if (session.status === 'signed-out') {
-    return (
-      <main style={{ padding: 'var(--space)' }}>
-        <h1>Finance Tracker</h1>
-        {session.error ? <p role="alert">{session.error}</p> : null}
-        <button onClick={session.signIn} type="button">
-          Sign in with Google
-        </button>
-      </main>
-    );
+    return <SignIn error={session.error} onSignIn={session.signIn} />;
   }
   return <Shell onSignOut={session.signOut} repository={session.repository} />;
 }
@@ -72,7 +65,10 @@ export function App() {
   return (
     <BrowserRouter>
       {import.meta.env.VITE_DATA_SOURCE === 'memory' ? (
-        <Shell repository={preview} />
+        <Routes>
+          <Route element={<SignIn onSignIn={() => undefined} />} path="/signin" />
+          <Route element={<Shell repository={preview} />} path="*" />
+        </Routes>
       ) : (
         <SignedInApp />
       )}

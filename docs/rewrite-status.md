@@ -13,7 +13,7 @@ Last updated 2026-11-01. The rewrite is in progress and doesn't yet replace the 
 | Data layer | Repository interface, Firestore and in-memory implementations |
 | Security rules | Written, with 13 tests passing on the emulator |
 | App shell | Routing, responsive navigation, error and invalid-record notices |
-| Screens | Dashboard, Income, Expenses, Loans (basic versions) |
+| Screens | Sign-in, Dashboard, Income, Expenses, Loans, with light and dark themes. Add forms work, editing doesn't yet |
 
 ## Not verified
 
@@ -43,7 +43,7 @@ Last updated 2026-11-01. The rewrite is in progress and doesn't yet replace the 
 - [ ] Family members and profile filtering
 - [ ] Monthly balances and month close
 - [ ] Investments and retirement accounts
-- [ ] Analytics and Projections, with charts loaded on demand
+- [ ] Analytics and Projections. The dashboard trend chart is plain HTML and CSS, so `chart.js` is only needed if these screens require it
 - [ ] Monthly review
 - [ ] Search
 - [ ] Settings, appearance, invites and accepting an invite
@@ -63,7 +63,7 @@ Last updated 2026-11-01. The rewrite is in progress and doesn't yet replace the 
 - [ ] Save the parity tests' legacy results as fixtures, because those tests read `dist/*.js`
 - [ ] Deploy rules and the new app
 - [ ] Promote `app/` to the repo root
-- [ ] Delete `src/`, `dist/`, `tools/`, `functions/`, `tests/` and `docs/legacy/`
+- [ ] Delete `src/`, `dist/`, `tools/`, `tests/` and `docs/legacy/`
 
 ## Decisions
 

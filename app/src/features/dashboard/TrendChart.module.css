@@ -1,0 +1,129 @@
+.figure {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.swatchIncome,
+.swatchExpense {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  background: var(--series-income);
+  border-radius: 3px;
+}
+
+.swatchExpense {
+  background: var(--series-expense);
+}
+
+.plot {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  height: 200px;
+  padding-left: 44px;
+}
+
+.gridTop,
+.gridMiddle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  color: var(--muted);
+  font-size: 0.7rem;
+  border-top: 1px solid var(--border);
+}
+
+.gridTop {
+  top: 0;
+}
+
+.gridMiddle {
+  top: calc((100% - 24px) / 2);
+}
+
+.month {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr 24px;
+  min-width: 0;
+  border-radius: 8px;
+}
+
+.month:hover {
+  background: var(--accent-soft);
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  min-height: 0;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.barIncome,
+.barExpense {
+  width: min(40%, 18px);
+  min-height: 0;
+  background: var(--series-income);
+  border-radius: 4px 4px 0 0;
+}
+
+.barExpense {
+  background: var(--series-expense);
+}
+
+.label {
+  align-self: end;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% - 40px);
+  left: 50%;
+  z-index: 1;
+  display: none;
+  gap: 2px;
+  width: max-content;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.month:first-of-type .tooltip {
+  left: 0;
+  transform: none;
+}
+
+.month:last-of-type .tooltip {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+.month:hover .tooltip {
+  display: grid;
+}

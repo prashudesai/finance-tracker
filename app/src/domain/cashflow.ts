@@ -1,5 +1,5 @@
 import type { Expense, Income, MonthlyBalance } from '../schema/records';
-import { nextMonth } from './calendar';
+import { nextMonth, previousMonth } from './calendar';
 
 export interface CashflowData {
   income: Income[];
@@ -52,4 +52,43 @@ export function monthClose(data: CashflowData, month: string): MonthClose {
     unrecorded: complete ? available - closing : null,
     complete,
   };
+}
+
+export interface MonthTrend extends MonthTotals {
+  month: string;
+}
+
+/** The `count` months ending at `lastMonth`, oldest first. Empty months are included. */
+export function monthlyTrend(
+  data: Pick<CashflowData, 'income' | 'expenses'>,
+  lastMonth: string,
+  count: number,
+): MonthTrend[] {
+  const totals = monthTotals(data);
+  const rows: MonthTrend[] = [];
+  for (let month = lastMonth; rows.length < count; month = previousMonth(month)) {
+    rows.unshift({ month, ...(totals.get(month) ?? { income: 0, expenses: 0 }) });
+  }
+  return rows;
+}
+
+export interface CategoryTotal {
+  category: string;
+  amount: number;
+}
+
+/** Largest categories in a month, with the rest folded into "Other". */
+export function topCategories(expenses: Expense[], month: string, limit: number): CategoryTotal[] {
+  const totals = new Map<string, number>();
+  for (const row of expenses) {
+    if (row.date.startsWith(month)) {
+      totals.set(row.category, (totals.get(row.category) ?? 0) + row.amount);
+    }
+  }
+  const sorted = [...totals]
+    .map(([category, amount]) => ({ category, amount }))
+    .sort((a, b) => b.amount - a.amount);
+  if (sorted.length <= limit) return sorted;
+  const other = sorted.slice(limit).reduce((sum, row) => sum + row.amount, 0);
+  return [...sorted.slice(0, limit), { category: 'Other', amount: other }];
 }

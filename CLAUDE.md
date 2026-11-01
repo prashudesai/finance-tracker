@@ -1,6 +1,6 @@
 # Finance Tracker
 
-A family finance PWA, mid-rewrite. All new work goes in `app/` (React, TypeScript, Vite, Firebase). `src/`, `dist/`, `tools/`, `functions/` and `tests/` are the legacy app.
+A family finance PWA, mid-rewrite. All new work goes in `app/` (React, TypeScript, Vite, Firebase). `src/`, `dist/`, `tools/` and `tests/` are the legacy app.
 
 Read [docs/rewrite-status.md](docs/rewrite-status.md) before starting a feature, and [docs/architecture.md](docs/architecture.md) before changing how data flows.
 
@@ -43,7 +43,7 @@ npm run test:rules
 npm run build
 ```
 
-- `dev:preview` runs the app on sample in-memory data with no Firebase or sign-in, on port 5173.
+- `dev:preview` runs the app on sample in-memory data with no Firebase or sign-in, on port 5173. The sign-in screen is at `/signin`.
 - `npm test` covers domain logic and UI. It reads `../dist/*.js` for the parity tests.
 - `test:rules` runs against the Firestore emulator and needs Java 17 or later.
 
@@ -68,6 +68,8 @@ Before calling work done, run typecheck, lint, tests and build. Run `test:rules`
 **Money and dates.** Dates are `YYYY-MM-DD` strings and months are `YYYY-MM`, compared as strings and calculated in UTC through `domain/calendar.ts`. Round money with `roundMoney`. Display with `formatMoney`.
 
 **Styling.** Use CSS Modules and the tokens in `ui/tokens.css`, with no `!important`. Design for phone width first, with no horizontal page scroll. No inline event attributes or `innerHTML`.
+
+**Design.** The brand is deep teal surfaces with mint accents, large rounded cards and the logo in `src/assets`. Compare new screens with the live app at https://finance-tracker-bc7c9.web.app and aim to beat it. Icons come from `lucide-react`. Lead each screen with its most useful number. Check both themes.
 
 ## Porting from legacy
 

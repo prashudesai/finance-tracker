@@ -4,7 +4,16 @@ const rupees = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 0,
 });
 
+const compactRupees = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
 export const formatMoney = (value: number) => rupees.format(value);
+
+export const formatCompactMoney = (value: number) => compactRupees.format(value);
 
 export function localDate(now = new Date()) {
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -17,3 +26,9 @@ export const formatMonth = (month: string) =>
     month: 'long',
     year: 'numeric',
   });
+
+export const formatShortMonth = (month: string) =>
+  new Date(`${month}-01T00:00:00`).toLocaleDateString('en-IN', { month: 'short' });
+
+export const formatDay = (date: string) =>
+  new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });

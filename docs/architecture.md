@@ -13,7 +13,7 @@ Finance Tracker is a client-only app. The browser talks directly to Firebase Aut
 | Validation and record types | Zod |
 | Forms | React Hook Form |
 | Backend | Firebase Auth and Firestore |
-| Styling | CSS Modules and design tokens |
+| Styling | CSS Modules and design tokens, Inter, Lucide icons |
 | Tests | Vitest, Testing Library, Firestore emulator |
 
 ## Layers

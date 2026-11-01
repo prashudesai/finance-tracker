@@ -1,5 +1,5 @@
 import type { TrackerData } from '../data/repository';
-import { isLoanFailure, rebuildLoan, type LoanLedger } from './loan';
+import { estimateSchedule, isLoanFailure, rebuildLoan, type LoanLedger } from './loan';
 import { loanPayments } from './recurring';
 
 export interface LoanSummary {
@@ -28,3 +28,12 @@ export const totalMonthlyEmi = (loans: LoanSummary[]) =>
     (sum, loan) => sum + ((loan.ledger?.remaining ?? 0) > 0 ? (loan.ledger?.emi ?? 0) : 0),
     0,
   );
+
+/** Share of everything borrowed that has been repaid, from 0 to 1. */
+export function paidShare({ remaining, totalPrincipal }: LoanLedger) {
+  if (totalPrincipal <= 0) return 0;
+  return Math.min(1, Math.max(0, 1 - remaining / totalPrincipal));
+}
+
+export const remainingEmis = ({ remaining, emi, rate }: LoanLedger) =>
+  estimateSchedule(remaining, emi, rate).count;

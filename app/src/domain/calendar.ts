@@ -28,6 +28,11 @@ export function nextMonth(month: string) {
   return value === 12 ? `${year + 1}-01` : `${year}-${String(value + 1).padStart(2, '0')}`;
 }
 
+export function previousMonth(month: string) {
+  const [year, value] = dateParts(month);
+  return value === 1 ? `${year - 1}-12` : `${year}-${String(value - 1).padStart(2, '0')}`;
+}
+
 /** The same day next month, clamped to that month's length. */
 export function monthlyAnniversary(date: string) {
   const [year, month, day] = dateParts(date);

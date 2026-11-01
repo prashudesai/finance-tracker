@@ -6,6 +6,11 @@ import { localDate } from './ui/format';
 
 afterEach(cleanup);
 
+// jsdom has no native dialog behaviour.
+HTMLDialogElement.prototype.showModal = function showModal() {
+  this.open = true;
+};
+
 const month = localDate().slice(0, 7);
 
 function renderApp(path: string, seed: Parameters<typeof createMemoryRepository>[0]) {
@@ -18,7 +23,7 @@ function renderApp(path: string, seed: Parameters<typeof createMemoryRepository>
 
 async function stat(label: string) {
   const month = await screen.findByRole('region', { name: 'This month' });
-  return within(within(month).getByText(label).parentElement as HTMLElement);
+  return within(within(month).getByText(label).closest('div')?.parentElement as HTMLElement);
 }
 
 test('the dashboard totals the month and derives loan balances', async () => {
@@ -48,7 +53,7 @@ test('the dashboard totals the month and derives loan balances', async () => {
     ],
   });
   expect((await stat('Income')).getByText('₹1,00,000')).toBeDefined();
-  expect((await stat('Net')).getByText('₹70,000')).toBeDefined();
+  expect((await stat('Left this month')).getByText('₹70,000')).toBeDefined();
   expect((await stat('Loans outstanding')).getByText('₹5,00,000')).toBeDefined();
 });
 
@@ -77,20 +82,19 @@ test('posting a recurring item adds the record and clears it from the list', asy
 
 test('adding income validates the form, then lists the record', async () => {
   renderApp('/income', {});
-  const submit = await screen.findByRole('button', { name: 'Add income' });
+  fireEvent.click(await screen.findByRole('button', { name: 'Add income' }));
+  const submit = await screen.findByRole('button', { name: 'Save income', hidden: true });
   fireEvent.click(submit);
-  expect((await screen.findAllByRole('alert')).map((alert) => alert.textContent)).toEqual([
-    'This field is required.',
-    'This field is required.',
-    'Enter a number.',
-  ]);
+  expect(
+    (await screen.findAllByRole('alert', { hidden: true })).map((alert) => alert.textContent),
+  ).toEqual(['This field is required.', 'This field is required.', 'Enter a number.']);
 
   fireEvent.change(screen.getByLabelText('Family member'), { target: { value: 'Sam' } });
   fireEvent.change(screen.getByLabelText('Source'), { target: { value: 'Bonus' } });
   fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '5000' } });
   fireEvent.click(submit);
   expect(await screen.findByText('Bonus')).toBeDefined();
-  expect(screen.getByText('₹5,000')).toBeDefined();
+  expect(screen.getAllByText('₹5,000').length).toBeGreaterThan(0);
 });
 
 test('invalid stored records are reported, not shown', async () => {
@@ -119,7 +123,7 @@ test('recording the last EMI pays only what is still owed', async () => {
     ],
   });
   fireEvent.click(await screen.findByRole('button', { name: 'Record EMI for Car' }));
-  expect(await screen.findByText('Outstanding ₹0')).toBeDefined();
+  expect(await screen.findByText('Paid off')).toBeDefined();
   expect(screen.queryByRole('button', { name: 'Record EMI for Car' })).toBeNull();
 });
 
