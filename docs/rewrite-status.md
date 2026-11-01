@@ -26,14 +26,16 @@ All pages from the older app's navigation exist and follow its layouts.
 | Onboarding | Guided setup and an app tour |
 | PWA | Installable, app shell works offline, updates wait for acceptance, security policy applied |
 
+## Verified on the test project
+
+Checked by hand on https://finance-trackerp.web.app, with real accounts: Google sign-in, saving records, syncing between computer and phone, offline changes on a phone, and family invites with viewer limits.
+
 ## Not verified
 
-- Google sign-in works on the test project, under the deployed security policy. Family invites and member management haven't run against real Firebase yet.
-- Rules for `app/` are deployed to the test project only, not the live project.
-- Offline data and queued writes are expected from Firestore's local cache, but only the app shell has been tested offline.
+- Removing a family member, and changing a member's access, on real Firebase.
 - There are no Playwright tests in the repo yet. Main flows and PWA behaviour were checked with throwaway browser scripts.
 - Styled dropdown menus need a recent Chromium browser. Others show the native list.
-- Phone keyboards and screen readers need checking on real devices.
+- Screen readers need checking on real devices.
 
 ## Remaining
 
