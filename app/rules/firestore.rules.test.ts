@@ -79,6 +79,7 @@ describe('household records', () => {
       'gratuityAccounts',
       'projectionAdjustments',
       'settings',
+      'monthReviews',
     ]) {
       await assertSucceeds(setDoc(doc(db, `households/owner/${name}/a`), { value: 1 }));
     }

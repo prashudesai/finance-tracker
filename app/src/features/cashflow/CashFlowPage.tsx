@@ -13,6 +13,7 @@ import { Commitments } from './Commitments';
 import { ExpenseForm, IncomeForm } from './EntryForms';
 import { HistoryTable } from './HistoryTable';
 import { MonthlyBalances } from './MonthlyBalances';
+import { MonthReview } from './MonthReview';
 
 const MONTH_CHOICES = 24;
 
@@ -117,6 +118,7 @@ export function CashFlowPage() {
         />
       </div>
       <MonthlyBalances month={month} />
+      <MonthReview month={month} />
       {editingIncome ? (
         <Modal onClose={() => setEditingIncome(null)} title="Edit income">
           <IncomeForm initial={editingIncome} onDone={() => setEditingIncome(null)} />

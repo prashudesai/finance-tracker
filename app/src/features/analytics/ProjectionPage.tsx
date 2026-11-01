@@ -5,6 +5,7 @@ import { totalGratuity } from '../../domain/gratuity';
 import {
   gratuityAsset,
   projectionAssets,
+  realValue,
   runProjection,
   type ProjectionAsset,
   type ProjectionResult,
@@ -148,6 +149,124 @@ function Assumptions({ assets }: { assets: ProjectionAsset[] }) {
   );
 }
 
+function GoalPlanner({ assets }: { assets: ProjectionAsset[] }) {
+  const settings = useSettings();
+  const save = useSaveSettings();
+  const today = localDate();
+  const { goal } = settings;
+  const [years, setYears] = useState(String(goal.years));
+  const [inflation, setInflation] = useState(String(goal.inflation));
+  const [target, setTarget] = useState(goal.target > 0 ? String(goal.target) : '');
+  const parsed = { years: Number(years), inflation: Number(inflation), target: Number(target) };
+  const valid =
+    years !== '' &&
+    inflation !== '' &&
+    Number.isInteger(parsed.years) &&
+    parsed.years >= 1 &&
+    parsed.years <= 40 &&
+    parsed.inflation >= 0 &&
+    parsed.inflation <= 30 &&
+    parsed.target >= 0;
+
+  let error = '';
+  const rows: { scenario: Scenario; nominal: number; real: number }[] = [];
+  if (valid) {
+    try {
+      for (const scenario of SCENARIOS) {
+        const nominal = runProjection(assets, {
+          years: parsed.years,
+          scenario,
+          currentMonth: today.slice(0, 7),
+          includeMonthly: settings.includeMonthlyContributions,
+          excluded: settings.excludedContributions,
+          adjustments: [],
+          gratuityAccounts: [],
+        }).ending;
+        rows.push({ scenario, nominal, real: realValue(nominal, parsed.inflation, parsed.years) });
+      }
+    } catch (failure) {
+      error = failure instanceof Error ? failure.message : 'This goal could not be calculated.';
+    }
+  }
+
+  return (
+    <div className={ui.page}>
+      <form
+        className={ui.form}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (valid) save({ goal: parsed });
+        }}
+      >
+        <Field label="Years to goal">
+          <input
+            max="40"
+            min="1"
+            onChange={(event) => setYears(event.target.value)}
+            type="number"
+            value={years}
+          />
+        </Field>
+        <Field label="Annual inflation assumption (%)">
+          <input
+            max="30"
+            min="0"
+            onChange={(event) => setInflation(event.target.value)}
+            step="0.1"
+            type="number"
+            value={inflation}
+          />
+        </Field>
+        <Field label="Portfolio goal in today's rupees">
+          <input
+            min="0"
+            onChange={(event) => setTarget(event.target.value)}
+            type="number"
+            value={target}
+          />
+        </Field>
+        <div className={ui.formActions}>
+          <button className={ui.button} disabled={!valid} type="submit">
+            Save goal
+          </button>
+        </div>
+      </form>
+      {error ? (
+        <p className={ui.notice} role="alert">
+          {error}
+        </p>
+      ) : null}
+      <p className={ui.caption}>Portfolio only. Debt and gratuity are excluded.</p>
+      <div className={ui.tableWrap}>
+        <table className={ui.table}>
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th className={ui.numeric}>Projected</th>
+              <th className={ui.numeric}>In today's rupees</th>
+              {parsed.target > 0 ? <th className={ui.numeric}>Gap to goal</th> : null}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.scenario}>
+                <td>{SCENARIO_LABELS[row.scenario]}</td>
+                <td className={ui.numeric}>{formatMoney(row.nominal)}</td>
+                <td className={ui.numeric}>{formatMoney(row.real)}</td>
+                {parsed.target > 0 ? (
+                  <td className={ui.numeric}>
+                    {formatMoney(Math.max(0, parsed.target - row.real))}
+                  </td>
+                ) : null}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function AdjustmentForm({ categories, onDone }: { categories: string[]; onDone: () => void }) {
   const commit = useTracker((state) => state.commit);
   const [category, setCategory] = useState(categories[0] ?? '');
@@ -213,6 +332,7 @@ export function ProjectionPage() {
   const today = localDate();
   const [scenario, setScenario] = useState<Scenario>('base');
   const [adding, setAdding] = useState(false);
+  const [planning, setPlanning] = useState(false);
 
   const assets = projectionAssets(data.holdings, data, settings, data.projectionAdjustments, today);
   const gratuityNow = totalGratuity(data.gratuityAccounts, today);
@@ -304,6 +424,18 @@ export function ProjectionPage() {
       </section>
 
       <Assumptions assets={assets} />
+
+      <section className={ui.card}>
+        <div className={ui.cardHeader}>
+          <div>
+            <h2 style={{ fontSize: '1.2rem' }}>Goal planning</h2>
+            <div className={ui.caption}>See whether your portfolio reaches a target</div>
+          </div>
+          <button className={ui.quiet} onClick={() => setPlanning(true)} type="button">
+            Portfolio goal planner
+          </button>
+        </div>
+      </section>
 
       <section className={ui.card}>
         <div className={ui.cardHeader}>
@@ -419,6 +551,11 @@ export function ProjectionPage() {
         </>
       ) : null}
 
+      {planning ? (
+        <Modal onClose={() => setPlanning(false)} title="Portfolio goal planner">
+          <GoalPlanner assets={assets} />
+        </Modal>
+      ) : null}
       {adding ? (
         <Modal onClose={() => setAdding(false)} title="Add planned change">
           <AdjustmentForm

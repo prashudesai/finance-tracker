@@ -68,7 +68,7 @@ service cloud.firestore {
         && collection in ['income', 'expenses', 'loans', 'recurringRules',
                           'recurringOccurrences', 'monthlyBalances', 'holdings',
                           'contributions', 'valuations', 'gratuityAccounts',
-                          'projectionAdjustments', 'settings'];
+                          'projectionAdjustments', 'settings', 'monthReviews'];
     }
   }
 }

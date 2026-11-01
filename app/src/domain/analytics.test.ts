@@ -1,14 +1,21 @@
 import { emptyTrackerData, type TrackerData } from '../data/repository';
 import { defaultSettings, type Holding } from '../schema/records';
 import {
+  attentionItems,
   closeMonth,
   financialSummary,
+  holdingRows,
   monthlyOverview,
+  monthReviewStatus,
+  monthSignature,
   netWorth,
   portfolioCategories,
-  holdingRows,
+  uncheckedContributions,
+  unverifiedHoldings,
+  valuationAge,
 } from './analytics';
 import { clearWrites, createBackup, parseBackup, restoreWrites } from './backup';
+import { realValue } from './projection';
 import { reportCsv, reportRows } from './reports';
 
 const holding = (overrides: Partial<Holding>): Holding => ({
@@ -147,4 +154,66 @@ describe('backups', () => {
     expect(writes.some((row) => row.type === 'set' && row.id === 'a')).toBe(true);
     expect(clearWrites(state).map((row) => row.id)).toContain('2026-01');
   });
+});
+
+describe('reviews', () => {
+  const state = data({
+    income: [{ id: 'i', date: '2026-03-01', member: 'A', source: 'S', amount: 100 }],
+    monthlyBalances: [
+      { month: '2026-03', startBalance: 10 },
+      { month: '2026-04', startBalance: 20 },
+    ],
+  });
+
+  test('a reviewed month asks again when its figures change', () => {
+    const reviewed = {
+      ...state,
+      monthReviews: [
+        {
+          id: 'm',
+          month: '2026-03',
+          signature: monthSignature(state, '2026-03'),
+          reviewedAt: '2026-04-01',
+        },
+      ],
+    };
+    expect(monthReviewStatus(reviewed, '2026-03').reviewed).toBe(true);
+    const changed = {
+      ...reviewed,
+      income: [{ id: 'j', date: '2026-03-02', member: 'A', source: 'S', amount: 5 }],
+    };
+    expect(monthReviewStatus(changed, '2026-03')).toMatchObject({ reviewed: false, changed: true });
+  });
+
+  test('the attention list counts unreviewed months and unconfirmed values', () => {
+    const items = attentionItems({ ...state, holdings: [holding({})] }, '2026-04-10', 2);
+    expect(items.map((row) => row.label)).toEqual([
+      '1 household month needs balance review',
+      '1 valuation needs confirmation',
+      '2 recurring items due',
+    ]);
+  });
+
+  test('confirming a value clears it and reports its age', () => {
+    const confirmed = data({
+      holdings: [holding({})],
+      valuations: [{ id: 'v', holdingId: 'h', date: '2026-01-01', value: 150_000 }],
+    });
+    expect(unverifiedHoldings(confirmed)).toEqual([]);
+    expect(valuationAge('h', confirmed, '2026-01-31')).toBe('2026-01-01 · 30 days ago');
+    expect(valuationAge('h', data(), '2026-01-31')).toBe('Unverified');
+  });
+
+  test('statement checks only count unconfirmed automatic entries', () => {
+    const row = { id: 'a', holdingId: 'h', date: '2026-03-01', amount: 5, automatic: true };
+    const checks = data({
+      holdings: [holding({})],
+      contributions: [row, { ...row, id: 'b', confirmed: true }],
+    });
+    expect(uncheckedContributions(checks, '2026-03').map((item) => item.id)).toEqual(['a']);
+  });
+});
+
+test('real value removes inflation', () => {
+  expect(realValue(1210, 10, 2)).toBeCloseTo(1000);
 });

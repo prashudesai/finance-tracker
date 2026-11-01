@@ -1,8 +1,19 @@
 import type { TrackerData } from '../data/repository';
 import { EMI_CATEGORY, PMS_TYPE, type Holding, type TrackerSettings } from '../schema/records';
-import { financialYearRange, financialYearStart, nextMonth, previousMonth } from './calendar';
+import {
+  financialYearRange,
+  financialYearStart,
+  lastDayOfMonth,
+  previousMonth,
+  toDayNumber,
+} from './calendar';
 import { monthClose, monthTotals } from './cashflow';
-import { holdingContributions, holdingPosition, type HoldingPosition } from './holdings';
+import {
+  holdingContributions,
+  holdingPosition,
+  latestValuation,
+  type HoldingPosition,
+} from './holdings';
 import { isLoanFailure } from './loan';
 import { summarizeLoans, totalOutstanding } from './summary';
 import { rebuildLoan } from './loan';
@@ -247,18 +258,86 @@ export function memberContributions(data: TrackerData, fy: number) {
   return [...totals].map(([member, amount]) => ({ member, amount }));
 }
 
-/** Items that need a look, shown as the dashboard's attention bar. */
-export function attentionItems(data: TrackerData, today: string, pendingRecurring: number) {
-  const items: string[] = [];
-  const month = today.slice(0, 7);
+export const monthSignature = (data: TrackerData, month: string) =>
+  JSON.stringify(closeMonth(data, month));
+
+export function monthReviewStatus(data: TrackerData, month: string) {
+  const review = data.monthReviews.find((row) => row.month === month);
+  if (!review) return { reviewed: false, changed: false, reviewedAt: null };
+  const same = review.signature === monthSignature(data, month);
+  return { reviewed: same, changed: !same, reviewedAt: review.reviewedAt };
+}
+
+/** Holdings whose value nobody has confirmed against a statement yet. */
+export const unverifiedHoldings = (data: TrackerData) =>
+  data.holdings.filter((holding) => !latestValuation(holding.id, data.valuations));
+
+export function valuationAge(holdingId: string, data: TrackerData, today: string) {
+  const valuation = latestValuation(holdingId, data.valuations);
+  if (!valuation) return 'Unverified';
+  const days = toDayNumber(today) - toDayNumber(valuation.date);
+  if (days < 0) return 'Invalid future date';
+  return `${valuation.date} · ${days} days ago`;
+}
+
+/** Scheduled contributions this month that no one has checked against a statement. */
+export function uncheckedContributions(data: TrackerData, month: string) {
+  const ids = new Set(data.holdings.map((holding) => holding.id));
+  return activeContributions(data).filter(
+    (row) => row.automatic && !row.confirmed && ids.has(row.holdingId) && inMonth(row.date, month),
+  );
+}
+
+export interface AttentionItem {
+  label: string;
+  path: string;
+}
+
+const needs = (count: number, noun: string) =>
+  `${count} ${noun}${count === 1 ? ' needs' : 's need'}`;
+
+/** Things that need a look, shown as the dashboard's attention bar. */
+export function attentionItems(
+  data: TrackerData,
+  today: string,
+  pendingRecurring: number,
+): AttentionItem[] {
+  const items: AttentionItem[] = [];
+  const current = today.slice(0, 7);
   const recorded = new Set(data.monthlyBalances.map((row) => row.month));
-  const active = [...monthTotals(data).keys()].filter((key) => key < month).sort();
-  const missing = active.filter((key) => !recorded.has(key) || !recorded.has(nextMonth(key)));
-  if (missing.length > 0) {
-    items.push(`${missing.length} month${missing.length === 1 ? '' : 's'} missing bank balances`);
+  const first = [...recorded].sort()[0];
+  const months = [...monthTotals(data).keys()].filter(
+    (month) => month <= current && (!first || month >= first),
+  );
+  const incomplete = [...new Set([...months, ...recorded])]
+    .filter((month) => month <= current)
+    .filter((month) => {
+      const close = closeMonth(data, month);
+      if (month === current) return close.opening === null;
+      return !close.complete || !monthReviewStatus(data, month).reviewed;
+    });
+  if (incomplete.length > 0) {
+    items.push({
+      label: `${needs(incomplete.length, 'household month')} balance review`,
+      path: '/cash-flow',
+    });
+  }
+  const unverified = unverifiedHoldings(data).length;
+  if (unverified > 0) {
+    items.push({ label: `${needs(unverified, 'valuation')} confirmation`, path: '/investments' });
+  }
+  const unchecked = uncheckedContributions(data, current).length;
+  if (unchecked > 0 && today === lastDayOfMonth(current)) {
+    items.push({
+      label: `${unchecked} automatic ${unchecked === 1 ? 'entry needs' : 'entries need'} a statement check`,
+      path: '/cash-flow',
+    });
   }
   if (pendingRecurring > 0) {
-    items.push(`${pendingRecurring} recurring item${pendingRecurring === 1 ? '' : 's'} due`);
+    items.push({
+      label: `${pendingRecurring} recurring item${pendingRecurring === 1 ? '' : 's'} due`,
+      path: '/cash-flow',
+    });
   }
   return items;
 }

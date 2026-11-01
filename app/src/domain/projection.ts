@@ -374,3 +374,7 @@ export function runProjection(
     totalGrowth: add('growth'),
   };
 }
+
+/** What a future amount buys in today's money. */
+export const realValue = (nominal: number, inflation: number, years: number) =>
+  nominal / Math.pow(1 + inflation / 100, years);

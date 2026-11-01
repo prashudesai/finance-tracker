@@ -1,6 +1,12 @@
 import { ChevronRight, PiggyBank, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { holdingRows, isPms, portfolioCategories, type CategoryRow } from '../../domain/analytics';
+import {
+  holdingRows,
+  isPms,
+  portfolioCategories,
+  valuationAge,
+  type CategoryRow,
+} from '../../domain/analytics';
 import { estimateGratuity, totalGratuity } from '../../domain/gratuity';
 import { groupXirr, growthType, monthlyContribution } from '../../domain/holdings';
 import { cagr } from '../../domain/returns';
@@ -397,6 +403,44 @@ export function InvestmentsPage() {
           ) : null}
         </div>
       </section>
+
+      {rows.length > 0 ? (
+        <details className={`${ui.card} ${ui.fold}`}>
+          <summary>Record freshness</summary>
+          <p className={ui.caption}>
+            Confirming records today's value against your statement. It doesn't change the balance.
+          </p>
+          <ul className={ui.list}>
+            {rows.map(({ holding, position }) => (
+              <li className={ui.row} key={holding.id}>
+                <div className={ui.rowMain}>
+                  <div className={ui.rowTitle}>{holding.name}</div>
+                  <div className={ui.rowDetail}>{valuationAge(holding.id, data, today)}</div>
+                </div>
+                <span className={ui.amount}>{formatMoney(position.current)}</span>
+                <button
+                  aria-label={`Confirm value of ${holding.name}`}
+                  className={ui.quiet}
+                  onClick={() => {
+                    const id = crypto.randomUUID();
+                    commit([
+                      {
+                        type: 'set',
+                        collection: 'valuations',
+                        id,
+                        value: { id, holdingId: holding.id, date: today, value: position.current },
+                      },
+                    ]);
+                  }}
+                  type="button"
+                >
+                  Confirm
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
 
       {adding === 'gratuity' ? (
         <Modal onClose={() => setAdding(null)} title="Add gratuity estimate">

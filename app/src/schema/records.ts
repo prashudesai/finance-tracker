@@ -173,6 +173,8 @@ export const contributionSchema = z.object({
   automatic: z.boolean().default(false),
   /** A removed scheduled contribution, kept so the schedule does not post it again. */
   skipped: z.boolean().optional(),
+  /** Checked against a statement. */
+  confirmed: z.boolean().optional(),
 });
 export type Contribution = z.infer<typeof contributionSchema>;
 
@@ -216,6 +218,15 @@ const textList = z.array(z.string().trim().min(1).max(60)).default([]);
 
 export const TRACKER_SETTINGS_ID = 'tracker';
 
+/** A month someone has reviewed, and what its figures were at the time. */
+export const monthReviewSchema = z.object({
+  id,
+  month,
+  signature: z.string().max(1000),
+  reviewedAt: date,
+});
+export type MonthReview = z.infer<typeof monthReviewSchema>;
+
 /** One document of household preferences. */
 export const trackerSettingsSchema = z.object({
   id,
@@ -233,6 +244,13 @@ export const trackerSettingsSchema = z.object({
   stepUps: z.record(z.string(), z.number()).default({}),
   returns: z.record(z.string(), scenarioRates).default({}),
   projectionMonthly: z.record(z.string(), z.number()).default({}),
+  goal: z
+    .object({
+      years: z.number().int().min(1).max(40),
+      inflation: z.number().min(0).max(30),
+      target: z.number().nonnegative(),
+    })
+    .default({ years: 5, inflation: 6, target: 0 }),
 });
 export type TrackerSettings = z.infer<typeof trackerSettingsSchema>;
 

@@ -141,10 +141,11 @@ export function Dashboard() {
             </span>
           </summary>
           <ul className={ui.list} style={{ marginTop: 10 }}>
-            {attention.map((item) => (
-              <li className={ui.row} key={item}>
-                <Link style={{ color: 'inherit' }} to="/cash-flow">
-                  {item}
+            {attention.map(({ label, path }) => (
+              <li className={ui.row} key={label}>
+                <span className={ui.rowMain}>{label}</span>
+                <Link className={ui.caption} style={{ color: 'var(--accent)' }} to={path}>
+                  Review ›
                 </Link>
               </li>
             ))}
