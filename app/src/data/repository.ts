@@ -1,17 +1,29 @@
 import type { z } from 'zod';
 import {
+  contributionSchema,
   expenseSchema,
+  gratuityAccountSchema,
+  holdingSchema,
   incomeSchema,
   loanSchema,
   monthlyBalanceSchema,
+  projectionAdjustmentSchema,
   recurringOccurrenceSchema,
   recurringRuleSchema,
+  trackerSettingsSchema,
+  valuationSchema,
+  type Contribution,
   type Expense,
+  type GratuityAccount,
+  type Holding,
   type Income,
   type Loan,
   type MonthlyBalance,
+  type ProjectionAdjustment,
   type RecurringOccurrence,
   type RecurringRule,
+  type TrackerSettings,
+  type Valuation,
 } from '../schema/records';
 
 export interface TrackerData {
@@ -21,6 +33,12 @@ export interface TrackerData {
   recurringRules: RecurringRule[];
   recurringOccurrences: RecurringOccurrence[];
   monthlyBalances: MonthlyBalance[];
+  holdings: Holding[];
+  contributions: Contribution[];
+  valuations: Valuation[];
+  gratuityAccounts: GratuityAccount[];
+  projectionAdjustments: ProjectionAdjustment[];
+  settings: TrackerSettings[];
 }
 
 export type CollectionName = keyof TrackerData;
@@ -32,6 +50,12 @@ export const COLLECTIONS: { [Name in CollectionName]: z.ZodType<TrackerData[Name
   recurringRules: recurringRuleSchema,
   recurringOccurrences: recurringOccurrenceSchema,
   monthlyBalances: monthlyBalanceSchema,
+  holdings: holdingSchema,
+  contributions: contributionSchema,
+  valuations: valuationSchema,
+  gratuityAccounts: gratuityAccountSchema,
+  projectionAdjustments: projectionAdjustmentSchema,
+  settings: trackerSettingsSchema,
 };
 
 export const COLLECTION_NAMES = Object.keys(COLLECTIONS) as CollectionName[];
@@ -43,6 +67,12 @@ export const emptyTrackerData = (): TrackerData => ({
   recurringRules: [],
   recurringOccurrences: [],
   monthlyBalances: [],
+  holdings: [],
+  contributions: [],
+  valuations: [],
+  gratuityAccounts: [],
+  projectionAdjustments: [],
+  settings: [],
 });
 
 export type RecordWrite =
@@ -54,6 +84,13 @@ export const recordId = {
   monthlyBalance: (row: MonthlyBalance) => row.month,
   occurrence: (row: RecurringOccurrence) => `${row.ruleId}_${row.month}`,
 };
+
+/** The document ID a row is stored under. */
+export function documentId(name: CollectionName, row: object) {
+  if (name === 'monthlyBalances') return recordId.monthlyBalance(row as MonthlyBalance);
+  if (name === 'recurringOccurrences') return recordId.occurrence(row as RecurringOccurrence);
+  return (row as { id: string }).id;
+}
 
 export interface TrackerRepository {
   /** Calls `onRows` with every valid document, now and after each change. */

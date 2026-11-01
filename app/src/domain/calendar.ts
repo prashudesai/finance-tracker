@@ -47,3 +47,31 @@ export function dayInMonth(month: string, day: number) {
   const last = daysInMonth(year, value);
   return `${month}-${String(day === 0 ? last : Math.min(day, last)).padStart(2, '0')}`;
 }
+
+/** Adds months, keeping `anchorDay` where the target month is long enough. */
+export function addMonths(date: string, months: number, anchorDay?: number) {
+  const [year, month, day] = dateParts(date);
+  const index = year * 12 + (month - 1) + months;
+  const targetYear = Math.floor(index / 12);
+  const targetMonth = (index % 12) + 1;
+  const last = daysInMonth(targetYear, targetMonth);
+  const clamped = Math.min(anchorDay ?? day, last);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${targetYear}-${pad(targetMonth)}-${pad(clamped)}`;
+}
+
+export const lastDayOfMonth = (month: string) => dayInMonth(month, 0);
+
+/** The starting year of the April–March financial year containing a date or month. */
+export function financialYearStart(dateOrMonth: string) {
+  const [year, month] = dateParts(dateOrMonth);
+  return month < 4 ? year - 1 : year;
+}
+
+export const financialYearLabel = (startYear: number) =>
+  `FY ${startYear}-${String((startYear + 1) % 100).padStart(2, '0')}`;
+
+export const financialYearRange = (startYear: number) => ({
+  start: `${startYear}-04-01`,
+  end: `${startYear + 1}-03-31`,
+});

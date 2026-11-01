@@ -35,25 +35,27 @@ export function TrendChart({ months }: { months: MonthTrend[] }) {
           </div>
         ))}
       </div>
-      <table className={ui.visuallyHidden}>
-        <caption>Income and expenses by month</caption>
-        <thead>
-          <tr>
-            <th scope="col">Month</th>
-            <th scope="col">Income</th>
-            <th scope="col">Expenses</th>
-          </tr>
-        </thead>
-        <tbody>
-          {months.map((row) => (
-            <tr key={row.month}>
-              <th scope="row">{formatMonth(row.month)}</th>
-              <td>{formatMoney(row.income)}</td>
-              <td>{formatMoney(row.expenses)}</td>
+      <div className={ui.visuallyHidden}>
+        <table>
+          <caption>Income and expenses by month</caption>
+          <thead>
+            <tr>
+              <th scope="col">Month</th>
+              <th scope="col">Income</th>
+              <th scope="col">Expenses</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {months.map((row) => (
+              <tr key={row.month}>
+                <th scope="row">{formatMonth(row.month)}</th>
+                <td>{formatMoney(row.income)}</td>
+                <td>{formatMoney(row.expenses)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

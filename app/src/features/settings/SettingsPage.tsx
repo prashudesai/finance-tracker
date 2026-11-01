@@ -1,0 +1,402 @@
+import {
+  ChevronRight,
+  DatabaseBackup,
+  Info,
+  ListPlus,
+  Palette,
+  RefreshCw,
+  Smartphone,
+  User,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
+import { useRef, useState } from 'react';
+import { clearWrites, createBackup, parseBackup, restoreWrites } from '../../domain/backup';
+import { useSettings, useTracker } from '../../store/tracker';
+import type { Account } from '../../Shell';
+import { TRACKER_SETTINGS_ID, type TrackerSettings } from '../../schema/records';
+import { downloadText } from '../../ui/download';
+import { Field } from '../../ui/Field';
+import { localDate } from '../../ui/format';
+import { Modal } from '../../ui/Modal';
+import { PageHeader } from '../../ui/PageHeader';
+import { useTheme } from '../../ui/theme';
+import ui from '../../ui/ui.module.css';
+
+type Panel = 'info' | 'account' | 'family' | 'appearance' | 'values' | 'data' | 'updates';
+
+const VERSION = '0.1.0';
+
+const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] = [
+  { panel: 'info', icon: Info, title: 'App info', text: 'Features and calculations' },
+  { panel: 'account', icon: User, title: 'Account', text: 'Profile details and sign out' },
+  {
+    panel: 'family',
+    icon: Users,
+    title: 'Family access',
+    text: 'Invite members and manage permissions',
+  },
+  {
+    panel: 'appearance',
+    icon: Palette,
+    title: 'Appearance',
+    text: 'Choose colors and display preferences',
+  },
+  {
+    panel: 'values',
+    icon: ListPlus,
+    title: 'Custom values',
+    text: 'Family members, categories and sources',
+  },
+  {
+    panel: 'data',
+    icon: DatabaseBackup,
+    title: 'Data & backup',
+    text: 'Export, import and recovery tools',
+  },
+  { panel: 'updates', icon: Smartphone, title: 'App & updates', text: `Version ${VERSION}` },
+];
+
+type ListKey =
+  'familyMembers' | 'incomeSources' | 'expenseCategories' | 'debtTypes' | 'investmentTypes';
+
+const LISTS: { key: ListKey; label: string }[] = [
+  { key: 'familyMembers', label: 'Family members' },
+  { key: 'incomeSources', label: 'Income sources' },
+  { key: 'expenseCategories', label: 'Expense categories' },
+  { key: 'debtTypes', label: 'Loan types' },
+  { key: 'investmentTypes', label: 'Investment types' },
+];
+
+function CustomValues() {
+  const settings = useSettings();
+  const commit = useTracker((state) => state.commit);
+  const [key, setKey] = useState<ListKey>('familyMembers');
+  const [text, setText] = useState('');
+  const [growth, setGrowth] = useState<'market' | 'fixed' | 'no-return'>('market');
+  const save = (patch: Partial<TrackerSettings>) =>
+    commit([
+      {
+        type: 'set',
+        collection: 'settings',
+        id: TRACKER_SETTINGS_ID,
+        value: { ...settings, ...patch, id: TRACKER_SETTINGS_ID },
+      },
+    ]);
+  const value = text.trim();
+  const exists = settings[key].some((item) => item.toLowerCase() === value.toLowerCase());
+
+  return (
+    <div className={ui.page}>
+      <form
+        className={ui.form}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!value || exists) return;
+          save({
+            [key]: [...settings[key], value],
+            ...(key === 'investmentTypes'
+              ? { growthTypes: { ...settings.growthTypes, [value]: growth } }
+              : {}),
+          });
+          setText('');
+        }}
+      >
+        <Field label="Value category">
+          <select onChange={(event) => setKey(event.target.value as ListKey)} value={key}>
+            {LISTS.map((list) => (
+              <option key={list.key} value={list.key}>
+                {list.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="New value">
+          <input maxLength={60} onChange={(event) => setText(event.target.value)} value={text} />
+        </Field>
+        {key === 'investmentTypes' ? (
+          <Field label="Growth behaviour">
+            <select
+              onChange={(event) => setGrowth(event.target.value as typeof growth)}
+              value={growth}
+            >
+              <option value="market">Market linked</option>
+              <option value="fixed">Fixed return</option>
+              <option value="no-return">No return</option>
+            </select>
+          </Field>
+        ) : null}
+        <div className={ui.formActions}>
+          <button className={ui.button} disabled={!value || exists} type="submit">
+            + Add
+          </button>
+        </div>
+      </form>
+      {settings[key].length === 0 ? (
+        <p className={ui.empty}>No custom values yet.</p>
+      ) : (
+        <ul className={ui.list}>
+          {settings[key].map((item) => (
+            <li className={ui.row} key={item}>
+              <div className={ui.rowMain}>{item}</div>
+              <button
+                aria-label={`Remove ${item}`}
+                className={ui.quiet}
+                onClick={() => save({ [key]: settings[key].filter((row) => row !== item) })}
+                type="button"
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className={ui.caption}>Removing a value keeps it on records that already use it.</p>
+    </div>
+  );
+}
+
+function DataBackup() {
+  const data = useTracker((state) => state.data);
+  const commit = useTracker((state) => state.commit);
+  const [status, setStatus] = useState('');
+  const [phrase, setPhrase] = useState('');
+  const file = useRef<HTMLInputElement>(null);
+
+  const restore = async (selected: File) => {
+    try {
+      const backup = parseBackup(await selected.text());
+      const count = Object.values(backup).reduce((sum, rows) => sum + rows.length, 0);
+      if (!window.confirm(`Replace all current records with ${count} records from this backup?`)) {
+        return;
+      }
+      commit(restoreWrites(data, backup));
+      setStatus(`Restored ${count} records.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'This backup could not be read.');
+    }
+  };
+
+  return (
+    <div className={ui.page}>
+      <div className={ui.metric}>
+        <strong>Export backup</strong>
+        <p className={ui.caption}>Download all tracker records as one JSON file.</p>
+        <button
+          className={ui.button}
+          onClick={() =>
+            downloadText(
+              `finance-backup-${localDate()}.json`,
+              createBackup(data, new Date().toISOString()),
+              'application/json',
+            )
+          }
+          type="button"
+        >
+          Export backup
+        </button>
+      </div>
+      <div className={ui.metric}>
+        <strong>Import backup</strong>
+        <p className={ui.caption}>
+          Replaces every current record. A file with any invalid record is rejected.
+        </p>
+        <input
+          accept="application/json"
+          aria-label="Backup file"
+          hidden
+          onChange={(event) => {
+            const selected = event.target.files?.[0];
+            if (selected) void restore(selected);
+            event.target.value = '';
+          }}
+          ref={file}
+          type="file"
+        />
+        <button className={ui.quiet} onClick={() => file.current?.click()} type="button">
+          Choose backup file
+        </button>
+      </div>
+      <div className={ui.metric}>
+        <strong>Clear all data</strong>
+        <p className={ui.caption}>Type DELETE to remove every record. Export a backup first.</p>
+        <div className={ui.actions} style={{ flexWrap: 'wrap' }}>
+          <input
+            aria-label="Type DELETE to confirm"
+            className={ui.fieldSelect}
+            onChange={(event) => setPhrase(event.target.value)}
+            value={phrase}
+          />
+          <button
+            className={ui.quiet}
+            disabled={phrase !== 'DELETE'}
+            onClick={() => {
+              commit(clearWrites(data));
+              setPhrase('');
+              setStatus('All records were cleared.');
+            }}
+            type="button"
+          >
+            Clear all data
+          </button>
+        </div>
+      </div>
+      {status ? (
+        <p className={ui.notice} role="status">
+          {status}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function FamilyAccess({ account }: { account: Account }) {
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState<'editor' | 'viewer'>('viewer');
+  const [status, setStatus] = useState('');
+  const { invite } = account;
+  return (
+    <div className={ui.page}>
+      <p className={ui.caption}>
+        Viewer: view and export. Editor: add, edit and delete records. Owner: manage access, import
+        backups and clear all data.
+      </p>
+      <p>
+        Your role: <strong>{account.role}</strong>
+      </p>
+      {invite && account.role === 'owner' ? (
+        <form
+          className={ui.form}
+          onSubmit={(event) => {
+            event.preventDefault();
+            invite(email, role).then(
+              () => {
+                setStatus(`Invited ${email}. They accept when they next sign in.`);
+                setEmail('');
+              },
+              (error: unknown) => setStatus(String(error)),
+            );
+          }}
+        >
+          <Field label="Google email">
+            <input
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              type="email"
+              value={email}
+            />
+          </Field>
+          <Field label="Access">
+            <select
+              onChange={(event) => setRole(event.target.value as 'editor' | 'viewer')}
+              value={role}
+            >
+              <option value="viewer">Viewer</option>
+              <option value="editor">Editor</option>
+            </select>
+          </Field>
+          <div className={ui.formActions}>
+            <button className={ui.button} type="submit">
+              Send invite
+            </button>
+          </div>
+        </form>
+      ) : (
+        <p className={ui.empty}>Invites are available to the owner after signing in.</p>
+      )}
+      {status ? (
+        <p className={ui.notice} role="status">
+          {status}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function Appearance() {
+  const { theme, toggle } = useTheme();
+  return (
+    <div className={ui.page}>
+      <p>
+        Current mode: <strong>{theme === 'dark' ? 'Dark' : 'Light'}</strong>
+      </p>
+      <button className={ui.quiet} onClick={toggle} type="button">
+        Switch to {theme === 'dark' ? 'light' : 'dark'} mode
+      </button>
+    </div>
+  );
+}
+
+export function SettingsPage({ account }: { account: Account }) {
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const initial = account.name.charAt(0).toUpperCase();
+  const open = TILES.find((tile) => tile.panel === panel);
+
+  return (
+    <div className={ui.page}>
+      <PageHeader
+        eyebrow="Personalize your tracker"
+        subtitle="Adjust the look, manage the values in your forms, and protect your backup."
+        title="Settings"
+      />
+      <section aria-label="Your account" className={ui.card}>
+        <div className={ui.cardHeader}>
+          <div className={ui.cardHeader} style={{ justifyContent: 'flex-start' }}>
+            <span aria-hidden="true" className={ui.tileIcon} style={{ borderRadius: '50%' }}>
+              {initial}
+            </span>
+            <div>
+              <strong>{account.name}</strong>
+              <div className={ui.caption}>{account.email}</div>
+            </div>
+          </div>
+          <span className={ui.caption}>
+            <RefreshCw size={12} /> Syncs automatically
+          </span>
+        </div>
+      </section>
+      <div className={ui.threeColumn}>
+        {TILES.map(({ panel: key, icon: Icon, title, text }) => (
+          <button className={ui.tileButton} key={key} onClick={() => setPanel(key)} type="button">
+            <span aria-hidden="true" className={ui.tileIcon}>
+              <Icon size={20} />
+            </span>
+            <span>
+              <strong style={{ display: 'block' }}>{title}</strong>
+              <span className={ui.caption}>{text}</span>
+            </span>
+            <ChevronRight aria-hidden="true" size={16} />
+          </button>
+        ))}
+      </div>
+      {open ? (
+        <Modal onClose={() => setPanel(null)} title={open.title}>
+          {panel === 'info' ? (
+            <p>
+              Track income, expenses, investments, retirement accounts and loans for your family.
+              Balances are always calculated from your records, so totals stay consistent across
+              devices.
+            </p>
+          ) : null}
+          {panel === 'account' ? (
+            <div className={ui.page}>
+              <p>
+                {account.name} · {account.email}
+              </p>
+              {account.signOut ? (
+                <button className={ui.quiet} onClick={account.signOut} type="button">
+                  Sign out
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          {panel === 'family' ? <FamilyAccess account={account} /> : null}
+          {panel === 'appearance' ? <Appearance /> : null}
+          {panel === 'values' ? <CustomValues /> : null}
+          {panel === 'data' ? <DataBackup /> : null}
+          {panel === 'updates' ? <p>You are on version {VERSION}.</p> : null}
+        </Modal>
+      ) : null}
+    </div>
+  );
+}

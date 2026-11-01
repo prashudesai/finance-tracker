@@ -132,3 +132,109 @@ export const monthlyBalanceSchema = z.object({
   startBalance: z.number().finite(),
 });
 export type MonthlyBalance = z.infer<typeof monthlyBalanceSchema>;
+
+export const PMS_TYPE = 'Stallion PMS';
+
+/**
+ * Opening position only. Invested and current values are always derived from the
+ * holding's contributions and valuations, so they cannot drift.
+ */
+export const holdingSchema = z.object({
+  id,
+  kind: z.enum(['investment', 'pf', 'ppf', 'nps']),
+  /** Category, such as Mutual Funds. Retirement kinds use their own label. */
+  type: name,
+  name,
+  member: name,
+  date,
+  openingInvested: money,
+  openingValue: money,
+  /** Annual interest for fixed-return holdings. */
+  rate: number.nonnegative('Enter zero or more.').optional(),
+  monthly: money.default(0),
+  /** PF splits the monthly amount; the EPS share goes to the pension balance. */
+  employee: money.optional(),
+  employer: money.optional(),
+  epsMonthly: money.optional(),
+  epsOpening: money.optional(),
+  autoContribute: z.boolean().default(false),
+  /** First scheduled contribution. Its day anchors later months. */
+  autoStart: date.optional(),
+  notes: notes.optional(),
+});
+export type Holding = z.infer<typeof holdingSchema>;
+
+export const contributionSchema = z.object({
+  id,
+  holdingId: id,
+  date,
+  amount: money,
+  epsAmount: money.optional(),
+  automatic: z.boolean().default(false),
+  /** A removed scheduled contribution, kept so the schedule does not post it again. */
+  skipped: z.boolean().optional(),
+});
+export type Contribution = z.infer<typeof contributionSchema>;
+
+export const valuationSchema = z.object({
+  id,
+  holdingId: id,
+  date,
+  value: money,
+});
+export type Valuation = z.infer<typeof valuationSchema>;
+
+export const gratuityAccountSchema = z.object({
+  id,
+  member: name,
+  /** Date of joining. */
+  date,
+  basicSalary: money,
+});
+export type GratuityAccount = z.infer<typeof gratuityAccountSchema>;
+
+export const projectionAdjustmentSchema = z.object({
+  id,
+  category: name,
+  date,
+  type: z.enum(['add', 'withdraw']),
+  amount: positiveMoney,
+  notes: notes.optional(),
+});
+export type ProjectionAdjustment = z.infer<typeof projectionAdjustmentSchema>;
+
+export const SCENARIOS = ['stress', 'base', 'optimistic'] as const;
+export type Scenario = (typeof SCENARIOS)[number];
+
+const scenarioRates = z.object({
+  stress: z.number().optional(),
+  base: z.number().optional(),
+  optimistic: z.number().optional(),
+});
+
+const textList = z.array(z.string().trim().min(1).max(60)).default([]);
+
+export const TRACKER_SETTINGS_ID = 'tracker';
+
+/** One document of household preferences. */
+export const trackerSettingsSchema = z.object({
+  id,
+  familyMembers: textList,
+  incomeSources: textList,
+  expenseCategories: textList,
+  debtTypes: textList,
+  investmentTypes: textList,
+  /** Growth behaviour of custom investment types. */
+  growthTypes: z.record(z.string(), z.enum(['market', 'fixed', 'no-return'])).default({}),
+  projectionYears: z.number().int().min(1).max(40).default(5),
+  includeMonthlyContributions: z.boolean().default(true),
+  includeGratuity: z.boolean().default(true),
+  excludedContributions: textList,
+  stepUps: z.record(z.string(), z.number()).default({}),
+  returns: z.record(z.string(), scenarioRates).default({}),
+  projectionMonthly: z.record(z.string(), z.number()).default({}),
+});
+export type TrackerSettings = z.infer<typeof trackerSettingsSchema>;
+
+export const defaultSettings = (): TrackerSettings =>
+  trackerSettingsSchema.parse({ id: TRACKER_SETTINGS_ID });

@@ -4,12 +4,12 @@ import { createMemoryRepository } from './data/memoryRepository';
 import type { TrackerRepository } from './data/repository';
 import { previewData } from './data/previewData';
 import { SignIn } from './features/auth/SignIn';
-import { Shell } from './Shell';
+import { Shell, type Account } from './Shell';
 
 type Session =
   | { status: 'loading' }
   | { status: 'signed-out'; signIn: () => void; error?: string }
-  | { status: 'ready'; repository: TrackerRepository; signOut: () => void };
+  | { status: 'ready'; repository: TrackerRepository; account: Account };
 
 /** Firebase loads on demand, so the preview and tests never touch it. */
 function useFirebaseSession(): Session {
@@ -31,12 +31,18 @@ function useFirebaseSession(): Session {
           return;
         }
         setSession({ status: 'loading' });
-        void firebase.resolveMembership(user).then(({ householdId }) => {
+        void firebase.resolveMembership(user).then(({ householdId, role }) => {
           if (!active) return;
           setSession({
             status: 'ready',
             repository: firebase.createFirestoreRepository(householdId),
-            signOut: () => void firebase.signOutUser(),
+            account: {
+              name: user.displayName ?? user.email ?? 'You',
+              email: user.email ?? '',
+              role,
+              signOut: () => void firebase.signOutUser(),
+              invite: (email, access) => firebase.inviteMember(user.uid, email, access),
+            },
           });
         });
       });
@@ -56,7 +62,7 @@ function SignedInApp() {
   if (session.status === 'signed-out') {
     return <SignIn error={session.error} onSignIn={session.signIn} />;
   }
-  return <Shell onSignOut={session.signOut} repository={session.repository} />;
+  return <Shell account={session.account} repository={session.repository} />;
 }
 
 const preview = createMemoryRepository(previewData());

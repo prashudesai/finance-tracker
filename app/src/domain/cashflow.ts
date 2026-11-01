@@ -36,12 +36,13 @@ export function monthTotals({ income, expenses }: Pick<CashflowData, 'income' | 
   return totals;
 }
 
-export function monthClose(data: CashflowData, month: string): MonthClose {
+/** `transfers` is money moved out to PMS, which reduces what is available. */
+export function monthClose(data: CashflowData, month: string, transfers = 0): MonthClose {
   const totals = monthTotals(data).get(month) ?? { income: 0, expenses: 0 };
   const balances = new Map(data.monthlyBalances.map((row) => [row.month, row.startBalance]));
   const opening = balances.get(month) ?? null;
   const closing = balances.get(nextMonth(month)) ?? null;
-  const available = (opening ?? 0) + totals.income - totals.expenses;
+  const available = (opening ?? 0) + totals.income - totals.expenses - transfers;
   const complete = opening !== null && closing !== null;
   return {
     month,

@@ -16,7 +16,7 @@ export function PageHeader({
     <header className={ui.pageHeader}>
       <div>
         <p className={ui.eyebrow}>{eyebrow}</p>
-        <h1>{title}</h1>
+        <h1 className={ui.titleBar}>{title}</h1>
         {subtitle ? <p className={ui.subtitle}>{subtitle}</p> : null}
       </div>
       {action}

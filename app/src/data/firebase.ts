@@ -13,6 +13,8 @@ import {
   collection,
   doc,
   getDoc,
+  setDoc,
+  updateDoc,
   initializeFirestore,
   onSnapshot,
   persistentLocalCache,
@@ -54,12 +56,23 @@ export interface Membership {
 export async function resolveMembership(user: User): Promise<Membership> {
   const email = user.email?.toLowerCase();
   if (email) {
-    const invite = await getDoc(doc(db, 'memberships', email));
-    const data = invite.data();
+    const invite = doc(db, 'memberships', email);
+    const data = (await getDoc(invite)).data();
     if (data?.accepted === true) return { householdId: data.householdId, role: data.role };
+    if (data && window.confirm(`Join a shared family tracker as ${data.role}?`)) {
+      await updateDoc(invite, { accepted: true });
+      return { householdId: data.householdId, role: data.role };
+    }
   }
   return { householdId: user.uid, role: 'owner' };
 }
+
+export const inviteMember = (ownerUid: string, email: string, role: 'editor' | 'viewer') =>
+  setDoc(doc(db, 'memberships', email.trim().toLowerCase()), {
+    householdId: ownerUid,
+    role,
+    accepted: false,
+  });
 
 export function createFirestoreRepository(householdId: string): TrackerRepository {
   const path = (name: CollectionName) => `households/${householdId}/${name}`;

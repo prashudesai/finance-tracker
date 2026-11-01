@@ -32,3 +32,11 @@ export const formatShortMonth = (month: string) =>
 
 export const formatDay = (date: string) =>
   new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+export const formatPercent = (value: number | null, digits = 1) =>
+  value === null ? '—' : `${(value * 100).toFixed(digits)}%`;
+
+export const signedMoney = (value: number) =>
+  `${value < 0 ? '−' : '+'}${formatMoney(Math.abs(value))}`;
+
+export const gainClass = (value: number | null) => (value !== null && value < 0 ? 'loss' : 'gain');

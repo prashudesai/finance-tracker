@@ -70,6 +70,21 @@ describe('household records', () => {
     await assertFails(getDoc(doc(editor(), 'households/other/income/a')));
   });
 
+  test('every tracker collection can be written by an editor', async () => {
+    const db = editor();
+    for (const name of [
+      'holdings',
+      'contributions',
+      'valuations',
+      'gratuityAccounts',
+      'projectionAdjustments',
+      'settings',
+    ]) {
+      await assertSucceeds(setDoc(doc(db, `households/owner/${name}/a`), { value: 1 }));
+    }
+    await assertFails(setDoc(doc(viewer(), 'households/owner/holdings/a'), { value: 1 }));
+  });
+
   test('only known collections can be written', async () => {
     await assertFails(setDoc(doc(owner(), 'households/owner/unknown/a'), {}));
   });

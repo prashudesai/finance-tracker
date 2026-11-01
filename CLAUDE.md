@@ -59,7 +59,7 @@ Before calling work done, run typecheck, lint, tests and build. Run `test:rules`
 - `app/src/features/<page>`: one folder per screen.
 - `app/src/ui`: shared styles, formatting and small components.
 
-**Store facts, derive the rest.** Never save a value that can be calculated. A loan stores opening terms and dated changes; balance, rate, EMI and interest always come from `rebuildLoan`. Don't add cached totals to a record.
+**Store facts, derive the rest.** Never save a value that can be calculated. A loan stores opening terms and dated changes, and a holding stores its opening position, contributions and valuations. Balances always come from `rebuildLoan` and `holdingPosition`. Don't add cached totals to a record.
 
 **Rendering never writes.** Changes happen in event handlers through `commit`. Legacy accruals ran during render, and that must not come back.
 
@@ -69,13 +69,13 @@ Before calling work done, run typecheck, lint, tests and build. Run `test:rules`
 
 **Styling.** Use CSS Modules and the tokens in `ui/tokens.css`, with no `!important`. Design for phone width first, with no horizontal page scroll. No inline event attributes or `innerHTML`.
 
-**Design.** The brand is deep teal surfaces with mint accents, large rounded cards and the logo in `src/assets`. Compare new screens with the live app at https://finance-tracker-bc7c9.web.app and aim to beat it. Icons come from `lucide-react`. Lead each screen with its most useful number. Check both themes.
+**Design.** The brand is deep teal surfaces with mint accents, large rounded cards and the logo in `src/assets`. New and changed pages follow the older app's layout: same sections, order and labels. Compare with the live app at https://finance-tracker-bc7c9.web.app, or run legacy locally as `tests/emerald-flow-browser.cjs` does. Dropdowns are styled once, in `ui/tokens.css`. Icons come from `lucide-react`. Lead each screen with its most useful number. Check both themes.
 
 ## Porting from legacy
 
 1. Read the legacy code and its tests, and any spec in [docs/legacy/](docs/legacy/README.md).
 2. Port the calculation into `domain/` as pure TypeScript.
-3. Add unit tests, plus a seeded parity test against the legacy module where one can be loaded. See `domain/loan.test.ts`.
+3. Add unit tests, plus a seeded parity test against the legacy code. See `domain/loan.test.ts`, and `domain/legacy.testutil.ts` for functions in `src/core`.
 4. Confirm the parity test can fail by breaking the port on purpose, then restore it.
 5. Build the screen, and update [docs/rewrite-status.md](docs/rewrite-status.md).
 

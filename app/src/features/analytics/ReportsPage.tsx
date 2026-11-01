@@ -1,0 +1,201 @@
+import { Download, Printer } from 'lucide-react';
+import { useState } from 'react';
+import {
+  addMonths,
+  financialYearLabel,
+  financialYearRange,
+  financialYearStart,
+} from '../../domain/calendar';
+import { financialYearsWithData } from '../../domain/analytics';
+import {
+  groupTotals,
+  reportCsv,
+  reportRows,
+  REPORT_TYPES,
+  type ReportType,
+} from '../../domain/reports';
+import { useView } from '../../store/tracker';
+import { downloadText } from '../../ui/download';
+import { Field } from '../../ui/Field';
+import { formatDay, formatMoney, localDate } from '../../ui/format';
+import { Metric } from '../../ui/Stat';
+import ui from '../../ui/ui.module.css';
+
+const ROW_LIMIT = 200;
+
+export function ReportsPage() {
+  const data = useView();
+  const today = localDate();
+  const thisFy = financialYearStart(today);
+  const [start, setStart] = useState(financialYearRange(thisFy).start);
+  const [end, setEnd] = useState(today);
+  const [type, setType] = useState<ReportType>('all');
+
+  const presets: [string, () => void][] = [
+    [
+      'This month',
+      () => {
+        setStart(`${today.slice(0, 7)}-01`);
+        setEnd(today);
+      },
+    ],
+    [
+      'This FY',
+      () => {
+        setStart(financialYearRange(thisFy).start);
+        setEnd(today);
+      },
+    ],
+    [
+      'Last FY',
+      () => {
+        const range = financialYearRange(thisFy - 1);
+        setStart(range.start);
+        setEnd(range.end);
+      },
+    ],
+    [
+      'Last 3 months',
+      () => {
+        setStart(addMonths(today, -3));
+        setEnd(today);
+      },
+    ],
+  ];
+
+  const rows = start && end && start <= end ? reportRows(data, start, end, type) : [];
+  const totals = groupTotals(rows);
+  const years = financialYearsWithData(data, today);
+
+  return (
+    <div className={ui.page}>
+      <section className={ui.card}>
+        <div>
+          <div className={ui.label}>Quick period</div>
+          <div className={ui.actions} style={{ flexWrap: 'wrap', marginTop: 8 }}>
+            {presets.map(([label, apply]) => (
+              <button className={ui.quiet} key={label} onClick={apply} type="button">
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={ui.form}>
+          <Field label="Financial year">
+            <select
+              onChange={(event) => {
+                if (!event.target.value) return;
+                const range = financialYearRange(Number(event.target.value));
+                setStart(range.start);
+                setEnd(range.end);
+              }}
+              value=""
+            >
+              <option value="">Custom date range</option>
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {financialYearLabel(year)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="From date">
+            <input onChange={(event) => setStart(event.target.value)} type="date" value={start} />
+          </Field>
+          <Field label="To date">
+            <input onChange={(event) => setEnd(event.target.value)} type="date" value={end} />
+          </Field>
+          <Field label="Report type">
+            <select onChange={(event) => setType(event.target.value as ReportType)} value={type}>
+              {REPORT_TYPES.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <div className={ui.caption}>
+          Both dates are included. Downloads follow the selected family profile.
+        </div>
+      </section>
+
+      {start > end ? (
+        <p className={ui.notice} role="alert">
+          The start date must be on or before the end date.
+        </p>
+      ) : null}
+
+      {totals.length > 0 ? (
+        <section aria-label="Report summary" className={ui.metrics}>
+          {totals.map((row) => (
+            <Metric key={row.group} label={row.group} value={formatMoney(row.amount)} />
+          ))}
+        </section>
+      ) : null}
+
+      <section className={ui.card}>
+        <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
+          <h2 style={{ fontSize: '1.2rem' }}>
+            {rows.length} {rows.length === 1 ? 'record' : 'records'}
+          </h2>
+          <div className={ui.actions}>
+            <button
+              className={ui.quiet}
+              disabled={rows.length === 0}
+              onClick={() =>
+                downloadText(`finance-report-${start}-to-${end}.csv`, reportCsv(rows), 'text/csv')
+              }
+              type="button"
+            >
+              <Download size={16} /> CSV
+            </button>
+            <button
+              className={ui.quiet}
+              disabled={rows.length === 0}
+              onClick={() => window.print()}
+              type="button"
+            >
+              <Printer size={16} /> Print or PDF
+            </button>
+          </div>
+        </div>
+        {rows.length === 0 ? (
+          <p className={ui.empty}>No records in this period.</p>
+        ) : (
+          <div className={ui.tableWrap}>
+            <table className={ui.table}>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th>Details</th>
+                  <th className={ui.numeric}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.slice(0, ROW_LIMIT).map((row, index) => (
+                  <tr key={`${row.date}-${row.name}-${index}`}>
+                    <td>
+                      {formatDay(row.date)} {row.date.slice(0, 4)}
+                    </td>
+                    <td>{row.group}</td>
+                    <td>{row.name}</td>
+                    <td>{row.detail || '—'}</td>
+                    <td className={ui.numeric}>{formatMoney(row.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {rows.length > ROW_LIMIT ? (
+          <div className={ui.caption}>
+            Showing the latest {ROW_LIMIT}. The CSV has every record.
+          </div>
+        ) : null}
+      </section>
+    </div>
+  );
+}

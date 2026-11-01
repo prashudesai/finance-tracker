@@ -1,5 +1,6 @@
 import {
   COLLECTION_NAMES,
+  documentId,
   parseRows,
   type CollectionName,
   type RecordWrite,
@@ -12,7 +13,7 @@ export function createMemoryRepository(seed: Partial<TrackerData> = {}): Tracker
   const stores = new Map<CollectionName, Map<string, object>>(
     COLLECTION_NAMES.map((name) => [
       name,
-      new Map((seed[name] ?? []).map((row, index) => [storedId(row, index), row])),
+      new Map((seed[name] ?? []).map((row) => [documentId(name, row), row])),
     ]),
   );
   const listeners = new Map<CollectionName, Set<() => void>>(
@@ -41,8 +42,4 @@ export function createMemoryRepository(seed: Partial<TrackerData> = {}): Tracker
       }
     },
   };
-}
-
-function storedId(row: object, index: number) {
-  return 'id' in row && typeof row.id === 'string' ? row.id : String(index);
 }

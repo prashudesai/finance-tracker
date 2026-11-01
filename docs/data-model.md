@@ -13,6 +13,12 @@ households/{ownerUid}/
   recurringRules/{id}
   recurringOccurrences/{ruleId_month}
   monthlyBalances/{month}
+  holdings/{id}
+  contributions/{id}
+  valuations/{id}
+  gratuityAccounts/{id}
+  projectionAdjustments/{id}
+  settings/tracker
 ```
 
 Email addresses in `memberships` are lowercase.
@@ -27,6 +33,12 @@ Email addresses in `memberships` are lowercase.
 | `recurringRules` | Monthly income, expense or EMI schedules | A rule's `kind` decides its fields |
 | `recurringOccurrences` | What happened to a rule in a month | `posted`, `matched` or `skipped` |
 | `monthlyBalances` | Opening household balance for a month | Next month's opening is this month's closing |
+| `holdings` | Opening position of an investment, PF, PPF or NPS account | Current figures are never stored |
+| `contributions` | Dated money added to a holding | Scheduled ones use `auto_<holdingId>_<yyyymm>` IDs |
+| `valuations` | Dated value of a holding | The latest sets its current value |
+| `gratuityAccounts` | Joining date and basic salary | The estimate is calculated |
+| `projectionAdjustments` | Planned additions and withdrawals | |
+| `settings` | Custom values and projection assumptions | One document, `tracker` |
 
 ## Loans
 
@@ -43,6 +55,6 @@ There are two calculation modes:
 
 Deleting a rule with history archives it, so its records stay explained.
 
-## Not modelled yet
+## Holdings
 
-Investments, NPS, PPF, PF, gratuity, PMS, projections, reviews and family member lists. See [rewrite-status.md](rewrite-status.md).
+Invested is the opening amount plus contributions. Current is the latest valuation, or the opening value, plus contributions dated after it. A removed scheduled contribution stays as a `skipped` record, so the schedule doesn't post it again.

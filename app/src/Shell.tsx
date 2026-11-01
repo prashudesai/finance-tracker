@@ -1,65 +1,130 @@
-import { ArrowUpDown, Landmark, LayoutDashboard, LogOut, Moon, Receipt, Sun } from 'lucide-react';
+import {
+  ArrowUpDown,
+  CreditCard,
+  Home,
+  LineChart,
+  Moon,
+  SlidersHorizontal,
+  Sun,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { lazy, Suspense, useEffect } from 'react';
 import { NavLink, Route, Routes } from 'react-router';
-import logo from './assets/logo.png';
 import { Dashboard } from './features/dashboard/Dashboard';
 import type { TrackerRepository } from './data/repository';
-import { useTracker } from './store/tracker';
+import { useSettings, useTracker } from './store/tracker';
 import styles from './Shell.module.css';
+import { localDate } from './ui/format';
 import { useTheme } from './ui/theme';
 import ui from './ui/ui.module.css';
 
-const IncomePage = lazy(() =>
-  import('./features/income/IncomePage').then(({ IncomePage }) => ({ default: IncomePage })),
+const named = <Name extends string>(
+  load: () => Promise<Record<Name, React.ComponentType>>,
+  name: Name,
+) => lazy(() => load().then((module) => ({ default: module[name] })));
+
+const CashFlowPage = named(() => import('./features/cashflow/CashFlowPage'), 'CashFlowPage');
+const InvestmentsPage = named(
+  () => import('./features/investments/InvestmentsPage'),
+  'InvestmentsPage',
 );
-const ExpensesPage = lazy(() =>
-  import('./features/expenses/ExpensesPage').then(({ ExpensesPage }) => ({
-    default: ExpensesPage,
-  })),
+const DebtsPage = named(() => import('./features/debts/DebtsPage'), 'DebtsPage');
+const AnalyticsLayout = named(
+  () => import('./features/analytics/AnalyticsLayout'),
+  'AnalyticsLayout',
 );
-const LoansPage = lazy(() =>
-  import('./features/loans/LoansPage').then(({ LoansPage }) => ({ default: LoansPage })),
+const AnalyticsPage = named(() => import('./features/analytics/AnalyticsPage'), 'AnalyticsPage');
+const ProjectionPage = named(() => import('./features/analytics/ProjectionPage'), 'ProjectionPage');
+const ReportsPage = named(() => import('./features/analytics/ReportsPage'), 'ReportsPage');
+const SettingsPage = lazy(() =>
+  import('./features/settings/SettingsPage').then(({ SettingsPage: Page }) => ({ default: Page })),
 );
 
 const LINKS = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/income', label: 'Income', icon: ArrowUpDown },
-  { to: '/expenses', label: 'Expenses', icon: Receipt },
-  { to: '/loans', label: 'Loans', icon: Landmark },
+  { to: '/', label: 'Dashboard', short: 'Home', icon: Home },
+  { to: '/cash-flow', label: 'Income & Expense', short: 'Cash flow', icon: ArrowUpDown },
+  { to: '/investments', label: 'Investment', short: 'Investments', icon: Wallet },
+  { to: '/debts', label: 'Debts', short: 'Debts', icon: CreditCard },
+  { to: '/analytics', label: 'Analytics & Reports', short: 'Reports', icon: LineChart },
+  { to: '/settings', label: 'Settings', short: 'Settings', icon: SlidersHorizontal },
 ];
+
+export interface Account {
+  name: string;
+  email: string;
+  role: 'owner' | 'editor' | 'viewer';
+  signOut?: () => void;
+  invite?: (email: string, role: 'editor' | 'viewer') => Promise<void>;
+}
+
+const PREVIEW_ACCOUNT: Account = {
+  name: 'Preview',
+  email: 'preview@example.test',
+  role: 'owner',
+};
 
 export function Shell({
   repository,
-  onSignOut,
+  account = PREVIEW_ACCOUNT,
 }: {
   repository: TrackerRepository;
-  onSignOut?: () => void;
+  account?: Account;
 }) {
   const connect = useTracker((state) => state.connect);
   const loaded = useTracker((state) => state.loaded);
   const error = useTracker((state) => state.error);
   const invalidRecords = useTracker((state) => state.invalidRecords);
+  const runSchedules = useTracker((state) => state.runSchedules);
+  const profile = useTracker((state) => state.profile);
+  const setProfile = useTracker((state) => state.setProfile);
+  const settings = useSettings();
   const { theme, toggle } = useTheme();
 
-  useEffect(() => connect(repository), [connect, repository]);
+  useEffect(
+    () => connect(repository, account.role !== 'viewer'),
+    [connect, repository, account.role],
+  );
+
+  // Scheduled contributions post once records have loaded, never during rendering.
+  useEffect(() => {
+    if (loaded) runSchedules(localDate());
+  }, [loaded, runSchedules]);
 
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
         <div className={styles.brand}>
-          <img alt="" className={styles.logo} height="36" src={logo} width="36" />
-          My finances
+          <span aria-hidden="true" className={styles.avatar}>
+            <Users size={18} />
+          </span>
+          <select
+            aria-label="Family profile"
+            className={styles.profile}
+            onChange={(event) => setProfile(event.target.value || null)}
+            value={profile ?? ''}
+          >
+            <option value="">My finances</option>
+            {settings.familyMembers.map((member) => (
+              <option key={member} value={member}>
+                {member}
+              </option>
+            ))}
+          </select>
         </div>
         <nav aria-label="Main" className={styles.nav}>
-          {LINKS.map(({ to, label, icon: Icon }) => (
+          {LINKS.map(({ to, label, short, icon: Icon }) => (
             <NavLink
-              className={({ isActive }) => (isActive ? styles.active : styles.link)}
+              className={({ isActive }) =>
+                `${isActive ? styles.active : styles.link} ${to === '/settings' ? styles.desktopOnly : ''}`
+              }
               end={to === '/'}
               key={to}
               to={to}
             >
               <Icon aria-hidden="true" size={20} />
-              {label}
+              <span className={styles.fullLabel}>{label}</span>
+              <span className={styles.shortLabel}>{short}</span>
             </NavLink>
           ))}
         </nav>
@@ -72,16 +137,13 @@ export function Shell({
           >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          {onSignOut ? (
-            <button
-              aria-label="Sign out"
-              className={ui.iconButton}
-              onClick={onSignOut}
-              type="button"
-            >
-              <LogOut size={18} />
-            </button>
-          ) : null}
+          <NavLink
+            aria-label="Settings"
+            className={`${ui.iconButton} ${styles.mobileOnly}`}
+            to="/settings"
+          >
+            <SlidersHorizontal size={18} />
+          </NavLink>
         </div>
       </header>
       <main className={styles.main}>
@@ -99,9 +161,15 @@ export function Shell({
           <Suspense fallback={<p className={ui.empty}>Loading…</p>}>
             <Routes>
               <Route element={<Dashboard />} path="/" />
-              <Route element={<IncomePage />} path="/income" />
-              <Route element={<ExpensesPage />} path="/expenses" />
-              <Route element={<LoansPage />} path="/loans" />
+              <Route element={<CashFlowPage />} path="/cash-flow" />
+              <Route element={<InvestmentsPage />} path="/investments" />
+              <Route element={<DebtsPage />} path="/debts" />
+              <Route element={<AnalyticsLayout />} path="/analytics">
+                <Route element={<AnalyticsPage />} index />
+                <Route element={<ProjectionPage />} path="projection" />
+                <Route element={<ReportsPage />} path="reports" />
+              </Route>
+              <Route element={<SettingsPage account={account} />} path="/settings" />
             </Routes>
           </Suspense>
         ) : (

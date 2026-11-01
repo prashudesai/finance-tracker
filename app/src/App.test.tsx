@@ -1,10 +1,16 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { createMemoryRepository } from './data/memoryRepository';
+import { previewData } from './data/previewData';
+import { defaultSettings, type Holding, type Loan } from './schema/records';
 import { Shell } from './Shell';
+import { useTracker } from './store/tracker';
 import { localDate } from './ui/format';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  useTracker.setState({ profile: null });
+});
 
 // jsdom has no native dialog behaviour.
 HTMLDialogElement.prototype.showModal = function showModal() {
@@ -13,7 +19,7 @@ HTMLDialogElement.prototype.showModal = function showModal() {
 
 const month = localDate().slice(0, 7);
 
-function renderApp(path: string, seed: Parameters<typeof createMemoryRepository>[0]) {
+function renderApp(path: string, seed: Parameters<typeof createMemoryRepository>[0] = {}) {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Shell repository={createMemoryRepository(seed)} />
@@ -21,44 +27,91 @@ function renderApp(path: string, seed: Parameters<typeof createMemoryRepository>
   );
 }
 
-async function stat(label: string) {
-  const month = await screen.findByRole('region', { name: 'This month' });
-  return within(within(month).getByText(label).closest('div')?.parentElement as HTMLElement);
-}
+const loan: Loan = {
+  id: 'l',
+  type: 'Car',
+  member: 'A',
+  date: '2020-01-01',
+  principal: 500_000,
+  openingRate: 0,
+  openingEmi: 10_000,
+  changes: [],
+};
 
-test('the dashboard totals the month and derives loan balances', async () => {
-  renderApp('/', {
-    income: [{ id: 'i', date: `${month}-01`, member: 'A', source: 'Salary', amount: 100_000 }],
-    expenses: [
-      {
-        id: 'e',
-        date: `${month}-01`,
-        category: 'Rent',
-        subcategory: '',
-        amount: 30_000,
-        isAnnual: false,
-      },
-    ],
-    loans: [
-      {
-        id: 'l',
-        type: 'Car',
-        member: 'A',
-        date: '2020-01-01',
-        principal: 500_000,
-        openingRate: 0,
-        openingEmi: 10_000,
-        changes: [],
-      },
-    ],
-  });
-  expect((await stat('Income')).getByText('₹1,00,000')).toBeDefined();
-  expect((await stat('Left this month')).getByText('₹70,000')).toBeDefined();
-  expect((await stat('Loans outstanding')).getByText('₹5,00,000')).toBeDefined();
+const fund: Holding = {
+  id: 'h',
+  kind: 'investment',
+  type: 'Mutual Funds',
+  name: 'Index fund',
+  member: 'A',
+  date: '2024-01-01',
+  openingInvested: 100_000,
+  openingValue: 150_000,
+  monthly: 0,
+  autoContribute: false,
+};
+
+test.each([
+  ['/', 'Dashboard'],
+  ['/cash-flow', 'Cash flow'],
+  ['/investments', 'Investments'],
+  ['/debts', 'Debt & EMI Tracker'],
+  ['/analytics', 'Analytics'],
+  ['/analytics/projection', 'Analytics'],
+  ['/analytics/reports', 'Analytics'],
+  ['/settings', 'Settings'],
+])('%s renders with full sample data', async (path, title) => {
+  renderApp(path, previewData());
+  expect(await screen.findByRole('heading', { level: 1, name: title })).toBeDefined();
+  expect(screen.queryByRole('status')).toBeNull();
+  expect(screen.queryByRole('alert')).toBeNull();
 });
 
-test('posting a recurring item adds the record and clears it from the list', async () => {
+test.each([
+  '/',
+  '/cash-flow',
+  '/investments',
+  '/debts',
+  '/analytics',
+  '/analytics/projection',
+  '/analytics/reports',
+  '/settings',
+])('%s renders on an empty account', async (path) => {
+  renderApp(path);
+  expect(await screen.findByRole('heading', { level: 1 })).toBeDefined();
+});
+
+test('the navigation matches the old app', async () => {
+  renderApp('/');
+  const nav = await screen.findByRole('navigation', { name: 'Main' });
+  const links = within(nav).getAllByRole('link');
+  expect(links.map((link) => link.getAttribute('href'))).toEqual([
+    '/',
+    '/cash-flow',
+    '/investments',
+    '/debts',
+    '/analytics',
+    '/settings',
+  ]);
+});
+
+test('the dashboard shows net worth from holdings less loans', async () => {
+  renderApp('/', { holdings: [fund], loans: [loan] });
+  const card = await screen.findByRole('region', { name: 'Net worth' });
+  expect(within(card).getByText('-₹3,50,000')).toBeDefined();
+  expect(within(card).getByText('₹1,50,000')).toBeDefined();
+});
+
+test('the monthly overview reads this month', async () => {
   renderApp('/', {
+    income: [{ id: 'i', date: `${month}-01`, member: 'A', source: 'Salary', amount: 100_000 }],
+  });
+  const region = await screen.findByRole('region', { name: 'This month' });
+  expect(within(region).getAllByText('₹1,00,000').length).toBeGreaterThan(0);
+});
+
+test('posting a recurring item adds the record', async () => {
+  renderApp('/cash-flow', {
     recurringRules: [
       {
         id: 'rent',
@@ -77,58 +130,12 @@ test('posting a recurring item adds the record and clears it from the list', asy
   });
   fireEvent.click(await screen.findByRole('button', { name: 'Post' }));
   expect(await screen.findByText('Nothing is due.')).toBeDefined();
-  expect((await stat('Expenses')).getByText('₹32,000')).toBeDefined();
-});
-
-test('adding income validates the form, then lists the record', async () => {
-  renderApp('/income', {});
-  fireEvent.click(await screen.findByRole('button', { name: 'Add income' }));
-  const submit = await screen.findByRole('button', { name: 'Save income', hidden: true });
-  fireEvent.click(submit);
-  expect(
-    (await screen.findAllByRole('alert', { hidden: true })).map((alert) => alert.textContent),
-  ).toEqual(['This field is required.', 'This field is required.', 'Enter a number.']);
-
-  fireEvent.change(screen.getByLabelText('Family member'), { target: { value: 'Sam' } });
-  fireEvent.change(screen.getByLabelText('Source'), { target: { value: 'Bonus' } });
-  fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '5000' } });
-  fireEvent.click(submit);
-  expect(await screen.findByText('Bonus')).toBeDefined();
-  expect(screen.getAllByText('₹5,000').length).toBeGreaterThan(0);
-});
-
-test('invalid stored records are reported, not shown', async () => {
-  renderApp('/income', {
-    income: [{ id: 'bad', amount: -1 } as never],
-  });
-  expect(await screen.findByRole('status')).toHaveProperty(
-    'textContent',
-    '1 saved record(s) could not be read and are hidden.',
-  );
-});
-
-test('recording the last EMI pays only what is still owed', async () => {
-  renderApp('/loans', {
-    loans: [
-      {
-        id: 'l',
-        type: 'Car',
-        member: 'A',
-        date: '2020-01-01',
-        principal: 7_000,
-        openingRate: 0,
-        openingEmi: 10_000,
-        changes: [],
-      },
-    ],
-  });
-  fireEvent.click(await screen.findByRole('button', { name: 'Record EMI for Car' }));
-  expect(await screen.findByText('Paid off')).toBeDefined();
-  expect(screen.queryByRole('button', { name: 'Record EMI for Car' })).toBeNull();
+  const region = screen.getByRole('region', { name: 'Selected month' });
+  expect(within(region).getByText('₹32,000')).toBeDefined();
 });
 
 test('a recurring item that cannot post explains why', async () => {
-  renderApp('/', {
+  renderApp('/cash-flow', {
     recurringRules: [
       {
         id: 'emi',
@@ -140,22 +147,78 @@ test('a recurring item that cannot post explains why', async () => {
         paused: false,
       },
     ],
-    loans: [
-      {
-        id: 'l',
-        type: 'Car',
-        member: 'A',
-        date: '2020-01-01',
-        principal: 500_000,
-        openingRate: 0,
-        openingEmi: 10_000,
-        changes: [],
-      },
-    ],
+    loans: [loan],
   });
   const posts = await screen.findAllByRole('button', { name: 'Post' });
   fireEvent.click(posts[1] as HTMLElement);
   expect((await screen.findByRole('alert')).textContent).toBe(
     'Car EMI: review earlier missed payments first.',
+  );
+});
+
+test('adding income validates, then lists the record', async () => {
+  renderApp('/cash-flow');
+  const submit = await screen.findByRole('button', { name: 'Add income' });
+  fireEvent.click(submit);
+  expect((await screen.findAllByRole('alert')).map((alert) => alert.textContent)).toEqual([
+    'This field is required.',
+    'Enter a number.',
+  ]);
+  fireEvent.change(screen.getByLabelText('Family member'), { target: { value: 'Sam' } });
+  fireEvent.change(screen.getAllByLabelText('Amount (₹)')[0] as HTMLElement, {
+    target: { value: '5000' },
+  });
+  fireEvent.click(submit);
+  expect(await screen.findByRole('button', { name: 'Edit Salary' })).toBeDefined();
+});
+
+test('recording the last EMI pays only what is still owed', async () => {
+  renderApp('/debts', { loans: [{ ...loan, principal: 7_000 }] });
+  fireEvent.click(await screen.findByRole('button', { name: 'History of Car' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Save emi payment', hidden: true }));
+  expect(await screen.findByText('Paid off')).toBeDefined();
+});
+
+test('scheduled contributions post after loading, not while rendering', async () => {
+  renderApp('/investments', {
+    holdings: [{ ...fund, monthly: 1000, autoContribute: true, autoStart: `${month}-01` }],
+  });
+  await screen.findByRole('heading', { level: 1, name: 'Investments' });
+  expect((await screen.findAllByText('₹1,51,000')).length).toBeGreaterThan(0);
+});
+
+test('a viewer cannot change records', async () => {
+  render(
+    <MemoryRouter initialEntries={['/cash-flow']}>
+      <Shell
+        account={{ name: 'V', email: 'v@example.test', role: 'viewer' }}
+        repository={createMemoryRepository({
+          income: [{ id: 'i', date: `${month}-01`, member: 'A', source: 'Salary', amount: 5 }],
+        })}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete Salary' }));
+  expect((await screen.findByRole('alert')).textContent).toMatch(/Viewer access/);
+  expect(screen.getByRole('button', { name: 'Delete Salary' })).toBeDefined();
+});
+
+test('the family profile filters personal records but not expenses', async () => {
+  renderApp('/cash-flow', {
+    settings: [{ ...defaultSettings(), familyMembers: ['A', 'B'] }],
+    income: [
+      { id: 'a', date: `${month}-01`, member: 'A', source: 'Salary', amount: 100 },
+      { id: 'b', date: `${month}-01`, member: 'B', source: 'Bonus', amount: 200 },
+    ],
+  });
+  fireEvent.change(await screen.findByLabelText('Family profile'), { target: { value: 'B' } });
+  expect(await screen.findByRole('button', { name: 'Edit Bonus' })).toBeDefined();
+  expect(screen.queryByRole('button', { name: 'Edit Salary' })).toBeNull();
+});
+
+test('invalid stored records are reported, not shown', async () => {
+  renderApp('/cash-flow', { income: [{ id: 'bad', amount: -1 } as never] });
+  expect((await screen.findByRole('status')).textContent).toBe(
+    '1 saved record(s) could not be read and are hidden.',
   );
 });
