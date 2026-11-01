@@ -20,7 +20,7 @@ Each stored record is tied to its household, collection and document ID as authe
 
 **This device.** The private key is imported as non-extractable and kept in IndexedDB until sign-out, so the passphrase isn't needed each visit and offline use keeps working. Firestore's local cache holds only encrypted data.
 
-**Face ID or fingerprint.** Someone can add a passkey with the WebAuthn PRF extension. The device turns a biometric check into a secret, which locks another copy of the private key in the keyring. A device with this on keeps no key, so each visit needs the check, and returning after 5 minutes away reloads the app. Devices without PRF support keep using the passphrase.
+**Face ID or fingerprint.** Someone can add a passkey with the WebAuthn PRF extension. The device turns a biometric check into a secret, which locks another copy of the private key in the keyring. A device with this on keeps no key, so each visit needs the check, and returning after 5 minutes away reloads the app. The check starts by itself where the browser allows it, and the unlock button stays as the fallback. Devices without PRF support keep using the passphrase.
 
 **Family.** An invited member accepts, creates a keyring and writes their public key to `requests`. Both people compare a safety code derived from that key, outside the app, and the owner approves. The comparison stops someone with database access swapping in their own key. Approval re-reads the key and refuses if the code no longer matches.
 

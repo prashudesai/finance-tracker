@@ -188,6 +188,34 @@ test('Face ID unlock opens the tracker, and turning it off retires it', async ()
   vi.unstubAllGlobals();
 });
 
+test('turning on Face ID during setup needs no second passphrase, and opens the tracker', async () => {
+  const secret = crypto.getRandomValues(new Uint8Array(32));
+  const rawId = crypto.getRandomValues(new Uint8Array(16)).buffer;
+  const credential = () => ({
+    rawId,
+    getClientExtensionResults: () => ({
+      prf: { enabled: true, results: { first: secret.buffer } },
+    }),
+  });
+  vi.stubGlobal('PublicKeyCredential', {
+    isUserVerifyingPlatformAuthenticatorAvailable: () => Promise.resolve(true),
+  });
+  vi.stubGlobal('navigator', {
+    credentials: {
+      create: () => Promise.resolve(credential()),
+      get: () => Promise.resolve(credential()),
+    },
+  });
+  const gate = gateOf(await start(owner(), 'owner', 'owner@example.com', 'owner'));
+  const created = await gate.create(PASS);
+  expect(created.passkeyAvailable).toBe(true);
+  await created.enablePasskey();
+  await expect(created.enter()).resolves.toMatchObject({ status: 'open' });
+  const next = gateOf(await start(owner(), 'owner', 'owner@example.com', 'owner'));
+  await expect(next.unlockWithPasskey()).resolves.toMatchObject({ status: 'open' });
+  vi.unstubAllGlobals();
+});
+
 test('a family member reads shared records only after the owner approves', async () => {
   const { codec, owner: tools } = await setUpOwner();
   await firestoreRepository(owner(), 'owner', codec).commit([

@@ -93,8 +93,16 @@ export type VaultAccess =
 export interface VaultGate {
   hasKeyring: boolean;
   canUsePasskey: boolean;
+  /** This device has Face ID on, so the check starts without a tap where browsers allow it. */
+  autoPasskey: boolean;
   unlockWithPasskey(): Promise<VaultAccess>;
-  create(passphrase: string): Promise<{ recoveryCode: string; enter(): Promise<VaultAccess> }>;
+  create(passphrase: string): Promise<{
+    recoveryCode: string;
+    /** Whether setup can offer Face ID or a fingerprint on this device. */
+    passkeyAvailable: boolean;
+    enablePasskey(): Promise<void>;
+    enter(): Promise<VaultAccess>;
+  }>;
   unlock(passphrase: string): Promise<VaultAccess>;
   recover(code: string, passphrase: string): Promise<VaultAccess>;
   /** For someone who lost both. Deletes what can no longer be read. */
@@ -270,6 +278,13 @@ export async function startVault(
     };
   };
 
+  const addPasskey = async (keyring: Keyring, pkcs8: Uint8Array) => {
+    const locked = await lockWithPasskey(pkcs8, await createPasskey(user));
+    await setDoc(keyringDoc, { ...keyring, passkeys: [...(keyring.passkeys ?? []), locked] });
+    await forgetOnDevice(user.uid);
+    devicePasskey(user.uid, true);
+  };
+
   const tools = (): VaultTools => {
     const currentKeyring = async () => {
       const keyring = await readKeyring();
@@ -302,12 +317,7 @@ export async function startVault(
         enabled: () => devicePasskey(user.uid),
         async enable(passphrase) {
           const keyring = await currentKeyring();
-          const pkcs8 = await unlockCurrent(keyring, passphrase);
-          const secret = await createPasskey(user);
-          const locked = await lockWithPasskey(pkcs8, secret);
-          await setDoc(keyringDoc, { ...keyring, passkeys: [...(keyring.passkeys ?? []), locked] });
-          await forgetOnDevice(user.uid);
-          devicePasskey(user.uid, true);
+          await addPasskey(keyring, await unlockCurrent(keyring, passphrase));
         },
         async disable() {
           const keyring = await currentKeyring();
@@ -365,10 +375,13 @@ export async function startVault(
   const remembered = keyring ? await recallFromDevice(user.uid) : null;
   if (keyring && remembered) return { access: await enter(remembered, keyring.publicKey) };
 
+  const canUsePasskey = Boolean(keyring?.passkeys?.length) && (await passkeysAvailable());
+
   return {
     gate: {
       hasKeyring: keyring !== undefined,
-      canUsePasskey: Boolean(keyring?.passkeys?.length) && (await passkeysAvailable()),
+      canUsePasskey,
+      autoPasskey: canUsePasskey && devicePasskey(user.uid),
       async unlockWithPasskey() {
         const stored = await readKeyring();
         const entries = stored?.passkeys ?? [];
@@ -385,7 +398,9 @@ export async function startVault(
         await setDoc(keyringDoc, created.keyring);
         return {
           recoveryCode: created.recoveryCode,
-          enter: () => enterWith(created.pkcs8, created.keyring),
+          passkeyAvailable: await passkeysAvailable(),
+          enablePasskey: () => addPasskey(created.keyring, created.pkcs8),
+          enter: async () => enterWith(created.pkcs8, (await readKeyring()) ?? created.keyring),
         };
       },
       async unlock(passphrase) {

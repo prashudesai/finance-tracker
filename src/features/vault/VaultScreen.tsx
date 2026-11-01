@@ -1,5 +1,5 @@
 import { Fingerprint, KeyRound, ShieldCheck } from 'lucide-react';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { MIN_PASSPHRASE_LENGTH } from '../../data/crypto';
 import type { VaultAccess, VaultGate } from '../../data/vault';
 import { Field } from '../../ui/Field';
@@ -134,7 +134,41 @@ function CreatePassphrase({
   const [value, setValue] = useState({ passphrase: '', repeat: '' });
   const [created, setCreated] = useState<Awaited<ReturnType<VaultGate['create']>> | null>(null);
   const [saved, setSaved] = useState(false);
+  const [offering, setOffering] = useState(false);
   const { working, error, run } = useTask();
+
+  if (created && offering) {
+    return (
+      <Screen
+        onSignOut={onSignOut}
+        text="Open your records with your face or fingerprint on this device, instead of staying unlocked. Your passphrase and recovery code still work."
+        title="Use Face ID or fingerprint?"
+      >
+        <Failure message={error} />
+        <button
+          className={ui.button}
+          disabled={working}
+          onClick={() =>
+            void run(async () => {
+              await created.enablePasskey();
+              onAccess(await created.enter());
+            })
+          }
+          type="button"
+        >
+          <Fingerprint size={16} /> {working ? 'Setting up…' : 'Turn on'}
+        </button>
+        <button
+          className={ui.quiet}
+          disabled={working}
+          onClick={() => void run(async () => onAccess(await created.enter()))}
+          type="button"
+        >
+          Not now
+        </button>
+      </Screen>
+    );
+  }
 
   if (created) {
     return (
@@ -156,7 +190,10 @@ function CreatePassphrase({
         <button
           className={ui.button}
           disabled={!saved || working}
-          onClick={() => void run(async () => onAccess(await created.enter()))}
+          onClick={() => {
+            if (created.passkeyAvailable) setOffering(true);
+            else void run(async () => onAccess(await created.enter()));
+          }}
           type="button"
         >
           {working ? 'Opening…' : 'Continue'}
@@ -208,6 +245,14 @@ function Unlock({
   const [fresh, setFresh] = useState({ passphrase: '', repeat: '' });
   const [phrase, setPhrase] = useState('');
   const { working, error, run } = useTask();
+  const prompted = useRef(false);
+
+  // Some browsers refuse this without a tap, and people can cancel. Either way the button stays.
+  useEffect(() => {
+    if (!gate.autoPasskey || prompted.current) return;
+    prompted.current = true;
+    gate.unlockWithPasskey().then(onAccess, () => undefined);
+  }, [gate, onAccess]);
 
   return (
     <Screen
