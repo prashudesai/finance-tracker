@@ -13,7 +13,7 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vite/client", "vitest/globals", "node"]
+    "types": ["vite/client", "vitest/globals", "node", "vite-plugin-pwa/client"]
   },
   "include": ["src", "rules", "vite.config.ts"]
 }

@@ -17,6 +17,7 @@ import { useSettings, useTracker } from './store/tracker';
 import styles from './Shell.module.css';
 import { localDate } from './ui/format';
 import { SearchButton } from './ui/SearchDialog';
+import { useAppUpdate } from './ui/pwa';
 import { useTheme } from './ui/theme';
 import ui from './ui/ui.module.css';
 
@@ -81,6 +82,7 @@ export function Shell({
   const setProfile = useTracker((state) => state.setProfile);
   const settings = useSettings();
   const { theme, toggle } = useTheme();
+  const { updateReady, applyUpdate } = useAppUpdate();
 
   useEffect(
     () => connect(repository, account.role !== 'viewer'),
@@ -148,6 +150,14 @@ export function Shell({
         </div>
       </header>
       <main className={styles.main}>
+        {updateReady ? (
+          <div className={`${ui.notice} ${ui.split}`} role="status">
+            <span>Update available. Finish what you're typing, then update.</span>
+            <button className={ui.quiet} onClick={applyUpdate} type="button">
+              Update now
+            </button>
+          </div>
+        ) : null}
         {error ? (
           <p className={ui.notice} role="alert">
             {error}

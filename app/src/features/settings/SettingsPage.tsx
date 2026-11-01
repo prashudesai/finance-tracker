@@ -20,6 +20,7 @@ import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
+import { useInstallApp } from '../../ui/pwa';
 import { useTheme } from '../../ui/theme';
 import ui from '../../ui/ui.module.css';
 
@@ -382,6 +383,26 @@ function FamilyAccess({ account }: { account: Account }) {
   );
 }
 
+function AppUpdates() {
+  const { canInstall, install } = useInstallApp();
+  return (
+    <div className={ui.page}>
+      <p>You are on version {VERSION}. New versions wait for you to accept them.</p>
+      <div className={ui.metric}>
+        <strong>Install app</strong>
+        <p className={ui.caption}>
+          {canInstall
+            ? 'Add Finance Tracker to your Home Screen or desktop.'
+            : 'Already installed, or use your browser menu to add it to your Home Screen.'}
+        </p>
+        <button className={ui.quiet} disabled={!canInstall} onClick={install} type="button">
+          Install app
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Appearance() {
   const { theme, toggle } = useTheme();
   return (
@@ -464,7 +485,7 @@ export function SettingsPage({ account }: { account: Account }) {
           {panel === 'values' ? <CustomValues /> : null}
           {panel === 'archived' ? <ArchivedAccounts /> : null}
           {panel === 'data' ? <DataBackup /> : null}
-          {panel === 'updates' ? <p>You are on version {VERSION}.</p> : null}
+          {panel === 'updates' ? <AppUpdates /> : null}
         </Modal>
       ) : null}
     </div>

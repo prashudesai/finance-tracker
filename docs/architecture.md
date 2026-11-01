@@ -14,6 +14,7 @@ Finance Tracker is a client-only app. The browser talks directly to Firebase Aut
 | Forms | React Hook Form |
 | Backend | Firebase Auth and Firestore |
 | Styling | CSS Modules and design tokens, Inter, Lucide icons |
+| PWA | `vite-plugin-pwa`, app files only, updates wait for acceptance |
 | Tests | Vitest, Testing Library, Firestore emulator |
 
 ## Layers
@@ -25,8 +26,8 @@ store/tracker     Live data, commit, error state
       |
 data/repository   TrackerRepository interface
       |
-      +-- data/firebase           Firestore, used in the real app
-      +-- data/memoryRepository   In-memory, used in tests and the preview
+      +-- data/firestoreRepository  Firestore, used in the real app
+      +-- data/memoryRepository     In-memory, used in tests and the preview
 
 domain/   Pure calculations, usable from any layer
 schema/   Zod record schemas, usable from any layer
@@ -62,4 +63,5 @@ The older app saved all data as one large chunked snapshot, with its own Indexed
 - A household's ID is its owner's UID.
 - The owner creates an invite, and only the invited person can accept it. Without that step, anyone could push a stranger into their household.
 - Editors and viewers get access only through an accepted membership. Viewers can't write.
+- `app/firebase.json` sets a Content Security Policy for hosting.
 - Rules can't validate record contents in depth, so schemas protect the client from bad rows rather than protecting the database from a hostile editor.

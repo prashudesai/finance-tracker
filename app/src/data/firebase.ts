@@ -10,18 +10,15 @@ import {
   type User,
 } from 'firebase/auth';
 import {
-  collection,
   doc,
   getDoc,
   setDoc,
   updateDoc,
   initializeFirestore,
-  onSnapshot,
   persistentLocalCache,
   persistentMultipleTabManager,
-  writeBatch,
 } from 'firebase/firestore';
-import { parseRows, type CollectionName, type TrackerRepository } from './repository';
+import { firestoreRepository } from './firestoreRepository';
 
 // Firebase web configuration identifies the project; it is not a secret.
 const app = initializeApp({
@@ -74,35 +71,5 @@ export const inviteMember = (ownerUid: string, email: string, role: 'editor' | '
     accepted: false,
   });
 
-export function createFirestoreRepository(householdId: string): TrackerRepository {
-  const path = (name: CollectionName) => `households/${householdId}/${name}`;
-  return {
-    subscribe(name, onRows, onError) {
-      return onSnapshot(
-        collection(db, path(name)),
-        (snapshot) => {
-          const { rows, invalidCount } = parseRows(
-            name,
-            snapshot.docs.map((row) => row.data()),
-          );
-          onRows(rows, invalidCount);
-        },
-        onError,
-      );
-    },
-    async commit(writes) {
-      const batch = writeBatch(db);
-      for (const write of writes) {
-        const target = doc(db, path(write.collection), write.id);
-        if (write.type === 'set') batch.set(target, stripUndefined(write.value));
-        else batch.delete(target);
-      }
-      await batch.commit();
-    },
-  };
-}
-
-/** Firestore rejects `undefined`, which optional form fields produce. */
-function stripUndefined(value: object) {
-  return JSON.parse(JSON.stringify(value)) as object;
-}
+export const createFirestoreRepository = (householdId: string) =>
+  firestoreRepository(db, householdId);

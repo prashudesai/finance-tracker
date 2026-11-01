@@ -1,6 +1,6 @@
 # Rewrite status
 
-Last updated 2026-11-01. The rewrite is in progress and doesn't yet replace the older app.
+Last updated 2026-11-01. The rewrite is on `rewrite/react-typescript` and isn't deployed, so the older app is still what runs in production.
 
 ## Done
 
@@ -15,38 +15,36 @@ All pages from the older app's navigation exist and follow its layouts.
 | Analytics & Reports | Analytics, Growth Projection and Date range reports tabs |
 | Settings | App info, account, family access, appearance, custom values, data and backup, app and updates |
 | Calculations | Loans, recurring, XIRR, gratuity and projections match legacy in seeded parity tests |
-| Security rules | Written for all collections, with 14 tests passing on the emulator |
+| Search | All records, following the selected family profile |
+| Reviews | Month review, statement checks, record freshness and the attention list |
+| Planning | Goal planner and planned changes |
+| Data layer | Firestore repository tested on the emulator with the real rules |
+| Security rules | Written for all collections and tested on the emulator |
+| PWA | Installable, app shell works offline, updates wait for acceptance, security policy applied |
 
 ## Not verified
 
-- The Firestore repository, Google sign-in and invites haven't been run end to end. Tests and the preview use the in-memory repository.
+- Google sign-in and invites haven't run against real Firebase. The security policy allows the sign-in hosts, but no real sign-in has exercised it.
 - Rules for `app/` aren't deployed, so sign-in against the real project would be refused data access.
-- Offline behaviour is expected from Firestore's local cache, but nothing tests it yet.
-- There are no Playwright tests in the repo yet. Main flows were checked with a throwaway browser script.
+- Offline data and queued writes are expected from Firestore's local cache, but only the app shell has been tested offline.
+- There are no Playwright tests in the repo yet. Main flows and PWA behaviour were checked with throwaway browser scripts.
 - Styled dropdown menus need a recent Chromium browser. Others show the native list.
+- Phone keyboards and screen readers need checking on real devices.
 
 ## Remaining
 
 ### Features still missing from the older app
 
-- [ ] Record search
-- [ ] Onboarding and guided tour
-- [ ] Month review, statement checks and valuation freshness
-- [ ] Portfolio goal planner
-- [ ] Archived accounts, change log and restore points
-- [ ] Loan fields for extra first-EMI interest and short first-period interest
-- [ ] Recurring item editing and dated amount changes
+- [ ] Guided tour
+- [ ] Change log and dated restore points
 - [ ] Removing family members from access, and shared payment confirmations
 - [ ] Generated PDF exports (reports use the browser's print to PDF for now)
 - [ ] Named tests from `tests/first-emi.cjs`, `tests/short-first-interest.cjs`, `tests/revised-emi.cjs` and `tests/sbi-daily.cjs`
 
 ### Platform
 
-- [ ] PWA install and app shell caching, with a prompt before updating
-- [ ] Content Security Policy and security headers
 - [ ] Bundle budgets, and more code splitting (the Firebase chunk is about 187 KB gzipped)
 - [ ] Playwright tests at phone and desktop widths
-- [ ] CI for `app/`
 
 ### Cutover
 
@@ -72,5 +70,6 @@ All pages from the older app's navigation exist and follow its layouts.
 - Holdings derive invested and current values from contributions and valuations, instead of keeping running totals.
 - A contribution dated the same day as a valuation, or earlier, is treated as already included in that valuation.
 - PF and PPF interest credits are recorded as a new valuation rather than a separate credit list.
+- A restore larger than 400 writes is sent in batches, so an interrupted restore can be partial. Restoring the backup again fixes it.
 - Scheduled contributions post once after records load, with fixed IDs, so two devices can't post the same month twice.
 - The expenses series is amber, not rose, because rose fails the colour-blindness check against mint.

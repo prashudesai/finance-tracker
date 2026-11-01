@@ -9,7 +9,7 @@ Read [docs/rewrite-status.md](docs/rewrite-status.md) before starting a feature,
 - Existing data is throwaway. Don't add migrations or compatibility with legacy formats.
 - Legacy code is a reference only. Don't fix or extend it. It gets deleted once `app/` has parity.
 - The encrypted vault was dropped on purpose. Don't restore it from git history.
-- Nothing from `app/` is deployed. Its `firestore.rules` differ from the rules in production, so real sign-in won't work until they are deployed.
+- Nothing from `app/` is deployed. Its `firestore.rules` differ from the rules in production, so real sign-in won't work until they are deployed. Pushes to `main` still deploy the older app, and `app/**` changes are excluded from that workflow.
 
 ## Commands
 
@@ -45,7 +45,7 @@ npm run build
 
 - `dev:preview` runs the app on sample in-memory data with no Firebase or sign-in, on port 5173. The sign-in screen is at `/signin`.
 - `npm test` covers domain logic and UI. It reads `../dist/*.js` for the parity tests.
-- `test:rules` runs against the Firestore emulator and needs Java 17 or later.
+- `test:rules` covers the security rules and Firestore repository on the emulator, and needs Java 17 or later.
 
 Before calling work done, run typecheck, lint, tests and build. Run `test:rules` too if `firestore.rules` changed. For UI changes, also check the running app at phone and desktop widths.
 

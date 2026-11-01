@@ -8,6 +8,8 @@ on:
     paths-ignore:
       - '.github/**'
       - '**/*.md'
+      # The new app is not deployed yet.
+      - 'app/**'
   workflow_dispatch:
 
 permissions:
