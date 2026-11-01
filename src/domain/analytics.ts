@@ -342,6 +342,31 @@ export function attentionItems(
   return items;
 }
 
+export interface StatementAccount {
+  kind: 'holding' | 'loan';
+  id: string;
+  name: string;
+  balance: number;
+}
+
+/** Everything that has a statement to compare against, with its tracker balance. */
+export function statementAccounts(data: TrackerData, today: string): StatementAccount[] {
+  return [
+    ...holdingRows(data, today).map(({ holding, position }): StatementAccount => ({
+      kind: 'holding',
+      id: holding.id,
+      name: `${holding.name} · ${holding.member}`,
+      balance: position.current,
+    })),
+    ...summarizeLoans(data, today).map(({ id, type, member, ledger }): StatementAccount => ({
+      kind: 'loan',
+      id,
+      name: `${type} · ${member}`,
+      balance: ledger?.remaining ?? 0,
+    })),
+  ];
+}
+
 export const isEmi = (row: { category: string }) => row.category === EMI_CATEGORY;
 
 export const assumptionKeys = (settings: TrackerSettings) => Object.keys(settings.returns);

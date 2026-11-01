@@ -1,15 +1,15 @@
 import { Archive, History, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { CategoryRow, PositionRow } from '../../domain/analytics';
-import { holdingContributions } from '../../domain/holdings';
 import type { RecordWrite } from '../../data/repository';
 import { useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
-import { formatDay, formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
+import { formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { Metric } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import { HoldingForm } from './HoldingForm';
+import { HoldingHistory } from './HoldingHistory';
 
 type Action = 'value' | 'contribution' | 'history' | 'edit';
 
@@ -58,48 +58,6 @@ function AmountForm({
         </button>
       </div>
     </form>
-  );
-}
-
-function ContributionHistory({ holdingId }: { holdingId: string }) {
-  const contributions = useTracker((state) => state.data.contributions);
-  const commit = useTracker((state) => state.commit);
-  const rows = holdingContributions(holdingId, contributions).reverse();
-  if (rows.length === 0) return <p className={ui.empty}>No contributions recorded yet.</p>;
-  return (
-    <ul className={ui.list}>
-      {rows.map((row) => (
-        <li className={ui.row} key={row.id}>
-          <div className={ui.rowMain}>
-            <div className={ui.rowTitle}>{formatMoney(row.amount)}</div>
-            <div className={ui.rowDetail}>
-              {formatDay(row.date)} {row.date.slice(0, 4)} ·{' '}
-              {row.automatic ? 'Automatic' : 'Manual'}
-            </div>
-          </div>
-          <button
-            aria-label={`Remove contribution of ${formatDay(row.date)}`}
-            className={ui.smallIcon}
-            onClick={() =>
-              // A scheduled record stays, marked skipped, so the schedule does not repost it.
-              commit([
-                row.automatic
-                  ? {
-                      type: 'set',
-                      collection: 'contributions',
-                      id: row.id,
-                      value: { ...row, skipped: true },
-                    }
-                  : { type: 'delete', collection: 'contributions', id: row.id },
-              ])
-            }
-            type="button"
-          >
-            <Trash2 size={14} />
-          </button>
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -245,8 +203,8 @@ function HoldingCard({ row }: { row: PositionRow }) {
         </Modal>
       ) : null}
       {action === 'history' ? (
-        <Modal onClose={close} title="Contribution history">
-          <ContributionHistory holdingId={holding.id} />
+        <Modal onClose={close} title={`${holding.name} history`}>
+          <HoldingHistory holding={holding} />
         </Modal>
       ) : null}
       {action === 'edit' ? (

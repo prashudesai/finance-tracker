@@ -1,7 +1,9 @@
 import {
   PMS_TYPE,
   type Contribution,
+  type EpsUpdate,
   type Holding,
+  type InterestCredit,
   type TrackerSettings,
   type Valuation,
 } from '../schema/records';
@@ -26,6 +28,8 @@ export function growthType(type: string, settings?: Pick<TrackerSettings, 'growt
 export interface HoldingData {
   contributions: Contribution[];
   valuations: Valuation[];
+  interestCredits?: InterestCredit[];
+  epsUpdates?: EpsUpdate[];
 }
 
 /** Rows for one holding, active only, oldest first. */
@@ -57,7 +61,7 @@ export interface HoldingPosition {
 
 /**
  * Invested is the opening amount plus contributions. Current is the latest valuation,
- * or the opening value, plus contributions made after it.
+ * or the opening value, plus contributions and interest credited after it.
  */
 export function holdingPosition(
   holding: Holding,
@@ -71,10 +75,22 @@ export function holdingPosition(
   const contributed = rows.reduce((sum, row) => sum + row.amount, 0);
   const invested = holding.openingInvested + contributed;
   const since = valuation?.date ?? '';
+  const interest = (data.interestCredits ?? [])
+    .filter(
+      (row) => row.holdingId === holding.id && row.creditedDate <= asOf && row.creditedDate > since,
+    )
+    .reduce((sum, row) => sum + row.amount, 0);
   const current =
     (valuation?.value ?? holding.openingValue) +
+    interest +
     rows.filter((row) => row.date > since).reduce((sum, row) => sum + row.amount, 0);
-  const eps = (holding.epsOpening ?? 0) + rows.reduce((sum, row) => sum + (row.epsAmount ?? 0), 0);
+  const corrections = (data.epsUpdates ?? [])
+    .filter((row) => row.holdingId === holding.id && row.date <= asOf)
+    .reduce((sum, row) => sum + row.amount, 0);
+  const eps =
+    (holding.epsOpening ?? 0) +
+    corrections +
+    rows.reduce((sum, row) => sum + (row.epsAmount ?? 0), 0);
 
   const flows: Cashflow[] = [];
   if (holding.openingInvested > 0) {
@@ -152,3 +168,40 @@ export function groupXirr(holdings: Holding[], data: HoldingData, asOf: string) 
   }
   return calculateXirr(flows);
 }
+
+export interface EpsEntry {
+  id: string;
+  date: string;
+  amount: number;
+  kind: 'contribution' | 'correction';
+  balance: number;
+}
+
+/** EPS movements, oldest first, with the balance after each. EPS earns no interest. */
+export function epsLedger(holding: Holding, data: HoldingData): EpsEntry[] {
+  const entries = [
+    ...holdingContributions(holding.id, data.contributions)
+      .filter((row) => row.epsAmount !== undefined)
+      .map((row) => ({
+        id: row.id,
+        date: row.date,
+        amount: row.epsAmount ?? 0,
+        kind: 'contribution' as const,
+      })),
+    ...(data.epsUpdates ?? [])
+      .filter((row) => row.holdingId === holding.id)
+      .map(({ id, date, amount }) => ({ id, date, amount, kind: 'correction' as const })),
+  ].sort(
+    (a, b) =>
+      a.date.localeCompare(b.date) ||
+      Number(a.kind === 'correction') - Number(b.kind === 'correction'),
+  );
+  let balance = holding.epsOpening ?? 0;
+  return entries.map((row) => {
+    balance += row.amount;
+    return { ...row, balance };
+  });
+}
+
+export const interestCreditId = (holdingId: string, year: number) =>
+  `interest_${holdingId}_${year}`;

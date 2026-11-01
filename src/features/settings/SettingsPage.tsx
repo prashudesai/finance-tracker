@@ -2,6 +2,7 @@ import {
   Archive,
   ChevronRight,
   DatabaseBackup,
+  FileCheck,
   History,
   Info,
   ListPlus,
@@ -13,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { statementAccounts } from '../../domain/analytics';
 import { clearWrites, createBackup, parseBackup, restoreWrites } from '../../domain/backup';
 import { undoWrites } from '../../domain/changes';
 import type { ChangeRecord } from '../../schema/records';
@@ -20,7 +22,7 @@ import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
 import type { Account, FamilyMember } from '../../Shell';
 import { downloadText } from '../../ui/download';
 import { Field } from '../../ui/Field';
-import { localDate } from '../../ui/format';
+import { formatMoney, localDate, signedMoney } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
 import { useInstallApp } from '../../ui/pwa';
@@ -35,6 +37,7 @@ type Panel =
   | 'appearance'
   | 'values'
   | 'archived'
+  | 'statements'
   | 'changes'
   | 'data'
   | 'updates';
@@ -67,6 +70,12 @@ const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] =
     icon: Archive,
     title: 'Archived accounts',
     text: 'Restore closed accounts and loans',
+  },
+  {
+    panel: 'statements',
+    icon: FileCheck,
+    title: 'Statement checks',
+    text: 'Compare balances with your statements',
   },
   {
     panel: 'changes',
@@ -461,6 +470,113 @@ function FamilyAccessPanel({ account }: { account: Account }) {
   );
 }
 
+function StatementChecks() {
+  const data = useTracker((state) => state.data);
+  const commit = useTracker((state) => state.commit);
+  const today = localDate();
+  const accounts = statementAccounts(data, today);
+  const [selected, setSelected] = useState(accounts[0]?.id ?? '');
+  const [statement, setStatement] = useState('');
+  const [notes, setNotes] = useState('');
+  const account = accounts.find((row) => row.id === selected);
+  const balance = Number(statement);
+  const valid = account !== undefined && statement !== '' && balance >= 0;
+  const rows = [...data.statementChecks].sort((a, b) => b.date.localeCompare(a.date));
+  if (accounts.length === 0) return <p className={ui.empty}>No accounts to compare yet.</p>;
+
+  return (
+    <div className={ui.page}>
+      <p className={ui.caption}>
+        Compare today's tracker balance with a current statement. This records a check and doesn't
+        change any balance. Correct an account or EMI on its own page, then check again.
+      </p>
+      <form
+        className={ui.form}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!valid || !account) return;
+          const id = crypto.randomUUID();
+          commit([
+            {
+              type: 'set',
+              collection: 'statementChecks',
+              id,
+              value: {
+                id,
+                accountKind: account.kind,
+                accountId: account.id,
+                accountName: account.name,
+                date: today,
+                statementBalance: balance,
+                trackerBalance: account.balance,
+                ...(notes.trim() ? { notes: notes.trim() } : {}),
+              },
+            },
+          ]);
+          setStatement('');
+          setNotes('');
+        }}
+      >
+        <Field label="Account">
+          <select onChange={(event) => setSelected(event.target.value)} value={selected}>
+            {accounts.map((row) => (
+              <option key={row.id} value={row.id}>
+                {row.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Statement balance (₹)">
+          <input
+            inputMode="decimal"
+            onChange={(event) => setStatement(event.target.value)}
+            step="0.01"
+            type="number"
+            value={statement}
+          />
+        </Field>
+        <Field label="Statement reference or notes">
+          <input maxLength={240} onChange={(event) => setNotes(event.target.value)} value={notes} />
+        </Field>
+        {account ? (
+          <p className={ui.caption} style={{ gridColumn: '1 / -1', margin: 0 }}>
+            Tracker balance {formatMoney(account.balance)}
+            {statement !== '' ? ` · Difference ${signedMoney(balance - account.balance)}` : ''}
+          </p>
+        ) : null}
+        <div className={ui.formActions}>
+          <button className={ui.button} disabled={!valid} type="submit">
+            Save statement check
+          </button>
+        </div>
+      </form>
+      {rows.length === 0 ? (
+        <p className={ui.empty}>No statement checks yet.</p>
+      ) : (
+        <ul className={ui.list}>
+          {rows.map((row) => {
+            const difference = row.statementBalance - row.trackerBalance;
+            return (
+              <li className={ui.row} key={row.id}>
+                <div className={ui.rowMain}>
+                  <div className={ui.rowTitle}>{row.accountName}</div>
+                  <div className={ui.rowDetail}>
+                    {row.date} · Statement {formatMoney(row.statementBalance)}
+                    {row.notes ? ` · ${row.notes}` : ''}
+                  </div>
+                </div>
+                <span className={`${ui.amount} ${difference === 0 ? ui.gain : ui.loss}`}>
+                  {difference === 0 ? 'Matches' : signedMoney(difference)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function ChangeLog() {
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
@@ -655,6 +771,7 @@ export function SettingsPage({ account }: { account: Account }) {
           {panel === 'appearance' ? <Appearance /> : null}
           {panel === 'values' ? <CustomValues /> : null}
           {panel === 'archived' ? <ArchivedAccounts /> : null}
+          {panel === 'statements' ? <StatementChecks /> : null}
           {panel === 'changes' ? <ChangeLog /> : null}
           {panel === 'data' ? <DataBackup /> : null}
           {panel === 'updates' ? <AppUpdates /> : null}

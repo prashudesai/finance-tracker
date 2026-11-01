@@ -2,30 +2,36 @@ import type { z } from 'zod';
 import {
   changeRecordSchema,
   contributionSchema,
+  epsUpdateSchema,
   expenseSchema,
   gratuityAccountSchema,
   holdingSchema,
   incomeSchema,
+  interestCreditSchema,
   loanSchema,
   monthReviewSchema,
   monthlyBalanceSchema,
   projectionAdjustmentSchema,
   recurringOccurrenceSchema,
   recurringRuleSchema,
+  statementCheckSchema,
   trackerSettingsSchema,
   valuationSchema,
   type ChangeRecord,
   type Contribution,
+  type EpsUpdate,
   type Expense,
   type GratuityAccount,
   type Holding,
   type Income,
+  type InterestCredit,
   type Loan,
   type MonthReview,
   type MonthlyBalance,
   type ProjectionAdjustment,
   type RecurringOccurrence,
   type RecurringRule,
+  type StatementCheck,
   type TrackerSettings,
   type Valuation,
 } from '../schema/records';
@@ -45,6 +51,9 @@ export interface TrackerData {
   settings: TrackerSettings[];
   monthReviews: MonthReview[];
   changes: ChangeRecord[];
+  interestCredits: InterestCredit[];
+  epsUpdates: EpsUpdate[];
+  statementChecks: StatementCheck[];
 }
 
 export type CollectionName = keyof TrackerData;
@@ -64,6 +73,9 @@ export const COLLECTIONS: { [Name in CollectionName]: z.ZodType<TrackerData[Name
   settings: trackerSettingsSchema,
   monthReviews: monthReviewSchema,
   changes: changeRecordSchema,
+  interestCredits: interestCreditSchema,
+  epsUpdates: epsUpdateSchema,
+  statementChecks: statementCheckSchema,
 };
 
 export const COLLECTION_NAMES = Object.keys(COLLECTIONS) as CollectionName[];
@@ -83,6 +95,9 @@ export const emptyTrackerData = (): TrackerData => ({
   settings: [],
   monthReviews: [],
   changes: [],
+  interestCredits: [],
+  epsUpdates: [],
+  statementChecks: [],
 });
 
 export type RecordWrite =

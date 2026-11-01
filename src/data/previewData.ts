@@ -224,6 +224,15 @@ export function previewData(): Partial<TrackerData> {
     contributions,
     valuations,
     monthlyBalances,
+    interestCredits: [
+      {
+        id: 'interest_pf_2025',
+        holdingId: 'pf',
+        financialYearStartYear: 2025,
+        creditedDate: '2026-03-31',
+        amount: 42_500,
+      },
+    ],
     gratuityAccounts: [
       { id: 'grat', member: MEMBERS[0] ?? '', date: '2018-06-15', basicSalary: 68_000 },
     ],

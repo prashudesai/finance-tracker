@@ -1,7 +1,7 @@
 import { defaultSettings, type GratuityAccount, type Holding } from '../schema/records';
 import { addMonths, isValidDate } from './calendar';
 import { estimateGratuity } from './gratuity';
-import { dueContributions, holdingPosition } from './holdings';
+import { dueContributions, epsLedger, holdingPosition } from './holdings';
 import { loadLegacyFunctions } from './legacy.testutil';
 import { gratuityAsset, projectionAssets, runProjection, type ProjectionAsset } from './projection';
 import { calculateXirr } from './returns';
@@ -60,6 +60,69 @@ describe('holding positions', () => {
       valuations: [],
     };
     expect(holdingPosition(holding(), data, '2025-05-01').invested).toBe(100_000);
+  });
+});
+
+describe('interest credits and EPS', () => {
+  const pf = holding({ kind: 'pf', type: 'PF', epsOpening: 1000 });
+
+  test('interest raises current value but not the invested amount', () => {
+    const data = {
+      contributions: [],
+      valuations: [],
+      interestCredits: [
+        {
+          id: 'i',
+          holdingId: 'h',
+          financialYearStartYear: 2025,
+          creditedDate: '2026-03-31',
+          amount: 8000,
+        },
+      ],
+    };
+    const position = holdingPosition(pf, data, '2026-04-01');
+    expect(position.current).toBe(108_000);
+    expect(position.invested).toBe(100_000);
+    expect(holdingPosition(pf, data, '2026-03-30').current).toBe(100_000);
+  });
+
+  test('a later valuation already includes earlier interest', () => {
+    const data = {
+      contributions: [],
+      valuations: [{ id: 'v', holdingId: 'h', date: '2026-04-15', value: 120_000 }],
+      interestCredits: [
+        {
+          id: 'i',
+          holdingId: 'h',
+          financialYearStartYear: 2025,
+          creditedDate: '2026-03-31',
+          amount: 8000,
+        },
+      ],
+    };
+    expect(holdingPosition(pf, data, '2026-05-01').current).toBe(120_000);
+  });
+
+  test('the EPS ledger runs from the opening balance through corrections', () => {
+    const data = {
+      contributions: [
+        {
+          id: 'a',
+          holdingId: 'h',
+          date: '2026-01-01',
+          amount: 8750,
+          epsAmount: 1250,
+          automatic: true,
+        },
+      ],
+      valuations: [],
+      epsUpdates: [{ id: 'b', holdingId: 'h', date: '2026-02-01', amount: -250 }],
+    };
+    expect(epsLedger(pf, data).map((row) => [row.kind, row.balance])).toEqual([
+      ['contribution', 2250],
+      ['correction', 2000],
+    ]);
+    expect(holdingPosition(pf, data, '2026-03-01').eps).toBe(2000);
   });
 });
 

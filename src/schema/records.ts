@@ -190,6 +190,38 @@ export const valuationSchema = z.object({
 });
 export type Valuation = z.infer<typeof valuationSchema>;
 
+/** Annual PF or PPF interest. Each account has at most one per financial year. */
+export const interestCreditSchema = z.object({
+  id,
+  holdingId: id,
+  financialYearStartYear: z.number().int().min(1900).max(2200),
+  creditedDate: date,
+  amount: money,
+});
+export type InterestCredit = z.infer<typeof interestCreditSchema>;
+
+/** A correction to a PF account's EPS balance. Signed, as it can go either way. */
+export const epsUpdateSchema = z.object({
+  id,
+  holdingId: id,
+  date,
+  amount: number,
+});
+export type EpsUpdate = z.infer<typeof epsUpdateSchema>;
+
+/** A balance compared with a statement. It records the check and changes no money. */
+export const statementCheckSchema = z.object({
+  id,
+  accountKind: z.enum(['holding', 'loan']),
+  accountId: id,
+  accountName: z.string().max(200),
+  date,
+  statementBalance: number,
+  trackerBalance: number,
+  notes: z.string().max(240).optional(),
+});
+export type StatementCheck = z.infer<typeof statementCheckSchema>;
+
 export const gratuityAccountSchema = z.object({
   id,
   member: name,

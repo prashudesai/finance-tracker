@@ -91,6 +91,9 @@ describe('household records', () => {
       'settings',
       'monthReviews',
       'changes',
+      'interestCredits',
+      'epsUpdates',
+      'statementChecks',
     ]) {
       await assertSucceeds(setDoc(doc(db, `households/owner/${name}/a`), { value: 1 }));
     }
