@@ -9,7 +9,7 @@ Read [docs/rewrite-status.md](docs/rewrite-status.md) before starting a feature,
 - Existing data is throwaway. Don't add migrations or compatibility with legacy formats.
 - Legacy code is a reference only. Don't fix or extend it. It gets deleted once `app/` has parity.
 - The encrypted vault was dropped on purpose. Don't restore it from git history.
-- Nothing from `app/` is deployed. Its `firestore.rules` differ from the rules in production, so real sign-in won't work until they are deployed. Pushes to `main` still deploy the older app, and `app/**` changes are excluded from that workflow.
+- `app/` deploys to the test project `finance-trackerp`, pinned in `app/.firebaserc`. Don't deploy it to the live project `finance-tracker-bc7c9`: its `firestore.rules` would lock out the older app. Pushes to `main` still deploy the older app, and `app/**` changes are excluded from that workflow.
 
 ## Commands
 

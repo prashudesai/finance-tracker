@@ -1,6 +1,6 @@
 # Rewrite status
 
-Last updated 2026-11-01. The rewrite is on `rewrite/react-typescript` and isn't deployed, so the older app is still what runs in production.
+Last updated 2026-11-01. The rewrite is on `rewrite/react-typescript`. It's deployed to the `finance-trackerp` test project at https://finance-trackerp.web.app, and the older app is still what runs in production.
 
 ## Done
 
@@ -29,7 +29,7 @@ All pages from the older app's navigation exist and follow its layouts.
 ## Not verified
 
 - Google sign-in and family management haven't run against real Firebase. The security policy allows the sign-in hosts, but no real sign-in has exercised it.
-- Rules for `app/` aren't deployed, so sign-in against the real project would be refused data access.
+- Rules for `app/` are deployed to the test project only, not the live project.
 - Offline data and queued writes are expected from Firestore's local cache, but only the app shell has been tested offline.
 - There are no Playwright tests in the repo yet. Main flows and PWA behaviour were checked with throwaway browser scripts.
 - Styled dropdown menus need a recent Chromium browser. Others show the native list.
