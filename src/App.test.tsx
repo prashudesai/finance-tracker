@@ -898,6 +898,46 @@ test('Face ID is turned on with the passphrase, and says when a device lacks it'
   expect(await screen.findByText(/doesn't support it yet/)).toBeDefined();
 });
 
+test('passphrase settings stay compact until one is chosen', async () => {
+  const security = {
+    changePassphrase: vi.fn(async () => undefined),
+    newRecoveryCode: vi.fn(async () => 'NEW-CODE'),
+    passkey: {
+      available: vi.fn(async () => false),
+      enabled: vi.fn(() => false),
+      enable: vi.fn(async () => undefined),
+      disable: vi.fn(async () => undefined),
+    },
+  };
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell
+        account={{ name: 'O', email: 'o@example.test', role: 'owner', security }}
+        repository={createMemoryRepository()}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+  const change = await screen.findByRole('button', { name: 'Change passphrase', hidden: true });
+  expect(screen.queryByLabelText('Current passphrase')).toBeNull();
+  fireEvent.click(change);
+  fireEvent.change(screen.getByLabelText('Current passphrase'), { target: { value: 'old' } });
+  const value = { target: { value: 'a long new passphrase' } };
+  fireEvent.change(screen.getByLabelText('New passphrase'), value);
+  fireEvent.change(screen.getByLabelText('Repeat new passphrase'), value);
+  fireEvent.click(screen.getByRole('button', { name: 'Save passphrase', hidden: true }));
+  await waitFor(() =>
+    expect(security.changePassphrase).toHaveBeenCalledWith('old', 'a long new passphrase'),
+  );
+  expect(await screen.findByText('Passphrase changed.')).toBeDefined();
+  expect(screen.queryByLabelText('Current passphrase')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'New recovery code', hidden: true }));
+  expect(screen.queryByLabelText('New passphrase')).toBeNull();
+  fireEvent.change(screen.getByLabelText('Current passphrase'), { target: { value: 'old' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Create code', hidden: true }));
+  expect(await screen.findByText('NEW-CODE')).toBeDefined();
+});
+
 test('the owner approves a family member after comparing their code', async () => {
   const request = { uid: 'n', email: 'new@example.test', code: '1234 5678 9012' };
   const family = {

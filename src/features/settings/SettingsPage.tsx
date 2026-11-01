@@ -587,68 +587,93 @@ function DeviceUnlock({ security }: { security: AccountSecurity }) {
   );
 }
 
+type SecurityAction = 'passphrase' | 'recovery';
+
 function SecurityPanel({ security }: { security: AccountSecurity }) {
+  const [action, setAction] = useState<SecurityAction | null>(null);
   const [current, setCurrent] = useState('');
   const [fresh, setFresh] = useState({ passphrase: '', repeat: '' });
   const [recoveryCode, setRecoveryCode] = useState('');
   const [status, setStatus] = useState('');
   const [working, setWorking] = useState(false);
 
+  const choose = (next: SecurityAction) => {
+    setAction(action === next ? null : next);
+    setStatus('');
+    setRecoveryCode('');
+  };
+
   const run = (task: () => Promise<string>) => {
     setWorking(true);
     setStatus('');
     task()
-      .then(setStatus, (error: unknown) => setStatus(failureText(error)))
+      .then(
+        (done) => {
+          setStatus(done);
+          setAction(null);
+          setCurrent('');
+          setFresh({ passphrase: '', repeat: '' });
+        },
+        (error: unknown) => setStatus(failureText(error)),
+      )
       .finally(() => setWorking(false));
   };
 
   return (
     <div className={ui.metric}>
       <strong>Passphrase and recovery code</strong>
-      <p className={ui.caption}>
-        Only you can open your records. Nobody can reset these for you, so keep your recovery code
-        safe.
-      </p>
-      <Field label="Current passphrase">
-        <input
-          autoComplete="current-password"
-          onChange={(event) => setCurrent(event.target.value)}
-          type="password"
-          value={current}
-        />
-      </Field>
-      <PassphraseFields label="New passphrase" onChange={setFresh} value={fresh} />
-      <div className={ui.actions}>
+      <div className={ui.actions} style={{ marginTop: 8 }}>
         <button
+          aria-expanded={action === 'passphrase'}
           className={ui.quiet}
-          disabled={!current || !validPassphrase(fresh) || working}
-          onClick={() =>
-            run(async () => {
-              await security.changePassphrase(current, fresh.passphrase);
-              setCurrent('');
-              setFresh({ passphrase: '', repeat: '' });
-              return 'Passphrase changed.';
-            })
-          }
+          onClick={() => choose('passphrase')}
           type="button"
         >
           Change passphrase
         </button>
         <button
+          aria-expanded={action === 'recovery'}
           className={ui.quiet}
-          disabled={!current || working}
-          onClick={() =>
-            run(async () => {
-              setRecoveryCode(await security.newRecoveryCode(current));
-              setCurrent('');
-              return 'New recovery code created. Your old code no longer works.';
-            })
-          }
+          onClick={() => choose('recovery')}
           type="button"
         >
           New recovery code
         </button>
       </div>
+      {action ? (
+        <div className={ui.form} style={{ marginTop: 10 }}>
+          <Field label="Current passphrase">
+            <input
+              autoComplete="current-password"
+              onChange={(event) => setCurrent(event.target.value)}
+              type="password"
+              value={current}
+            />
+          </Field>
+          {action === 'passphrase' ? (
+            <PassphraseFields label="New passphrase" onChange={setFresh} value={fresh} />
+          ) : null}
+          <div className={ui.formActions}>
+            <button
+              className={ui.button}
+              disabled={!current || working || (action === 'passphrase' && !validPassphrase(fresh))}
+              onClick={() =>
+                run(async () => {
+                  if (action === 'passphrase') {
+                    await security.changePassphrase(current, fresh.passphrase);
+                    return 'Passphrase changed.';
+                  }
+                  setRecoveryCode(await security.newRecoveryCode(current));
+                  return 'Your old recovery code no longer works.';
+                })
+              }
+              type="button"
+            >
+              {action === 'passphrase' ? 'Save passphrase' : 'Create code'}
+            </button>
+          </div>
+        </div>
+      ) : null}
       {status ? (
         <p className={ui.caption} role="status">
           {status}

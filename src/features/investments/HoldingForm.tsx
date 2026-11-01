@@ -213,9 +213,12 @@ export function HoldingForm({
         <input type="checkbox" {...register('autoContribute')} /> Add contributions automatically
       </label>
       {auto ? (
-        <Field label="First Monthly Contribution Date">
-          <input type="date" {...register('autoStart')} />
-        </Field>
+        <div>
+          <Field label="Contribution starts on">
+            <input type="date" {...register('autoStart')} />
+          </Field>
+          <p className={ui.caption}>Repeats on this day every month.</p>
+        </div>
       ) : null}
       {kind === 'investment' ? (
         <Field label="Notes">
