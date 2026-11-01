@@ -40,7 +40,14 @@ function useFirebaseSession(): Session {
               name: user.displayName ?? user.email ?? 'You',
               email: user.email ?? '',
               role,
+              ...(user.photoURL ? { photo: user.photoURL } : {}),
               signOut: () => void firebase.signOutUser(),
+              ...(role === 'owner'
+                ? {
+                    deleteAccount: (clearRecords: () => Promise<void>) =>
+                      firebase.deleteAccount(user, clearRecords),
+                  }
+                : {}),
               ...(role === 'owner' ? { family: firebase.familyAccess(user.uid) } : {}),
             },
           });

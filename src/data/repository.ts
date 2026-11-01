@@ -126,6 +126,8 @@ export interface TrackerRepository {
   ): () => void;
   /** Applies all writes together. Offline writes are queued by the backend. */
   commit(writes: RecordWrite[]): Promise<void>;
+  /** Resolves once this device's queued saves reach the server. */
+  flush?(): Promise<void>;
 }
 
 /** Keeps the rows that match the schema, so one bad document cannot blank the app. */

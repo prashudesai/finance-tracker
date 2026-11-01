@@ -45,19 +45,21 @@ export function SortHeader<Key extends string>({
   sort,
   onSort,
   numeric = false,
+  className,
 }: {
   label: string;
   column: Key;
   sort: Sort<Key> | null;
   onSort: (key: Key) => void;
   numeric?: boolean;
+  className?: string | undefined;
 }) {
   const active = sort?.key === column;
   const Icon = !active ? ArrowUpDown : sort.ascending ? ArrowUp : ArrowDown;
   return (
     <th
       aria-sort={!active ? 'none' : sort.ascending ? 'ascending' : 'descending'}
-      className={numeric ? ui.numeric : undefined}
+      className={`${numeric ? ui.numeric : ''} ${className ?? ''}`}
     >
       <button className={ui.sortButton} onClick={() => onSort(column)} type="button">
         {label} <Icon aria-hidden="true" size={12} />

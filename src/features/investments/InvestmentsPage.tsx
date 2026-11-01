@@ -223,12 +223,18 @@ export function InvestmentsPage() {
   const [openName, setOpenName] = useState<string | null>(null);
   const [section, setSection] = useState<Section>(savedSection);
   const phone = useIsPhone();
-  const { state: quickAdd } = useLocation() as { state: { add?: 'investment' | 'pms' } | null };
+  const { state: quickAdd } = useLocation() as {
+    state: { add?: 'investment' | 'pms'; open?: string } | null;
+  };
 
   // The dashboard's add menu lands here with the entry to open.
   useEffect(() => {
     if (quickAdd?.add === 'investment') setAdding('investment');
     if (quickAdd?.add === 'pms') setOpenName(PMS_TYPE);
+    if (quickAdd?.open) {
+      setOpenName(quickAdd.open);
+      if (['PF', 'PPF', 'NPS'].includes(quickAdd.open)) setSection('retirement');
+    }
   }, [quickAdd]);
   const showInvestments = !phone || section === 'investments';
   const showRetirement = !phone || section === 'retirement';

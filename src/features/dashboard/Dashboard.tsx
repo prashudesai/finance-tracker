@@ -12,6 +12,7 @@ import { Link } from 'react-router';
 import {
   attentionItems,
   closeMonth,
+  fullHouseExpense,
   holdingRows,
   monthlyOverview,
   netWorth,
@@ -34,6 +35,7 @@ import {
   signedMoney,
 } from '../../ui/format';
 import { PageHeader } from '../../ui/PageHeader';
+import { useIsPhone } from '../../ui/useIsPhone';
 import { Metric, Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import { GettingStarted } from './GettingStarted';
@@ -54,6 +56,7 @@ function PortfolioRow({ row, peak, index }: { row: CategoryRow; peak: number; in
   return (
     <Link
       className={ui.barRow}
+      state={{ open: row.name }}
       style={{ color: 'inherit', textDecoration: 'none' }}
       to="/investments"
     >
@@ -86,6 +89,8 @@ export function Dashboard() {
   const today = localDate();
   const month = today.slice(0, 7);
   const [sort, setSort] = useState<SortKey>('size');
+  const [fullHouse, setFullHouse] = useState(false);
+  const phone = useIsPhone();
   const [snapshotMonth, setSnapshotMonth] = useState(previousMonth(month));
 
   const worth = netWorth(data, today);
@@ -128,6 +133,9 @@ export function Dashboard() {
     for (let step = 0; step <= index; step++) key = previousMonth(key);
     return key;
   });
+  const trend = monthlyTrend(data, month, fyMonths).map((row) =>
+    fullHouse ? { ...row, expenses: fullHouseExpense(data, row.month) } : row,
+  );
   const monthName = formatMonth(month).split(' ')[0];
   const snapshotName = formatMonth(snapshotMonth).split(' ')[0];
   const previousName = formatMonth(overview.previous);
@@ -281,15 +289,22 @@ export function Dashboard() {
               View details ›
             </Link>
           </div>
-          <TrendChart months={monthlyTrend(data, month, fyMonths)} />
+          <select
+            aria-label="Expense measure"
+            className={ui.fieldSelect}
+            onChange={(event) => setFullHouse(event.target.value === 'full')}
+            value={fullHouse ? 'full' : 'recorded'}
+          >
+            <option value="recorded">Income vs expenses</option>
+            <option value="full">Income vs full house expense</option>
+          </select>
+          <TrendChart months={trend} />
         </section>
 
-        <section className={ui.card}>
-          <div>
-            <h2>What changed in {monthName}</h2>
-            <div className={ui.caption}>
-              Key recorded changes · {monthName} compared with {previousName}
-            </div>
+        <details className={`${ui.card} ${ui.fold}`} key={phone ? 'phone' : 'wide'} open={!phone}>
+          <summary>What changed in {monthName}</summary>
+          <div className={ui.caption}>
+            Key recorded changes · {monthName} compared with {previousName}
           </div>
           <div className={ui.metricsTwo}>
             <Metric
@@ -320,7 +335,16 @@ export function Dashboard() {
           <Link className={ui.quiet} to="/cash-flow">
             View cash-flow details
           </Link>
-        </section>
+          <details className={ui.fold}>
+            <summary>How these figures are calculated</summary>
+            <p className={ui.caption}>
+              Contributions and spending are what you recorded in each month. Debt principal counts
+              only the principal part of each repayment. PMS gain change needs a valuation in both
+              months. House expense is opening balance plus income, less recorded expenses, PMS
+              transfers and next month's opening balance.
+            </p>
+          </details>
+        </details>
       </div>
 
       <section className={ui.card}>

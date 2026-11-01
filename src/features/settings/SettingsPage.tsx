@@ -21,6 +21,7 @@ import type { ChangeRecord } from '../../schema/records';
 import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
 import type { Account, FamilyMember } from '../../Shell';
 import { downloadText } from '../../ui/download';
+import { downloadTablePdf } from '../../ui/pdf';
 import { Field } from '../../ui/Field';
 import { formatMoney, localDate, signedMoney } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
@@ -45,8 +46,13 @@ type Panel =
 const VERSION = '1.0.0';
 
 const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] = [
-  { panel: 'info', icon: Info, title: 'App info', text: 'Features and calculations' },
-  { panel: 'account', icon: User, title: 'Account', text: 'Profile details and sign out' },
+  { panel: 'info', icon: Info, title: 'App info', text: 'Features, calculations and PDF guide' },
+  {
+    panel: 'account',
+    icon: User,
+    title: 'Account',
+    text: 'Profile details, security and account deletion',
+  },
   {
     panel: 'family',
     icon: Users,
@@ -254,6 +260,8 @@ function ArchivedAccounts() {
 }
 
 function DataBackup() {
+  const settings = useSettings();
+  const save = useSaveSettings();
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
   const [status, setStatus] = useState('');
@@ -281,17 +289,37 @@ function DataBackup() {
         <p className={ui.caption}>Download all tracker records as one JSON file.</p>
         <button
           className={ui.button}
-          onClick={() =>
+          onClick={() => {
             downloadText(
               `finance-backup-${localDate()}.json`,
               createBackup(data, new Date().toISOString()),
               'application/json',
-            )
-          }
+            );
+            save({ lastBackupOn: localDate() });
+          }}
           type="button"
         >
           Export backup
         </button>
+      </div>
+      <div className={ui.metric}>
+        <strong>Backup care</strong>
+        <p className={ui.caption}>
+          {settings.lastBackupOn ? `Last backup ${settings.lastBackupOn}.` : 'No backup yet.'}
+        </p>
+        <label className={ui.caption}>
+          Remind me{' '}
+          <select
+            className={ui.fieldSelect}
+            onChange={(event) => save({ backupReminderDays: Number(event.target.value) })}
+            value={settings.backupReminderDays}
+          >
+            <option value="7">every week</option>
+            <option value="30">every month</option>
+            <option value="90">every 3 months</option>
+            <option value="0">never</option>
+          </select>
+        </label>
       </div>
       <div className={ui.metric}>
         <strong>Import backup</strong>
@@ -577,6 +605,75 @@ function StatementChecks() {
   );
 }
 
+const GUIDE = [
+  ['Dashboard', 'Net worth, this month, trends, portfolio and debts at a glance.'],
+  ['Income & Expense', 'Record money in and out, post recurring items, and review each month.'],
+  ['Investment', 'Holdings, PMS, PF, PPF, NPS and gratuity, with values and contributions.'],
+  ['Debts', 'Loans, EMIs, part payments, rate changes, top-ups and statement corrections.'],
+  ['Analytics & Reports', 'Trends, growth projections, goals, and date range reports.'],
+  ['Net worth', 'Current value of all holdings, less what remains on all loans.'],
+  ['Invested', 'Opening amount plus contributions.'],
+  ['Current value', 'Latest valuation, plus contributions and interest dated after it.'],
+  ['XIRR', 'Annualised return that accounts for when each amount was invested.'],
+  ['Gratuity', 'Basic salary x 15/26 x years counted, after 5 years, capped at 20,00,000.'],
+  ['House expense', 'Opening balance + income - expenses - PMS - next opening balance.'],
+];
+
+const saveGuide = () =>
+  downloadTablePdf({
+    title: 'Personal Finance Tracker guide',
+    subtitle: 'Features and calculations',
+    columns: [
+      { label: 'Topic', width: 55 },
+      { label: 'What it means', width: 220 },
+    ],
+    rows: GUIDE,
+    file: 'finance-tracker-guide.pdf',
+  });
+
+function DeleteAccount({ account }: { account: Account }) {
+  const data = useTracker((state) => state.data);
+  const repository = useTracker((state) => state.repository);
+  const [phrase, setPhrase] = useState('');
+  const [status, setStatus] = useState('');
+  const { deleteAccount } = account;
+  if (!deleteAccount) return null;
+  return (
+    <div className={ui.metric}>
+      <strong>Delete account</strong>
+      <p className={ui.caption}>
+        Permanently deletes this tracker, its records and family access, then your sign-in. Google
+        asks you to confirm first. Export a backup before you do this.
+      </p>
+      <div className={ui.actions}>
+        <input
+          aria-label="Type DELETE MY ACCOUNT to confirm"
+          className={ui.fieldSelect}
+          onChange={(event) => setPhrase(event.target.value)}
+          value={phrase}
+        />
+        <button
+          className={ui.quiet}
+          disabled={phrase !== 'DELETE MY ACCOUNT'}
+          onClick={() => {
+            deleteAccount(async () => {
+              await repository?.commit(clearWrites(data));
+            }).catch((error: unknown) => setStatus(String(error)));
+          }}
+          type="button"
+        >
+          Delete account
+        </button>
+      </div>
+      {status ? (
+        <p className={ui.fieldError} role="alert">
+          {status}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function ChangeLog() {
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
@@ -723,6 +820,23 @@ function Appearance() {
 export function SettingsPage({ account }: { account: Account }) {
   const [panel, setPanel] = useState<Panel | null>(null);
   const setTourOpen = useTracker((state) => state.setTourOpen);
+  const repository = useTracker((state) => state.repository);
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('');
+
+  const syncNow = () => {
+    if (!navigator.onLine) {
+      setSyncStatus('Your changes are safe here and will sync when you reconnect.');
+      return;
+    }
+    setSyncing(true);
+    void (repository?.flush?.() ?? Promise.resolve())
+      .then(
+        () => setSyncStatus('All changes are saved to the cloud.'),
+        () => setSyncStatus('Sync could not finish. Your changes stay on this device.'),
+      )
+      .finally(() => setSyncing(false));
+  };
   const initial = account.name.charAt(0).toUpperCase();
   const open = TILES.find((tile) => tile.panel === panel);
 
@@ -734,20 +848,36 @@ export function SettingsPage({ account }: { account: Account }) {
         title="Settings"
       />
       <section aria-label="Your account" className={ui.card}>
-        <div className={ui.cardHeader}>
+        <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
           <div className={ui.cardHeader} style={{ justifyContent: 'flex-start' }}>
-            <span aria-hidden="true" className={ui.tileIcon} style={{ borderRadius: '50%' }}>
-              {initial}
-            </span>
+            {account.photo ? (
+              <img
+                alt=""
+                height="40"
+                referrerPolicy="no-referrer"
+                src={account.photo}
+                style={{ borderRadius: '50%' }}
+                width="40"
+              />
+            ) : (
+              <span aria-hidden="true" className={ui.tileIcon} style={{ borderRadius: '50%' }}>
+                {initial}
+              </span>
+            )}
             <div>
               <strong>{account.name}</strong>
               <div className={ui.caption}>{account.email}</div>
             </div>
           </div>
-          <span className={ui.caption}>
-            <RefreshCw size={12} /> Syncs automatically
-          </span>
+          <button className={ui.quiet} disabled={syncing} onClick={syncNow} type="button">
+            <RefreshCw size={14} /> {syncing ? 'Syncing…' : 'Sync now'}
+          </button>
         </div>
+        {syncStatus ? (
+          <p className={ui.caption} role="status" style={{ margin: 0 }}>
+            {syncStatus}
+          </p>
+        ) : null}
       </section>
       <div className={ui.threeColumn}>
         {TILES.map(({ panel: key, icon: Icon, title, text }) => (
@@ -782,6 +912,9 @@ export function SettingsPage({ account }: { account: Account }) {
               >
                 Start app tour
               </button>
+              <button className={ui.quiet} onClick={() => void saveGuide()} type="button">
+                Save PDF guide
+              </button>
             </div>
           ) : null}
           {panel === 'account' ? (
@@ -794,6 +927,7 @@ export function SettingsPage({ account }: { account: Account }) {
                   Sign out
                 </button>
               ) : null}
+              <DeleteAccount account={account} />
             </div>
           ) : null}
           {panel === 'family' ? <FamilyAccessPanel account={account} /> : null}

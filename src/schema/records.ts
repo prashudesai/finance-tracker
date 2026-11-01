@@ -308,6 +308,8 @@ export const trackerSettingsSchema = z.object({
   returns: z.record(z.string(), scenarioRates).default({}),
   projectionMonthly: z.record(z.string(), z.number()).default({}),
   onboardingDone: z.boolean().default(false),
+  backupReminderDays: z.number().int().min(0).max(365).default(30),
+  lastBackupOn: z.string().optional(),
   goal: z
     .object({
       years: z.number().int().min(1).max(40),

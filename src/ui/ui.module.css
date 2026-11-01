@@ -783,6 +783,51 @@ details.fold[open] > summary {
   border-radius: 50%;
 }
 
+.clickableRow {
+  cursor: pointer;
+}
+
+.clickableRow:hover {
+  background: var(--accent-soft);
+}
+
+.rowOpen {
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.detailList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.detailList > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detailList dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.detailList dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
 .sortButton {
   display: inline-flex;
   align-items: center;
@@ -848,6 +893,15 @@ details.fold[open] > summary {
 
 /* Phones show the page title alone, as the older app did. */
 @media (max-width: 700px) {
+  .hideOnPhone {
+    display: none;
+  }
+
+  .table th,
+  .table td {
+    padding: 10px 8px;
+  }
+
   .tiles > :last-child:nth-child(odd) {
     grid-column: 1 / -1;
   }

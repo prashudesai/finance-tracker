@@ -21,7 +21,7 @@ import { MonthReview } from './MonthReview';
 const MONTH_CHOICES = 24;
 
 const INCOME_COLUMNS: Column<Income>[] = [
-  { header: 'Member', cell: (row) => row.member, sortValue: (row) => row.member },
+  { header: 'Member', secondary: true, cell: (row) => row.member, sortValue: (row) => row.member },
   { header: 'Source', cell: (row) => row.source, sortValue: (row) => row.source },
   {
     header: 'Amount',
@@ -29,8 +29,20 @@ const INCOME_COLUMNS: Column<Income>[] = [
     cell: (row) => formatMoney(row.amount),
     sortValue: (row) => row.amount,
   },
-  { header: 'Date', cell: (row) => formatDay(row.date), sortValue: (row) => row.date },
+  {
+    header: 'Date',
+    cell: (row) => formatDay(row.date),
+    detail: (row) => `${formatDay(row.date)} ${row.date.slice(0, 4)}`,
+    sortValue: (row) => row.date,
+  },
 ];
+
+const noteDetails = (row: { notes?: string | undefined; recurringRuleId?: string | undefined }) => {
+  const rows: [string, string][] = [];
+  if (row.notes) rows.push(['Notes', row.notes]);
+  if (row.recurringRuleId) rows.push(['Added by', 'Recurring schedule']);
+  return rows;
+};
 
 function BalanceExplainer() {
   return (
@@ -78,11 +90,17 @@ export function CashFlowPage() {
     },
     {
       header: 'Type',
+      secondary: true,
       cell: (row) => (row.isAnnual ? 'Annual' : 'Monthly'),
       sortValue: (row) => (row.isAnnual ? 'Annual' : 'Monthly'),
     },
-    { header: 'Loan/Notes', cell: expenseNote, sortValue: expenseNote },
-    { header: 'Date', cell: (row) => formatDay(row.date), sortValue: (row) => row.date },
+    { header: 'Loan/Notes', secondary: true, cell: expenseNote, sortValue: expenseNote },
+    {
+      header: 'Date',
+      cell: (row) => formatDay(row.date),
+      detail: (row) => `${formatDay(row.date)} ${row.date.slice(0, 4)}`,
+      sortValue: (row) => row.date,
+    },
   ];
   const totals = monthTotals(data).get(month) ?? { income: 0, expenses: 0 };
   const newest = <Row extends { date: string }>(rows: Row[]) =>
@@ -211,6 +229,7 @@ export function CashFlowPage() {
           <HistoryTable
             columns={INCOME_COLUMNS}
             describe={(row) => row.source}
+            details={noteDetails}
             emptyText="No income this month."
             onDelete={(row) => commit([{ type: 'delete', collection: 'income', id: row.id }])}
             onEdit={setEditingIncome}
@@ -230,6 +249,10 @@ export function CashFlowPage() {
           <HistoryTable
             columns={expenseColumns}
             describe={(row) => row.subcategory || row.category}
+            details={(row) => [
+              ...(row.member ? ([['Family member', row.member]] as [string, string][]) : []),
+              ...noteDetails(row),
+            ]}
             emptyText="No expenses this month."
             onDelete={(row) => commit([{ type: 'delete', collection: 'expenses', id: row.id }])}
             onEdit={setEditingExpense}

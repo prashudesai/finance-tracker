@@ -245,6 +245,36 @@ export function debtProgress(data: TrackerData, today: string) {
   return { paid, remaining, paidShare: borrowed > 0 ? paid / borrowed : 0 };
 }
 
+export interface MemberPosition {
+  member: string;
+  invested: number;
+  current: number;
+  gain: number;
+}
+
+export function memberPositions(rows: PositionRow[]): MemberPosition[] {
+  const totals = new Map<string, MemberPosition>();
+  for (const { holding, position } of rows) {
+    const entry = totals.get(holding.member) ?? {
+      member: holding.member,
+      invested: 0,
+      current: 0,
+      gain: 0,
+    };
+    entry.invested += position.invested;
+    entry.current += position.current;
+    entry.gain += position.gain;
+    totals.set(holding.member, entry);
+  }
+  return [...totals.values()].sort((a, b) => b.current - a.current);
+}
+
+/** Recorded expenses plus unrecorded house spending, once a month's balances are known. */
+export function fullHouseExpense(data: TrackerData, month: string) {
+  const close = closeMonth(data, month);
+  return close.unrecorded === null ? close.expenses : close.expenses + close.unrecorded;
+}
+
 export function memberContributions(data: TrackerData, fy: number) {
   const { start, end } = financialYearRange(fy);
   const totals = new Map<string, number>();
@@ -288,6 +318,19 @@ export function uncheckedContributions(data: TrackerData, month: string) {
   );
 }
 
+/** Reminds someone to export once records exist and the last backup is old. */
+export function backupStatus(data: TrackerData, today: string) {
+  const settings = data.settings[0];
+  const days = settings?.backupReminderDays ?? 30;
+  const last = settings?.lastBackupOn;
+  const age = last ? toDayNumber(today) - toDayNumber(last) : null;
+  const hasRecords = data.income.length + data.expenses.length + data.holdings.length > 0;
+  return {
+    due: days > 0 && hasRecords && (age === null || age >= days),
+    label: age === null ? 'No backup exported yet' : `Last backup was ${age} days ago`,
+  };
+}
+
 export interface AttentionItem {
   label: string;
   path: string;
@@ -322,6 +365,8 @@ export function attentionItems(
       path: '/cash-flow',
     });
   }
+  const backup = backupStatus(data, today);
+  if (backup.due) items.push({ label: backup.label, path: '/settings' });
   const unverified = unverifiedHoldings(data).length;
   if (unverified > 0) {
     items.push({ label: `${needs(unverified, 'valuation')} confirmation`, path: '/investments' });

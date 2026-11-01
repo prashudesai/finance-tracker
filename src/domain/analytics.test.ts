@@ -2,7 +2,10 @@ import { emptyTrackerData, type TrackerData } from '../data/repository';
 import { defaultSettings, type Holding } from '../schema/records';
 import {
   attentionItems,
+  backupStatus,
   closeMonth,
+  fullHouseExpense,
+  memberPositions,
   financialSummary,
   holdingRows,
   monthlyOverview,
@@ -189,6 +192,7 @@ describe('reviews', () => {
     const items = attentionItems({ ...state, holdings: [holding({})] }, '2026-04-10', 2);
     expect(items.map((row) => row.label)).toEqual([
       '1 household month needs balance review',
+      'No backup exported yet',
       '1 valuation needs confirmation',
       '2 recurring items due',
     ]);
@@ -216,4 +220,42 @@ describe('reviews', () => {
 
 test('real value removes inflation', () => {
   expect(realValue(1210, 10, 2)).toBeCloseTo(1000);
+});
+
+test('backup reminders follow the chosen interval', () => {
+  const state = data({
+    income: [{ id: 'i', date: '2026-01-01', member: 'A', source: 'S', amount: 1 }],
+    settings: [{ ...defaultSettings(), backupReminderDays: 30, lastBackupOn: '2026-01-01' }],
+  });
+  expect(backupStatus(state, '2026-01-20').due).toBe(false);
+  expect(backupStatus(state, '2026-02-15')).toEqual({
+    due: true,
+    label: 'Last backup was 45 days ago',
+  });
+  const never = { ...state, settings: [{ ...defaultSettings(), backupReminderDays: 0 }] };
+  expect(backupStatus(never, '2026-02-15').due).toBe(false);
+  expect(backupStatus(data(), '2026-02-15').due).toBe(false);
+});
+
+test('full house expense adds spending that was not recorded', () => {
+  const state = data({
+    income: [{ id: 'i', date: '2026-03-01', member: 'A', source: 'S', amount: 100 }],
+    monthlyBalances: [
+      { month: '2026-03', startBalance: 10 },
+      { month: '2026-04', startBalance: 50 },
+    ],
+  });
+  expect(fullHouseExpense(state, '2026-03')).toBe(60);
+  expect(fullHouseExpense(data(), '2026-03')).toBe(0);
+});
+
+test('member positions total each person', () => {
+  const rows = holdingRows(
+    data({ holdings: [holding({}), holding({ id: 'b', member: 'B', openingValue: 90_000 })] }),
+    '2026-01-01',
+  );
+  expect(memberPositions(rows).map((row) => [row.member, row.gain])).toEqual([
+    ['A', 50_000],
+    ['B', -10_000],
+  ]);
 });

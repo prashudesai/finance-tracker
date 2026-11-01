@@ -57,7 +57,9 @@ export interface Account {
   name: string;
   email: string;
   role: 'owner' | 'editor' | 'viewer';
+  photo?: string;
   signOut?: () => void;
+  deleteAccount?: (clearRecords: () => Promise<void>) => Promise<void>;
   family?: FamilyAccess;
 }
 

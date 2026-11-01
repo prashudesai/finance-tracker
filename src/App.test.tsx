@@ -176,7 +176,7 @@ test('adding income validates, then lists the record', async () => {
     target: { value: '5000' },
   });
   fireEvent.click(submit);
-  expect(await screen.findByRole('button', { name: 'Edit Salary' })).toBeDefined();
+  expect(await screen.findByRole('button', { name: 'Open Salary' })).toBeDefined();
 });
 
 test('recording the last EMI pays only what is still owed', async () => {
@@ -205,9 +205,10 @@ test('a viewer cannot change records', async () => {
       />
     </MemoryRouter>,
   );
-  fireEvent.click(await screen.findByRole('button', { name: 'Delete Salary' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open Salary' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete', hidden: true }));
   expect((await screen.findByRole('alert')).textContent).toMatch(/Viewer access/);
-  expect(screen.getByRole('button', { name: 'Delete Salary' })).toBeDefined();
+  expect(screen.getByRole('button', { name: 'Open Salary' })).toBeDefined();
 });
 
 test('the family profile filters personal records but not expenses', async () => {
@@ -219,8 +220,29 @@ test('the family profile filters personal records but not expenses', async () =>
     ],
   });
   fireEvent.change(await screen.findByLabelText('Family profile'), { target: { value: 'B' } });
-  expect(await screen.findByRole('button', { name: 'Edit Bonus' })).toBeDefined();
-  expect(screen.queryByRole('button', { name: 'Edit Salary' })).toBeNull();
+  expect(await screen.findByRole('button', { name: 'Open Bonus' })).toBeDefined();
+  expect(screen.queryByRole('button', { name: 'Open Salary' })).toBeNull();
+});
+
+test('a history row opens its details with edit and delete inside', async () => {
+  renderApp('/cash-flow', {
+    income: [
+      {
+        id: 'i',
+        date: `${month}-01`,
+        member: 'A',
+        source: 'Salary',
+        amount: 5000,
+        notes: 'Bonus month',
+      },
+    ],
+  });
+  expect(screen.queryByText('Actions')).toBeNull();
+  fireEvent.click(await screen.findByRole('button', { name: 'Open Salary' }));
+  const dialog = await screen.findByRole('dialog', { name: 'Salary', hidden: true });
+  expect(within(dialog).getByText('Bonus month')).toBeDefined();
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Edit', hidden: true }));
+  expect(await screen.findByRole('dialog', { name: 'Edit income', hidden: true })).toBeDefined();
 });
 
 test('invalid stored records are reported, not shown', async () => {
@@ -301,7 +323,8 @@ test('editing a recurring amount keeps earlier months', async () => {
 test('the change log lists a deletion and can undo it', async () => {
   const income = { id: 'i', date: `${month}-01`, member: 'A', source: 'Salary', amount: 5000 };
   renderApp('/cash-flow', { income: [income] });
-  fireEvent.click(await screen.findByRole('button', { name: 'Delete Salary' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open Salary' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete', hidden: true }));
   expect(await screen.findByText('No income this month.')).toBeDefined();
   fireEvent.click(screen.getByRole('link', { name: 'Settings' }));
   fireEvent.click(await screen.findByRole('button', { name: /Change log/ }));
@@ -313,7 +336,7 @@ test('the change log lists a deletion and can undo it', async () => {
   ).toHaveProperty('disabled', true);
   fireEvent.click(screen.getByRole('button', { name: 'Close', hidden: true }));
   fireEvent.click(screen.getByRole('link', { name: /Income & Expense/ }));
-  expect(await screen.findByRole('button', { name: 'Edit Salary' })).toBeDefined();
+  expect(await screen.findByRole('button', { name: 'Open Salary' })).toBeDefined();
 });
 
 test('owners can manage family members', async () => {
@@ -449,17 +472,17 @@ test('history tables sort by a column and filter by any text', async () => {
     amount,
   });
   renderApp('/cash-flow', { income: [row('a', 'Bonus', 100), row('b', 'Salary', 900)] });
-  const table = (await screen.findByRole('button', { name: 'Edit Bonus' })).closest('table');
+  const table = (await screen.findByRole('button', { name: 'Open Bonus' })).closest('table');
   const sources = () =>
     within(table as HTMLElement)
-      .getAllByRole('button', { name: /^Edit / })
+      .getAllByRole('button', { name: /^Open / })
       .map((button) => button.getAttribute('aria-label'));
   fireEvent.click(within(table as HTMLElement).getByRole('button', { name: 'Amount' }));
-  expect(sources()).toEqual(['Edit Bonus', 'Edit Salary']);
+  expect(sources()).toEqual(['Open Bonus', 'Open Salary']);
   fireEvent.click(within(table as HTMLElement).getByRole('button', { name: 'Amount' }));
-  expect(sources()).toEqual(['Edit Salary', 'Edit Bonus']);
+  expect(sources()).toEqual(['Open Salary', 'Open Bonus']);
   fireEvent.change(screen.getByLabelText('Filter Income History'), { target: { value: 'bonus' } });
-  expect(sources()).toEqual(['Edit Bonus']);
+  expect(sources()).toEqual(['Open Bonus']);
   fireEvent.change(screen.getByLabelText('Filter Income History'), {
     target: { value: 'nothing' },
   });
@@ -490,4 +513,37 @@ test('a statement corrects one EMI split and balances follow', async () => {
   });
   fireEvent.click(screen.getByRole('button', { name: 'Save correction', hidden: true }));
   expect((await screen.findAllByText('₹92,000')).length).toBeGreaterThan(0);
+});
+
+test('a dashboard portfolio row opens that category', async () => {
+  renderApp('/', { holdings: [fund], settings: [{ ...defaultSettings(), onboardingDone: true }] });
+  fireEvent.click(await screen.findByRole('link', { name: /Mutual Funds/ }));
+  expect(await screen.findByRole('dialog', { name: 'Mutual Funds', hidden: true })).toBeDefined();
+});
+
+test('analytics offers the family split and details', async () => {
+  renderApp('/analytics', { holdings: [fund, { ...fund, id: 'b', member: 'B', name: 'Other' }] });
+  fireEvent.change(await screen.findByLabelText('Returns view'), { target: { value: 'family' } });
+  expect((await screen.findAllByText('B')).length).toBeGreaterThan(0);
+  expect(screen.getAllByText('View Details').length).toBeGreaterThan(2);
+});
+
+test('deleting an account needs the exact phrase, then clears records first', async () => {
+  const deleteAccount = vi.fn(async (clear: () => Promise<void>) => clear());
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell
+        account={{ name: 'O', email: 'o@example.test', role: 'owner', deleteAccount }}
+        repository={createMemoryRepository({ holdings: [fund] })}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+  const button = await screen.findByRole('button', { name: 'Delete account', hidden: true });
+  expect(button).toHaveProperty('disabled', true);
+  fireEvent.change(screen.getByLabelText('Type DELETE MY ACCOUNT to confirm'), {
+    target: { value: 'DELETE MY ACCOUNT' },
+  });
+  fireEvent.click(button);
+  expect(deleteAccount).toHaveBeenCalledTimes(1);
 });

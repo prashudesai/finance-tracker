@@ -2,9 +2,11 @@ import { initializeApp } from 'firebase/app';
 import {
   browserLocalPersistence,
   browserPopupRedirectResolver,
+  deleteUser,
   GoogleAuthProvider,
   initializeAuth,
   onAuthStateChanged,
+  reauthenticateWithPopup,
   signInWithPopup,
   signOut,
   type User,
@@ -90,6 +92,18 @@ export const familyAccess = (ownerUid: string): FamilyAccess => ({
   setRole: (email, role) => updateDoc(memberDoc(email), { role }),
   remove: (email) => deleteDoc(memberDoc(email)),
 });
+
+/**
+ * Confirms it's really them first, so a failed sign-in deletes nothing. Then removes
+ * family access, the records and the account.
+ */
+export async function deleteAccount(user: User, clearRecords: () => Promise<void>) {
+  await reauthenticateWithPopup(user, new GoogleAuthProvider());
+  const family = familyAccess(user.uid);
+  await Promise.all((await family.list()).map((member) => family.remove(member.email)));
+  await clearRecords();
+  await deleteUser(user);
+}
 
 export const createFirestoreRepository = (householdId: string) =>
   firestoreRepository(db, householdId);

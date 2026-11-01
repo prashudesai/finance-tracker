@@ -6,6 +6,7 @@ import {
   financialYearsWithData,
   holdingRows,
   memberContributions,
+  memberPositions,
   netWorth,
   pmsGainTrend,
   portfolioCategories,
@@ -24,7 +25,42 @@ import { Metric } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 
 type Allocation = 'all' | 'retirement';
+type ReturnsView = 'holdings' | 'family';
+
+function ViewDetails({ headers, rows }: { headers: string[]; rows: string[][] }) {
+  return (
+    <details className={ui.fold}>
+      <summary>View Details</summary>
+      <div className={ui.tableWrap}>
+        <table className={ui.table}>
+          <thead>
+            <tr>
+              {headers.map((header, index) => (
+                <th className={index > 0 ? ui.numeric : undefined} key={header}>
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.join('|')}>
+                {row.map((cell, index) => (
+                  <td className={index > 0 ? ui.numeric : undefined} key={`${index}-${cell}`}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
 type Trend = 'surplus' | 'pms';
+
+const RETURN_ROWS = 5;
 
 const monthsLabel = (count: number, noun: string) =>
   count === 0 ? `No ${noun} entries recorded` : `Across ${count} months with ${noun} entries`;
@@ -35,6 +71,7 @@ export function AnalyticsPage() {
   const [year, setYear] = useState(financialYearStart(today));
   const [allocation, setAllocation] = useState<Allocation>('all');
   const [trend, setTrend] = useState<Trend>('surplus');
+  const [returnsView, setReturnsView] = useState<ReturnsView>('holdings');
 
   const summary = financialSummary(data, year, today);
   const worth = netWorth(data, today);
@@ -44,10 +81,25 @@ export function AnalyticsPage() {
     allocation === 'all' ? rows : rows.filter((row) => row.holding.kind !== 'investment'),
   );
   const allocationTotal = categories.reduce((sum, row) => sum + row.current, 0);
-  const returns = [...rows]
-    .sort((a, b) => b.position.gain - a.position.gain)
-    .slice(0, 5)
-    .map((row) => ({ label: row.holding.name, value: row.position.gain }));
+  const returnsRows =
+    returnsView === 'family'
+      ? memberPositions(rows).map(({ member, invested, gain }) => ({
+          label: member,
+          invested,
+          gain,
+        }))
+      : [...rows]
+          .sort((a, b) => b.position.gain - a.position.gain)
+          .slice(0, RETURN_ROWS)
+          .map(({ holding, position }) => ({
+            label: holding.name,
+            invested: position.invested,
+            gain: position.gain,
+          }));
+  const returnsPeak = Math.max(
+    ...returnsRows.map((row) => row.invested + Math.max(0, row.gain)),
+    1,
+  );
   const members = memberContributions(data, year);
   const points = (trend === 'surplus' ? balanceTrend(data, year) : pmsGainTrend(data)).map(
     (row) => ({
@@ -149,6 +201,13 @@ export function AnalyticsPage() {
               value={formatPercent(summary.expenseRatio)}
             />
           </div>
+          <details className={ui.fold}>
+            <summary>About these averages</summary>
+            <p className={ui.caption}>
+              Each average divides the financial year's total by the months that have entries, so
+              months with nothing recorded don't pull it down.
+            </p>
+          </details>
           <div className={ui.metric}>
             <div className={ui.split}>
               <span className={ui.caption}>Reported expenses as a share of income</span>
@@ -177,6 +236,20 @@ export function AnalyticsPage() {
             ]}
             title="Income and cash outflows for the financial year"
           />
+          <ViewDetails
+            headers={['Item', 'Amount', 'Share of income']}
+            rows={[
+              ['Income', summary.income],
+              ['Expenses', summary.expenses],
+              ['Stallion', summary.pms],
+              ['NPS + PPF', summary.npsPpf],
+              ['Cash remaining', summary.remaining],
+            ].map(([label, value]) => [
+              String(label),
+              formatMoney(Number(value)),
+              summary.income > 0 ? formatPercent(Number(value) / summary.income) : '—',
+            ])}
+          />
         </section>
         <section className={ui.card}>
           <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
@@ -196,6 +269,10 @@ export function AnalyticsPage() {
           <LineChart
             series={[{ name: trend === 'surplus' ? 'Balance' : 'Profit', points }]}
             title="Trend by month"
+          />
+          <ViewDetails
+            headers={['Month', trend === 'surplus' ? 'Balance' : 'Profit']}
+            rows={points.map((row) => [row.label, formatMoney(row.value)])}
           />
         </section>
       </div>
@@ -224,24 +301,71 @@ export function AnalyticsPage() {
               title="Asset allocation"
             />
           )}
+          <ViewDetails
+            headers={['Asset', 'Invested', 'Current', 'Share']}
+            rows={categories.map((row) => [
+              row.name,
+              formatMoney(row.invested),
+              formatMoney(row.current),
+              formatPercent(allocationTotal > 0 ? row.current / allocationTotal : 0),
+            ])}
+          />
         </section>
         <section className={ui.card}>
-          <h2 style={{ fontSize: '1.2rem' }}>Investment Returns</h2>
-          {returns.length === 0 ? (
+          <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
+            <h2 style={{ fontSize: '1.2rem' }}>Investment Returns</h2>
+            <select
+              aria-label="Returns view"
+              className={ui.fieldSelect}
+              onChange={(event) => setReturnsView(event.target.value as ReturnsView)}
+              value={returnsView}
+            >
+              <option value="holdings">Returns vs. Invested</option>
+              <option value="family">Family Split</option>
+            </select>
+          </div>
+          {returnsRows.length === 0 ? (
             <p className={ui.empty}>No holdings yet.</p>
           ) : (
             <ul className={ui.list}>
-              {returns.map((row) => (
+              {returnsRows.map((row) => (
                 <li className={ui.row} key={row.label}>
-                  <div className={ui.rowMain}>{row.label}</div>
-                  <span className={`${ui.amount} ${row.value < 0 ? ui.loss : ui.gain}`}>
-                    {formatMoney(row.value)}
+                  <div className={ui.rowMain}>
+                    <div className={ui.rowTitle}>{row.label}</div>
+                    <div className={ui.rowDetail}>Invested {formatCompactMoney(row.invested)}</div>
+                    <div className={ui.stack} style={{ marginTop: 6 }}>
+                      <span
+                        className={ui.stackInvested}
+                        style={{ width: `${(row.invested / returnsPeak) * 100}%` }}
+                      />
+                      <span
+                        className={ui.stackGain}
+                        style={{ width: `${(Math.max(0, row.gain) / returnsPeak) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className={`${ui.amount} ${row.gain < 0 ? ui.loss : ui.gain}`}>
+                    {formatMoney(row.gain)}
                   </span>
                 </li>
               ))}
             </ul>
           )}
-          <div className={ui.caption}>Showing top 5 holdings by gain.</div>
+          {returnsView === 'holdings' && rows.length > RETURN_ROWS ? (
+            <div className={ui.caption}>
+              Showing top {RETURN_ROWS} of {rows.length} holdings. View Details shows all.
+            </div>
+          ) : null}
+          <ViewDetails
+            headers={['Holding', 'Invested', 'Current', 'Gain', 'XIRR']}
+            rows={rows.map(({ holding, position }) => [
+              holding.name,
+              formatMoney(position.invested),
+              formatMoney(position.current),
+              formatMoney(position.gain),
+              formatPercent(position.xirr, 2),
+            ])}
+          />
         </section>
         <section className={ui.card}>
           <h2 style={{ fontSize: '1.2rem' }}>Debt Reduction Progress</h2>
@@ -249,7 +373,7 @@ export function AnalyticsPage() {
             <span className={ui.meterFill} style={{ width: `${debts.paidShare * 100}%` }} />
             <span className={ui.meterDebt} style={{ flex: 1 }} />
           </div>
-          <div className={ui.metrics}>
+          <div className={ui.metricsTwo}>
             <Metric
               detail={formatPercent(debts.paidShare)}
               label="Paid"

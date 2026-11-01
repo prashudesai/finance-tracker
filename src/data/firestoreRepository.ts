@@ -1,4 +1,11 @@
-import { collection, doc, onSnapshot, writeBatch, type Firestore } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  onSnapshot,
+  waitForPendingWrites,
+  writeBatch,
+  type Firestore,
+} from 'firebase/firestore';
 import { parseRows, type CollectionName, type TrackerRepository } from './repository';
 
 const BATCH_SIZE = 400;
@@ -24,6 +31,7 @@ export function firestoreRepository(db: Firestore, householdId: string): Tracker
         onError,
       );
     },
+    flush: () => waitForPendingWrites(db),
     /** Sent in batches, so a large restore stays within Firestore's request limits. */
     async commit(writes) {
       for (let start = 0; start < writes.length; start += BATCH_SIZE) {

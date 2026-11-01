@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { useCallback, useState, type ReactNode } from 'react';
+import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
 import { SortHeader, useSort, type SortValue } from '../../ui/useSort';
 
@@ -8,7 +9,11 @@ const PAGE_SIZE = 8;
 export interface Column<Row> {
   header: string;
   numeric?: boolean;
+  /** Left out of the table on phones, where it shows in the record's modal instead. */
+  secondary?: boolean;
   cell: (row: Row) => ReactNode;
+  /** A fuller value for the record's modal. */
+  detail?: (row: Row) => ReactNode;
   sortValue: (row: Row) => SortValue;
 }
 
@@ -20,6 +25,7 @@ export function HistoryTable<Row extends { id: string }>({
   total,
   emptyText,
   describe,
+  details,
   onEdit,
   onDelete,
 }: {
@@ -30,11 +36,15 @@ export function HistoryTable<Row extends { id: string }>({
   total: string;
   emptyText: string;
   describe: (row: Row) => string;
+  /** Extra label and value pairs shown only in the record's modal. */
+  details?: (row: Row) => [string, string][];
   onEdit: (row: Row) => void;
   onDelete: (row: Row) => void;
 }) {
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = rows.find((row) => row.id === selectedId);
 
   const valueOf = useCallback(
     (row: Row, header: string) =>
@@ -87,6 +97,7 @@ export function HistoryTable<Row extends { id: string }>({
             <tr>
               {columns.map((column) => (
                 <SortHeader
+                  className={column.secondary ? ui.hideOnPhone : undefined}
                   column={column.header}
                   key={column.header}
                   label={column.header}
@@ -95,42 +106,38 @@ export function HistoryTable<Row extends { id: string }>({
                   sort={sort}
                 />
               ))}
-              <th className={ui.numeric}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {visible.map((row) => (
-              <tr key={row.id}>
-                {columns.map((column) => (
-                  <td className={column.numeric ? ui.numeric : undefined} key={column.header}>
-                    {column.cell(row)}
+              <tr className={ui.clickableRow} key={row.id} onClick={() => setSelectedId(row.id)}>
+                {columns.map((column, index) => (
+                  <td
+                    className={`${column.numeric ? ui.numeric : ''} ${column.secondary ? ui.hideOnPhone : ''}`}
+                    key={column.header}
+                  >
+                    {index === 0 ? (
+                      <button
+                        aria-label={`Open ${describe(row)}`}
+                        className={ui.rowOpen}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedId(row.id);
+                        }}
+                        type="button"
+                      >
+                        {column.cell(row)}
+                      </button>
+                    ) : (
+                      column.cell(row)
+                    )}
                   </td>
                 ))}
-                <td>
-                  <div className={ui.tableActions}>
-                    <button
-                      aria-label={`Edit ${describe(row)}`}
-                      className={ui.smallIcon}
-                      onClick={() => onEdit(row)}
-                      type="button"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      aria-label={`Delete ${describe(row)}`}
-                      className={ui.smallIcon}
-                      onClick={() => onDelete(row)}
-                      type="button"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
               </tr>
             ))}
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} style={{ textAlign: 'center', padding: 32 }}>
+                <td colSpan={columns.length} style={{ textAlign: 'center', padding: 32 }}>
                   {rows.length === 0 ? emptyText : 'No entries match this filter.'}
                   {rows.length > 0 ? (
                     <div style={{ marginTop: 10 }}>
@@ -171,6 +178,48 @@ export function HistoryTable<Row extends { id: string }>({
           </button>
         </div>
       </div>
+      {selected ? (
+        <Modal onClose={() => setSelectedId(null)} title={describe(selected)}>
+          <div className={ui.page}>
+            <dl className={ui.detailList}>
+              {columns.map((column) => (
+                <div key={column.header}>
+                  <dt>{column.header}</dt>
+                  <dd>{column.detail?.(selected) ?? column.cell(selected)}</dd>
+                </div>
+              ))}
+              {details?.(selected).map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className={ui.formActions}>
+              <button
+                className={ui.quiet}
+                onClick={() => {
+                  setSelectedId(null);
+                  onDelete(selected);
+                }}
+                type="button"
+              >
+                <Trash2 size={16} /> Delete
+              </button>
+              <button
+                className={ui.button}
+                onClick={() => {
+                  setSelectedId(null);
+                  onEdit(selected);
+                }}
+                type="button"
+              >
+                <Pencil size={16} /> Edit
+              </button>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
     </section>
   );
 }
