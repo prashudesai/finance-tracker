@@ -336,6 +336,8 @@ test('owners can manage family members', async () => {
     invite: async () => undefined,
     setRole: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
+    requests: vi.fn(async () => [{ uid: 'n', email: 'new@example.test', code: '1234 5678 9012' }]),
+    approve: vi.fn(async () => undefined),
   };
   render(
     <MemoryRouter initialEntries={['/settings']}>
@@ -750,6 +752,67 @@ test('viewers are told why they cannot change their photo', async () => {
   fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
   expect(await screen.findByText(/Ask the owner for edit access/)).toBeDefined();
   expect(screen.queryByRole('button', { name: 'Change photo', hidden: true })).toBeNull();
+});
+
+test('delete account says what to type, accepts lowercase, and shows a failure', async () => {
+  const deleteAccount = vi.fn(async () => {
+    throw new Error('Google sign-in was cancelled.');
+  });
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell
+        account={{ name: 'O', email: 'o@example.test', role: 'owner', deleteAccount }}
+        repository={createMemoryRepository()}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+  const box = await screen.findByLabelText('Type DELETE MY ACCOUNT to confirm');
+  expect(box.closest('label')?.textContent).toContain('DELETE MY ACCOUNT');
+  fireEvent.change(box, { target: { value: ' delete my account ' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Delete account', hidden: true }));
+  expect(deleteAccount).toHaveBeenCalledTimes(1);
+  expect(await screen.findByRole('alert', { hidden: true })).toHaveProperty(
+    'textContent',
+    'Google sign-in was cancelled.',
+  );
+});
+
+test('the owner approves a family member after comparing their code', async () => {
+  const request = { uid: 'n', email: 'new@example.test', code: '1234 5678 9012' };
+  const family = {
+    list: vi.fn(async () => []),
+    invite: vi.fn(async () => undefined),
+    setRole: vi.fn(async () => undefined),
+    remove: vi.fn(async () => undefined),
+    requests: vi.fn(async () => [request]),
+    approve: vi.fn(async () => undefined),
+  };
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell
+        account={{ name: 'O', email: 'o@example.test', role: 'owner', family }}
+        repository={createMemoryRepository()}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /Family access/ }));
+  expect(await screen.findByText('Code 1234 5678 9012')).toBeDefined();
+  fireEvent.click(screen.getByRole('button', { name: 'Approve new@example.test', hidden: true }));
+  await waitFor(() => expect(family.approve).toHaveBeenCalledWith(request));
+});
+
+test('a backup needs a strong passphrase before it can be exported', async () => {
+  renderApp('/settings', { holdings: [fund] });
+  fireEvent.click(await screen.findByRole('button', { name: /Data & backup/ }));
+  const button = await screen.findByRole('button', { name: 'Export backup', hidden: true });
+  expect(button).toHaveProperty('disabled', true);
+  fireEvent.change(screen.getByLabelText('Backup passphrase'), { target: { value: 'too short' } });
+  expect(button).toHaveProperty('disabled', true);
+  fireEvent.change(screen.getByLabelText('Backup passphrase'), {
+    target: { value: 'long enough passphrase' },
+  });
+  expect(button).toHaveProperty('disabled', false);
 });
 
 test('+ Add new saves a value and selects it, and the old custom values tile is gone', async () => {

@@ -755,6 +755,41 @@
   border-color: var(--border-strong);
 }
 
+.vaultScreen {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 16px;
+}
+
+.vaultScreen > section {
+  width: min(460px, 100%);
+}
+
+.vaultScreen .form {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.recoveryCode {
+  margin: 6px 0;
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
+.textButton {
+  justify-self: center;
+  padding: 6px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
 .settingGrid {
   display: grid;
   gap: 16px;

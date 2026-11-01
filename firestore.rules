@@ -37,6 +37,22 @@ service cloud.firestore {
         || (signedIn() && exists(membershipPath()) && acceptedRole(household) == 'editor');
     }
 
+    function isRecords(collection) {
+      return collection in ['income', 'expenses', 'loans', 'recurringRules',
+                            'recurringOccurrences', 'monthlyBalances', 'holdings',
+                            'contributions', 'valuations', 'gratuityAccounts',
+                            'projectionAdjustments', 'settings', 'monthReviews',
+                            'changes', 'interestCredits', 'epsUpdates'];
+    }
+
+    // Records are encrypted on the device, so anything readable is refused.
+    function isSealed() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['k', 'iv', 'c'])
+        && data.keys().hasAll(['k', 'iv', 'c'])
+        && data.k is int && data.iv is string && data.c is string;
+    }
+
     match /memberships/{address} {
       allow read: if signedIn()
         && (address == email() || resource.data.householdId == request.auth.uid);
@@ -62,14 +78,33 @@ service cloud.firestore {
         && (resource.data.householdId == request.auth.uid || address == email());
     }
 
+    // A person's private key, locked by their passphrase and recovery code.
+    match /keyrings/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // The household's keys, locked to each member. Only the owner shares them.
+    match /households/{household}/keys/{member} {
+      allow read: if isOwner(household)
+        || (signedIn() && request.auth.uid == member && canRead(household));
+      allow create, update: if isOwner(household)
+        && request.resource.data.keys().hasOnly(['email', 'publicKey', 'locked']);
+      allow delete: if isOwner(household) || (signedIn() && request.auth.uid == member);
+    }
+
+    // A member asking the owner for those keys.
+    match /households/{household}/requests/{member} {
+      allow read: if isOwner(household) || (signedIn() && request.auth.uid == member);
+      allow create, update: if signedIn() && request.auth.uid == member && canRead(household)
+        && request.resource.data.keys().hasOnly(['email', 'publicKey'])
+        && request.resource.data.email == email();
+      allow delete: if isOwner(household) || (signedIn() && request.auth.uid == member);
+    }
+
     match /households/{household}/{collection}/{record} {
-      allow read: if canRead(household);
-      allow write: if canEdit(household)
-        && collection in ['income', 'expenses', 'loans', 'recurringRules',
-                          'recurringOccurrences', 'monthlyBalances', 'holdings',
-                          'contributions', 'valuations', 'gratuityAccounts',
-                          'projectionAdjustments', 'settings', 'monthReviews',
-                          'changes', 'interestCredits', 'epsUpdates'];
+      allow read: if canRead(household) && isRecords(collection);
+      allow create, update: if canEdit(household) && isRecords(collection) && isSealed();
+      allow delete: if canEdit(household) && isRecords(collection);
     }
   }
 }

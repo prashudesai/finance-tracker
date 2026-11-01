@@ -51,4 +51,5 @@ npm run build && npx firebase deploy --only firestore:rules,hosting --project fi
 - [CLAUDE.md](CLAUDE.md): working rules
 - [docs/architecture.md](docs/architecture.md): how the app is built and why
 - [docs/data-model.md](docs/data-model.md): what is stored in Firestore
+- [docs/encryption.md](docs/encryption.md): how records are encrypted
 - [docs/rewrite-status.md](docs/rewrite-status.md): what changed from the older app, and what's left

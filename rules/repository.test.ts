@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { doc, setDoc, type Firestore } from 'firebase/firestore';
+import { createCodec, createHouseholdSecret } from '../src/data/crypto';
 import { firestoreRepository } from '../src/data/firestoreRepository';
 import { COLLECTION_NAMES, documentId, type TrackerData } from '../src/data/repository';
 import { previewData } from '../src/data/previewData';
@@ -9,6 +10,9 @@ import { clearWrites, restoreWrites } from '../src/domain/backup';
 import { emptyTrackerData } from '../src/data/repository';
 
 let env: RulesTestEnvironment;
+
+const secret = createHouseholdSecret();
+const codec = createCodec('owner', secret, () => Promise.resolve(secret));
 
 const asOwner = () =>
   env
@@ -22,7 +26,7 @@ function nextRows<Name extends keyof TrackerData>(
   ready: (rows: TrackerData[Name], invalid: number) => boolean,
 ) {
   return new Promise<{ rows: TrackerData[Name]; invalid: number }>((done, fail) => {
-    const stop = firestoreRepository(db, 'owner').subscribe(
+    const stop = firestoreRepository(db, 'owner', codec).subscribe(
       name,
       (rows, invalid) => {
         if (ready(rows, invalid)) {
@@ -48,7 +52,7 @@ beforeEach(() => env.clearFirestore());
 test('records round-trip through Firestore and pass their schemas', async () => {
   const db = asOwner();
   const seed = { ...emptyTrackerData(), ...previewData() };
-  await firestoreRepository(db, 'owner').commit(restoreWrites(emptyTrackerData(), seed));
+  await firestoreRepository(db, 'owner', codec).commit(restoreWrites(emptyTrackerData(), seed));
 
   for (const name of COLLECTION_NAMES) {
     const expected = seed[name] as object[];
@@ -71,7 +75,7 @@ test('undefined optional fields save without error', async () => {
     amount: 5,
     notes: undefined,
   };
-  await firestoreRepository(db, 'owner').commit([
+  await firestoreRepository(db, 'owner', codec).commit([
     { type: 'set', collection: 'income', id: 'i', value: row },
   ]);
   const { rows } = await nextRows(db, 'income', (found) => found.length === 1);
@@ -82,7 +86,7 @@ test('a second device sees changes live', async () => {
   const device = asOwner();
   const other = asOwner();
   const seen = nextRows(other, 'income', (found) => found.some((row) => row.id === 'live'));
-  await firestoreRepository(device, 'owner').commit([
+  await firestoreRepository(device, 'owner', codec).commit([
     {
       type: 'set',
       collection: 'income',
@@ -95,7 +99,7 @@ test('a second device sees changes live', async () => {
 
 test('an invalid document is counted, not shown', async () => {
   const db = asOwner();
-  await setDoc(doc(db, 'households/owner/income/bad'), { amount: -1 });
+  await setDoc(doc(db, 'households/owner/income/bad'), await codec.seal('income', 'bad', {}));
   const { rows, invalid } = await nextRows(db, 'income', (_, count) => count === 1);
   expect(rows).toEqual([]);
   expect(invalid).toBe(1);
@@ -104,7 +108,7 @@ test('an invalid document is counted, not shown', async () => {
 test('clearing removes every record', async () => {
   const db = asOwner();
   const seed = { ...emptyTrackerData(), ...previewData() };
-  const repository = firestoreRepository(db, 'owner');
+  const repository = firestoreRepository(db, 'owner', codec);
   await repository.commit(
     seed.income.map((value) => ({ type: 'set', collection: 'income', id: value.id, value })),
   );
@@ -116,7 +120,7 @@ test('clearing removes every record', async () => {
 test('deleting an account leaves nothing in any collection', async () => {
   const db = asOwner();
   const seed = { ...emptyTrackerData(), ...previewData() };
-  const repository = firestoreRepository(db, 'owner');
+  const repository = firestoreRepository(db, 'owner', codec);
   await repository.commit(restoreWrites(emptyTrackerData(), seed));
   await repository.commit(clearWrites(seed));
   for (const name of COLLECTION_NAMES) {
@@ -134,7 +138,7 @@ test('a commit larger than one batch saves every record', async () => {
     id: `i${index}`,
     value: { ...value, id: `i${index}` },
   }));
-  await firestoreRepository(db, 'owner').commit(writes);
+  await firestoreRepository(db, 'owner', codec).commit(writes);
   const { rows } = await nextRows(db, 'income', (found) => found.length === 901);
   expect(rows).toHaveLength(901);
 });

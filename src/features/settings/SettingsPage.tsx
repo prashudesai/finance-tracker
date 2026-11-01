@@ -13,17 +13,24 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import release from '../../release.json';
 import { syncedRecently } from '../../domain/analytics';
-import { clearWrites, createBackup, parseBackup, restoreWrites } from '../../domain/backup';
+import { createBackup, parseBackup, restoreWrites } from '../../domain/backup';
 import { undoWrites } from '../../domain/changes';
 import { TRACKER_SETTINGS_ID, type ChangeRecord, type TrackerSettings } from '../../schema/records';
 import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
-import type { Account, FamilyMember } from '../../Shell';
+import type { Account, AccountSecurity, FamilyMember, FamilyRequest } from '../../Shell';
 import { downloadText } from '../../ui/download';
 import { downloadTablePdf } from '../../ui/pdf';
 import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
+import {
+  decryptBackup,
+  encryptBackup,
+  isEncryptedBackup,
+  MIN_PASSPHRASE_LENGTH,
+} from '../../data/crypto';
+import { PassphraseFields, RecoveryCode, validPassphrase } from '../vault/VaultScreen';
 import { Avatar } from '../../ui/Avatar';
 import { resizePhoto } from '../../ui/photo';
 import { checkForUpdates, useAppUpdate, useInstallApp, type UpdateCheck } from '../../ui/pwa';
@@ -133,11 +140,20 @@ function DataBackup() {
   const syncedAt = useTracker((state) => state.syncedAt);
   const synced = syncedRecently(syncedAt ? localDate(syncedAt) : null, localDate());
   const [status, setStatus] = useState('');
+  const [passphrase, setPassphrase] = useState('');
   const file = useRef<HTMLInputElement>(null);
+  const strong = passphrase.length >= MIN_PASSPHRASE_LENGTH;
 
   const restore = async (selected: File) => {
     try {
-      const backup = parseBackup(await selected.text());
+      const text = await selected.text();
+      if (isEncryptedBackup(text) && !passphrase) {
+        setStatus("Enter this backup's passphrase first, then choose the file again.");
+        return;
+      }
+      const backup = parseBackup(
+        isEncryptedBackup(text) ? await decryptBackup(text, passphrase) : text,
+      );
       const count = Object.values(backup).reduce((sum, rows) => sum + rows.length, 0);
       if (!window.confirm(`Replace all current records with ${count} records from this backup?`)) {
         return;
@@ -152,17 +168,37 @@ function DataBackup() {
   return (
     <div className={ui.page}>
       <div className={ui.metric}>
+        <strong>Backup passphrase</strong>
+        <p className={ui.caption}>
+          Backups are encrypted with this passphrase. It can be different from your sign-in
+          passphrase. A backup can't be opened without it, and it can't be reset.
+        </p>
+        <Field label="Backup passphrase">
+          <input
+            autoComplete="off"
+            onChange={(event) => setPassphrase(event.target.value)}
+            type="password"
+            value={passphrase}
+          />
+        </Field>
+      </div>
+      <div className={ui.metric}>
         <strong>Export backup</strong>
-        <p className={ui.caption}>Download all tracker records as one JSON file.</p>
+        <p className={ui.caption}>
+          Download all tracker records as one encrypted file. Use at least {MIN_PASSPHRASE_LENGTH}{' '}
+          characters.
+        </p>
         <button
           className={ui.button}
+          disabled={!strong}
           onClick={() => {
-            downloadText(
-              `finance-backup-${localDate()}.json`,
-              createBackup(data, new Date().toISOString()),
-              'application/json',
+            encryptBackup(createBackup(data, new Date().toISOString()), passphrase).then(
+              (file) => {
+                downloadText(`finance-backup-${localDate()}.json`, file, 'application/json');
+                save({ lastBackupOn: localDate() });
+              },
+              (error: unknown) => setStatus(failureText(error)),
             );
-            save({ lastBackupOn: localDate() });
           }}
           type="button"
         >
@@ -229,9 +265,11 @@ function FamilyMembers({ account }: { account: Account }) {
   const [role, setRole] = useState<FamilyMember['role']>('viewer');
   const [status, setStatus] = useState('');
   const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [requests, setRequests] = useState<FamilyRequest[]>([]);
 
   const refresh = useCallback(() => {
-    family?.list().then(setMembers, (error: unknown) => setStatus(String(error)));
+    family?.list().then(setMembers, (error: unknown) => setStatus(failureText(error)));
+    family?.requests().then(setRequests, (error: unknown) => setStatus(failureText(error)));
   }, [family]);
   useEffect(refresh, [refresh]);
 
@@ -241,13 +279,42 @@ function FamilyMembers({ account }: { account: Account }) {
         setStatus(done);
         refresh();
       },
-      (error: unknown) => setStatus(String(error)),
+      (error: unknown) => setStatus(failureText(error)),
     );
 
   return (
     <div className={ui.page}>
       {family ? (
         <>
+          {requests.length > 0 ? (
+            <div>
+              <div className={ui.groupLabel}>Waiting for approval</div>
+              <p className={ui.caption}>
+                Ask them to read out the code on their screen, by phone or in person. Approve only
+                if it matches exactly.
+              </p>
+              <ul className={ui.list}>
+                {requests.map((request) => (
+                  <li className={ui.row} key={request.uid}>
+                    <div className={ui.rowMain}>
+                      <div className={ui.rowTitle}>{request.email}</div>
+                      <div className={ui.rowDetail}>Code {request.code}</div>
+                    </div>
+                    <button
+                      aria-label={`Approve ${request.email}`}
+                      className={ui.button}
+                      onClick={() =>
+                        void run(family.approve(request), `Approved ${request.email}.`)
+                      }
+                      type="button"
+                    >
+                      Approve
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <form
             className={ui.form}
             onSubmit={(event) => {
@@ -314,6 +381,7 @@ function FamilyMembers({ account }: { account: Account }) {
                       className={ui.quiet}
                       onClick={() => {
                         if (window.confirm(`Remove access for ${member.email}?`)) {
+                          setStatus('Removing access and re-encrypting your records…');
                           void run(family.remove(member.email), `Removed ${member.email}.`);
                         }
                       }}
@@ -368,36 +436,46 @@ const saveGuide = () =>
 const withoutPhoto = (settings: TrackerSettings, email: string) =>
   Object.fromEntries(Object.entries(settings.photos).filter(([owner]) => owner !== email));
 
+const DELETE_PHRASE = 'DELETE MY ACCOUNT';
+
+const failureText = (error: unknown) =>
+  error instanceof Error ? error.message : 'That did not work. Please try again.';
+
 function DeleteAccount({ account }: { account: Account }) {
-  const data = useTracker((state) => state.data);
   const repository = useTracker((state) => state.repository);
   const settings = useSettings();
   const [phrase, setPhrase] = useState('');
   const [status, setStatus] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const { deleteAccount } = account;
   if (!deleteAccount) return null;
+  const confirmed = phrase.trim().toUpperCase() === DELETE_PHRASE;
   return (
     <div className={ui.metric}>
       <strong>Delete account</strong>
       <p className={ui.caption}>
         {account.role === 'owner'
-          ? 'Permanently deletes this tracker, its records and family access, then your sign-in.'
+          ? 'Permanently deletes this tracker, all its records and family access, then your sign-in.'
           : 'Permanently removes your access and your sign-in. The tracker stays with its owner.'}{' '}
-        Google asks you to confirm first.
+        Google asks you to confirm first, then you're signed out.
       </p>
-      <div className={ui.actions}>
+      <Field label={`Type ${DELETE_PHRASE} to confirm`}>
         <input
-          aria-label="Type DELETE MY ACCOUNT to confirm"
-          className={ui.fieldSelect}
+          autoCapitalize="characters"
+          autoComplete="off"
           onChange={(event) => setPhrase(event.target.value)}
+          placeholder={DELETE_PHRASE}
           value={phrase}
         />
+      </Field>
+      <div className={ui.actions}>
         <button
           className={ui.quiet}
-          disabled={phrase !== 'DELETE MY ACCOUNT'}
+          disabled={!confirmed || deleting}
           onClick={() => {
+            setDeleting(true);
+            setStatus('');
             deleteAccount(async () => {
-              if (account.role === 'owner') await repository?.commit(clearWrites(data));
               // Viewers can't write here, and can't have uploaded a photo either.
               if (account.role === 'editor' && settings.photos[account.email]) {
                 await repository?.commit([
@@ -409,11 +487,13 @@ function DeleteAccount({ account }: { account: Account }) {
                   },
                 ]);
               }
-            }).catch((error: unknown) => setStatus(String(error)));
+            })
+              .catch((error: unknown) => setStatus(failureText(error)))
+              .finally(() => setDeleting(false));
           }}
           type="button"
         >
-          Delete account
+          {deleting ? 'Deleting…' : 'Delete account'}
         </button>
       </div>
       {status ? (
@@ -421,6 +501,78 @@ function DeleteAccount({ account }: { account: Account }) {
           {status}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+function SecurityPanel({ security }: { security: AccountSecurity }) {
+  const [current, setCurrent] = useState('');
+  const [fresh, setFresh] = useState({ passphrase: '', repeat: '' });
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const [status, setStatus] = useState('');
+  const [working, setWorking] = useState(false);
+
+  const run = (task: () => Promise<string>) => {
+    setWorking(true);
+    setStatus('');
+    task()
+      .then(setStatus, (error: unknown) => setStatus(failureText(error)))
+      .finally(() => setWorking(false));
+  };
+
+  return (
+    <div className={ui.metric}>
+      <strong>Passphrase and recovery code</strong>
+      <p className={ui.caption}>
+        Only you can open your records. Nobody can reset these for you, so keep your recovery code
+        safe.
+      </p>
+      <Field label="Current passphrase">
+        <input
+          autoComplete="current-password"
+          onChange={(event) => setCurrent(event.target.value)}
+          type="password"
+          value={current}
+        />
+      </Field>
+      <PassphraseFields label="New passphrase" onChange={setFresh} value={fresh} />
+      <div className={ui.actions}>
+        <button
+          className={ui.quiet}
+          disabled={!current || !validPassphrase(fresh) || working}
+          onClick={() =>
+            run(async () => {
+              await security.changePassphrase(current, fresh.passphrase);
+              setCurrent('');
+              setFresh({ passphrase: '', repeat: '' });
+              return 'Passphrase changed.';
+            })
+          }
+          type="button"
+        >
+          Change passphrase
+        </button>
+        <button
+          className={ui.quiet}
+          disabled={!current || working}
+          onClick={() =>
+            run(async () => {
+              setRecoveryCode(await security.newRecoveryCode(current));
+              setCurrent('');
+              return 'New recovery code created. Your old code no longer works.';
+            })
+          }
+          type="button"
+        >
+          New recovery code
+        </button>
+      </div>
+      {status ? (
+        <p className={ui.caption} role="status">
+          {status}
+        </p>
+      ) : null}
+      {recoveryCode ? <RecoveryCode code={recoveryCode} /> : null}
     </div>
   );
 }
@@ -761,6 +913,7 @@ export function SettingsPage({ account }: { account: Account }) {
                 </button>
               ) : null}
               <ProfilePhoto account={account} />
+              {account.security ? <SecurityPanel security={account.security} /> : null}
               <DeleteAccount account={account} />
             </div>
           ) : null}

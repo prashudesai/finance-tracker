@@ -28,6 +28,7 @@ const editor = () => person('ed', 'editor@example.com');
 const viewer = () => person('vi', 'viewer@example.com');
 const stranger = () => person('st', 'stranger@example.com');
 const record = 'households/owner/income/a';
+const sealed = { k: 1, iv: 'aXY=', c: 'Yw==' };
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({
@@ -42,7 +43,7 @@ beforeEach(async () => {
   await env.clearFirestore();
   await env.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();
-    await setDoc(doc(db, record), { amount: 1 });
+    await setDoc(doc(db, record), sealed);
     const member = (role: string, accepted: boolean) => ({ householdId: 'owner', role, accepted });
     await setDoc(doc(db, 'memberships/editor@example.com'), member('editor', true));
     await setDoc(doc(db, 'memberships/viewer@example.com'), member('viewer', true));
@@ -54,13 +55,13 @@ describe('household records', () => {
   test('owners and editors can read and write', async () => {
     for (const db of [owner(), editor()]) {
       await assertSucceeds(getDoc(doc(db, record)));
-      await assertSucceeds(setDoc(doc(db, record), { amount: 2 }));
+      await assertSucceeds(setDoc(doc(db, record), sealed));
     }
   });
 
   test('viewers can read but not write', async () => {
     await assertSucceeds(getDoc(doc(viewer(), record)));
-    await assertFails(setDoc(doc(viewer(), record), { amount: 2 }));
+    await assertFails(setDoc(doc(viewer(), record), sealed));
     await assertFails(deleteDoc(doc(viewer(), record)));
   });
 
@@ -68,7 +69,7 @@ describe('household records', () => {
     const unverified = person('owner', 'owner@example.com', false);
     for (const db of [stranger(), unverified, env.unauthenticatedContext().firestore()]) {
       await assertFails(getDoc(doc(db, record)));
-      await assertFails(setDoc(doc(db, record), { amount: 2 }));
+      await assertFails(setDoc(doc(db, record), sealed));
     }
   });
 
@@ -94,9 +95,9 @@ describe('household records', () => {
       'interestCredits',
       'epsUpdates',
     ]) {
-      await assertSucceeds(setDoc(doc(db, `households/owner/${name}/a`), { value: 1 }));
+      await assertSucceeds(setDoc(doc(db, `households/owner/${name}/a`), sealed));
     }
-    await assertFails(setDoc(doc(viewer(), 'households/owner/holdings/a'), { value: 1 }));
+    await assertFails(setDoc(doc(viewer(), 'households/owner/holdings/a'), sealed));
   });
 
   test('only known collections can be written', async () => {
@@ -159,5 +160,43 @@ describe('memberships', () => {
   test('owners can remove members, ending their access', async () => {
     await assertSucceeds(deleteDoc(doc(owner(), 'memberships/editor@example.com')));
     await assertFails(getDoc(doc(editor(), record)));
+  });
+});
+
+describe('encryption', () => {
+  const memberKey = { email: 'editor@example.com', publicKey: { x: 'x' }, locked: { c: 'c' } };
+
+  test('readable records are refused, whoever writes them', async () => {
+    await assertFails(setDoc(doc(owner(), record), { amount: 2 }));
+    await assertFails(setDoc(doc(owner(), record), { ...sealed, amount: 2 }));
+    await assertFails(setDoc(doc(owner(), record), { k: 1, iv: 'aXY=' }));
+    await assertFails(setDoc(doc(editor(), record), { amount: 2 }));
+    await assertSucceeds(setDoc(doc(owner(), record), sealed));
+  });
+
+  test('a keyring belongs to its person', async () => {
+    await assertSucceeds(setDoc(doc(owner(), 'keyrings/owner'), { publicKey: {} }));
+    await assertFails(getDoc(doc(editor(), 'keyrings/owner')));
+    await assertFails(setDoc(doc(editor(), 'keyrings/owner'), { publicKey: {} }));
+  });
+
+  test('only the owner shares keys, and members see only their own', async () => {
+    await assertSucceeds(setDoc(doc(owner(), 'households/owner/keys/ed'), memberKey));
+    await assertFails(setDoc(doc(editor(), 'households/owner/keys/ed'), memberKey));
+    await assertFails(setDoc(doc(editor(), 'households/owner/keys/vi'), memberKey));
+    await assertSucceeds(getDoc(doc(editor(), 'households/owner/keys/ed')));
+    await assertFails(getDoc(doc(viewer(), 'households/owner/keys/ed')));
+    await assertFails(getDoc(doc(stranger(), 'households/owner/keys/ed')));
+  });
+
+  test('a member can only ask for themselves, and outsiders cannot ask', async () => {
+    const ask = { email: 'editor@example.com', publicKey: { x: 'x' } };
+    await assertSucceeds(setDoc(doc(editor(), 'households/owner/requests/ed'), ask));
+    await assertFails(setDoc(doc(viewer(), 'households/owner/requests/ed'), ask));
+    await assertFails(
+      setDoc(doc(editor(), 'households/owner/requests/ed'), { ...ask, email: 'x@example.com' }),
+    );
+    await assertFails(setDoc(doc(stranger(), 'households/owner/requests/st'), ask));
+    await assertSucceeds(getDoc(doc(owner(), 'households/owner/requests/ed')));
   });
 });

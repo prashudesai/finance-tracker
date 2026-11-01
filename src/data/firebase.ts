@@ -26,7 +26,17 @@ import {
   persistentMultipleTabManager,
 } from 'firebase/firestore';
 import type { FamilyAccess } from '../Shell';
+import type { RecordCodec } from './crypto';
 import { firestoreRepository } from './firestoreRepository';
+import {
+  deleteHousehold,
+  deleteKeyring,
+  deleteMemberKeys,
+  forgetOnDevice,
+  startVault,
+  type OwnerTools,
+  type VaultMembership,
+} from './vault';
 
 // Firebase web configuration identifies the project; it is not a secret.
 const app = initializeApp({
@@ -51,7 +61,13 @@ export const watchUser = (onChange: (user: User | null) => void) =>
 
 export const signIn = () => signInWithPopup(auth, new GoogleAuthProvider());
 
-export const signOutUser = () => signOut(auth);
+export const signOutUser = async () => {
+  if (auth.currentUser) await forgetOnDevice(auth.currentUser.uid);
+  await signOut(auth);
+};
+
+export const openVault = (user: User, membership: VaultMembership) =>
+  startVault(db, { uid: user.uid, email: user.email?.toLowerCase() ?? '' }, membership);
 
 export interface Membership {
   householdId: string;
@@ -76,7 +92,7 @@ export async function resolveMembership(user: User): Promise<Membership> {
 const memberDoc = (email: string) => doc(db, 'memberships', email.trim().toLowerCase());
 
 /** Family management for a household's owner. Security rules enforce who may do this. */
-export const familyAccess = (ownerUid: string): FamilyAccess => ({
+export const familyAccess = (ownerUid: string, owner: OwnerTools): FamilyAccess => ({
   async list() {
     const members = await getDocs(
       query(collection(db, 'memberships'), where('householdId', '==', ownerUid)),
@@ -90,26 +106,41 @@ export const familyAccess = (ownerUid: string): FamilyAccess => ({
   invite: (email, role) =>
     setDoc(memberDoc(email), { householdId: ownerUid, role, accepted: false }),
   setRole: (email, role) => updateDoc(memberDoc(email), { role }),
-  remove: (email) => deleteDoc(memberDoc(email)),
+  requests: () => owner.requests(),
+  approve: (request) => owner.approve(request),
+  async remove(email) {
+    await owner.removeMember(email);
+    await deleteDoc(memberDoc(email));
+  },
 });
 
 /**
- * Confirms it's really them first, so a failed sign-in deletes nothing. An owner's records
- * and family access go too. A member loses only their own access. Then the sign-in goes.
+ * Confirms it's really them first, so a failed sign-in deletes nothing. An owner's whole tracker
+ * and family access go. A member loses only their own access. Then the sign-in goes, which
+ * signs them out.
  */
-export async function deleteAccount(user: User, owner: boolean, clearOwnData: () => Promise<void>) {
+export async function deleteAccount(
+  user: User,
+  { householdId, role }: VaultMembership,
+  clearMemberData: () => Promise<void>,
+) {
   await reauthenticateWithPopup(user, new GoogleAuthProvider());
-  if (owner) {
-    const family = familyAccess(user.uid);
-    await Promise.all((await family.list()).map((member) => family.remove(member.email)));
-    await clearOwnData();
-  } else if (user.email) {
-    // A member's access ends with this document, so their data goes first.
-    await clearOwnData();
-    await deleteDoc(memberDoc(user.email));
+  if (role === 'owner') {
+    const members = await getDocs(
+      query(collection(db, 'memberships'), where('householdId', '==', user.uid)),
+    );
+    await Promise.all(members.docs.map((row) => deleteDoc(row.ref)));
+    await deleteHousehold(db, householdId);
+  } else {
+    // A member's access ends with their membership, so their data goes first.
+    await clearMemberData();
+    await deleteMemberKeys(db, user.uid, householdId);
+    if (user.email) await deleteDoc(memberDoc(user.email));
   }
+  await deleteKeyring(db, user.uid);
   await deleteUser(user);
+  await signOut(auth);
 }
 
-export const createFirestoreRepository = (householdId: string) =>
-  firestoreRepository(db, householdId);
+export const createFirestoreRepository = (householdId: string, codec: RecordCodec) =>
+  firestoreRepository(db, householdId, codec);

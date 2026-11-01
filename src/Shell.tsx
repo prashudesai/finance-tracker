@@ -60,8 +60,15 @@ export interface Account {
   role: 'owner' | 'editor' | 'viewer';
   photo?: string;
   signOut?: () => void;
-  deleteAccount?: (clearOwnData: () => Promise<void>) => Promise<void>;
+  /** `clearMemberData` runs for a member, while they can still write. */
+  deleteAccount?: (clearMemberData: () => Promise<void>) => Promise<void>;
   family?: FamilyAccess;
+  security?: AccountSecurity;
+}
+
+export interface AccountSecurity {
+  changePassphrase(current: string, next: string): Promise<void>;
+  newRecoveryCode(passphrase: string): Promise<string>;
 }
 
 export interface FamilyMember {
@@ -70,7 +77,15 @@ export interface FamilyMember {
   accepted: boolean;
 }
 
+export interface FamilyRequest {
+  uid: string;
+  email: string;
+  code: string;
+}
+
 export interface FamilyAccess {
+  requests(): Promise<FamilyRequest[]>;
+  approve(request: FamilyRequest): Promise<void>;
   list(): Promise<FamilyMember[]>;
   invite(email: string, role: FamilyMember['role']): Promise<void>;
   setRole(email: string, role: FamilyMember['role']): Promise<void>;

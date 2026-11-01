@@ -8,7 +8,7 @@ Read [docs/rewrite-status.md](docs/rewrite-status.md) before starting a feature,
 
 - This project is `finance-trackerp`, pinned in `.firebaserc`. The older app is a separate project, `finance-tracker-bc7c9`. Never deploy this repo to it.
 - The older app's code was removed from this repo. It remains in git history, up to commit `d34c2af`.
-- The encrypted vault was dropped on purpose. Don't restore it from git history.
+- The older app's encrypted vault was dropped on purpose. Don't restore it from git history. Encryption today is the end-to-end design in [docs/encryption.md](docs/encryption.md).
 
 ## Commands
 
@@ -52,6 +52,7 @@ Before calling work done, run typecheck, lint, tests and build. Run `test:rules`
 - `src/domain`: pure functions only, with no React, Firebase, DOM or current-time access. Pass `today` in.
 - `src/schema`: Zod schemas are the single source of record types. Derive types with `z.infer`.
 - `src/data`: the only place that touches Firestore, behind `TrackerRepository`.
+- Every record is encrypted on the device by `RecordCodec` in `src/data/crypto.ts`. Never write a readable record, and don't add a way to read one on the server. The security rules refuse them.
 - `src/features/<page>`: one folder per screen.
 - `src/ui`: shared styles, formatting and small components.
 

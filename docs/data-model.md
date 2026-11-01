@@ -6,7 +6,10 @@ Record types are defined in `src/schema/records.ts`. That file is the source of 
 
 ```text
 memberships/{email}                   Invite: householdId, role, accepted
+keyrings/{uid}                        Public key, plus the private key locked by a passphrase and a recovery code
 households/{ownerUid}/
+  keys/{uid}                          The household's keys, locked to one member
+  requests/{uid}                      A member's public key, waiting for the owner's approval
   income/{id}
   expenses/{id}
   loans/{id}
@@ -26,6 +29,8 @@ households/{ownerUid}/
 ```
 
 Email addresses in `memberships` are lowercase.
+
+Every record below is stored encrypted, as `{ k, iv, c }`, under a scrambled document ID. The IDs shown above are what the app sees after decrypting. See [encryption.md](encryption.md).
 
 ## Records
 
