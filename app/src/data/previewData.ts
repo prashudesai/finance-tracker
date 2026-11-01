@@ -232,6 +232,7 @@ export function previewData(): Partial<TrackerData> {
       {
         ...defaultSettings(),
         familyMembers: MEMBERS,
+        onboardingDone: true,
         investmentTypes: ['Index ETFs', 'Cash Reserve'],
         growthTypes: { 'Index ETFs': 'market', 'Cash Reserve': 'no-return' },
       },

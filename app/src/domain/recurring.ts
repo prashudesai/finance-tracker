@@ -350,3 +350,18 @@ export function stopSchedules(
     occurrences: data.occurrences.filter((row) => !removed.has(row.ruleId)),
   };
 }
+
+/**
+ * Applies a new amount from `month` on. Earlier months keep the old amount, so past
+ * records stay explained.
+ */
+export function withAmountChange<Rule extends Extract<RecurringRule, { amount: number }>>(
+  rule: Rule,
+  amount: number,
+  month: string,
+): Rule {
+  if (amountAt(rule, month) === amount) return rule;
+  const earlier = rule.amountChanges.filter((change) => change.month < month);
+  if (month <= rule.startMonth) return { ...rule, amount, amountChanges: earlier };
+  return { ...rule, amountChanges: [...earlier, { month, amount }] };
+}

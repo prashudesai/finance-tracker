@@ -1,4 +1,13 @@
-import { Clock, CreditCard, History, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  Archive,
+  Clock,
+  CreditCard,
+  History,
+  ListChecks,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { loanPayments, stopSchedules } from '../../domain/recurring';
 import {
@@ -174,6 +183,24 @@ export function DebtsPage() {
                             type="button"
                           >
                             <Pencil size={14} />
+                          </button>
+                          <button
+                            aria-label={`Archive ${type}`}
+                            className={ui.smallIcon}
+                            onClick={() =>
+                              loan &&
+                              commit([
+                                {
+                                  type: 'set',
+                                  collection: 'loans',
+                                  id,
+                                  value: { ...loan, archived: true },
+                                },
+                              ])
+                            }
+                            type="button"
+                          >
+                            <Archive size={14} />
                           </button>
                           <button
                             aria-label={`Delete ${type}`}

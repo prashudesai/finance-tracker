@@ -1,4 +1,5 @@
 import {
+  Archive,
   ChevronRight,
   DatabaseBackup,
   Info,
@@ -12,9 +13,8 @@ import {
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { clearWrites, createBackup, parseBackup, restoreWrites } from '../../domain/backup';
-import { useSettings, useTracker } from '../../store/tracker';
+import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
 import type { Account } from '../../Shell';
-import { TRACKER_SETTINGS_ID, type TrackerSettings } from '../../schema/records';
 import { downloadText } from '../../ui/download';
 import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
@@ -23,7 +23,8 @@ import { PageHeader } from '../../ui/PageHeader';
 import { useTheme } from '../../ui/theme';
 import ui from '../../ui/ui.module.css';
 
-type Panel = 'info' | 'account' | 'family' | 'appearance' | 'values' | 'data' | 'updates';
+type Panel =
+  'info' | 'account' | 'family' | 'appearance' | 'values' | 'archived' | 'data' | 'updates';
 
 const VERSION = '0.1.0';
 
@@ -49,6 +50,12 @@ const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] =
     text: 'Family members, categories and sources',
   },
   {
+    panel: 'archived',
+    icon: Archive,
+    title: 'Archived accounts',
+    text: 'Restore closed accounts and loans',
+  },
+  {
     panel: 'data',
     icon: DatabaseBackup,
     title: 'Data & backup',
@@ -70,19 +77,10 @@ const LISTS: { key: ListKey; label: string }[] = [
 
 function CustomValues() {
   const settings = useSettings();
-  const commit = useTracker((state) => state.commit);
+  const save = useSaveSettings();
   const [key, setKey] = useState<ListKey>('familyMembers');
   const [text, setText] = useState('');
   const [growth, setGrowth] = useState<'market' | 'fixed' | 'no-return'>('market');
-  const save = (patch: Partial<TrackerSettings>) =>
-    commit([
-      {
-        type: 'set',
-        collection: 'settings',
-        id: TRACKER_SETTINGS_ID,
-        value: { ...settings, ...patch, id: TRACKER_SETTINGS_ID },
-      },
-    ]);
   const value = text.trim();
   const exists = settings[key].some((item) => item.toLowerCase() === value.toLowerCase());
 
@@ -152,6 +150,77 @@ function CustomValues() {
         </ul>
       )}
       <p className={ui.caption}>Removing a value keeps it on records that already use it.</p>
+    </div>
+  );
+}
+
+function ArchivedAccounts() {
+  const holdings = useTracker((state) => state.data.holdings);
+  const loans = useTracker((state) => state.data.loans);
+  const commit = useTracker((state) => state.commit);
+  const archivedHoldings = holdings.filter((row) => row.archived);
+  const archivedLoans = loans.filter((row) => row.archived);
+  if (archivedHoldings.length + archivedLoans.length === 0) {
+    return <p className={ui.empty}>No archived accounts.</p>;
+  }
+  return (
+    <div className={ui.page}>
+      <p className={ui.caption}>
+        Archived accounts are left out of current totals and projections. Restoring one resumes its
+        contributions, including any months missed while it was archived.
+      </p>
+      <ul className={ui.list}>
+        {archivedHoldings.map((row) => (
+          <li className={ui.row} key={row.id}>
+            <div className={ui.rowMain}>
+              <div className={ui.rowTitle}>{row.name}</div>
+              <div className={ui.rowDetail}>{row.type}</div>
+            </div>
+            <button
+              aria-label={`Restore ${row.name}`}
+              className={ui.quiet}
+              onClick={() =>
+                commit([
+                  {
+                    type: 'set',
+                    collection: 'holdings',
+                    id: row.id,
+                    value: { ...row, archived: false },
+                  },
+                ])
+              }
+              type="button"
+            >
+              Restore
+            </button>
+          </li>
+        ))}
+        {archivedLoans.map((row) => (
+          <li className={ui.row} key={row.id}>
+            <div className={ui.rowMain}>
+              <div className={ui.rowTitle}>{row.type}</div>
+              <div className={ui.rowDetail}>{row.member}</div>
+            </div>
+            <button
+              aria-label={`Restore ${row.type}`}
+              className={ui.quiet}
+              onClick={() =>
+                commit([
+                  {
+                    type: 'set',
+                    collection: 'loans',
+                    id: row.id,
+                    value: { ...row, archived: false },
+                  },
+                ])
+              }
+              type="button"
+            >
+              Restore
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -393,6 +462,7 @@ export function SettingsPage({ account }: { account: Account }) {
           {panel === 'family' ? <FamilyAccess account={account} /> : null}
           {panel === 'appearance' ? <Appearance /> : null}
           {panel === 'values' ? <CustomValues /> : null}
+          {panel === 'archived' ? <ArchivedAccounts /> : null}
           {panel === 'data' ? <DataBackup /> : null}
           {panel === 'updates' ? <p>You are on version {VERSION}.</p> : null}
         </Modal>

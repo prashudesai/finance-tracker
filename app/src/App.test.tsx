@@ -232,3 +232,61 @@ test('search finds a record and opens its page', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
   expect(await screen.findByRole('heading', { level: 1, name: 'Cash flow' })).toBeDefined();
 });
+
+test('a new account is walked through setup, and can skip it', async () => {
+  renderApp('/');
+  fireEvent.change(await screen.findByLabelText('First name'), { target: { value: 'Sam' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+  expect(await screen.findByText('Step 2 of 6')).toBeDefined();
+  fireEvent.click(screen.getByRole('button', { name: 'Skip setup' }));
+  expect(await screen.findByRole('region', { name: 'Net worth' })).toBeDefined();
+  expect(screen.queryByText('Step 2 of 6')).toBeNull();
+});
+
+test('an archived holding leaves current totals and can be restored', async () => {
+  renderApp('/investments', { holdings: [{ ...fund, archived: true }] });
+  expect(await screen.findByText('No investments recorded yet.')).toBeDefined();
+  fireEvent.click(screen.getByRole('link', { name: 'Settings' }));
+  fireEvent.click(await screen.findByRole('button', { name: /Archived accounts/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Restore Index fund', hidden: true }));
+  expect(await screen.findByText('No archived accounts.')).toBeDefined();
+});
+
+test('editing a recurring amount keeps earlier months', async () => {
+  renderApp('/cash-flow', {
+    recurringRules: [
+      {
+        id: 'rent',
+        kind: 'expense',
+        name: 'Rent',
+        category: 'House Rent',
+        subcategory: '',
+        isAnnual: false,
+        amount: 32_000,
+        day: 1,
+        startMonth: '2020-01',
+        paused: true,
+        amountChanges: [],
+      },
+      {
+        id: 'gym',
+        kind: 'expense',
+        name: 'Gym',
+        category: 'Health',
+        subcategory: '',
+        isAnnual: false,
+        amount: 2000,
+        day: 28,
+        startMonth: month,
+        paused: false,
+        amountChanges: [],
+      },
+    ],
+  });
+  fireEvent.click(await screen.findByRole('button', { name: 'Edit Gym' }));
+  fireEvent.change(await screen.findByLabelText('Monthly amount (₹)'), {
+    target: { value: '2500' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Save recurring item', hidden: true }));
+  expect(await screen.findByText('₹2,500 · monthly')).toBeDefined();
+});

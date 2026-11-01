@@ -28,6 +28,8 @@ const formSchema = z.object({
   principalPaidBeforeTracking: optional,
   interestPaidBeforeTracking: optional,
   firstEmiDate: z.string(),
+  firstEmiExtraInterest: optional,
+  firstEmiInterestMethod: z.enum(['monthly', 'short-actual365']),
   dailyInterestBasis: z.boolean(),
 });
 type FormInput = z.input<typeof formSchema>;
@@ -51,6 +53,8 @@ export function LoanForm({ initial, onDone }: { initial?: Loan; onDone: () => vo
       principalPaidBeforeTracking: initial?.principalPaidBeforeTracking,
       interestPaidBeforeTracking: initial?.interestPaidBeforeTracking,
       firstEmiDate: initial?.firstEmiDate ?? '',
+      firstEmiExtraInterest: initial?.firstEmiExtraInterest,
+      firstEmiInterestMethod: initial?.firstEmiInterestMethod ?? 'monthly',
       dailyInterestBasis: initial?.dailyInterestBasis ?? false,
     },
   });
@@ -108,6 +112,13 @@ export function LoanForm({ initial, onDone }: { initial?: Loan; onDone: () => vo
       {number('Monthly EMI (₹)', 'openingEmi', errors.openingEmi?.message)}
       <Field label="First EMI date (optional)">
         <input type="date" {...register('firstEmiDate')} />
+      </Field>
+      {number('Extra first-EMI interest (₹)', 'firstEmiExtraInterest')}
+      <Field label="First EMI interest">
+        <select {...register('firstEmiInterestMethod')}>
+          <option value="monthly">Standard monthly</option>
+          <option value="short-actual365">Short first period, actual days</option>
+        </select>
       </Field>
       {number('Principal paid before tracking (₹)', 'principalPaidBeforeTracking')}
       {number('Interest paid before tracking (₹)', 'interestPaidBeforeTracking')}

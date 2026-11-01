@@ -36,6 +36,7 @@ import {
 import { PageHeader } from '../../ui/PageHeader';
 import { Metric, Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
+import { GettingStarted } from './GettingStarted';
 import { TrendChart } from './TrendChart';
 
 const DASHBOARD_CATEGORIES = 5;
@@ -158,6 +159,8 @@ export function Dashboard() {
         subtitle="Your wealth, spending and progress — all in one place."
         title="Dashboard"
       />
+
+      <GettingStarted />
 
       <div className={ui.twoColumn}>
         <section aria-label="Net worth" className={ui.hero}>

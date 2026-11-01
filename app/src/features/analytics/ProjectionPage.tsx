@@ -10,14 +10,8 @@ import {
   type ProjectionAsset,
   type ProjectionResult,
 } from '../../domain/projection';
-import {
-  SCENARIOS,
-  TRACKER_SETTINGS_ID,
-  type ProjectionAdjustment,
-  type Scenario,
-  type TrackerSettings,
-} from '../../schema/records';
-import { useSettings, useTracker, useView } from '../../store/tracker';
+import { SCENARIOS, type ProjectionAdjustment, type Scenario } from '../../schema/records';
+import { useSaveSettings, useSettings, useTracker, useView } from '../../store/tracker';
 import { LineChart } from '../../ui/charts';
 import { Field } from '../../ui/Field';
 import { formatCompactMoney, formatMoney, localDate } from '../../ui/format';
@@ -29,20 +23,6 @@ const SCENARIO_LABELS: Record<Scenario, string> = {
   stress: 'Stress',
   base: 'Base',
   optimistic: 'Optimistic',
-};
-
-const useSaveSettings = () => {
-  const commit = useTracker((state) => state.commit);
-  const settings = useSettings();
-  return (patch: Partial<TrackerSettings>) =>
-    commit([
-      {
-        type: 'set',
-        collection: 'settings',
-        id: TRACKER_SETTINGS_ID,
-        value: { ...settings, ...patch, id: TRACKER_SETTINGS_ID },
-      },
-    ]);
 };
 
 function RateInput({

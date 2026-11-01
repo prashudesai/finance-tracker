@@ -8,7 +8,7 @@ import {
   type TrackerData,
   type TrackerRepository,
 } from '../data/repository';
-import { defaultSettings, type TrackerSettings } from '../schema/records';
+import { defaultSettings, TRACKER_SETTINGS_ID, type TrackerSettings } from '../schema/records';
 
 interface TrackerState {
   data: TrackerData;
@@ -105,8 +105,30 @@ export const useTracker = create<TrackerState>((set, get) => ({
 export const useSettings = (): TrackerSettings =>
   useTracker((state) => state.data.settings[0]) ?? defaultSettings();
 
-/** Personal records follow the selected profile. Household expenses stay shared. */
-export function selectView(data: TrackerData, profile: string | null): TrackerData {
+export function useSaveSettings() {
+  const commit = useTracker((state) => state.commit);
+  const settings = useSettings();
+  return (patch: Partial<TrackerSettings>) =>
+    commit([
+      {
+        type: 'set',
+        collection: 'settings',
+        id: TRACKER_SETTINGS_ID,
+        value: { ...settings, ...patch, id: TRACKER_SETTINGS_ID },
+      },
+    ]);
+}
+
+/**
+ * Archived accounts leave current figures. Personal records follow the selected
+ * profile, and household expenses stay shared.
+ */
+export function selectView(source: TrackerData, profile: string | null): TrackerData {
+  const data = {
+    ...source,
+    holdings: source.holdings.filter((row) => !row.archived),
+    loans: source.loans.filter((row) => !row.archived),
+  };
   if (!profile) return data;
   const mine = <Row extends { member: string }>(rows: Row[]) =>
     rows.filter((row) => row.member === profile);

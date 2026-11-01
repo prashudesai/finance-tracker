@@ -266,6 +266,11 @@ describe('parity with the legacy ledger', () => {
       principalPaidBeforeTracking: next() < 0.3 ? 5000 : 0,
       interestPaidBeforeTracking: next() < 0.3 ? 2500 : 0,
     });
+    if (next() < 0.3) {
+      loan.firstEmiDate = pick(['2026-01-20', '2026-02-01']);
+      loan.firstEmiExtraInterest = pick([0, 1200]);
+      loan.firstEmiInterestMethod = pick(['monthly', 'short-actual365'] as const);
+    }
     const payments: LoanPayment[] = [];
     for (let month = 2; month <= 25; month++) {
       const year = 2026 + Math.floor((month - 1) / 12);

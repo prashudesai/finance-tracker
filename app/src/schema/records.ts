@@ -50,6 +50,8 @@ export const loanSchema = z.object({
   firstEmiInterestMethod: z.enum(['monthly', 'short-actual365']).optional(),
   dailyInterestBasis: z.boolean().optional(),
   changes: z.array(loanChangeSchema).max(500),
+  /** Kept for its history, but left out of current totals. */
+  archived: z.boolean().optional(),
 });
 export type Loan = z.infer<typeof loanSchema>;
 
@@ -161,6 +163,8 @@ export const holdingSchema = z.object({
   /** First scheduled contribution. Its day anchors later months. */
   autoStart: date.optional(),
   notes: notes.optional(),
+  /** Kept for its history, but left out of current totals and schedules. */
+  archived: z.boolean().optional(),
 });
 export type Holding = z.infer<typeof holdingSchema>;
 
@@ -244,6 +248,7 @@ export const trackerSettingsSchema = z.object({
   stepUps: z.record(z.string(), z.number()).default({}),
   returns: z.record(z.string(), scenarioRates).default({}),
   projectionMonthly: z.record(z.string(), z.number()).default({}),
+  onboardingDone: z.boolean().default(false),
   goal: z
     .object({
       years: z.number().int().min(1).max(40),

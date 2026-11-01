@@ -2,10 +2,12 @@ import { createRequire } from 'node:module';
 import type { Expense, Loan, RecurringRule } from '../schema/records';
 import { isLoanFailure, rebuildLoan } from './loan';
 import {
+  amountAt,
   applyOccurrences,
   loanPayments,
   pendingOccurrences,
   stopSchedules,
+  withAmountChange,
   validateRecurring,
   type RecurringData,
 } from './recurring';
@@ -121,6 +123,17 @@ test('stopping keeps rules with history and removes the rest', () => {
   ).data;
   const stopped = stopSchedules(posted, () => true, '2026-10');
   expect(stopped.rules.map((rule) => [rule.id, rule.archived])).toEqual([['sal', true]]);
+});
+
+test('a new amount applies from its month and keeps earlier months', () => {
+  const rule = withAmountChange(
+    rent as Extract<RecurringRule, { kind: 'expense' }>,
+    35_000,
+    '2026-11',
+  );
+  expect(amountAt(rule, '2026-10')).toBe(20_000);
+  expect(amountAt(rule, '2026-11')).toBe(35_000);
+  expect(withAmountChange(rule, 35_000, '2026-12')).toBe(rule);
 });
 
 test('rejects two active EMI schedules for one loan', () => {

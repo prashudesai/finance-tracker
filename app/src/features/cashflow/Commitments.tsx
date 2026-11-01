@@ -1,14 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Repeat, Square } from 'lucide-react';
+import { Pencil, Plus, Repeat, Square } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { isValidMonth } from '../../domain/calendar';
 import { optionLists } from '../../domain/options';
 import {
+  amountAt,
   applyOccurrences,
   pendingOccurrences,
   stopSchedules,
+  withAmountChange,
   type OccurrenceRequest,
   type RecurringData,
 } from '../../domain/recurring';
@@ -66,7 +68,7 @@ const ruleForm = z.object({
 });
 type RuleValues = z.infer<typeof ruleForm>;
 
-function RuleForm({ onDone }: { onDone: () => void }) {
+function RuleForm({ initial, onDone }: { initial?: RecurringRule; onDone: () => void }) {
   const commit = useTracker((state) => state.commit);
   const report = useTracker((state) => state.report);
   const loans = useTracker((state) => state.data.loans);
@@ -74,20 +76,47 @@ function RuleForm({ onDone }: { onDone: () => void }) {
   const options = optionLists(settings);
   const { register, handleSubmit, watch, formState } = useForm<RuleValues>({
     resolver: zodResolver(ruleForm),
-    defaultValues: {
-      kind: 'expense',
-      name: '',
-      label: '',
-      member: '',
-      loanId: '',
-      day: 1,
-      startMonth: localDate().slice(0, 7),
-    },
+    defaultValues: initial
+      ? {
+          kind: initial.kind,
+          name: initial.name,
+          amount: amountAt(initial, localDate().slice(0, 7)),
+          label:
+            initial.kind === 'income'
+              ? initial.source
+              : initial.kind === 'expense'
+                ? initial.category
+                : '',
+          member: initial.kind === 'income' ? initial.member : '',
+          loanId: initial.kind === 'emi' ? initial.loanId : '',
+          day: initial.day,
+          startMonth: initial.startMonth,
+        }
+      : {
+          kind: 'expense',
+          name: '',
+          label: '',
+          member: '',
+          loanId: '',
+          day: 1,
+          startMonth: localDate().slice(0, 7),
+        },
   });
   const { errors } = formState;
   const kind = watch('kind');
 
   const save = (values: RuleValues) => {
+    if (initial) {
+      const month = localDate().slice(0, 7);
+      const changed =
+        initial.kind === 'emi'
+          ? initial
+          : withAmountChange(initial, values.amount ?? initial.amount, month);
+      const value = { ...changed, name: values.name, day: values.day };
+      commit([{ type: 'set', collection: 'recurringRules', id: initial.id, value }]);
+      onDone();
+      return;
+    }
     const id = crypto.randomUUID();
     const { name, day, startMonth } = values;
     const base = { id, name, day, startMonth, paused: false };
@@ -128,7 +157,7 @@ function RuleForm({ onDone }: { onDone: () => void }) {
   return (
     <form className={ui.form} onSubmit={(event) => void handleSubmit(save)(event)}>
       <Field label="Type">
-        <select {...register('kind')}>
+        <select disabled={initial !== undefined} {...register('kind')}>
           <option value="expense">Expense</option>
           <option value="income">Income</option>
           <option value="emi">Loan EMI</option>
@@ -176,7 +205,7 @@ function RuleForm({ onDone }: { onDone: () => void }) {
         <input type="number" {...register('day', { valueAsNumber: true })} />
       </Field>
       <Field label="Starts" error={errors.startMonth?.message}>
-        <input type="month" {...register('startMonth')} />
+        <input disabled={initial !== undefined} type="month" {...register('startMonth')} />
       </Field>
       <div className={ui.formActions}>
         <button className={ui.button} type="submit">
@@ -192,6 +221,7 @@ export function Commitments() {
   const commit = useTracker((state) => state.commit);
   const report = useTracker((state) => state.report);
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<RecurringRule | null>(null);
   const today = localDate();
   const month = today.slice(0, 7);
   const recurring = toRecurring(data);
@@ -267,9 +297,18 @@ export function Commitments() {
               <div className={ui.rowMain}>
                 <div className={ui.rowTitle}>{rule.name}</div>
                 <div className={ui.rowDetail}>
-                  {rule.kind === 'emi' ? 'Loan EMI' : formatMoney(rule.amount)} · monthly
+                  {rule.kind === 'emi' ? 'Loan EMI' : formatMoney(amountAt(rule, month) ?? 0)} ·
+                  monthly
                 </div>
               </div>
+              <button
+                aria-label={`Edit ${rule.name}`}
+                className={ui.smallIcon}
+                onClick={() => setEditing(rule)}
+                type="button"
+              >
+                <Pencil size={14} />
+              </button>
               <button
                 aria-label={`Stop ${rule.name}`}
                 className={ui.smallIcon}
@@ -287,6 +326,11 @@ export function Commitments() {
           <Plus size={16} /> Add recurring item
         </button>
       </div>
+      {editing ? (
+        <Modal onClose={() => setEditing(null)} title={`Edit ${editing.name}`}>
+          <RuleForm initial={editing} onDone={() => setEditing(null)} />
+        </Modal>
+      ) : null}
       {adding ? (
         <Modal onClose={() => setAdding(false)} title="Add recurring item">
           <RuleForm onDone={() => setAdding(false)} />
