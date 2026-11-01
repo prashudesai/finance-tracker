@@ -380,6 +380,18 @@ describe('the tour follows quick setup', () => {
   });
 });
 
+test('Review this month shows only while the month needs something', async () => {
+  const month = localDate().slice(0, 7);
+  renderApp('/cash-flow', {
+    income: [{ id: 'i', date: `${month}-01`, member: 'A', source: 'S', amount: 1 }],
+  });
+  expect(await screen.findByRole('button', { name: 'Review this month' })).toBeDefined();
+  cleanup();
+  renderApp('/cash-flow', { monthlyBalances: [{ month, startBalance: 100 }] });
+  expect(await screen.findByText('Review when the month ends')).toBeDefined();
+  expect(screen.queryByRole('button', { name: 'Review this month' })).toBeNull();
+});
+
 test('the app tour walks the pages and changes nothing', async () => {
   renderApp('/settings');
   fireEvent.click(await screen.findByRole('button', { name: /App info/ }));

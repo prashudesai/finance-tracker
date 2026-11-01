@@ -100,6 +100,8 @@ export function CashFlowPage() {
     }
   };
 
+  const needsReview = monthsToReview(household, localDate()).includes(month);
+
   const loanName = (id: string | undefined) =>
     data.loans.find((loan) => loan.id === id)?.type ?? '';
   const expenseNote = (row: Expense) => loanName(row.loanId) || row.subcategory || row.notes || '—';
@@ -154,16 +156,18 @@ export function CashFlowPage() {
         subtitle="Income, spending and what remains"
         title="Cash flow"
       />
-      <button
-        className={ui.primaryWide}
-        onClick={() => {
-          setReviewOpen(true);
-          scrollToSection('month-review');
-        }}
-        type="button"
-      >
-        Review this month
-      </button>
+      {needsReview ? (
+        <button
+          className={ui.primaryWide}
+          onClick={() => {
+            setReviewOpen(true);
+            scrollToSection('month-review');
+          }}
+          type="button"
+        >
+          Review this month
+        </button>
+      ) : null}
       {phone ? (
         <section aria-label="Selected month" className={ui.card}>
           <div className={ui.metric}>

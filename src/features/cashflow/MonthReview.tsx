@@ -35,13 +35,17 @@ export function MonthReview({
   );
   const id = `month_${month}`;
 
-  const summary = !close.complete
-    ? 'Balances needed'
-    : status.changed
-      ? 'Changed since review'
-      : status.reviewed
-        ? `Reviewed ${status.reviewedAt}`
-        : 'Review available';
+  const running = month === localDate().slice(0, 7) && close.opening !== null;
+
+  const summary = running
+    ? 'Review when the month ends'
+    : !close.complete
+      ? 'Balances needed'
+      : status.changed
+        ? 'Changed since review'
+        : status.reviewed
+          ? `Reviewed ${status.reviewedAt}`
+          : 'Review available';
 
   return (
     <details
