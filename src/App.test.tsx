@@ -612,3 +612,21 @@ test('the loan form fills the EMI from the tenure until it is typed over', async
   fireEvent.change(field('Tenure (Months)'), { target: { value: '60' } });
   await waitFor(() => expect(field('EMI (₹)').value).toBe('12000'));
 });
+
+test('the header shows the Google photo when there is one', async () => {
+  const { container } = render(
+    <MemoryRouter>
+      <Shell
+        account={{
+          name: 'O',
+          email: 'o@example.test',
+          role: 'owner',
+          photo: 'https://lh3.googleusercontent.com/a/photo',
+        }}
+        repository={createMemoryRepository()}
+      />
+    </MemoryRouter>,
+  );
+  await screen.findByRole('heading', { level: 1 });
+  expect(container.querySelector('header img')?.getAttribute('src')).toContain('googleusercontent');
+});

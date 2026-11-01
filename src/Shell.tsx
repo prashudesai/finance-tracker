@@ -117,7 +117,11 @@ export function Shell({
       <header className={styles.header}>
         <div className={styles.brand}>
           <span aria-hidden="true" className={styles.avatar}>
-            <Users size={18} />
+            {account.photo ? (
+              <img alt="" height="38" referrerPolicy="no-referrer" src={account.photo} width="38" />
+            ) : (
+              <Users size={18} />
+            )}
           </span>
           {settings.familyMembers.length > 1 ? (
             <select
