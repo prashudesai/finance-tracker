@@ -62,7 +62,12 @@ const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] =
     title: 'Data & backup',
     text: 'Export, import and recovery tools',
   },
-  { panel: 'updates', icon: Smartphone, title: 'App & updates', text: `Version ${VERSION}` },
+  {
+    panel: 'updates',
+    icon: Smartphone,
+    title: 'App & updates',
+    text: `Version ${VERSION} · Updates and release notes`,
+  },
 ];
 
 function FamilyNames() {
@@ -707,17 +712,17 @@ export function SettingsPage({ account }: { account: Account }) {
           </p>
         ) : null}
       </section>
-      <div className={ui.threeColumn}>
+      <div className={ui.settingGrid}>
         {TILES.map(({ panel: key, icon: Icon, title, text }) => (
-          <button className={ui.tileButton} key={key} onClick={() => setPanel(key)} type="button">
+          <button className={ui.settingTile} key={key} onClick={() => setPanel(key)} type="button">
             <span aria-hidden="true" className={ui.tileIcon}>
               <Icon size={20} />
             </span>
-            <span>
+            <span className={ui.settingText}>
               <strong style={{ display: 'block' }}>{title}</strong>
               <span className={ui.caption}>{text}</span>
             </span>
-            <ChevronRight aria-hidden="true" size={16} />
+            <ChevronRight aria-hidden="true" className={ui.settingArrow} size={16} />
           </button>
         ))}
       </div>

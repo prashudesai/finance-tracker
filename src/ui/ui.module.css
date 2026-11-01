@@ -755,15 +755,75 @@
   border-color: var(--border-strong);
 }
 
-.tileButton {
+.settingGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.settingTile {
   composes: card;
-  grid-template-columns: auto 1fr auto;
+  grid-template-areas: 'icon text arrow';
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px 14px;
+  align-content: center;
   align-items: center;
   width: 100%;
+  min-height: 118px;
+  padding: 16px 22px;
   color: inherit;
   font: inherit;
   text-align: left;
+  border-radius: 14px;
   cursor: pointer;
+  transition: border-color 140ms ease;
+}
+
+.settingTile:hover {
+  border-color: var(--border-strong);
+}
+
+.settingTile > :first-child {
+  grid-area: icon;
+}
+
+.settingText {
+  grid-area: text;
+  min-width: 0;
+}
+
+.settingArrow {
+  grid-area: arrow;
+  color: var(--accent);
+}
+
+@media (max-width: 1000px) {
+  .settingGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .settingGrid {
+    gap: 8px;
+  }
+
+  .settingTile {
+    grid-template-areas:
+      'icon arrow'
+      'text text';
+    grid-template-columns: 1fr auto;
+    align-content: start;
+    align-items: start;
+    gap: 10px 8px;
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .settingTile .tileIcon {
+    width: 34px;
+    height: 34px;
+  }
 }
 
 .barList {
