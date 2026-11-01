@@ -4,11 +4,8 @@ node_modules/
 # Local credentials
 .env*
 !.env.example
-functions/.env*
-!functions/.env.example
 .secret.local
 .runtimeconfig.json
-functions/.runtimeconfig.json
 
 # Firebase emulator and local cache
 .firebase/

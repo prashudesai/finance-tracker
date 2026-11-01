@@ -101,14 +101,5 @@
   },
   "firestore": {
     "rules": "firestore.rules"
-  },
-  "functions": {
-    "source": "functions",
-    "codebase": "tracker-account",
-    "ignore": [
-      "node_modules",
-      ".git",
-      "*-debug.log"
-    ]
   }
 }
