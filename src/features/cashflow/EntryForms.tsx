@@ -77,7 +77,11 @@ export function IncomeForm({ initial, onDone }: { initial?: Income; onDone?: () 
 
 const expenseForm = expenseSchema
   .pick({ date: true, category: true, amount: true, notes: true })
-  .extend({ subcategory: z.string().max(100), annual: z.enum(['no', 'yes']) });
+  .extend({
+    subcategory: z.string().max(100),
+    annual: z.enum(['no', 'yes']),
+    member: z.string().max(100),
+  });
 type ExpenseValues = z.infer<typeof expenseForm>;
 
 export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: () => void }) {
@@ -87,27 +91,41 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
   const { register, handleSubmit, reset, formState } = useForm<ExpenseValues>({
     resolver: zodResolver(expenseForm),
     defaultValues: initial
-      ? { ...initial, annual: initial.isAnnual ? 'yes' : 'no' }
+      ? { ...initial, member: initial.member ?? '', annual: initial.isAnnual ? 'yes' : 'no' }
       : {
           date: localDate(),
           category: 'Groceries',
           subcategory: '',
+          member: '',
           annual: 'no',
           notes: '',
         },
   });
   const { errors } = formState;
 
-  const save = ({ annual, ...values }: ExpenseValues) => {
+  const save = ({ annual, member, ...values }: ExpenseValues) => {
     const id = initial?.id ?? crypto.randomUUID();
-    const value: Expense = { ...initial, ...values, id, isAnnual: annual === 'yes' };
+    const value: Expense = {
+      ...initial,
+      ...values,
+      id,
+      isAnnual: annual === 'yes',
+      ...(member ? { member } : {}),
+    };
     commit([{ type: 'set', collection: 'expenses', id, value }]);
-    reset({ ...values, annual: 'no', subcategory: '', notes: '' });
+    reset({ ...values, member: '', annual: 'no', subcategory: '', notes: '' });
     onDone?.();
   };
 
   return (
     <form className={ui.form} onSubmit={(event) => void handleSubmit(save)(event)}>
+      <Field label="Family member (optional)">
+        <Select
+          options={options.familyMembers}
+          placeholder="-- Household / unspecified --"
+          {...register('member')}
+        />
+      </Field>
       <Field label="Category" error={errors.category?.message}>
         <Select options={options.expenseCategories} {...register('category')} />
       </Field>

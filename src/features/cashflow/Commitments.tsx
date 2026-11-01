@@ -3,13 +3,14 @@ import { Pencil, Plus, Repeat, Square } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { isValidMonth } from '../../domain/calendar';
+import { addDays, isValidMonth } from '../../domain/calendar';
 import { optionLists } from '../../domain/options';
 import {
   amountAt,
   applyOccurrences,
   pendingOccurrences,
   stopSchedules,
+  upcomingCommitments,
   withAmountChange,
   type OccurrenceRequest,
   type RecurringData,
@@ -22,6 +23,8 @@ import { formatDay, formatMoney, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { Select } from '../../ui/Select';
 import ui from '../../ui/ui.module.css';
+
+const COMMITMENT_DAYS = 30;
 
 const toRecurring = (data: TrackerData): RecurringData => ({
   rules: data.recurringRules,
@@ -226,6 +229,7 @@ export function Commitments() {
   const month = today.slice(0, 7);
   const recurring = toRecurring(data);
   const pending = pendingOccurrences(recurring, today);
+  const upcoming = upcomingCommitments(recurring, today, addDays(today, COMMITMENT_DAYS));
   const ruleName = (id: string) => data.recurringRules.find((rule) => rule.id === id)?.name ?? id;
   const active = data.recurringRules.filter((rule) => !rule.paused);
 
@@ -249,7 +253,7 @@ export function Commitments() {
   return (
     <details className={`${ui.card} ${ui.fold}`} open={pending.length > 0}>
       <summary className={ui.split}>
-        <span>Upcoming recorded commitments</span>
+        <span>Upcoming commitments</span>
         <span className={ui.caption} style={{ color: 'var(--accent)' }}>
           <Repeat size={12} /> Recurring · {pending.length} due
         </span>
@@ -287,45 +291,66 @@ export function Commitments() {
           ))}
         </ul>
       )}
-      <div className={ui.groupLabel}>Recurring items</div>
-      {active.length === 0 ? (
-        <p className={ui.empty}>No recurring items yet.</p>
+      <div className={ui.groupLabel}>Next 30 days</div>
+      {upcoming.length === 0 ? (
+        <p className={ui.empty}>No scheduled payments in the next 30 days.</p>
       ) : (
         <ul className={ui.list}>
-          {active.map((rule) => (
-            <li className={ui.row} key={rule.id}>
+          {upcoming.map((row) => (
+            <li className={ui.row} key={`${row.ruleId}-${row.date}`}>
               <div className={ui.rowMain}>
-                <div className={ui.rowTitle}>{rule.name}</div>
+                <div className={ui.rowTitle}>{row.name}</div>
                 <div className={ui.rowDetail}>
-                  {rule.kind === 'emi' ? 'Loan EMI' : formatMoney(amountAt(rule, month) ?? 0)} ·
-                  monthly
+                  {formatDay(row.date)}
+                  {row.kind === 'income' ? ' · Income' : ''}
                 </div>
               </div>
-              <button
-                aria-label={`Edit ${rule.name}`}
-                className={ui.smallIcon}
-                onClick={() => setEditing(rule)}
-                type="button"
-              >
-                <Pencil size={14} />
-              </button>
-              <button
-                aria-label={`Stop ${rule.name}`}
-                className={ui.smallIcon}
-                onClick={() => stop(rule)}
-                type="button"
-              >
-                <Square size={14} />
-              </button>
+              <span className={ui.amount}>{formatMoney(row.amount)}</span>
             </li>
           ))}
         </ul>
       )}
-      <div className={ui.formActions}>
-        <button className={ui.quiet} onClick={() => setAdding(true)} type="button">
-          <Plus size={16} /> Add recurring item
-        </button>
-      </div>
+      <details className={ui.fold}>
+        <summary>Manage recurring items</summary>
+        {active.length === 0 ? (
+          <p className={ui.empty}>No recurring items yet.</p>
+        ) : (
+          <ul className={ui.list}>
+            {active.map((rule) => (
+              <li className={ui.row} key={rule.id}>
+                <div className={ui.rowMain}>
+                  <div className={ui.rowTitle}>{rule.name}</div>
+                  <div className={ui.rowDetail}>
+                    {rule.kind === 'emi' ? 'Loan EMI' : formatMoney(amountAt(rule, month) ?? 0)} ·
+                    monthly
+                  </div>
+                </div>
+                <button
+                  aria-label={`Edit ${rule.name}`}
+                  className={ui.smallIcon}
+                  onClick={() => setEditing(rule)}
+                  type="button"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  aria-label={`Stop ${rule.name}`}
+                  className={ui.smallIcon}
+                  onClick={() => stop(rule)}
+                  type="button"
+                >
+                  <Square size={14} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className={ui.formActions}>
+          <button className={ui.quiet} onClick={() => setAdding(true)} type="button">
+            <Plus size={16} /> Add recurring item
+          </button>
+        </div>
+      </details>
       {editing ? (
         <Modal onClose={() => setEditing(null)} title={`Edit ${editing.name}`}>
           <RuleForm initial={editing} onDone={() => setEditing(null)} />

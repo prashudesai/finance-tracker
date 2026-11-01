@@ -39,6 +39,8 @@ const formSchema = z.object({
   epsOpening: optionalAmount,
   autoContribute: z.boolean(),
   autoStart: z.string(),
+  uan: z.string().max(40),
+  scheme: z.string().max(60),
 });
 type FormInput = z.input<typeof formSchema>;
 type FormValues = z.output<typeof formSchema>;
@@ -76,6 +78,8 @@ export function HoldingForm({
       epsOpening: initial?.epsOpening,
       autoContribute: initial?.autoContribute ?? false,
       autoStart: initial?.autoStart ?? nextMonthStart(today),
+      uan: initial?.uan ?? '',
+      scheme: initial?.scheme ?? '',
     },
   });
   const { errors } = formState;
@@ -86,7 +90,7 @@ export function HoldingForm({
     kind === 'ppf' ||
     (kind === 'investment' && growthType(type, settings) === 'fixed');
 
-  const save = ({ autoStart, ...values }: FormValues) => {
+  const save = ({ autoStart, uan, scheme, ...values }: FormValues) => {
     const id = initial?.id ?? crypto.randomUUID();
     const value = {
       ...values,
@@ -94,6 +98,8 @@ export function HoldingForm({
       kind,
       monthly: values.monthly ?? 0,
       ...(values.autoContribute ? { autoStart } : {}),
+      ...(kind === 'pf' && uan ? { uan } : {}),
+      ...(kind === 'nps' && scheme ? { scheme } : {}),
     };
     commit([{ type: 'set', collection: 'holdings', id, value }]);
     onDone();
@@ -131,6 +137,16 @@ export function HoldingForm({
           <input {...register('member')} />
         )}
       </Field>
+      {kind === 'pf' ? (
+        <Field label="UAN (optional)">
+          <input {...register('uan')} />
+        </Field>
+      ) : null}
+      {kind === 'nps' ? (
+        <Field label="Scheme (optional)">
+          <input placeholder="e.g., Active Choice" {...register('scheme')} />
+        </Field>
+      ) : null}
       <Field label="Start date" error={errors.date?.message}>
         <input type="date" {...register('date')} />
       </Field>

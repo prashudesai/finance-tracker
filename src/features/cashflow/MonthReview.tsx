@@ -4,7 +4,15 @@ import { useTracker } from '../../store/tracker';
 import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 
-export function MonthReview({ month }: { month: string }) {
+export function MonthReview({
+  month,
+  open,
+  onToggle,
+}: {
+  month: string;
+  open: boolean;
+  onToggle: (open: boolean) => void;
+}) {
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
   const close = closeMonth(data, month);
@@ -25,7 +33,12 @@ export function MonthReview({ month }: { month: string }) {
         : 'Review available';
 
   return (
-    <details className={`${ui.card} ${ui.fold}`}>
+    <details
+      className={`${ui.card} ${ui.fold}`}
+      id="month-review"
+      onToggle={(event) => onToggle(event.currentTarget.open)}
+      open={open}
+    >
       <summary className={ui.split}>
         <span>Month review</span>
         <span className={ui.caption}>{summary}</span>

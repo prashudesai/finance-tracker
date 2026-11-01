@@ -365,3 +365,41 @@ export function withAmountChange<Rule extends Extract<RecurringRule, { amount: n
   if (month <= rule.startMonth) return { ...rule, amount, amountChanges: earlier };
   return { ...rule, amountChanges: [...earlier, { month, amount }] };
 }
+
+export interface UpcomingCommitment {
+  ruleId: string;
+  name: string;
+  date: string;
+  amount: number;
+  kind: RecurringRule['kind'];
+}
+
+/** Scheduled money in the coming days, soonest first. Nothing here is posted yet. */
+export function upcomingCommitments(
+  data: RecurringData,
+  today: string,
+  horizon: string,
+): UpcomingCommitment[] {
+  const loans = new Map(data.loans.map((loan) => [loan.id, loan]));
+  const rows: UpcomingCommitment[] = [];
+  for (const rule of data.rules) {
+    if (rule.paused) continue;
+    let month = rule.startMonth < today.slice(0, 7) ? today.slice(0, 7) : rule.startMonth;
+    while (month <= horizon.slice(0, 7) && (!rule.endMonth || month <= rule.endMonth)) {
+      const date = dayInMonth(month, rule.day);
+      if (date > today && date <= horizon) {
+        let amount = amountAt(rule, month);
+        if (rule.kind === 'emi') {
+          const loan = loans.get(rule.loanId);
+          const quote = loan && quotePayment(loan, loanPayments(data.expenses, loan.id), date);
+          amount = quote && !isLoanFailure(quote) && !quote.paidOff ? quote.amount : undefined;
+        }
+        if (amount !== undefined) {
+          rows.push({ ruleId: rule.id, name: rule.name, date, amount, kind: rule.kind });
+        }
+      }
+      month = nextMonth(month);
+    }
+  }
+  return rows.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
+}

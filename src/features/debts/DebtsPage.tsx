@@ -17,6 +17,7 @@ import {
   summarizeLoans,
   totalMonthlyEmi,
   totalOutstanding,
+  type LoanSummary,
 } from '../../domain/summary';
 import type { RecordWrite } from '../../data/repository';
 import type { Loan } from '../../schema/records';
@@ -26,8 +27,21 @@ import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
 import { Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
+import { SortHeader, useSort } from '../../ui/useSort';
 import { LoanForm } from './LoanForm';
 import { LoanHistory } from './LoanHistory';
+
+type LoanColumn = 'type' | 'borrowed' | 'rate' | 'emi' | 'remaining' | 'emis' | 'status';
+
+function loanSortValue({ type, ledger }: LoanSummary, column: LoanColumn) {
+  if (column === 'type') return type;
+  if (column === 'borrowed') return ledger?.totalPrincipal ?? 0;
+  if (column === 'rate') return ledger?.rate ?? 0;
+  if (column === 'emi') return ledger?.emi ?? 0;
+  if (column === 'remaining') return ledger?.remaining ?? 0;
+  if (column === 'emis') return (ledger ? remainingEmis(ledger) : null) ?? 0;
+  return (ledger?.remaining ?? 0) > 0 ? 'Active' : 'Paid off';
+}
 
 export function DebtsPage() {
   const data = useView();
@@ -38,6 +52,7 @@ export function DebtsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [historyId, setHistoryId] = useState<string | null>(null);
   const summaries = summarizeLoans(data, today);
+  const { sorted, sort, toggle } = useSort(summaries, loanSortValue);
   const editing = data.loans.find((loan) => loan.id === editingId);
   const history = data.loans.find((loan) => loan.id === historyId);
 
@@ -118,18 +133,36 @@ export function DebtsPage() {
             <table className={ui.table}>
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th className={ui.numeric}>Total borrowed</th>
-                  <th className={ui.numeric}>Rate</th>
-                  <th className={ui.numeric}>EMI</th>
-                  <th className={ui.numeric}>Remaining principal</th>
-                  <th className={ui.numeric}>Remaining EMIs (est.)</th>
-                  <th>Status</th>
+                  <SortHeader column="type" label="Type" onSort={toggle} sort={sort} />
+                  <SortHeader
+                    column="borrowed"
+                    label="Total borrowed"
+                    numeric
+                    onSort={toggle}
+                    sort={sort}
+                  />
+                  <SortHeader column="rate" label="Rate" numeric onSort={toggle} sort={sort} />
+                  <SortHeader column="emi" label="EMI" numeric onSort={toggle} sort={sort} />
+                  <SortHeader
+                    column="remaining"
+                    label="Remaining principal"
+                    numeric
+                    onSort={toggle}
+                    sort={sort}
+                  />
+                  <SortHeader
+                    column="emis"
+                    label="Remaining EMIs (est.)"
+                    numeric
+                    onSort={toggle}
+                    sort={sort}
+                  />
+                  <SortHeader column="status" label="Status" onSort={toggle} sort={sort} />
                   <th className={ui.numeric}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {summaries.map(({ id, type, member, ledger, error }) => {
+                {sorted.map(({ id, type, member, ledger, error }) => {
                   const loan = data.loans.find((row) => row.id === id);
                   const paid = ledger ? paidShare(ledger) : 0;
                   const active = (ledger?.remaining ?? 0) > 0;

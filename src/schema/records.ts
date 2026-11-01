@@ -72,6 +72,8 @@ export const expenseSchema = z.object({
   date,
   category: name,
   subcategory: z.string().max(100).default(''),
+  /** Blank means the household. */
+  member: z.string().max(100).optional(),
   amount: positiveMoney,
   isAnnual: z.boolean().default(false),
   notes: notes.optional(),
@@ -163,6 +165,10 @@ export const holdingSchema = z.object({
   /** First scheduled contribution. Its day anchors later months. */
   autoStart: date.optional(),
   notes: notes.optional(),
+  /** PF account number. */
+  uan: z.string().max(40).optional(),
+  /** NPS scheme, such as Active Choice. */
+  scheme: z.string().max(60).optional(),
   /** Kept for its history, but left out of current totals and schedules. */
   archived: z.boolean().optional(),
 });

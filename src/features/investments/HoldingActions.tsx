@@ -89,6 +89,11 @@ function HoldingCard({ row }: { row: PositionRow }) {
           <div className={ui.rowDetail}>
             {holding.member}
             {holding.rate === undefined ? '' : ` · ${holding.rate}% a year`}
+            {holding.uan ? ` · UAN ${holding.uan}` : ''}
+            {holding.scheme ? ` · ${holding.scheme}` : ''}
+            {holding.kind === 'pf'
+              ? ` · Employee ${formatMoney(holding.employee ?? 0)} · Employer ${formatMoney(holding.employer ?? 0)}`
+              : ''}
           </div>
         </div>
         <div className={ui.actions}>

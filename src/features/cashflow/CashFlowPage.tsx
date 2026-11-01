@@ -9,16 +9,41 @@ import { useTracker, useView } from '../../store/tracker';
 import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
-import { Stat } from '../../ui/Stat';
+import { Metric, Stat } from '../../ui/Stat';
 import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
 import { Commitments } from './Commitments';
 import { ExpenseForm, IncomeForm } from './EntryForms';
-import { HistoryTable } from './HistoryTable';
+import { HistoryTable, type Column } from './HistoryTable';
 import { MonthlyBalances } from './MonthlyBalances';
 import { MonthReview } from './MonthReview';
 
 const MONTH_CHOICES = 24;
+
+const INCOME_COLUMNS: Column<Income>[] = [
+  { header: 'Member', cell: (row) => row.member, sortValue: (row) => row.member },
+  { header: 'Source', cell: (row) => row.source, sortValue: (row) => row.source },
+  {
+    header: 'Amount',
+    numeric: true,
+    cell: (row) => formatMoney(row.amount),
+    sortValue: (row) => row.amount,
+  },
+  { header: 'Date', cell: (row) => formatDay(row.date), sortValue: (row) => row.date },
+];
+
+function BalanceExplainer() {
+  return (
+    <details className={ui.fold}>
+      <summary>How this balance is calculated</summary>
+      <p className={ui.caption}>
+        Income recorded this month, less expenses recorded this month, including EMIs. Opening bank
+        balances aren't included. Family members' personal income follows the selected profile, and
+        household expenses stay shared.
+      </p>
+    </details>
+  );
+}
 
 export function CashFlowPage() {
   const data = useView();
@@ -29,6 +54,7 @@ export function CashFlowPage() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [adding, setAdding] = useState<'income' | 'expense' | null>(null);
   const [history, setHistory] = useState<'income' | 'expense'>('income');
+  const [reviewOpen, setReviewOpen] = useState(false);
   const phone = useIsPhone();
   const { state: quickAdd } = useLocation() as { state: { add?: 'income' | 'expense' } | null };
 
@@ -39,6 +65,25 @@ export function CashFlowPage() {
     setAdding(quickAdd.add);
   }, [quickAdd]);
 
+  const loanName = (id: string | undefined) =>
+    data.loans.find((loan) => loan.id === id)?.type ?? '';
+  const expenseNote = (row: Expense) => loanName(row.loanId) || row.subcategory || row.notes || '—';
+  const expenseColumns: Column<Expense>[] = [
+    { header: 'Category', cell: (row) => row.category, sortValue: (row) => row.category },
+    {
+      header: 'Amount',
+      numeric: true,
+      cell: (row) => formatMoney(row.amount),
+      sortValue: (row) => row.amount,
+    },
+    {
+      header: 'Type',
+      cell: (row) => (row.isAnnual ? 'Annual' : 'Monthly'),
+      sortValue: (row) => (row.isAnnual ? 'Annual' : 'Monthly'),
+    },
+    { header: 'Loan/Notes', cell: expenseNote, sortValue: expenseNote },
+    { header: 'Date', cell: (row) => formatDay(row.date), sortValue: (row) => row.date },
+  ];
   const totals = monthTotals(data).get(month) ?? { income: 0, expenses: 0 };
   const newest = <Row extends { date: string }>(rows: Row[]) =>
     rows.filter((row) => row.date.startsWith(month)).sort((a, b) => b.date.localeCompare(a.date));
@@ -68,19 +113,65 @@ export function CashFlowPage() {
         subtitle="Income, spending and what remains"
         title="Cash flow"
       />
-      <section aria-label="Selected month" className={ui.tiles}>
-        <Stat icon={ArrowUpFromLine} label="Income recorded" value={formatMoney(totals.income)} />
-        <Stat
-          icon={ArrowDownToLine}
-          label="Expenses recorded"
-          value={formatMoney(totals.expenses)}
-        />
-        <Stat
-          icon={TrendingUp}
-          label="Income after expenses"
-          value={formatMoney(totals.income - totals.expenses)}
-        />
-      </section>
+      <button
+        className={ui.primaryWide}
+        onClick={() => {
+          setReviewOpen(true);
+          document.getElementById('month-review')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+        type="button"
+      >
+        Review this month
+      </button>
+      {phone ? (
+        <section aria-label="Selected month" className={ui.card}>
+          <div className={ui.metric}>
+            <div className={ui.statLabel}>Balance after expenses</div>
+            <div className={ui.value}>{formatMoney(totals.income - totals.expenses)}</div>
+          </div>
+          <div className={ui.metricsTwo}>
+            <Metric label="Income recorded" value={formatMoney(totals.income)} />
+            <Metric label="Expenses recorded" value={formatMoney(totals.expenses)} />
+          </div>
+          {totals.income > 0 ? (
+            <div className={ui.meter}>
+              <span
+                className={ui.meterExpense}
+                style={{ width: `${Math.min(1, totals.expenses / totals.income) * 100}%` }}
+              />
+            </div>
+          ) : null}
+          <div className={ui.caption}>
+            {totals.income === 0 && totals.expenses === 0
+              ? 'No income or expenses recorded for this month'
+              : totals.expenses > totals.income
+                ? 'Expenses are above income this month'
+                : `${totals.income > 0 ? Math.round((totals.expenses / totals.income) * 100) : 0}% of income spent`}
+          </div>
+          <BalanceExplainer />
+        </section>
+      ) : (
+        <>
+          <section aria-label="Selected month" className={ui.tiles}>
+            <Stat
+              icon={ArrowUpFromLine}
+              label="Income recorded"
+              value={formatMoney(totals.income)}
+            />
+            <Stat
+              icon={ArrowDownToLine}
+              label="Expenses recorded"
+              value={formatMoney(totals.expenses)}
+            />
+            <Stat
+              icon={TrendingUp}
+              label="Income after expenses"
+              value={formatMoney(totals.income - totals.expenses)}
+            />
+          </section>
+          <BalanceExplainer />
+        </>
+      )}
       <Commitments />
       {phone ? null : (
         <div className={ui.twoColumn}>
@@ -118,12 +209,7 @@ export function CashFlowPage() {
       <div className={ui.twoColumn}>
         {!phone || history === 'income' ? (
           <HistoryTable
-            columns={[
-              { header: 'Member', cell: (row) => row.member },
-              { header: 'Source', cell: (row) => row.source },
-              { header: 'Amount', numeric: true, cell: (row) => formatMoney(row.amount) },
-              { header: 'Date', cell: (row) => formatDay(row.date) },
-            ]}
+            columns={INCOME_COLUMNS}
             describe={(row) => row.source}
             emptyText="No income this month."
             onDelete={(row) => commit([{ type: 'delete', collection: 'income', id: row.id }])}
@@ -142,13 +228,7 @@ export function CashFlowPage() {
         ) : null}
         {!phone || history === 'expense' ? (
           <HistoryTable
-            columns={[
-              { header: 'Category', cell: (row) => row.category },
-              { header: 'Amount', numeric: true, cell: (row) => formatMoney(row.amount) },
-              { header: 'Type', cell: (row) => (row.isAnnual ? 'Annual' : 'Monthly') },
-              { header: 'Notes', cell: (row) => row.subcategory || row.notes || '—' },
-              { header: 'Date', cell: (row) => formatDay(row.date) },
-            ]}
+            columns={expenseColumns}
             describe={(row) => row.subcategory || row.category}
             emptyText="No expenses this month."
             onDelete={(row) => commit([{ type: 'delete', collection: 'expenses', id: row.id }])}
@@ -167,7 +247,7 @@ export function CashFlowPage() {
         ) : null}
       </div>
       <MonthlyBalances month={month} />
-      <MonthReview month={month} />
+      <MonthReview month={month} onToggle={setReviewOpen} open={reviewOpen} />
       {adding === 'income' ? (
         <Modal fullScreenOnPhone onClose={() => setAdding(null)} title="Add Income">
           <IncomeForm onDone={() => setAdding(null)} />

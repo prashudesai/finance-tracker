@@ -783,6 +783,36 @@ details.fold[open] > summary {
   border-radius: 50%;
 }
 
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.filterInput {
+  width: 100%;
+  padding: 9px 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.primaryWide {
+  composes: button;
+  width: 100%;
+}
+
 .dialogFull {
   composes: dialog;
 }

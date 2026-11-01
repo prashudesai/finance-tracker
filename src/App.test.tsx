@@ -439,3 +439,55 @@ test('the + stays on the dashboard', async () => {
   await screen.findByRole('heading', { level: 1 });
   expect(screen.queryByRole('button', { name: 'Add record' })).toBeNull();
 });
+
+test('history tables sort by a column and filter by any text', async () => {
+  const row = (id: string, source: string, amount: number) => ({
+    id,
+    date: `${month}-01`,
+    member: 'A',
+    source,
+    amount,
+  });
+  renderApp('/cash-flow', { income: [row('a', 'Bonus', 100), row('b', 'Salary', 900)] });
+  const table = (await screen.findByRole('button', { name: 'Edit Bonus' })).closest('table');
+  const sources = () =>
+    within(table as HTMLElement)
+      .getAllByRole('button', { name: /^Edit / })
+      .map((button) => button.getAttribute('aria-label'));
+  fireEvent.click(within(table as HTMLElement).getByRole('button', { name: 'Amount' }));
+  expect(sources()).toEqual(['Edit Bonus', 'Edit Salary']);
+  fireEvent.click(within(table as HTMLElement).getByRole('button', { name: 'Amount' }));
+  expect(sources()).toEqual(['Edit Salary', 'Edit Bonus']);
+  fireEvent.change(screen.getByLabelText('Filter Income History'), { target: { value: 'bonus' } });
+  expect(sources()).toEqual(['Edit Bonus']);
+  fireEvent.change(screen.getByLabelText('Filter Income History'), {
+    target: { value: 'nothing' },
+  });
+  fireEvent.click(await screen.findByRole('button', { name: 'Clear filters' }));
+  expect(sources()).toHaveLength(2);
+});
+
+test('a statement corrects one EMI split and balances follow', async () => {
+  const loanRow = { ...loan, openingRate: 12, principal: 100_000 };
+  const payment = {
+    id: 'p',
+    date: '2020-02-01',
+    category: 'EMI Payment',
+    subcategory: '',
+    isAnnual: false,
+    loanId: 'l',
+    repaymentType: 'emi' as const,
+    amount: 10_000,
+  };
+  renderApp('/debts', { loans: [loanRow], expenses: [payment] });
+  expect((await screen.findAllByText('₹91,000')).length).toBeGreaterThan(0);
+  fireEvent.click(screen.getByRole('button', { name: 'History of Car' }));
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Correct interest of 2020-02-01', hidden: true }),
+  );
+  fireEvent.change(await screen.findByLabelText('Interest on statement (₹)'), {
+    target: { value: '2000' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Save correction', hidden: true }));
+  expect((await screen.findAllByText('₹92,000')).length).toBeGreaterThan(0);
+});

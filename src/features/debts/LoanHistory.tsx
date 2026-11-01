@@ -1,4 +1,4 @@
-import { FileText, Trash2 } from 'lucide-react';
+import { FileText, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
   dailyStatement,
@@ -166,10 +166,84 @@ function EntryForm({ loan, onDone }: { loan: Loan; onDone: () => void }) {
   );
 }
 
+/** Uses the bank's interest for one EMI. Later balances replay from it. */
+function SplitCorrection({
+  loan,
+  payment,
+  payments,
+  onDone,
+}: {
+  loan: Loan;
+  payment: Expense;
+  payments: Expense[];
+  onDone: () => void;
+}) {
+  const commit = useTracker((state) => state.commit);
+  const [interest, setInterest] = useState(String(payment.interestPaid ?? ''));
+  const [error, setError] = useState('');
+  const value = Number(interest);
+  const valid = interest !== '' && value >= 0;
+  const corrected: Expense = { ...payment, interestOverride: true, interestPaid: value };
+  const plain = { ...payment };
+  delete plain.interestOverride;
+  delete plain.interestPaid;
+
+  const save = (row: Expense) => {
+    const next = payments.map((item) => (item.id === row.id ? row : item));
+    const check = rebuildLoan(loan, next, { asOf: localDate() });
+    if (isLoanFailure(check)) {
+      setError(check.error);
+      return;
+    }
+    commit([{ type: 'set', collection: 'expenses', id: row.id, value: row }]);
+    onDone();
+  };
+
+  return (
+    <form
+      className={ui.form}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (valid) save(corrected);
+      }}
+    >
+      <p className={ui.caption} style={{ gridColumn: '1 / -1', margin: 0 }}>
+        Enter the interest from your bank statement for this {formatMoney(payment.amount)} EMI on{' '}
+        {payment.date}. The rest counts as principal, and later balances update.
+      </p>
+      <Field label="Interest on statement (₹)">
+        <input
+          inputMode="decimal"
+          onChange={(event) => setInterest(event.target.value)}
+          step="0.01"
+          type="number"
+          value={interest}
+        />
+      </Field>
+      {error ? (
+        <p className={ui.fieldError} role="alert" style={{ gridColumn: '1 / -1', margin: 0 }}>
+          {error}
+        </p>
+      ) : null}
+      <div className={ui.formActions}>
+        {payment.interestOverride ? (
+          <button className={ui.quiet} onClick={() => save(plain)} type="button">
+            Use calculated interest
+          </button>
+        ) : null}
+        <button className={ui.button} disabled={!valid} type="submit">
+          Save correction
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export function LoanHistory({ loan, onClose }: { loan: Loan; onClose: () => void }) {
   const expenses = useTracker((state) => state.data.expenses);
   const commit = useTracker((state) => state.commit);
   const report = useTracker((state) => state.report);
+  const [correcting, setCorrecting] = useState<Expense | null>(null);
   const today = localDate();
   const payments = loanPayments(expenses, loan.id);
   const ledger = rebuildLoan(loan, payments, { asOf: today });
@@ -302,6 +376,14 @@ export function LoanHistory({ loan, onClose }: { loan: Loan; onClose: () => void
                       <td className={ui.numeric}>{formatMoney(after.get(row.id) ?? 0)}</td>
                       <td>
                         <button
+                          aria-label={`Correct interest of ${row.date}`}
+                          className={ui.smallIcon}
+                          onClick={() => setCorrecting(row)}
+                          type="button"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
                           aria-label={`Delete payment of ${row.date}`}
                           className={ui.smallIcon}
                           onClick={() =>
@@ -338,6 +420,16 @@ export function LoanHistory({ loan, onClose }: { loan: Loan; onClose: () => void
           </details>
         ) : null}
       </div>
+      {correcting ? (
+        <Modal onClose={() => setCorrecting(null)} title="Correct EMI split">
+          <SplitCorrection
+            loan={loan}
+            onDone={() => setCorrecting(null)}
+            payment={correcting}
+            payments={payments}
+          />
+        </Modal>
+      ) : null}
     </Modal>
   );
 }

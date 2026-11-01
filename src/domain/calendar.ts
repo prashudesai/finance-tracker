@@ -75,3 +75,5 @@ export const financialYearRange = (startYear: number) => ({
   start: `${startYear}-04-01`,
   end: `${startYear + 1}-03-31`,
 });
+
+export const addDays = (date: string, days: number) => fromDayNumber(toDayNumber(date) + days);

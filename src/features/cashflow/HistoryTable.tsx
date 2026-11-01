@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import ui from '../../ui/ui.module.css';
+import { SortHeader, useSort, type SortValue } from '../../ui/useSort';
 
 const PAGE_SIZE = 8;
 
@@ -8,6 +9,7 @@ export interface Column<Row> {
   header: string;
   numeric?: boolean;
   cell: (row: Row) => ReactNode;
+  sortValue: (row: Row) => SortValue;
 }
 
 export function HistoryTable<Row extends { id: string }>({
@@ -32,10 +34,27 @@ export function HistoryTable<Row extends { id: string }>({
   onDelete: (row: Row) => void;
 }) {
   const [page, setPage] = useState(0);
-  const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const [filter, setFilter] = useState('');
+
+  const valueOf = useCallback(
+    (row: Row, header: string) =>
+      columns.find((column) => column.header === header)?.sortValue(row) ?? '',
+    [columns],
+  );
+  const terms = filter.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const filtered = rows.filter((row) => {
+    const text = columns
+      .map((column) => column.sortValue(row))
+      .join(' ')
+      .toLowerCase();
+    return terms.every((term) => text.includes(term));
+  });
+  const { sorted, sort, toggle } = useSort<Row, string>(filtered, valueOf);
+
+  const pages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const current = Math.min(page, pages - 1);
   const start = current * PAGE_SIZE;
-  const visible = rows.slice(start, start + PAGE_SIZE);
+  const visible = sorted.slice(start, start + PAGE_SIZE);
 
   return (
     <section className={ui.card}>
@@ -45,18 +64,36 @@ export function HistoryTable<Row extends { id: string }>({
       </div>
       <div className={`${ui.metric} ${ui.split}`} style={{ padding: '8px 12px' }}>
         <span className={ui.caption}>
-          {rows.length} {rows.length === 1 ? 'entry' : 'entries'} in selected month
+          {sorted.length} {sorted.length === 1 ? 'entry' : 'entries'} in selected month
         </span>
         <strong>{total}</strong>
       </div>
+      {rows.length > 0 ? (
+        <input
+          aria-label={`Filter ${title}`}
+          className={ui.filterInput}
+          onChange={(event) => {
+            setFilter(event.target.value);
+            setPage(0);
+          }}
+          placeholder="Filter by any column"
+          type="search"
+          value={filter}
+        />
+      ) : null}
       <div className={ui.tableWrap}>
         <table className={ui.table}>
           <thead>
             <tr>
               {columns.map((column) => (
-                <th className={column.numeric ? ui.numeric : undefined} key={column.header}>
-                  {column.header}
-                </th>
+                <SortHeader
+                  column={column.header}
+                  key={column.header}
+                  label={column.header}
+                  numeric={column.numeric ?? false}
+                  onSort={toggle}
+                  sort={sort}
+                />
               ))}
               <th className={ui.numeric}>Actions</th>
             </tr>
@@ -91,10 +128,17 @@ export function HistoryTable<Row extends { id: string }>({
                 </td>
               </tr>
             ))}
-            {rows.length === 0 ? (
+            {sorted.length === 0 ? (
               <tr>
                 <td colSpan={columns.length + 1} style={{ textAlign: 'center', padding: 32 }}>
-                  {emptyText}
+                  {rows.length === 0 ? emptyText : 'No entries match this filter.'}
+                  {rows.length > 0 ? (
+                    <div style={{ marginTop: 10 }}>
+                      <button className={ui.quiet} onClick={() => setFilter('')} type="button">
+                        Clear filters
+                      </button>
+                    </div>
+                  ) : null}
                 </td>
               </tr>
             ) : null}
@@ -103,7 +147,7 @@ export function HistoryTable<Row extends { id: string }>({
       </div>
       <div className={ui.pager}>
         <span>
-          Showing {rows.length === 0 ? 0 : start + 1}–{start + visible.length} of {rows.length}{' '}
+          Showing {sorted.length === 0 ? 0 : start + 1}–{start + visible.length} of {sorted.length}{' '}
           entries
         </span>
         <div className={ui.actions}>

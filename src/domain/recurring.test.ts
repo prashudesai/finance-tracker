@@ -7,6 +7,7 @@ import {
   loanPayments,
   pendingOccurrences,
   stopSchedules,
+  upcomingCommitments,
   withAmountChange,
   validateRecurring,
   type RecurringData,
@@ -134,6 +135,15 @@ test('a new amount applies from its month and keeps earlier months', () => {
   expect(amountAt(rule, '2026-10')).toBe(20_000);
   expect(amountAt(rule, '2026-11')).toBe(35_000);
   expect(withAmountChange(rule, 35_000, '2026-12')).toBe(rule);
+});
+
+test('upcoming commitments list what is scheduled, soonest first', () => {
+  const data = empty({ rules: [rent, emi], loans: [loan] });
+  const rows = upcomingCommitments(data, '2026-10-05', '2026-11-04');
+  expect(rows.map(({ name, date, amount }) => [name, date, amount])).toEqual([
+    ['Home EMI', '2026-10-10', 20_000],
+    ['Rent', '2026-10-31', 20_000],
+  ]);
 });
 
 test('rejects two active EMI schedules for one loan', () => {
