@@ -1,8 +1,8 @@
 import { Search } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { searchRecords, SEARCH_KINDS, type SearchKind } from '../domain/search';
-import { useView } from '../store/tracker';
+import { useTracker, useView } from '../store/tracker';
 import { Field } from './Field';
 import { formatDay, formatMoney, localDate } from './format';
 import { Modal } from './Modal';
@@ -73,19 +73,76 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function SearchButton() {
+/** True once someone reaches the page bottom, as the older app showed these controls. */
+function useAtPageBottom() {
+  const [atBottom, setAtBottom] = useState(false);
+
+  useEffect(() => {
+    let reached = false;
+    const isAtBottom = () =>
+      window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 24;
+    const update = () => setAtBottom(isAtBottom() && (window.scrollY > 0 || reached));
+    const intent = () => {
+      if (isAtBottom()) reached = true;
+      update();
+    };
+    window.addEventListener('scroll', intent, { passive: true });
+    window.addEventListener('wheel', intent, { passive: true });
+    window.addEventListener('touchend', intent, { passive: true });
+    window.addEventListener('resize', update);
+    const observer = new ResizeObserver(update);
+    observer.observe(document.documentElement);
+    return () => {
+      window.removeEventListener('scroll', intent);
+      window.removeEventListener('wheel', intent);
+      window.removeEventListener('touchend', intent);
+      window.removeEventListener('resize', update);
+      observer.disconnect();
+    };
+  }, []);
+
+  return atBottom;
+}
+
+function syncLabel(pending: number, online: boolean, syncedAt: Date | null) {
+  if (!online) return pending > 0 ? 'Offline · will sync later' : 'Offline';
+  if (pending > 0) return 'Saving…';
+  if (!syncedAt) return 'Connecting…';
+  const time = syncedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  return `Synced ${time}`;
+}
+
+export function PageEndTools() {
   const [open, setOpen] = useState(false);
+  const atBottom = useAtPageBottom();
+  const pending = useTracker((state) => state.pendingSaves);
+  const syncedAt = useTracker((state) => state.syncedAt);
+  const [online, setOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  }, []);
+
   return (
     <>
       <button
         aria-label="Search records"
-        className={styles.searchButton}
+        className={atBottom ? styles.searchVisible : styles.search}
         onClick={() => setOpen(true)}
         title="Search records"
         type="button"
       >
         <Search size={20} />
       </button>
+      <span className={atBottom ? styles.syncVisible : styles.sync}>
+        {syncLabel(pending, online, syncedAt)}
+      </span>
       {open ? (
         <Modal onClose={() => setOpen(false)} title="Find a record">
           <SearchPanel onClose={() => setOpen(false)} />

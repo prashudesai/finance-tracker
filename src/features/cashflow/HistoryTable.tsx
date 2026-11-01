@@ -12,6 +12,7 @@ export interface Column<Row> {
 
 export function HistoryTable<Row extends { id: string }>({
   title,
+  action,
   rows,
   columns,
   total,
@@ -21,6 +22,7 @@ export function HistoryTable<Row extends { id: string }>({
   onDelete,
 }: {
   title: string;
+  action?: ReactNode;
   rows: Row[];
   columns: Column<Row>[];
   total: string;
@@ -37,7 +39,10 @@ export function HistoryTable<Row extends { id: string }>({
 
   return (
     <section className={ui.card}>
-      <h2 style={{ fontSize: '1.3rem' }}>{title}</h2>
+      <div className={ui.cardHeader}>
+        <h2 style={{ fontSize: '1.3rem' }}>{title}</h2>
+        {action}
+      </div>
       <div className={`${ui.metric} ${ui.split}`} style={{ padding: '8px 12px' }}>
         <span className={ui.caption}>
           {rows.length} {rows.length === 1 ? 'entry' : 'entries'} in selected month

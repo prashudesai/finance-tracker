@@ -22,6 +22,9 @@ interface TrackerState {
   /** Who the change log names. */
   actor: string;
   tourOpen: boolean;
+  /** Saves not yet confirmed by the server. They wait here while offline. */
+  pendingSaves: number;
+  syncedAt: Date | null;
   repository: TrackerRepository | null;
   connect(repository: TrackerRepository, canEdit: boolean, actor?: string): () => void;
   /** Saves writes. Scheduled and housekeeping writes pass `log: false`. */
@@ -42,6 +45,8 @@ export const useTracker = create<TrackerState>((set, get) => ({
   profile: null,
   actor: '',
   tourOpen: false,
+  pendingSaves: 0,
+  syncedAt: null,
   repository: null,
 
   connect(repository, canEdit, actor = '') {
@@ -67,6 +72,7 @@ export const useTracker = create<TrackerState>((set, get) => ({
           set((state) => ({
             data: { ...state.data, [name]: rows },
             loaded: ready.size === COLLECTION_NAMES.length,
+            syncedAt: state.syncedAt ?? new Date(),
             invalidRecords: [...invalid.values()].reduce((sum, count) => sum + count, 0),
           }));
         },
@@ -101,9 +107,15 @@ export const useTracker = create<TrackerState>((set, get) => ({
           ...pruneWrites(data.changes),
         ]
       : writes;
-    repository?.commit(logged).catch((error: unknown) => {
-      set({ error: error instanceof Error ? error.message : 'The change could not be saved.' });
-    });
+    if (!repository) return;
+    set((state) => ({ pendingSaves: state.pendingSaves + 1 }));
+    repository
+      .commit(logged)
+      .then(() => set({ syncedAt: new Date() }))
+      .catch((error: unknown) => {
+        set({ error: error instanceof Error ? error.message : 'The change could not be saved.' });
+      })
+      .finally(() => set((state) => ({ pendingSaves: state.pendingSaves - 1 })));
   },
 
   setTourOpen(open) {

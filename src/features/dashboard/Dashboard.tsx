@@ -37,6 +37,7 @@ import { PageHeader } from '../../ui/PageHeader';
 import { Metric, Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import { GettingStarted } from './GettingStarted';
+import { QuickAdd } from './QuickAdd';
 import { TrendChart } from './TrendChart';
 
 const DASHBOARD_CATEGORIES = 5;
@@ -419,6 +420,7 @@ export function Dashboard() {
           </div>
         )}
       </section>
+      <QuickAdd />
     </div>
   );
 }

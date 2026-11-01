@@ -17,7 +17,7 @@ import { useSettings, useTracker } from './store/tracker';
 import styles from './Shell.module.css';
 import { localDate } from './ui/format';
 import { GuidedTour } from './ui/GuidedTour';
-import { SearchButton } from './ui/SearchDialog';
+import { PageEndTools } from './ui/SearchDialog';
 import { useAppUpdate } from './ui/pwa';
 import { useTheme } from './ui/theme';
 import ui from './ui/ui.module.css';
@@ -148,7 +148,6 @@ export function Shell({
           ))}
         </nav>
         <div className={styles.tools}>
-          {loaded ? <SearchButton /> : null}
           <button
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             className={ui.iconButton}
@@ -204,6 +203,7 @@ export function Shell({
           <p className={ui.empty}>Loading your records…</p>
         )}
       </main>
+      {loaded ? <PageEndTools /> : null}
       {tourOpen ? <GuidedTour /> : null}
     </div>
   );

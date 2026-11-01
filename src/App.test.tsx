@@ -12,6 +12,13 @@ afterEach(() => {
   useTracker.setState({ profile: null, tourOpen: false });
 });
 
+// jsdom has no ResizeObserver.
+globalThis.ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 // jsdom has no native dialog behaviour.
 HTMLDialogElement.prototype.showModal = function showModal() {
   this.open = true;
@@ -381,13 +388,13 @@ describe('on a phone', () => {
     expect(await screen.findByRole('heading', { name: 'Income History' })).toBeDefined();
     expect(screen.queryByRole('heading', { name: 'Expense History' })).toBeNull();
     expect(screen.queryByLabelText('Amount (₹)')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Add Income' })).toBeDefined();
-    expect(screen.queryByRole('button', { name: 'Add Expense' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Add income' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Add expense' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Expenses' }));
     expect(await screen.findByRole('heading', { name: 'Expense History' })).toBeDefined();
-    expect(screen.queryByRole('button', { name: 'Add Income' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Add Expense' }));
+    expect(screen.queryByRole('button', { name: 'Add income' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Add expense' }));
     expect(await screen.findByRole('dialog', { name: 'Add Expense', hidden: true })).toBeDefined();
   });
 
@@ -409,4 +416,26 @@ test('checking for updates reports back in the app preview', async () => {
   expect((await screen.findByRole('status', { hidden: true })).textContent).toMatch(
     /Updates are only/,
   );
+});
+
+test('the dashboard + opens the add menu and goes to the right entry', async () => {
+  renderApp('/', { settings: [{ ...defaultSettings(), onboardingDone: true }] });
+  fireEvent.click(await screen.findByRole('button', { name: 'Add record' }));
+  for (const name of [
+    'Expense or loan payment',
+    'Investment',
+    'PMS contribution',
+    'Loan or debt',
+  ]) {
+    expect(await screen.findByRole('button', { name, hidden: true })).toBeDefined();
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'Income', hidden: true }));
+  expect(await screen.findByRole('heading', { level: 1, name: 'Cash flow' })).toBeDefined();
+  expect(await screen.findByRole('dialog', { name: 'Add Income', hidden: true })).toBeDefined();
+});
+
+test('the + stays on the dashboard', async () => {
+  renderApp('/debts');
+  await screen.findByRole('heading', { level: 1 });
+  expect(screen.queryByRole('button', { name: 'Add record' })).toBeNull();
 });

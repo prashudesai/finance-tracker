@@ -9,6 +9,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useLocation } from 'react-router';
 import { loanPayments, stopSchedules } from '../../domain/recurring';
 import {
   paidShare,
@@ -32,7 +33,8 @@ export function DebtsPage() {
   const data = useView();
   const commit = useTracker((state) => state.commit);
   const today = localDate();
-  const [adding, setAdding] = useState(false);
+  const { state: quickAdd } = useLocation() as { state: { add?: boolean } | null };
+  const [adding, setAdding] = useState(quickAdd?.add === true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [historyId, setHistoryId] = useState<string | null>(null);
   const summaries = summarizeLoans(data, today);

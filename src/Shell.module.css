@@ -145,37 +145,93 @@
   }
 }
 
-/* In the phone header, so it never covers content. It floats on larger screens. */
-.searchButton {
+/* Search and sync status appear only at the end of a page, so they never cover content. */
+.search,
+.searchVisible {
+  position: fixed;
+  left: 12px;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  z-index: 2;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.sync,
+.syncVisible {
+  position: fixed;
+  left: 50%;
+  bottom: calc(82px + env(safe-area-inset-bottom));
+  z-index: 2;
+  max-width: calc(100vw - 170px);
   color: var(--muted);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-small);
+  font-size: 0.75rem;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.search,
+.sync {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Hidden while typing or in a dialog, as in the older app. */
+body:has(dialog[open], input:focus, textarea:focus, select:focus) .searchVisible,
+body:has(dialog[open], input:focus, textarea:focus, select:focus) .syncVisible,
+body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.quickAdd {
+  position: fixed;
+  right: 12px;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  box-shadow: var(--shadow);
   cursor: pointer;
 }
 
 @media (min-width: 768px) {
-  .searchButton {
-    position: fixed;
-    right: 24px;
-    bottom: 24px;
-    z-index: 2;
-    width: 48px;
-    height: 48px;
-    color: var(--accent-text);
-    background: var(--accent);
-    border: 0;
-    border-radius: 50%;
-    box-shadow: var(--shadow);
+  .search,
+  .searchVisible {
+    right: 20px;
+    bottom: 20px;
+    left: auto;
+  }
+
+  .sync,
+  .syncVisible {
+    bottom: 32px;
+  }
+
+  .quickAdd {
+    right: 20px;
+    bottom: 76px;
   }
 }
 
 @media print {
-  .searchButton,
+  .search,
+  .searchVisible,
+  .sync,
+  .syncVisible,
+  .quickAdd,
   .header,
   .nav,
   .tour {

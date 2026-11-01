@@ -1,5 +1,6 @@
 import { ChevronRight, PiggyBank, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router';
 import {
   holdingRows,
   isPms,
@@ -10,7 +11,12 @@ import {
 import { estimateGratuity, totalGratuity } from '../../domain/gratuity';
 import { groupXirr, growthType, monthlyContribution } from '../../domain/holdings';
 import { cagr } from '../../domain/returns';
-import { gratuityAccountSchema, type GratuityAccount, type Holding } from '../../schema/records';
+import {
+  gratuityAccountSchema,
+  PMS_TYPE,
+  type GratuityAccount,
+  type Holding,
+} from '../../schema/records';
 import { useSettings, useTracker, useView } from '../../store/tracker';
 import { Donut } from '../../ui/charts';
 import { Field } from '../../ui/Field';
@@ -217,6 +223,13 @@ export function InvestmentsPage() {
   const [openName, setOpenName] = useState<string | null>(null);
   const [section, setSection] = useState<Section>(savedSection);
   const phone = useIsPhone();
+  const { state: quickAdd } = useLocation() as { state: { add?: 'investment' | 'pms' } | null };
+
+  // The dashboard's add menu lands here with the entry to open.
+  useEffect(() => {
+    if (quickAdd?.add === 'investment') setAdding('investment');
+    if (quickAdd?.add === 'pms') setOpenName(PMS_TYPE);
+  }, [quickAdd]);
   const showInvestments = !phone || section === 'investments';
   const showRetirement = !phone || section === 'retirement';
 

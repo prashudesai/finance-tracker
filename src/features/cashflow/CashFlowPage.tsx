@@ -1,6 +1,7 @@
 import { ArrowDownToLine, ArrowUpFromLine, TrendingUp } from 'lucide-react';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router';
 import { previousMonth } from '../../domain/calendar';
 import { monthTotals } from '../../domain/cashflow';
 import type { Expense, Income } from '../../schema/records';
@@ -29,6 +30,14 @@ export function CashFlowPage() {
   const [adding, setAdding] = useState<'income' | 'expense' | null>(null);
   const [history, setHistory] = useState<'income' | 'expense'>('income');
   const phone = useIsPhone();
+  const { state: quickAdd } = useLocation() as { state: { add?: 'income' | 'expense' } | null };
+
+  // The dashboard's add menu lands here with the entry to open.
+  useEffect(() => {
+    if (!quickAdd?.add) return;
+    setHistory(quickAdd.add);
+    setAdding(quickAdd.add);
+  }, [quickAdd]);
 
   const totals = monthTotals(data).get(month) ?? { income: 0, expenses: 0 };
   const newest = <Row extends { date: string }>(rows: Row[]) =>
@@ -92,28 +101,19 @@ export function CashFlowPage() {
         </div>
       )}
       {phone ? (
-        <>
-          <div className={ui.segmented} role="group" aria-label="History">
-            {(['income', 'expense'] as const).map((key) => (
-              <button
-                aria-pressed={history === key}
-                className={history === key ? ui.segmentActive : ui.segment}
-                key={key}
-                onClick={() => setHistory(key)}
-                type="button"
-              >
-                {key === 'income' ? 'Income' : 'Expenses'}
-              </button>
-            ))}
-          </div>
-          <button
-            className={history === 'income' ? ui.button : `${ui.button} ${ui.expense}`}
-            onClick={() => setAdding(history)}
-            type="button"
-          >
-            <Plus size={16} /> {history === 'income' ? 'Add Income' : 'Add Expense'}
-          </button>
-        </>
+        <div className={ui.segmented} role="group" aria-label="History">
+          {(['income', 'expense'] as const).map((key) => (
+            <button
+              aria-pressed={history === key}
+              className={history === key ? ui.segmentActive : ui.segment}
+              key={key}
+              onClick={() => setHistory(key)}
+              type="button"
+            >
+              {key === 'income' ? 'Income' : 'Expenses'}
+            </button>
+          ))}
+        </div>
       ) : null}
       <div className={ui.twoColumn}>
         {!phone || history === 'income' ? (
@@ -130,6 +130,13 @@ export function CashFlowPage() {
             onEdit={setEditingIncome}
             rows={newest(data.income)}
             title="Income History"
+            action={
+              phone ? (
+                <button className={ui.button} onClick={() => setAdding('income')} type="button">
+                  <Plus size={16} /> Add income
+                </button>
+              ) : undefined
+            }
             total={formatMoney(totals.income)}
           />
         ) : null}
@@ -148,6 +155,13 @@ export function CashFlowPage() {
             onEdit={setEditingExpense}
             rows={newest(data.expenses)}
             title="Expense History"
+            action={
+              phone ? (
+                <button className={ui.button} onClick={() => setAdding('expense')} type="button">
+                  <Plus size={16} /> Add expense
+                </button>
+              ) : undefined
+            }
             total={formatMoney(totals.expenses)}
           />
         ) : null}
