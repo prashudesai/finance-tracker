@@ -209,6 +209,27 @@ export const projectionAdjustmentSchema = z.object({
 });
 export type ProjectionAdjustment = z.infer<typeof projectionAdjustmentSchema>;
 
+/** One saved change, with enough detail to show it and undo it. */
+export const changeRecordSchema = z.object({
+  id,
+  at: z.string(),
+  actor: z.string().max(200),
+  summary: z.string().max(200),
+  count: z.number().int().nonnegative(),
+  entries: z
+    .array(
+      z.object({
+        collection: z.string(),
+        docId: z.string(),
+        before: z.unknown(),
+        after: z.unknown(),
+      }),
+    )
+    .max(50),
+  undone: z.boolean().default(false),
+});
+export type ChangeRecord = z.infer<typeof changeRecordSchema>;
+
 export const SCENARIOS = ['stress', 'base', 'optimistic'] as const;
 export type Scenario = (typeof SCENARIOS)[number];
 

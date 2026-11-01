@@ -57,7 +57,20 @@ export interface Account {
   email: string;
   role: 'owner' | 'editor' | 'viewer';
   signOut?: () => void;
-  invite?: (email: string, role: 'editor' | 'viewer') => Promise<void>;
+  family?: FamilyAccess;
+}
+
+export interface FamilyMember {
+  email: string;
+  role: 'editor' | 'viewer';
+  accepted: boolean;
+}
+
+export interface FamilyAccess {
+  list(): Promise<FamilyMember[]>;
+  invite(email: string, role: FamilyMember['role']): Promise<void>;
+  setRole(email: string, role: FamilyMember['role']): Promise<void>;
+  remove(email: string): Promise<void>;
 }
 
 const PREVIEW_ACCOUNT: Account = {
@@ -85,8 +98,8 @@ export function Shell({
   const { updateReady, applyUpdate } = useAppUpdate();
 
   useEffect(
-    () => connect(repository, account.role !== 'viewer'),
-    [connect, repository, account.role],
+    () => connect(repository, account.role !== 'viewer', account.email),
+    [connect, repository, account.role, account.email],
   );
 
   // Scheduled contributions post once records have loaded, never during rendering.

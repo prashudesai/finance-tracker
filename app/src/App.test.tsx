@@ -290,3 +290,47 @@ test('editing a recurring amount keeps earlier months', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Save recurring item', hidden: true }));
   expect(await screen.findByText('₹2,500 · monthly')).toBeDefined();
 });
+
+test('the change log lists a deletion and can undo it', async () => {
+  const income = { id: 'i', date: `${month}-01`, member: 'A', source: 'Salary', amount: 5000 };
+  renderApp('/cash-flow', { income: [income] });
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete Salary' }));
+  expect(await screen.findByText('No income this month.')).toBeDefined();
+  fireEvent.click(screen.getByRole('link', { name: 'Settings' }));
+  fireEvent.click(await screen.findByRole('button', { name: /Change log/ }));
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Undo Deleted income · Salary', hidden: true }),
+  );
+  expect(
+    await screen.findByRole('button', { name: 'Undo Deleted income · Salary', hidden: true }),
+  ).toHaveProperty('disabled', true);
+  fireEvent.click(screen.getByRole('button', { name: 'Close', hidden: true }));
+  fireEvent.click(screen.getByRole('link', { name: /Income & Expense/ }));
+  expect(await screen.findByRole('button', { name: 'Edit Salary' })).toBeDefined();
+});
+
+test('owners can manage family members', async () => {
+  const family = {
+    list: async () => [{ email: 'a@example.test', role: 'viewer' as const, accepted: true }],
+    invite: async () => undefined,
+    setRole: vi.fn(async () => undefined),
+    remove: vi.fn(async () => undefined),
+  };
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell
+        account={{ name: 'O', email: 'o@example.test', role: 'owner', family }}
+        repository={createMemoryRepository()}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /Family access/ }));
+  fireEvent.change(
+    await screen.findByRole('combobox', { name: 'Access for a@example.test', hidden: true }),
+    { target: { value: 'editor' } },
+  );
+  expect(family.setRole).toHaveBeenCalledWith('a@example.test', 'editor');
+  window.confirm = () => true;
+  fireEvent.click(screen.getByRole('button', { name: 'Remove a@example.test', hidden: true }));
+  expect(family.remove).toHaveBeenCalledWith('a@example.test');
+});

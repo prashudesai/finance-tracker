@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { buildChange, pruneWrites } from '../domain/changes';
 import { dueContributions } from '../domain/holdings';
 import {
   COLLECTION_NAMES,
@@ -18,9 +19,14 @@ interface TrackerState {
   canEdit: boolean;
   /** Family member the personal figures follow. Null shows the whole household. */
   profile: string | null;
+  /** Who the change log names. */
+  actor: string;
+  tourOpen: boolean;
   repository: TrackerRepository | null;
-  connect(repository: TrackerRepository, canEdit: boolean): () => void;
-  commit(writes: RecordWrite[]): void;
+  connect(repository: TrackerRepository, canEdit: boolean, actor?: string): () => void;
+  /** Saves writes. Scheduled and housekeeping writes pass `log: false`. */
+  commit(writes: RecordWrite[], options?: { log?: boolean }): void;
+  setTourOpen(open: boolean): void;
   report(message: string): void;
   setProfile(profile: string | null): void;
   /** Posts scheduled contributions that are due. Safe to run from every device. */
@@ -34,12 +40,15 @@ export const useTracker = create<TrackerState>((set, get) => ({
   error: null,
   canEdit: true,
   profile: null,
+  actor: '',
+  tourOpen: false,
   repository: null,
 
-  connect(repository, canEdit) {
+  connect(repository, canEdit, actor = '') {
     set({
       repository,
       canEdit,
+      actor,
       data: emptyTrackerData(),
       loaded: false,
       invalidRecords: 0,
@@ -70,17 +79,35 @@ export const useTracker = create<TrackerState>((set, get) => ({
   },
 
   // Screens update from the subscription, including while offline, so this never blocks them.
-  commit(writes) {
-    if (!get().canEdit) {
+  commit(writes, options = {}) {
+    const { canEdit, data, actor, repository } = get();
+    if (!canEdit) {
       set({ error: 'Viewer access can look at records but not change them.' });
       return;
     }
     set({ error: null });
-    get()
-      .repository?.commit(writes)
-      .catch((error: unknown) => {
-        set({ error: error instanceof Error ? error.message : 'The change could not be saved.' });
-      });
+    const change =
+      options.log === false
+        ? null
+        : buildChange(data, writes, {
+            id: crypto.randomUUID(),
+            at: new Date().toISOString(),
+            actor,
+          });
+    const logged: RecordWrite[] = change
+      ? [
+          ...writes,
+          { type: 'set', collection: 'changes', id: change.id, value: change },
+          ...pruneWrites(data.changes),
+        ]
+      : writes;
+    repository?.commit(logged).catch((error: unknown) => {
+      set({ error: error instanceof Error ? error.message : 'The change could not be saved.' });
+    });
+  },
+
+  setTourOpen(open) {
+    set({ tourOpen: open });
   },
 
   report(message) {
@@ -98,6 +125,7 @@ export const useTracker = create<TrackerState>((set, get) => ({
     if (due.length === 0) return;
     commit(
       due.map((row) => ({ type: 'set', collection: 'contributions', id: row.id, value: row })),
+      { log: false },
     );
   },
 }));

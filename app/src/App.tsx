@@ -41,7 +41,7 @@ function useFirebaseSession(): Session {
               email: user.email ?? '',
               role,
               signOut: () => void firebase.signOutUser(),
-              invite: (email, access) => firebase.inviteMember(user.uid, email, access),
+              ...(role === 'owner' ? { family: firebase.familyAccess(user.uid) } : {}),
             },
           });
         });

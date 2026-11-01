@@ -2,6 +2,7 @@ import {
   Archive,
   ChevronRight,
   DatabaseBackup,
+  History,
   Info,
   ListPlus,
   Palette,
@@ -11,10 +12,12 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { clearWrites, createBackup, parseBackup, restoreWrites } from '../../domain/backup';
+import { undoWrites } from '../../domain/changes';
+import type { ChangeRecord } from '../../schema/records';
 import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
-import type { Account } from '../../Shell';
+import type { Account, FamilyMember } from '../../Shell';
 import { downloadText } from '../../ui/download';
 import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
@@ -25,7 +28,15 @@ import { useTheme } from '../../ui/theme';
 import ui from '../../ui/ui.module.css';
 
 type Panel =
-  'info' | 'account' | 'family' | 'appearance' | 'values' | 'archived' | 'data' | 'updates';
+  | 'info'
+  | 'account'
+  | 'family'
+  | 'appearance'
+  | 'values'
+  | 'archived'
+  | 'changes'
+  | 'data'
+  | 'updates';
 
 const VERSION = '0.1.0';
 
@@ -55,6 +66,12 @@ const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] =
     icon: Archive,
     title: 'Archived accounts',
     text: 'Restore closed accounts and loans',
+  },
+  {
+    panel: 'changes',
+    icon: History,
+    title: 'Change log',
+    text: 'See saved changes and undo them',
   },
   {
     panel: 'data',
@@ -320,57 +337,117 @@ function DataBackup() {
   );
 }
 
-function FamilyAccess({ account }: { account: Account }) {
+function FamilyAccessPanel({ account }: { account: Account }) {
+  const { family } = account;
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'editor' | 'viewer'>('viewer');
+  const [role, setRole] = useState<FamilyMember['role']>('viewer');
   const [status, setStatus] = useState('');
-  const { invite } = account;
+  const [members, setMembers] = useState<FamilyMember[]>([]);
+
+  const refresh = useCallback(() => {
+    family?.list().then(setMembers, (error: unknown) => setStatus(String(error)));
+  }, [family]);
+  useEffect(refresh, [refresh]);
+
+  const run = (action: Promise<void>, done: string) =>
+    action.then(
+      () => {
+        setStatus(done);
+        refresh();
+      },
+      (error: unknown) => setStatus(String(error)),
+    );
+
   return (
     <div className={ui.page}>
       <p className={ui.caption}>
         Viewer: view and export. Editor: add, edit and delete records. Owner: manage access, import
-        backups and clear all data.
+        backups and clear all data. Copies someone has already downloaded can't be taken back.
       </p>
       <p>
         Your role: <strong>{account.role}</strong>
       </p>
-      {invite && account.role === 'owner' ? (
-        <form
-          className={ui.form}
-          onSubmit={(event) => {
-            event.preventDefault();
-            invite(email, role).then(
-              () => {
-                setStatus(`Invited ${email}. They accept when they next sign in.`);
-                setEmail('');
-              },
-              (error: unknown) => setStatus(String(error)),
-            );
-          }}
-        >
-          <Field label="Google email">
-            <input
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              type="email"
-              value={email}
-            />
-          </Field>
-          <Field label="Access">
-            <select
-              onChange={(event) => setRole(event.target.value as 'editor' | 'viewer')}
-              value={role}
-            >
-              <option value="viewer">Viewer</option>
-              <option value="editor">Editor</option>
-            </select>
-          </Field>
-          <div className={ui.formActions}>
-            <button className={ui.button} type="submit">
-              Send invite
-            </button>
+      {family ? (
+        <>
+          <form
+            className={ui.form}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void run(
+                family.invite(email, role),
+                `Invited ${email}. They accept when they next sign in.`,
+              ).then(() => setEmail(''));
+            }}
+          >
+            <Field label="Google email">
+              <input
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                type="email"
+                value={email}
+              />
+            </Field>
+            <Field label="Access">
+              <select
+                onChange={(event) => setRole(event.target.value as FamilyMember['role'])}
+                value={role}
+              >
+                <option value="viewer">Viewer</option>
+                <option value="editor">Editor</option>
+              </select>
+            </Field>
+            <div className={ui.formActions}>
+              <button className={ui.button} type="submit">
+                Send invite
+              </button>
+            </div>
+          </form>
+          <div>
+            <div className={ui.groupLabel}>Members</div>
+            {members.length === 0 ? (
+              <p className={ui.empty}>No one else has access.</p>
+            ) : (
+              <ul className={ui.list}>
+                {members.map((member) => (
+                  <li className={ui.row} key={member.email}>
+                    <div className={ui.rowMain}>
+                      <div className={ui.rowTitle}>{member.email}</div>
+                      <div className={ui.rowDetail}>
+                        {member.accepted ? 'Active' : 'Invite pending'}
+                      </div>
+                    </div>
+                    <select
+                      aria-label={`Access for ${member.email}`}
+                      className={ui.fieldSelect}
+                      onChange={(event) =>
+                        void run(
+                          family.setRole(member.email, event.target.value as FamilyMember['role']),
+                          `Updated ${member.email}.`,
+                        )
+                      }
+                      value={member.role}
+                    >
+                      <option value="viewer">Viewer</option>
+                      <option value="editor">Editor</option>
+                    </select>
+                    <button
+                      aria-label={`Remove ${member.email}`}
+                      className={ui.quiet}
+                      onClick={() => {
+                        if (window.confirm(`Remove access for ${member.email}?`)) {
+                          void run(family.remove(member.email), `Removed ${member.email}.`);
+                        }
+                      }}
+                      type="button"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-        </form>
+        </>
       ) : (
         <p className={ui.empty}>Invites are available to the owner after signing in.</p>
       )}
@@ -379,6 +456,65 @@ function FamilyAccess({ account }: { account: Account }) {
           {status}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+function ChangeLog() {
+  const data = useTracker((state) => state.data);
+  const commit = useTracker((state) => state.commit);
+  const report = useTracker((state) => state.report);
+  const rows = [...data.changes].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 50);
+  if (rows.length === 0) return <p className={ui.empty}>No changes recorded yet.</p>;
+
+  const undo = (change: ChangeRecord) => {
+    try {
+      commit(
+        [
+          ...undoWrites(data, change),
+          {
+            type: 'set',
+            collection: 'changes',
+            id: change.id,
+            value: { ...change, undone: true },
+          },
+        ],
+        { log: false },
+      );
+    } catch (error) {
+      report(error instanceof Error ? error.message : 'This change could not be undone.');
+    }
+  };
+
+  return (
+    <div className={ui.page}>
+      <p className={ui.caption}>
+        Saved changes across your family. Undo restores the earlier version of a record, and refuses
+        if that record has changed since. Very large changes can't be undone here, so use a backup
+        for those.
+      </p>
+      <ul className={ui.list}>
+        {rows.map((change) => (
+          <li className={ui.row} key={change.id}>
+            <div className={ui.rowMain}>
+              <div className={ui.rowTitle}>{change.summary}</div>
+              <div className={ui.rowDetail}>
+                {new Date(change.at).toLocaleString('en-IN')}
+                {change.actor ? ` · ${change.actor}` : ''}
+              </div>
+            </div>
+            <button
+              aria-label={`Undo ${change.summary}`}
+              className={ui.quiet}
+              disabled={change.undone || change.entries.length === 0}
+              onClick={() => undo(change)}
+              type="button"
+            >
+              {change.undone ? 'Undone' : 'Undo'}
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -480,10 +616,11 @@ export function SettingsPage({ account }: { account: Account }) {
               ) : null}
             </div>
           ) : null}
-          {panel === 'family' ? <FamilyAccess account={account} /> : null}
+          {panel === 'family' ? <FamilyAccessPanel account={account} /> : null}
           {panel === 'appearance' ? <Appearance /> : null}
           {panel === 'values' ? <CustomValues /> : null}
           {panel === 'archived' ? <ArchivedAccounts /> : null}
+          {panel === 'changes' ? <ChangeLog /> : null}
           {panel === 'data' ? <DataBackup /> : null}
           {panel === 'updates' ? <AppUpdates /> : null}
         </Modal>

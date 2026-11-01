@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import {
+  changeRecordSchema,
   contributionSchema,
   expenseSchema,
   gratuityAccountSchema,
@@ -13,6 +14,7 @@ import {
   recurringRuleSchema,
   trackerSettingsSchema,
   valuationSchema,
+  type ChangeRecord,
   type Contribution,
   type Expense,
   type GratuityAccount,
@@ -42,6 +44,7 @@ export interface TrackerData {
   projectionAdjustments: ProjectionAdjustment[];
   settings: TrackerSettings[];
   monthReviews: MonthReview[];
+  changes: ChangeRecord[];
 }
 
 export type CollectionName = keyof TrackerData;
@@ -60,6 +63,7 @@ export const COLLECTIONS: { [Name in CollectionName]: z.ZodType<TrackerData[Name
   projectionAdjustments: projectionAdjustmentSchema,
   settings: trackerSettingsSchema,
   monthReviews: monthReviewSchema,
+  changes: changeRecordSchema,
 };
 
 export const COLLECTION_NAMES = Object.keys(COLLECTIONS) as CollectionName[];
@@ -78,6 +82,7 @@ export const emptyTrackerData = (): TrackerData => ({
   projectionAdjustments: [],
   settings: [],
   monthReviews: [],
+  changes: [],
 });
 
 export type RecordWrite =

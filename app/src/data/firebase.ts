@@ -11,13 +11,19 @@ import {
 } from 'firebase/auth';
 import {
   doc,
+  collection,
+  deleteDoc,
   getDoc,
+  getDocs,
+  query,
   setDoc,
   updateDoc,
+  where,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
 } from 'firebase/firestore';
+import type { FamilyAccess } from '../Shell';
 import { firestoreRepository } from './firestoreRepository';
 
 // Firebase web configuration identifies the project; it is not a secret.
@@ -64,12 +70,25 @@ export async function resolveMembership(user: User): Promise<Membership> {
   return { householdId: user.uid, role: 'owner' };
 }
 
-export const inviteMember = (ownerUid: string, email: string, role: 'editor' | 'viewer') =>
-  setDoc(doc(db, 'memberships', email.trim().toLowerCase()), {
-    householdId: ownerUid,
-    role,
-    accepted: false,
-  });
+const memberDoc = (email: string) => doc(db, 'memberships', email.trim().toLowerCase());
+
+/** Family management for a household's owner. Security rules enforce who may do this. */
+export const familyAccess = (ownerUid: string): FamilyAccess => ({
+  async list() {
+    const members = await getDocs(
+      query(collection(db, 'memberships'), where('householdId', '==', ownerUid)),
+    );
+    return members.docs.map((row) => ({
+      email: row.id,
+      role: row.data().role,
+      accepted: row.data().accepted === true,
+    }));
+  },
+  invite: (email, role) =>
+    setDoc(memberDoc(email), { householdId: ownerUid, role, accepted: false }),
+  setRole: (email, role) => updateDoc(memberDoc(email), { role }),
+  remove: (email) => deleteDoc(memberDoc(email)),
+});
 
 export const createFirestoreRepository = (householdId: string) =>
   firestoreRepository(db, householdId);

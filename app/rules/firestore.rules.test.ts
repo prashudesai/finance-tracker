@@ -6,7 +6,17 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 
 let env: RulesTestEnvironment;
 
@@ -80,6 +90,7 @@ describe('household records', () => {
       'projectionAdjustments',
       'settings',
       'monthReviews',
+      'changes',
     ]) {
       await assertSucceeds(setDoc(doc(db, `households/owner/${name}/a`), { value: 1 }));
     }
@@ -92,6 +103,19 @@ describe('household records', () => {
 });
 
 describe('memberships', () => {
+  test('owners can list and manage their members, and others cannot', async () => {
+    const list = (db: ReturnType<typeof owner>, household: string) =>
+      getDocs(query(collection(db, 'memberships'), where('householdId', '==', household)));
+    const found = await assertSucceeds(list(owner(), 'owner'));
+    expect(found.size).toBe(3);
+    await assertFails(list(stranger(), 'owner'));
+    await assertFails(list(editor(), 'owner'));
+    await assertSucceeds(
+      updateDoc(doc(owner(), 'memberships/viewer@example.com'), { role: 'editor' }),
+    );
+    await assertFails(updateDoc(doc(owner(), 'memberships/viewer@example.com'), { role: 'owner' }));
+  });
+
   const invite = { householdId: 'owner', role: 'viewer', accepted: false };
 
   test('owners can invite someone else to their own household', async () => {
