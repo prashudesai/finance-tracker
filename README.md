@@ -1,33 +1,31 @@
-# Personal Finance Tracker — 2026.10.26.1
+# Finance Tracker
 
-Family income, household expenses, investments, retirement accounts and loan ledgers in a Google-authenticated web app and installable PWA. Owners, editors and viewers share the same tracker with role-specific access.
+Family income, expenses, loans, investments and retirement accounts in an offline-capable web app, with owner, editor and viewer roles.
 
-The current release combines contribution amount editing with return-to-review, complete financial/review backup restore, explicit sync conflict choices, and compact bottom Search. See COMBINED_RELEASE.md, REVIEW_SYNC.md and RECORD_SEARCH.md.
+The app is being rewritten in React, TypeScript and Firebase. New work is in [app/](app/). The older app in this repository stays as a reference until the rewrite reaches parity.
 
-Only current versioned backup files import. Complete exports include shared review marks and payment confirmations; explicitly marked current device-recovery files can preserve existing reviews if a review snapshot was unavailable. Obsolete raw financial-only files are rejected before records change. No existing tracker data is reset by deployment.
+## Try it
 
-Use Node 22 and Java 17 for development and emulator checks:
+Node 22 or later is required.
 
 ```bash
-npm ci --ignore-scripts
-npm run build
-npm test
-npm run test:rules
-npm run test:emerald
-npm run test:pwa
+cd app
 ```
 
-Edit application source under src/core and src/index.html, or the independent feature modules in dist. Build-generated HTML/runtime assets must match their source. GitHub main runs validation and deploys Firebase rules before Hosting. See DEPLOY.md.
+```bash
+npm install --ignore-scripts
+```
 
-PERFORMANCE.md and PERFORMANCE_RESULTS.json contain reproducible measurements and limitations. Actual phone timing, keyboard and assistive-technology validation requires physical devices.
+```bash
+npm run dev:preview
+```
 
+Open http://localhost:5173. This uses sample data held in memory, so you don't need Firebase or a sign-in.
 
-### Optimized production assets (pending combined release)
+## Documentation
 
-Run `npm ci --ignore-scripts` followed by `npm run build`. The build keeps readable canonical sources and generates minified files and source maps under `dist/assets/`, with content hashes in their filenames. Commit the complete generated `dist` output. Do not omit esbuild's platform optional dependency.
-
-`src/index.html`, `src/core/`, `src/boot.js` and `src/service-worker.js` are editable sources. The hand-authored feature modules in `dist/*.js` remain editable; their optimized copies, `dist/index.html`, `dist/runtime/*`, `dist/assets/*`, `dist/print.css`, `dist/asset-manifest.json` and `dist/service-worker.js` are generated. Print-only CSS is extracted conservatively; active Appearance styles remain supported.
-
-`npm run test:startup` checks cached startup, concurrent edits, shared permissions, optional libraries and real Firebase SDK initialization. Set `PFT_STARTUP_BASELINE_DIR` to a baseline dist snapshot when collecting controlled startup timings. These local fixture timings are not production Lighthouse scores.
-
-Deployment uses the existing GitHub Actions and Firebase Hosting flow. Only content-addressed `/assets/**` gets immutable caching. HTML, service worker and version metadata remain refreshable. No Firestore rule or Cloud Function changes are required for this release.
+- [CLAUDE.md](CLAUDE.md): working rules and commands
+- [docs/architecture.md](docs/architecture.md): how the app is built and why
+- [docs/data-model.md](docs/data-model.md): what is stored in Firestore
+- [docs/rewrite-status.md](docs/rewrite-status.md): what is done and what remains
+- [docs/legacy/](docs/legacy/README.md): behaviour specs and notes from the older app

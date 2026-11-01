@@ -1,0 +1,44 @@
+const MS_PER_DAY = 86_400_000;
+
+export const roundMoney = (value: number) => Math.round(value * 100) / 100;
+
+export function isValidDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const time = Date.parse(`${value}T00:00:00Z`);
+  return !Number.isNaN(time) && new Date(time).toISOString().slice(0, 10) === value;
+}
+
+export const isValidMonth = (value: unknown): value is string =>
+  typeof value === 'string' && /^(19|20|21)\d\d-(0[1-9]|1[0-2])$/.test(value);
+
+export const toDayNumber = (date: string) => Date.parse(`${date}T00:00:00Z`) / MS_PER_DAY;
+
+export const fromDayNumber = (day: number) => new Date(day * MS_PER_DAY).toISOString().slice(0, 10);
+
+export const daysInMonth = (year: number, month: number) =>
+  new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+function dateParts(date: string): [number, number, number] {
+  const [year = 0, month = 0, day = 0] = date.split('-').map(Number);
+  return [year, month, day];
+}
+
+export function nextMonth(month: string) {
+  const [year, value] = dateParts(month);
+  return value === 12 ? `${year + 1}-01` : `${year}-${String(value + 1).padStart(2, '0')}`;
+}
+
+/** The same day next month, clamped to that month's length. */
+export function monthlyAnniversary(date: string) {
+  const [year, month, day] = dateParts(date);
+  return new Date(Date.UTC(year, month, Math.min(day, daysInMonth(year, month + 1))))
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** A day of `month`, clamped to its length. Day 0 means the last day of the month. */
+export function dayInMonth(month: string, day: number) {
+  const [year, value] = dateParts(month);
+  const last = daysInMonth(year, value);
+  return `${month}-${String(day === 0 ? last : Math.min(day, last)).padStart(2, '0')}`;
+}

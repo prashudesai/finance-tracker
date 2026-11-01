@@ -1,0 +1,72 @@
+rules_version = '2';
+
+// A household's ID is its owner's UID. Other people join through a membership
+// document, which the owner creates and only the invited person can accept.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function email() {
+      return request.auth.token.email.lower();
+    }
+
+    function membershipPath() {
+      return /databases/$(database)/documents/memberships/$(email());
+    }
+
+    function acceptedRole(household) {
+      let membership = get(membershipPath()).data;
+      return membership.householdId == household && membership.accepted == true
+        ? membership.role
+        : null;
+    }
+
+    function isOwner(household) {
+      return signedIn() && request.auth.uid == household;
+    }
+
+    function canRead(household) {
+      return isOwner(household)
+        || (signedIn() && exists(membershipPath()) && acceptedRole(household) in ['editor', 'viewer']);
+    }
+
+    function canEdit(household) {
+      return isOwner(household)
+        || (signedIn() && exists(membershipPath()) && acceptedRole(household) == 'editor');
+    }
+
+    match /memberships/{address} {
+      allow read: if signedIn()
+        && (address == email() || resource.data.householdId == request.auth.uid);
+
+      allow create: if signedIn()
+        && address != email()
+        && request.resource.data.keys().hasOnly(['householdId', 'role', 'accepted'])
+        && request.resource.data.householdId == request.auth.uid
+        && request.resource.data.role in ['editor', 'viewer']
+        && request.resource.data.accepted == false;
+
+      // Owners may change the role. Invitees may only accept.
+      allow update: if signedIn() && (
+        (resource.data.householdId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
+          && request.resource.data.role in ['editor', 'viewer'])
+        || (address == email()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['accepted'])
+          && request.resource.data.accepted == true)
+      );
+
+      allow delete: if signedIn()
+        && (resource.data.householdId == request.auth.uid || address == email());
+    }
+
+    match /households/{household}/{collection}/{record} {
+      allow read: if canRead(household);
+      allow write: if canEdit(household)
+        && collection in ['income', 'expenses', 'loans', 'recurringRules',
+                          'recurringOccurrences', 'monthlyBalances'];
+    }
+  }
+}
