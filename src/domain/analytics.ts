@@ -398,6 +398,25 @@ const needs = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? ' needs' : 's need'}`;
 
 /** Things that need a look, shown as the dashboard's attention bar. */
+/** Months missing a balance or a review, newest first. */
+export function monthsToReview(household: TrackerData, today: string) {
+  const current = today.slice(0, 7);
+  const recorded = new Set(household.monthlyBalances.map((row) => row.month));
+  const first = [...recorded].sort()[0];
+  const months = [...monthTotals(household).keys()].filter(
+    (month) => month <= current && (!first || month >= first),
+  );
+  return [...new Set([...months, ...recorded])]
+    .filter((month) => month <= current)
+    .filter((month) => {
+      const close = closeMonth(household, month);
+      if (month === current) return close.opening === null;
+      return !close.complete || !monthReviewStatus(household, month).reviewed;
+    })
+    .sort()
+    .reverse();
+}
+
 /** `view` is the selected profile's records. Bank balances belong to the whole household. */
 export function attentionItems(
   view: TrackerData,
@@ -408,20 +427,7 @@ export function attentionItems(
 ): AttentionItem[] {
   const items: AttentionItem[] = [];
   const current = today.slice(0, 7);
-  const recorded = new Set(household.monthlyBalances.map((row) => row.month));
-  const first = [...recorded].sort()[0];
-  const months = [...monthTotals(household).keys()].filter(
-    (month) => month <= current && (!first || month >= first),
-  );
-  const incomplete = [...new Set([...months, ...recorded])]
-    .filter((month) => month <= current)
-    .filter((month) => {
-      const close = closeMonth(household, month);
-      if (month === current) return close.opening === null;
-      return !close.complete || !monthReviewStatus(household, month).reviewed;
-    })
-    .sort()
-    .reverse();
+  const incomplete = monthsToReview(household, today);
   const [latest] = incomplete;
   if (latest) {
     items.push({

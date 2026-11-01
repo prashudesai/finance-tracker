@@ -2,6 +2,7 @@ import { ArrowDownToLine, ArrowUpFromLine, TrendingUp } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
+import { monthsToReview } from '../../domain/analytics';
 import { previousMonth } from '../../domain/calendar';
 import { monthTotals } from '../../domain/cashflow';
 import type { Expense, Income } from '../../schema/records';
@@ -60,6 +61,7 @@ function BalanceExplainer() {
 
 export function CashFlowPage() {
   const data = useView();
+  const household = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
   const current = localDate().slice(0, 7);
   const [month, setMonth] = useState(current);
@@ -86,6 +88,17 @@ export function CashFlowPage() {
     }
     if (quickAdd?.commitments) scrollToSection('commitments');
   }, [quickAdd]);
+
+  // A reviewed month leaves the screen: the next one opens, or the card closes.
+  const nextReview = () => {
+    const next = monthsToReview(household, localDate()).find((key) => key !== month);
+    if (next) {
+      setMonth(next);
+      scrollToSection('month-review');
+    } else {
+      setReviewOpen(false);
+    }
+  };
 
   const loanName = (id: string | undefined) =>
     data.loans.find((loan) => loan.id === id)?.type ?? '';
@@ -280,7 +293,12 @@ export function CashFlowPage() {
         ) : null}
       </div>
       <MonthlyBalances month={month} />
-      <MonthReview month={month} onToggle={setReviewOpen} open={reviewOpen} />
+      <MonthReview
+        month={month}
+        onReviewed={nextReview}
+        onToggle={setReviewOpen}
+        open={reviewOpen}
+      />
       {adding === 'income' ? (
         <Modal fullScreenOnPhone onClose={() => setAdding(null)} title="Add Income">
           <IncomeForm onDone={() => setAdding(null)} />

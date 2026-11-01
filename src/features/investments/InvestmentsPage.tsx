@@ -271,10 +271,37 @@ export function InvestmentsPage() {
   const showRetirement = !phone || section === 'retirement';
 
   const rows = holdingRows(data, today);
-  const unconfirmedFirst = [...rows].sort(
-    (a, b) =>
-      Number(valuationAge(b.holding.id, data, today) === 'Unverified') -
-      Number(valuationAge(a.holding.id, data, today) === 'Unverified'),
+  const isUnconfirmed = ({ holding }: (typeof rows)[number]) =>
+    valuationAge(holding.id, data, today) === 'Unverified';
+  const unconfirmed = rows.filter(isUnconfirmed);
+  const confirmed = rows.filter((row) => !isUnconfirmed(row));
+  const confirmValue = ({ holding, position }: (typeof rows)[number]) => {
+    const id = crypto.randomUUID();
+    commit([
+      {
+        type: 'set',
+        collection: 'valuations',
+        id,
+        value: { id, holdingId: holding.id, date: today, value: position.current },
+      },
+    ]);
+  };
+  const freshnessRow = (row: (typeof rows)[number], action: string) => (
+    <li className={ui.row} key={row.holding.id}>
+      <div className={ui.rowMain}>
+        <div className={ui.rowTitle}>{row.holding.name}</div>
+        <div className={ui.rowDetail}>{valuationAge(row.holding.id, data, today)}</div>
+      </div>
+      <span className={ui.amount}>{formatMoney(row.position.current)}</span>
+      <button
+        aria-label={`${action} value of ${row.holding.name}`}
+        className={ui.quiet}
+        onClick={() => confirmValue(row)}
+        type="button"
+      >
+        {action}
+      </button>
+    </li>
   );
   const categories = portfolioCategories(rows);
   const current = rows.reduce((sum, row) => sum + row.position.current, 0);
@@ -544,35 +571,17 @@ export function InvestmentsPage() {
           <p className={ui.caption}>
             Confirming records today's value against your statement. It doesn't change the balance.
           </p>
-          <ul className={ui.list}>
-            {unconfirmedFirst.map(({ holding, position }) => (
-              <li className={ui.row} key={holding.id}>
-                <div className={ui.rowMain}>
-                  <div className={ui.rowTitle}>{holding.name}</div>
-                  <div className={ui.rowDetail}>{valuationAge(holding.id, data, today)}</div>
-                </div>
-                <span className={ui.amount}>{formatMoney(position.current)}</span>
-                <button
-                  aria-label={`Confirm value of ${holding.name}`}
-                  className={ui.quiet}
-                  onClick={() => {
-                    const id = crypto.randomUUID();
-                    commit([
-                      {
-                        type: 'set',
-                        collection: 'valuations',
-                        id,
-                        value: { id, holdingId: holding.id, date: today, value: position.current },
-                      },
-                    ]);
-                  }}
-                  type="button"
-                >
-                  Confirm
-                </button>
-              </li>
-            ))}
-          </ul>
+          {unconfirmed.length > 0 ? (
+            <ul className={ui.list}>{unconfirmed.map((row) => freshnessRow(row, 'Confirm'))}</ul>
+          ) : (
+            <p className={ui.empty}>All values are confirmed.</p>
+          )}
+          {confirmed.length > 0 ? (
+            <details className={ui.fold}>
+              <summary>Confirmed values · {confirmed.length}</summary>
+              <ul className={ui.list}>{confirmed.map((row) => freshnessRow(row, 'Update'))}</ul>
+            </details>
+          ) : null}
         </details>
       ) : null}
 

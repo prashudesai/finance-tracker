@@ -535,6 +535,38 @@ describe('needs attention', () => {
     expect(list).not.toBeNull();
   });
 
+  test('a confirmed value leaves the list', async () => {
+    renderApp('/investments', { holdings: [fund] });
+    const confirm = await screen.findByRole('button', { name: /^Confirm value of/, hidden: true });
+    fireEvent.click(confirm);
+    expect(await screen.findByText('All values are confirmed.')).toBeDefined();
+    expect(screen.queryByRole('button', { name: /^Confirm value of/, hidden: true })).toBeNull();
+    expect(screen.getByRole('button', { name: /^Update value of/, hidden: true })).toBeDefined();
+  });
+
+  test('marking a month reviewed moves on to the next month', async () => {
+    const newer = previousMonth(localDate().slice(0, 7));
+    const older = previousMonth(newer);
+    const oldest = previousMonth(older);
+    const current = localDate().slice(0, 7);
+    renderApp('/', {
+      ...seen,
+      monthlyBalances: [oldest, older, newer, current].map((month) => ({
+        month,
+        startBalance: 100,
+      })),
+    });
+    await openReview(/balance review/);
+    await waitFor(() =>
+      expect((screen.getByLabelText('Month') as HTMLSelectElement).value).toBe(newer),
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Mark month reviewed' }));
+    await waitFor(() =>
+      expect((screen.getByLabelText('Month') as HTMLSelectElement).value).toBe(older),
+    );
+    expect(await screen.findByText(`Month review · ${formatMonth(older)}`)).toBeDefined();
+  });
+
   test('a backup reminder opens Data & backup', async () => {
     renderApp('/', { ...seen, holdings: [fund] });
     await screen.findByRole('heading', { level: 1 });

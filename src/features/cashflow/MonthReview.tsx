@@ -12,10 +12,12 @@ export function MonthReview({
   month,
   open,
   onToggle,
+  onReviewed,
 }: {
   month: string;
   open: boolean;
   onToggle: (open: boolean) => void;
+  onReviewed: () => void;
 }) {
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
@@ -49,7 +51,7 @@ export function MonthReview({
       open={open}
     >
       <summary className={ui.split}>
-        <span>Month review</span>
+        <span>Month review · {formatMonth(month)}</span>
         <span className={ui.caption}>{summary}</span>
       </summary>
       <div className={ui.page}>
@@ -120,7 +122,7 @@ export function MonthReview({
           <button
             className={missingBalance ? ui.quiet : ui.button}
             disabled={!close.complete || status.reviewed}
-            onClick={() =>
+            onClick={() => {
               commit([
                 {
                   type: 'set',
@@ -133,8 +135,9 @@ export function MonthReview({
                     reviewedAt: localDate(),
                   },
                 },
-              ])
-            }
+              ]);
+              onReviewed();
+            }}
             type="button"
           >
             Mark month reviewed
