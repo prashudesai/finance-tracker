@@ -148,6 +148,7 @@ export function Shell({
           ))}
         </nav>
         <div className={styles.tools}>
+          {loaded ? <SearchButton /> : null}
           <button
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             className={ui.iconButton}
@@ -203,7 +204,6 @@ export function Shell({
           <p className={ui.empty}>Loading your records…</p>
         )}
       </main>
-      {loaded ? <SearchButton /> : null}
       {tourOpen ? <GuidedTour /> : null}
     </div>
   );

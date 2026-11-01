@@ -783,6 +783,73 @@ details.fold[open] > summary {
   border-radius: 50%;
 }
 
+.dialogFull {
+  composes: dialog;
+}
+
+.twoUp {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.segmented {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.segment,
+.segmentActive {
+  min-height: 40px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.segmentActive {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+/* Phones show the page title alone, as the older app did. */
+@media (max-width: 700px) {
+  .tiles > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .pageHeader .eyebrow,
+  .pageHeader .subtitle {
+    display: none;
+  }
+
+  .pageHeader h1 {
+    font-size: 1.3rem;
+    font-weight: 600;
+  }
+
+  .dialogFull {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 16px;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
 @media print {
   .card,
   .hero,

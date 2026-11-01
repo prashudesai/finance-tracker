@@ -1,4 +1,5 @@
 import { ArrowDownToLine, ArrowUpFromLine, TrendingUp } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { previousMonth } from '../../domain/calendar';
 import { monthTotals } from '../../domain/cashflow';
@@ -8,6 +9,7 @@ import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format'
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
 import { Stat } from '../../ui/Stat';
+import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
 import { Commitments } from './Commitments';
 import { ExpenseForm, IncomeForm } from './EntryForms';
@@ -24,6 +26,9 @@ export function CashFlowPage() {
   const [month, setMonth] = useState(current);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [adding, setAdding] = useState<'income' | 'expense' | null>(null);
+  const [history, setHistory] = useState<'income' | 'expense'>('income');
+  const phone = useIsPhone();
 
   const totals = monthTotals(data).get(month) ?? { income: 0, expenses: 0 };
   const newest = <Row extends { date: string }>(rows: Row[]) =>
@@ -68,64 +73,108 @@ export function CashFlowPage() {
         />
       </section>
       <Commitments />
+      {phone ? (
+        <div className={ui.twoUp}>
+          <button className={ui.button} onClick={() => setAdding('income')} type="button">
+            <Plus size={16} /> Add income
+          </button>
+          <button
+            className={`${ui.button} ${ui.expense}`}
+            onClick={() => setAdding('expense')}
+            type="button"
+          >
+            <Plus size={16} /> Add expense
+          </button>
+        </div>
+      ) : (
+        <div className={ui.twoColumn}>
+          <section className={ui.card}>
+            <div>
+              <h2 style={{ fontSize: '1.2rem' }}>Add Income</h2>
+              <div className={ui.caption}>Log a salary, rental receipt, or other income</div>
+            </div>
+            <IncomeForm />
+          </section>
+          <section className={ui.card}>
+            <div>
+              <h2 style={{ fontSize: '1.2rem' }}>Add Expense</h2>
+              <div className={ui.caption}>Record purchases, annual costs, or EMI payments</div>
+            </div>
+            <ExpenseForm />
+          </section>
+        </div>
+      )}
+      {phone ? (
+        <div className={ui.segmented} role="group" aria-label="History">
+          {(['income', 'expense'] as const).map((key) => (
+            <button
+              aria-pressed={history === key}
+              className={history === key ? ui.segmentActive : ui.segment}
+              key={key}
+              onClick={() => setHistory(key)}
+              type="button"
+            >
+              {key === 'income' ? 'Income' : 'Expenses'}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className={ui.twoColumn}>
-        <section className={ui.card}>
-          <div>
-            <h2 style={{ fontSize: '1.2rem' }}>Add Income</h2>
-            <div className={ui.caption}>Log a salary, rental receipt, or other income</div>
-          </div>
-          <IncomeForm />
-        </section>
-        <section className={ui.card}>
-          <div>
-            <h2 style={{ fontSize: '1.2rem' }}>Add Expense</h2>
-            <div className={ui.caption}>Record purchases, annual costs, or EMI payments</div>
-          </div>
-          <ExpenseForm />
-        </section>
-      </div>
-      <div className={ui.twoColumn}>
-        <HistoryTable
-          columns={[
-            { header: 'Member', cell: (row) => row.member },
-            { header: 'Source', cell: (row) => row.source },
-            { header: 'Amount', numeric: true, cell: (row) => formatMoney(row.amount) },
-            { header: 'Date', cell: (row) => formatDay(row.date) },
-          ]}
-          describe={(row) => row.source}
-          emptyText="No income this month."
-          onDelete={(row) => commit([{ type: 'delete', collection: 'income', id: row.id }])}
-          onEdit={setEditingIncome}
-          rows={newest(data.income)}
-          title="Income History"
-          total={formatMoney(totals.income)}
-        />
-        <HistoryTable
-          columns={[
-            { header: 'Category', cell: (row) => row.category },
-            { header: 'Amount', numeric: true, cell: (row) => formatMoney(row.amount) },
-            { header: 'Type', cell: (row) => (row.isAnnual ? 'Annual' : 'Monthly') },
-            { header: 'Notes', cell: (row) => row.subcategory || row.notes || '—' },
-            { header: 'Date', cell: (row) => formatDay(row.date) },
-          ]}
-          describe={(row) => row.subcategory || row.category}
-          emptyText="No expenses this month."
-          onDelete={(row) => commit([{ type: 'delete', collection: 'expenses', id: row.id }])}
-          onEdit={setEditingExpense}
-          rows={newest(data.expenses)}
-          title="Expense History"
-          total={formatMoney(totals.expenses)}
-        />
+        {!phone || history === 'income' ? (
+          <HistoryTable
+            columns={[
+              { header: 'Member', cell: (row) => row.member },
+              { header: 'Source', cell: (row) => row.source },
+              { header: 'Amount', numeric: true, cell: (row) => formatMoney(row.amount) },
+              { header: 'Date', cell: (row) => formatDay(row.date) },
+            ]}
+            describe={(row) => row.source}
+            emptyText="No income this month."
+            onDelete={(row) => commit([{ type: 'delete', collection: 'income', id: row.id }])}
+            onEdit={setEditingIncome}
+            rows={newest(data.income)}
+            title="Income History"
+            total={formatMoney(totals.income)}
+          />
+        ) : null}
+        {!phone || history === 'expense' ? (
+          <HistoryTable
+            columns={[
+              { header: 'Category', cell: (row) => row.category },
+              { header: 'Amount', numeric: true, cell: (row) => formatMoney(row.amount) },
+              { header: 'Type', cell: (row) => (row.isAnnual ? 'Annual' : 'Monthly') },
+              { header: 'Notes', cell: (row) => row.subcategory || row.notes || '—' },
+              { header: 'Date', cell: (row) => formatDay(row.date) },
+            ]}
+            describe={(row) => row.subcategory || row.category}
+            emptyText="No expenses this month."
+            onDelete={(row) => commit([{ type: 'delete', collection: 'expenses', id: row.id }])}
+            onEdit={setEditingExpense}
+            rows={newest(data.expenses)}
+            title="Expense History"
+            total={formatMoney(totals.expenses)}
+          />
+        ) : null}
       </div>
       <MonthlyBalances month={month} />
       <MonthReview month={month} />
+      {adding === 'income' ? (
+        <Modal fullScreenOnPhone onClose={() => setAdding(null)} title="Add Income">
+          <IncomeForm onDone={() => setAdding(null)} />
+        </Modal>
+      ) : null}
+      {adding === 'expense' ? (
+        <Modal fullScreenOnPhone onClose={() => setAdding(null)} title="Add Expense">
+          <ExpenseForm onDone={() => setAdding(null)} />
+        </Modal>
+      ) : null}
       {editingIncome ? (
-        <Modal onClose={() => setEditingIncome(null)} title="Edit income">
+        <Modal fullScreenOnPhone onClose={() => setEditingIncome(null)} title="Edit income">
           <IncomeForm initial={editingIncome} onDone={() => setEditingIncome(null)} />
         </Modal>
       ) : null}
       {editingExpense ? (
-        <Modal onClose={() => setEditingExpense(null)} title="Edit expense">
+        <Modal fullScreenOnPhone onClose={() => setEditingExpense(null)} title="Edit expense">
           <ExpenseForm initial={editingExpense} onDone={() => setEditingExpense(null)} />
         </Modal>
       ) : null}

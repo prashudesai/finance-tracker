@@ -362,3 +362,47 @@ test('a colour theme applies from Settings and the header agrees on mode', async
   );
   expect(document.documentElement.dataset.theme).not.toBe(before);
 });
+
+describe('on a phone', () => {
+  beforeEach(() => {
+    window.matchMedia = ((query: string) => ({
+      matches: query === '(max-width: 700px)',
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+  });
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'matchMedia');
+  });
+
+  test('entry forms open on their own screen and one history shows at a time', async () => {
+    renderApp('/cash-flow');
+    expect(await screen.findByRole('heading', { name: 'Income History' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Expense History' })).toBeNull();
+    expect(screen.queryByLabelText('Amount (₹)')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Expenses' }));
+    expect(await screen.findByRole('heading', { name: 'Expense History' })).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Add income' }));
+    expect(await screen.findByRole('dialog', { name: 'Add Income', hidden: true })).toBeDefined();
+  });
+
+  test('investments and retirement are separate tabs', async () => {
+    renderApp('/investments', { holdings: [fund] });
+    expect(await screen.findByRole('heading', { name: 'Investment Portfolio' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Retirement Accounts' })).toBeNull();
+    fireEvent.click(screen.getByRole('tab', { name: 'Retirement' }));
+    expect(await screen.findByRole('heading', { name: 'Retirement Accounts' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Investment Portfolio' })).toBeNull();
+    fireEvent.click(screen.getByRole('tab', { name: 'Investments' }));
+  });
+});
+
+test('checking for updates reports back in the app preview', async () => {
+  renderApp('/settings');
+  fireEvent.click(await screen.findByRole('button', { name: /App & updates/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Check for updates', hidden: true }));
+  expect((await screen.findByRole('status', { hidden: true })).textContent).toMatch(
+    /Updates are only/,
+  );
+});

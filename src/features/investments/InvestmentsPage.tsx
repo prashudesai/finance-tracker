@@ -18,9 +18,62 @@ import { formatMoney, formatPercent, localDate, signedMoney } from '../../ui/for
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
 import { Metric } from '../../ui/Stat';
+import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
 import { CategoryDialog } from './HoldingActions';
 import { HoldingForm } from './HoldingForm';
+
+type Section = 'investments' | 'retirement';
+
+const SECTION_KEY = 'investmentSection';
+
+function savedSection(): Section {
+  try {
+    return localStorage.getItem(SECTION_KEY) === 'retirement' ? 'retirement' : 'investments';
+  } catch {
+    return 'investments';
+  }
+}
+
+/** Phones show one section at a time. The choice is remembered on the device. */
+function SectionTabs({
+  section,
+  onChange,
+}: {
+  section: Section;
+  onChange: (next: Section) => void;
+}) {
+  const choose = (next: Section) => {
+    onChange(next);
+    try {
+      localStorage.setItem(SECTION_KEY, next);
+    } catch {
+      // The choice still applies for this visit.
+    }
+  };
+  return (
+    <div aria-label="Investment sections" className={ui.segmented} role="tablist">
+      {(['investments', 'retirement'] as const).map((key) => (
+        <button
+          aria-selected={section === key}
+          className={section === key ? ui.segmentActive : ui.segment}
+          key={key}
+          onClick={() => choose(key)}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+              choose(section === 'investments' ? 'retirement' : 'investments');
+            }
+          }}
+          role="tab"
+          tabIndex={section === key ? 0 : -1}
+          type="button"
+        >
+          {key === 'investments' ? 'Investments' : 'Retirement'}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function GratuityForm({ onDone }: { onDone: () => void }) {
   const commit = useTracker((state) => state.commit);
@@ -162,6 +215,10 @@ export function InvestmentsPage() {
   const today = localDate();
   const [adding, setAdding] = useState<Holding['kind'] | 'gratuity' | null>(null);
   const [openName, setOpenName] = useState<string | null>(null);
+  const [section, setSection] = useState<Section>(savedSection);
+  const phone = useIsPhone();
+  const showInvestments = !phone || section === 'investments';
+  const showRetirement = !phone || section === 'retirement';
 
   const rows = holdingRows(data, today);
   const categories = portfolioCategories(rows);
@@ -229,7 +286,9 @@ export function InvestmentsPage() {
         </section>
       </div>
 
-      {pms.length > 0 ? (
+      {phone ? <SectionTabs onChange={setSection} section={section} /> : null}
+
+      {showInvestments && pms.length > 0 ? (
         <section className={ui.card}>
           <h2 style={{ fontSize: '1.2rem' }}>Stallion PMS</h2>
           {pms.map(({ holding, position }) => (
@@ -284,125 +343,129 @@ export function InvestmentsPage() {
         </section>
       ) : null}
 
-      <section className={ui.card}>
-        <div className={ui.cardHeader}>
-          <div>
-            <h2 style={{ fontSize: '1.2rem' }}>Investment Portfolio</h2>
-            <div className={ui.caption}>Stocks, mutual funds, ETFs and other holdings</div>
+      {showInvestments ? (
+        <section className={ui.card}>
+          <div className={ui.cardHeader}>
+            <div>
+              <h2 style={{ fontSize: '1.2rem' }}>Investment Portfolio</h2>
+              <div className={ui.caption}>Stocks, mutual funds, ETFs and other holdings</div>
+            </div>
+            <AddButton kinds={[['investment', 'Investment']]} onPick={setAdding} />
           </div>
-          <AddButton kinds={[['investment', 'Investment']]} onPick={setAdding} />
-        </div>
-        {general.length === 0 ? (
-          <p className={ui.empty}>No investments recorded yet.</p>
-        ) : (
+          {general.length === 0 ? (
+            <p className={ui.empty}>No investments recorded yet.</p>
+          ) : (
+            <div className={ui.threeColumn}>
+              {general.map((category) => (
+                <CategoryCard
+                  category={category}
+                  key={category.name}
+                  onOpen={() => setOpenName(category.name)}
+                  primary={primaryFor(category)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {showRetirement ? (
+        <section className={ui.card}>
+          <div className={ui.cardHeader}>
+            <div>
+              <h2 style={{ fontSize: '1.2rem' }}>Retirement Accounts</h2>
+              <div className={ui.caption}>PF, PPF, NPS and gratuity</div>
+            </div>
+            <AddButton
+              kinds={[
+                ['pf', 'PF account'],
+                ['ppf', 'PPF account'],
+                ['nps', 'NPS account'],
+                ['gratuity', 'Gratuity estimate'],
+              ]}
+              onPick={setAdding}
+            />
+          </div>
+          {retirement.length === 0 && data.gratuityAccounts.length === 0 ? (
+            <div className={ui.metric}>
+              <div className={ui.cardHeader} style={{ justifyContent: 'flex-start' }}>
+                <span aria-hidden="true" className={ui.tileIcon}>
+                  <PiggyBank size={20} />
+                </span>
+                <div>
+                  <strong>No retirement accounts yet</strong>
+                  <div className={ui.caption}>
+                    Add a PF, PPF, NPS or gratuity account to get started.
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className={ui.threeColumn}>
-            {general.map((category) => (
+            {retirement.map((category) => (
               <CategoryCard
                 category={category}
                 key={category.name}
                 onOpen={() => setOpenName(category.name)}
                 primary={primaryFor(category)}
+                {...(category.name === 'PF'
+                  ? {
+                      monthlyLabel: 'Monthly PF',
+                      extra: {
+                        label: 'EPS balance',
+                        value: formatMoney(
+                          category.rows.reduce((sum, row) => sum + row.position.eps, 0),
+                        ),
+                      },
+                    }
+                  : {})}
               />
             ))}
-          </div>
-        )}
-      </section>
-
-      <section className={ui.card}>
-        <div className={ui.cardHeader}>
-          <div>
-            <h2 style={{ fontSize: '1.2rem' }}>Retirement Accounts</h2>
-            <div className={ui.caption}>PF, PPF, NPS and gratuity</div>
-          </div>
-          <AddButton
-            kinds={[
-              ['pf', 'PF account'],
-              ['ppf', 'PPF account'],
-              ['nps', 'NPS account'],
-              ['gratuity', 'Gratuity estimate'],
-            ]}
-            onPick={setAdding}
-          />
-        </div>
-        {retirement.length === 0 && data.gratuityAccounts.length === 0 ? (
-          <div className={ui.metric}>
-            <div className={ui.cardHeader} style={{ justifyContent: 'flex-start' }}>
-              <span aria-hidden="true" className={ui.tileIcon}>
-                <PiggyBank size={20} />
-              </span>
-              <div>
-                <strong>No retirement accounts yet</strong>
-                <div className={ui.caption}>
-                  Add a PF, PPF, NPS or gratuity account to get started.
+            {data.gratuityAccounts.length > 0 ? (
+              <div className={ui.categoryCard} style={{ cursor: 'default' }}>
+                <div>
+                  <div style={{ fontSize: '1.1rem' }}>Gratuity</div>
+                  <div className={ui.caption}>
+                    {data.gratuityAccounts.length}{' '}
+                    {data.gratuityAccounts.length === 1 ? 'member' : 'members'}
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-        <div className={ui.threeColumn}>
-          {retirement.map((category) => (
-            <CategoryCard
-              category={category}
-              key={category.name}
-              onOpen={() => setOpenName(category.name)}
-              primary={primaryFor(category)}
-              {...(category.name === 'PF'
-                ? {
-                    monthlyLabel: 'Monthly PF',
-                    extra: {
-                      label: 'EPS balance',
-                      value: formatMoney(
-                        category.rows.reduce((sum, row) => sum + row.position.eps, 0),
-                      ),
-                    },
-                  }
-                : {})}
-            />
-          ))}
-          {data.gratuityAccounts.length > 0 ? (
-            <div className={ui.categoryCard} style={{ cursor: 'default' }}>
-              <div>
-                <div style={{ fontSize: '1.1rem' }}>Gratuity</div>
-                <div className={ui.caption}>
-                  {data.gratuityAccounts.length}{' '}
-                  {data.gratuityAccounts.length === 1 ? 'member' : 'members'}
-                </div>
-              </div>
-              <Metric label="Estimated value" value={formatMoney(gratuity)} />
-              <ul className={ui.list}>
-                {data.gratuityAccounts.map((account: GratuityAccount) => {
-                  const estimate = estimateGratuity(account, today);
-                  return (
-                    <li className={ui.row} key={account.id}>
-                      <div className={ui.rowMain}>
-                        <div className={ui.rowTitle}>{account.member}</div>
-                        <div className={ui.rowDetail}>
-                          {estimate.eligible
-                            ? `${estimate.countedYears} years counted`
-                            : `Eligible after 5 years · ${estimate.completedYears} served`}
+                <Metric label="Estimated value" value={formatMoney(gratuity)} />
+                <ul className={ui.list}>
+                  {data.gratuityAccounts.map((account: GratuityAccount) => {
+                    const estimate = estimateGratuity(account, today);
+                    return (
+                      <li className={ui.row} key={account.id}>
+                        <div className={ui.rowMain}>
+                          <div className={ui.rowTitle}>{account.member}</div>
+                          <div className={ui.rowDetail}>
+                            {estimate.eligible
+                              ? `${estimate.countedYears} years counted`
+                              : `Eligible after 5 years · ${estimate.completedYears} served`}
+                          </div>
                         </div>
-                      </div>
-                      <span className={ui.amount}>{formatMoney(estimate.amount)}</span>
-                      <button
-                        aria-label={`Delete gratuity for ${account.member}`}
-                        className={ui.smallIcon}
-                        onClick={() =>
-                          commit([
-                            { type: 'delete', collection: 'gratuityAccounts', id: account.id },
-                          ])
-                        }
-                        type="button"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : null}
-        </div>
-      </section>
+                        <span className={ui.amount}>{formatMoney(estimate.amount)}</span>
+                        <button
+                          aria-label={`Delete gratuity for ${account.member}`}
+                          className={ui.smallIcon}
+                          onClick={() =>
+                            commit([
+                              { type: 'delete', collection: 'gratuityAccounts', id: account.id },
+                            ])
+                          }
+                          type="button"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       {rows.length > 0 ? (
         <details className={`${ui.card} ${ui.fold}`}>

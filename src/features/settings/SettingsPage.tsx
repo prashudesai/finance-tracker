@@ -25,7 +25,7 @@ import { Field } from '../../ui/Field';
 import { formatMoney, localDate, signedMoney } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
-import { useInstallApp } from '../../ui/pwa';
+import { checkForUpdates, useAppUpdate, useInstallApp } from '../../ui/pwa';
 import { useTheme } from '../../ui/theme';
 import { THEME_CHOICES } from '../../ui/themes';
 import ui from '../../ui/ui.module.css';
@@ -638,9 +638,19 @@ function ChangeLog() {
 
 function AppUpdates() {
   const { canInstall, install } = useInstallApp();
+  const { updateReady, applyUpdate } = useAppUpdate();
+  const [status, setStatus] = useState('');
+  const [checking, setChecking] = useState(false);
+
+  const check = () => {
+    setChecking(true);
+    void checkForUpdates()
+      .then(setStatus)
+      .finally(() => setChecking(false));
+  };
+
   return (
     <div className={ui.page}>
-      <p>You are on version {VERSION}. New versions wait for you to accept them.</p>
       <div className={ui.metric}>
         <strong>Install app</strong>
         <p className={ui.caption}>
@@ -652,6 +662,25 @@ function AppUpdates() {
           Install app
         </button>
       </div>
+      <div className={ui.metric}>
+        <strong>Version {VERSION}</strong>
+        <p className={ui.caption}>New versions wait for you to accept them.</p>
+        <div className={ui.actions}>
+          <button className={ui.quiet} disabled={checking} onClick={check} type="button">
+            {checking ? 'Checking…' : 'Check for updates'}
+          </button>
+          {updateReady ? (
+            <button className={ui.button} onClick={applyUpdate} type="button">
+              Apply update
+            </button>
+          ) : null}
+        </div>
+      </div>
+      {status ? (
+        <p className={ui.notice} role="status">
+          {updateReady ? 'A new version is ready.' : status}
+        </p>
+      ) : null}
     </div>
   );
 }

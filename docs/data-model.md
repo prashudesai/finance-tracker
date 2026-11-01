@@ -21,6 +21,9 @@ households/{ownerUid}/
   settings/tracker
   monthReviews/{id}
   changes/{id}
+  interestCredits/{id}
+  epsUpdates/{id}
+  statementChecks/{id}
 ```
 
 Email addresses in `memberships` are lowercase.
@@ -42,6 +45,9 @@ Email addresses in `memberships` are lowercase.
 | `projectionAdjustments` | Planned additions and withdrawals | |
 | `settings` | Custom values and projection assumptions | One document, `tracker` |
 | `monthReviews` | Months someone has reviewed | Holds a signature, so later changes ask for review again |
+| `interestCredits` | Annual PF and PPF interest | One per account per financial year |
+| `epsUpdates` | EPS balance corrections | Signed amounts |
+| `statementChecks` | Balances compared with statements | Changes no money |
 | `changes` | The change log | Newest 200, with earlier values for undo |
 
 ## Loans
@@ -61,4 +67,4 @@ Deleting a rule with history archives it, so its records stay explained.
 
 ## Holdings
 
-Invested is the opening amount plus contributions. Current is the latest valuation, or the opening value, plus contributions dated after it. A removed scheduled contribution stays as a `skipped` record, so the schedule doesn't post it again.
+Invested is the opening amount plus contributions. Current is the latest valuation, or the opening value, plus contributions and interest dated after it. A removed scheduled contribution stays as a `skipped` record, so the schedule doesn't post it again.

@@ -145,27 +145,32 @@
   }
 }
 
+/* In the phone header, so it never covers content. It floats on larger screens. */
 .searchButton {
-  position: fixed;
-  right: 16px;
-  bottom: calc(84px + env(safe-area-inset-bottom));
-  z-index: 2;
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  color: var(--accent-text);
-  background: var(--accent);
-  border: 0;
-  border-radius: 50%;
-  box-shadow: var(--shadow);
+  width: 40px;
+  height: 40px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
   cursor: pointer;
 }
 
 @media (min-width: 768px) {
   .searchButton {
+    position: fixed;
     right: 24px;
     bottom: 24px;
+    z-index: 2;
+    width: 48px;
+    height: 48px;
+    color: var(--accent-text);
+    background: var(--accent);
+    border: 0;
+    border-radius: 50%;
+    box-shadow: var(--shadow);
   }
 }
 
@@ -181,7 +186,7 @@
 .tour {
   position: fixed;
   right: 12px;
-  bottom: calc(148px + env(safe-area-inset-bottom));
+  bottom: calc(84px + env(safe-area-inset-bottom));
   left: 12px;
   z-index: 3;
   display: grid;

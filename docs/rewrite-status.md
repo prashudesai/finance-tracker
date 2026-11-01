@@ -24,7 +24,10 @@ All pages from the older app exist and follow its layouts.
 | Family | Invite, change access and remove members |
 | Exports | CSV, print, and generated PDFs for reports and loan history |
 | Onboarding | Guided setup and an app tour |
-| PWA | Installable, app shell works offline, updates wait for acceptance, security policy applied |
+| Themes | All eight colour themes from the older app, in light and dark, contrast-tested |
+| Retirement detail | Interest credits, EPS history and statement checks |
+| Phone layouts | Title-only headers, full-screen entry forms, and Investments and Retirement tabs |
+| PWA | Installable, app shell works offline, check for updates, updates wait for acceptance, security policy applied |
 
 ## Verified on the test project
 
@@ -41,7 +44,11 @@ Checked by hand on https://finance-trackerp.web.app, with real accounts: Google 
 
 ### Features
 
-All features from the older app are built, apart from the deliberate differences listed below.
+The main features from the older app are built. These smaller details aren't yet:
+
+- [ ] Cash flow: column sorting and filters in the history tables, and the balance explainers
+- [ ] Analytics: View Details panels, the Family Split view and the fuller Investment Returns chart
+- [ ] Settings: profile photo, account deletion, Sync now with sync details, and backup reminders
 
 ### Platform
 
@@ -65,7 +72,6 @@ All features from the older app are built, apart from the deliberate differences
 - Loan and recurring validation is split between Zod schemas (one record) and domain validators (links between records).
 - Holdings derive invested and current values from contributions and valuations, instead of keeping running totals.
 - A contribution dated the same day as a valuation, or earlier, is treated as already included in that valuation.
-- PF and PPF interest credits are recorded as a new valuation rather than a separate credit list.
 - Dated restore points are replaced by the change log, which undoes single changes. A whole-tracker rollback uses a backup.
 - The change log is shared across the family, and changes of more than 50 records keep a summary only.
 - The app tour is a short walk through each page, not element-by-element highlights.
