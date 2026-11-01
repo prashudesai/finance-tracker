@@ -14,12 +14,22 @@ import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
 import { SortHeader, useSort, type SortValue } from '../../ui/useSort';
 
-export function BalanceForm({ month, onDone }: { month: string; onDone: () => void }) {
+/** With `closing`, the amount is that month's closing balance, which opens the next month. */
+export function BalanceForm({
+  month,
+  closing = false,
+  onDone,
+}: {
+  month: string;
+  closing?: boolean;
+  onDone: () => void;
+}) {
   const commit = useTracker((state) => state.commit);
   const balances = useTracker((state) => state.data.monthlyBalances);
   const startingBalance = (key: string) => balances.find((row) => row.month === key)?.startBalance;
-  const opening = startingBalance(month);
-  const [selected, setSelected] = useState(month);
+  const target = closing ? nextMonth(month) : month;
+  const opening = startingBalance(target);
+  const [selected, setSelected] = useState(target);
   const [amount, setAmount] = useState(opening === undefined ? '' : String(opening));
   const value = Number(amount);
   const valid = amount !== '' && Number.isFinite(value) && value >= 0;
@@ -50,20 +60,26 @@ export function BalanceForm({ month, onDone }: { month: string; onDone: () => vo
         onDone();
       }}
     >
-      <Field label="Month">
-        <input
-          onChange={(event) => {
-            const existing = startingBalance(event.target.value);
-            setSelected(event.target.value);
-            setAmount(existing === undefined ? '' : String(existing));
-          }}
-          type="month"
-          value={selected}
-        />
-      </Field>
+      {closing ? null : (
+        <Field label="Month">
+          <input
+            onChange={(event) => {
+              const existing = startingBalance(event.target.value);
+              setSelected(event.target.value);
+              setAmount(existing === undefined ? '' : String(existing));
+            }}
+            type="month"
+            value={selected}
+          />
+        </Field>
+      )}
       <Field
         error={amount !== '' && !valid ? 'Enter a bank balance of zero or more.' : undefined}
-        label="Bank balance at start of selected month (₹)"
+        label={
+          closing
+            ? `Bank balance at the end of ${formatMonth(month)} (₹)`
+            : 'Bank balance at start of selected month (₹)'
+        }
       >
         <input
           inputMode="decimal"
@@ -76,9 +92,12 @@ export function BalanceForm({ month, onDone }: { month: string; onDone: () => vo
       </Field>
       <div className={ui.formActions}>
         <button className={ui.button} disabled={!valid} type="submit">
-          Save opening balance
+          {closing ? 'Save closing balance' : 'Save opening balance'}
         </button>
       </div>
+      {closing ? (
+        <p className={ui.caption}>This also becomes {formatMonth(target)}'s opening balance.</p>
+      ) : null}
       <details className={ui.fold}>
         <summary>How is the monthly balance calculated?</summary>
         <div className={ui.caption}>
@@ -240,11 +259,11 @@ export function MonthlyBalances({ month }: { month: string }) {
           </div>
         </div>
         <div className={ui.metric}>
-          <div className={ui.label}>Next month's opening</div>
+          <div className={ui.label}>Closing balance</div>
           <div className={ui.metricValue}>
-            {close.closing === null ? 'Not set' : formatMoney(close.closing)}
+            {close.closing === null ? 'At month end' : formatMoney(close.closing)}
           </div>
-          <div className={ui.caption}>{formatMonth(nextMonth(month))}</div>
+          <div className={ui.caption}>Also {formatMonth(nextMonth(month))}'s opening</div>
         </div>
         <div className={ui.metric}>
           <div className={ui.label}>House expense</div>

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { closeMonth, monthReviewStatus, monthSignature } from '../../domain/analytics';
-import { nextMonth } from '../../domain/calendar';
+import { closeMonth, isMonthEnd, monthReviewStatus, monthSignature } from '../../domain/analytics';
 import { holdingContributions } from '../../domain/holdings';
 import { useTracker } from '../../store/tracker';
 import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format';
@@ -22,12 +21,15 @@ export function MonthReview({
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
   const canEdit = useTracker((state) => state.canEdit);
-  const [settingBalance, setSettingBalance] = useState<string | null>(null);
+  const [settingBalance, setSettingBalance] = useState(false);
   const close = closeMonth(data, month);
   const status = monthReviewStatus(data, month);
-  // A closing balance only exists once the next month has started.
-  const unset = close.opening === null ? month : close.closing === null ? nextMonth(month) : null;
-  const missingBalance = unset && unset <= localDate().slice(0, 7) ? unset : null;
+  const today = localDate();
+  const current = today.slice(0, 7);
+  // A month can only be closed on its last day or later.
+  const closable = month < current || (month === current && isMonthEnd(today));
+  const needsOpening = close.opening === null && month <= current;
+  const needsClosing = !needsOpening && close.closing === null && closable;
   const entries = data.holdings.flatMap((holding) =>
     holdingContributions(holding.id, data.contributions)
       .filter((row) => row.automatic && row.date.startsWith(month))
@@ -35,17 +37,16 @@ export function MonthReview({
   );
   const id = `month_${month}`;
 
-  const running = month === localDate().slice(0, 7) && close.opening !== null;
+  const summary = !close.complete
+    ? 'Balances needed'
+    : status.changed
+      ? 'Changed since review'
+      : status.reviewed
+        ? `Reviewed ${status.reviewedAt}`
+        : 'Review available';
 
-  const summary = running
-    ? 'Review when the month ends'
-    : !close.complete
-      ? 'Balances needed'
-      : status.changed
-        ? 'Changed since review'
-        : status.reviewed
-          ? `Reviewed ${status.reviewedAt}`
-          : 'Review available';
+  // A running month has nothing to review until its last day, unless it needs an opening balance.
+  if (month === current && !closable && !needsOpening) return null;
 
   return (
     <details
@@ -64,13 +65,17 @@ export function MonthReview({
             ['Opening balance', close.opening],
             ['Income', close.income],
             ['Recorded expenses', close.expenses],
-            ['Next month opening', close.closing],
+            ['Closing balance', close.closing],
             ['House expense', close.unrecorded],
           ].map(([label, value]) => (
             <li className={ui.row} key={String(label)}>
               <span className={ui.rowMain}>{label}</span>
               <span className={ui.amount}>
-                {value === null ? 'Not set' : formatMoney(Number(value))}
+                {value !== null
+                  ? formatMoney(Number(value))
+                  : label === 'Opening balance'
+                    ? 'Not set'
+                    : 'At month end'}
               </span>
             </li>
           ))}
@@ -114,17 +119,13 @@ export function MonthReview({
           figures change later, it asks for review again.
         </p>
         <div className={ui.formActions}>
-          {missingBalance && canEdit ? (
-            <button
-              className={ui.button}
-              onClick={() => setSettingBalance(missingBalance)}
-              type="button"
-            >
-              Set {formatMonth(missingBalance)} opening balance
+          {(needsOpening || needsClosing) && canEdit ? (
+            <button className={ui.button} onClick={() => setSettingBalance(true)} type="button">
+              Set {formatMonth(month)} {needsOpening ? 'opening' : 'closing'} balance
             </button>
           ) : null}
           <button
-            className={missingBalance ? ui.quiet : ui.button}
+            className={needsOpening || needsClosing ? ui.quiet : ui.button}
             disabled={!close.complete || status.reviewed}
             onClick={() => {
               commit([
@@ -149,8 +150,15 @@ export function MonthReview({
         </div>
       </div>
       {settingBalance ? (
-        <Modal onClose={() => setSettingBalance(null)} title="Set bank balance">
-          <BalanceForm month={settingBalance} onDone={() => setSettingBalance(null)} />
+        <Modal
+          onClose={() => setSettingBalance(false)}
+          title={`${formatMonth(month)} ${needsOpening ? 'opening' : 'closing'} balance`}
+        >
+          <BalanceForm
+            closing={!needsOpening}
+            month={month}
+            onDone={() => setSettingBalance(false)}
+          />
         </Modal>
       ) : null}
     </details>

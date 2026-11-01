@@ -2,7 +2,7 @@ import { ArrowDownToLine, ArrowUpFromLine, TrendingUp } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
-import { monthsToReview } from '../../domain/analytics';
+import { isMonthEnd, monthsToReview } from '../../domain/analytics';
 import { previousMonth } from '../../domain/calendar';
 import { monthTotals } from '../../domain/cashflow';
 import type { Expense, Income } from '../../schema/records';
@@ -100,7 +100,9 @@ export function CashFlowPage() {
     }
   };
 
-  const needsReview = monthsToReview(household, localDate()).includes(month);
+  const today = localDate();
+  const needsReview =
+    monthsToReview(household, today).includes(month) && (month !== current || isMonthEnd(today));
 
   const loanName = (id: string | undefined) =>
     data.loans.find((loan) => loan.id === id)?.type ?? '';

@@ -74,15 +74,6 @@
   border-radius: 12px;
 }
 
-.toggleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 0;
-  cursor: pointer;
-}
-
 .contribution {
   display: flex;
   align-items: center;
@@ -97,44 +88,6 @@
 .contribution button {
   flex: none;
   white-space: nowrap;
-}
-
-.switch {
-  width: 40px;
-  height: 22px;
-  margin: 0;
-  padding: 0;
-  appearance: none;
-  background: var(--border-strong);
-  border: 0;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background-color 140ms ease;
-}
-
-.switch::after {
-  content: '';
-  display: block;
-  width: 18px;
-  height: 18px;
-  margin: 2px;
-  background: var(--text);
-  border-radius: 50%;
-  transition: transform 140ms ease;
-}
-
-.switch:checked {
-  background: var(--accent);
-}
-
-.switch:checked::after {
-  background: var(--accent-text);
-  transform: translateX(18px);
-}
-
-.switch:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 .inputs[hidden] {

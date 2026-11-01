@@ -509,6 +509,7 @@ function DeviceUnlock({ security }: { security: AccountSecurity }) {
   const { passkey } = security;
   const [available, setAvailable] = useState<boolean | null>(null);
   const [enabled, setEnabled] = useState(passkey.enabled());
+  const [asking, setAsking] = useState(false);
   const [passphrase, setPassphrase] = useState('');
   const [status, setStatus] = useState('');
   const [working, setWorking] = useState(false);
@@ -524,6 +525,7 @@ function DeviceUnlock({ security }: { security: AccountSecurity }) {
       .then(
         () => {
           setEnabled(next);
+          setAsking(false);
           setPassphrase('');
           setStatus(done);
         },
@@ -534,31 +536,31 @@ function DeviceUnlock({ security }: { security: AccountSecurity }) {
 
   return (
     <div className={ui.metric}>
-      <strong>Face ID or fingerprint</strong>
-      {available === false ? (
-        <p className={ui.caption}>This device or browser doesn't support it yet.</p>
-      ) : enabled ? (
+      <label className={ui.toggleRow}>
+        <strong>Face ID or fingerprint</strong>
+        <input
+          checked={enabled || asking}
+          className={ui.switch}
+          disabled={!available || working}
+          onChange={(event) => {
+            setStatus('');
+            if (enabled) run(passkey.disable, 'Turned off.', false);
+            else setAsking(event.target.checked);
+          }}
+          role="switch"
+          type="checkbox"
+        />
+      </label>
+      <p className={ui.caption}>
+        {available === false
+          ? "This device or browser doesn't support it yet."
+          : enabled
+            ? 'On. The app asks when it opens, and again after 5 minutes away. Turning this off removes it from all your devices.'
+            : 'Off. This device is saved, so it stays unlocked until you sign out. Turn this on to ask for your face or fingerprint when the app opens.'}
+      </p>
+      {asking ? (
         <>
-          <p className={ui.caption}>
-            On for this device. The app asks when it opens, and again if you come back after 5
-            minutes away.
-          </p>
-          <button
-            className={ui.quiet}
-            disabled={working}
-            onClick={() => run(passkey.disable, 'Turned off.', false)}
-            type="button"
-          >
-            Turn off
-          </button>
-        </>
-      ) : (
-        <>
-          <p className={ui.caption}>
-            Unlock with your face or fingerprint when the app opens, instead of staying open on this
-            device. Your passphrase and recovery code still work.
-          </p>
-          <Field label="Passphrase to turn this on">
+          <Field label="Enter your passphrase to turn this on">
             <input
               autoComplete="current-password"
               onChange={(event) => setPassphrase(event.target.value)}
@@ -568,14 +570,14 @@ function DeviceUnlock({ security }: { security: AccountSecurity }) {
           </Field>
           <button
             className={ui.quiet}
-            disabled={!passphrase || working || available === null}
+            disabled={!passphrase || working}
             onClick={() => run(() => passkey.enable(passphrase), 'Turned on.', true)}
             type="button"
           >
-            Turn on
+            {working ? 'Setting up…' : 'Continue'}
           </button>
         </>
-      )}
+      ) : null}
       {status ? (
         <p className={ui.caption} role="status">
           {status}

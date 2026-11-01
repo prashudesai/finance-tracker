@@ -116,11 +116,11 @@ function Settings({
         <span>{sliderEnd} years</span>
       </div>
       <div className={styles.toggleBox}>
-        <label className={styles.toggleRow}>
+        <label className={ui.toggleRow}>
           <span className={styles.overline}>Include monthly contributions</span>
           <input
             checked={settings.includeMonthlyContributions}
-            className={styles.switch}
+            className={ui.switch}
             onChange={(event) => save({ includeMonthlyContributions: event.target.checked })}
             role="switch"
             type="checkbox"
@@ -139,11 +139,11 @@ function Settings({
       </div>
       {hasGratuity ? (
         <div className={styles.toggleBox}>
-          <label className={styles.toggleRow}>
+          <label className={ui.toggleRow}>
             <span className={styles.overline}>Gratuity balance</span>
             <input
               checked={settings.includeGratuity}
-              className={styles.switch}
+              className={ui.switch}
               onChange={(event) => save({ includeGratuity: event.target.checked })}
               role="switch"
               type="checkbox"

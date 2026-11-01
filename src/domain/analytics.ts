@@ -398,6 +398,8 @@ const needs = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? ' needs' : 's need'}`;
 
 /** Things that need a look, shown as the dashboard's attention bar. */
+export const isMonthEnd = (today: string) => today === lastDayOfMonth(today.slice(0, 7));
+
 /** Months missing a balance or a review, newest first. */
 export function monthsToReview(household: TrackerData, today: string) {
   const current = today.slice(0, 7);
@@ -410,7 +412,8 @@ export function monthsToReview(household: TrackerData, today: string) {
     .filter((month) => month <= current)
     .filter((month) => {
       const close = closeMonth(household, month);
-      if (month === current) return close.opening === null;
+      // A running month only needs its opening balance until its last day.
+      if (month === current && !isMonthEnd(today)) return close.opening === null;
       return !close.complete || !monthReviewStatus(household, month).reviewed;
     })
     .sort()

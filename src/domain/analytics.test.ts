@@ -13,6 +13,7 @@ import {
   monthlyOverview,
   monthReviewStatus,
   monthSignature,
+  monthsToReview,
   netWorth,
   portfolioCategories,
   uncheckedContributions,
@@ -334,6 +335,13 @@ test('month reviews follow the household, whichever profile is selected', () => 
   const view = { ...reviewed, income: reviewed.income.filter((row) => row.member === 'A') };
   const labels = attentionItems(view, reviewed, '2026-04-15', 0).map((row) => row.label);
   expect(labels.filter((label) => label.includes('balance review'))).toEqual([]);
+});
+
+test('a running month asks for review only on its last day', () => {
+  const state = data({ monthlyBalances: [{ month: '2026-03', startBalance: 10 }] });
+  expect(monthsToReview(state, '2026-03-15')).toEqual([]);
+  expect(monthsToReview(state, '2026-03-31')).toEqual(['2026-03']);
+  expect(monthsToReview(state, '2026-04-02')).toEqual(['2026-03']);
 });
 
 test('member positions total each person', () => {

@@ -7,6 +7,7 @@ import { TrendChart } from './features/dashboard/TrendChart';
 import { Shell, type Account } from './Shell';
 import { useTracker } from './store/tracker';
 import { formatMonth, localDate } from './ui/format';
+import { isMonthEnd } from './domain/analytics';
 import { previousMonth } from './domain/calendar';
 
 afterEach(() => {
@@ -380,16 +381,54 @@ describe('the tour follows quick setup', () => {
   });
 });
 
-test('Review this month shows only while the month needs something', async () => {
-  const month = localDate().slice(0, 7);
-  renderApp('/cash-flow', {
-    income: [{ id: 'i', date: `${month}-01`, member: 'A', source: 'S', amount: 1 }],
-  });
-  expect(await screen.findByRole('button', { name: 'Review this month' })).toBeDefined();
-  cleanup();
+test('a running month shows no review until its last day', async () => {
+  const today = localDate();
+  const month = today.slice(0, 7);
   renderApp('/cash-flow', { monthlyBalances: [{ month, startBalance: 100 }] });
-  expect(await screen.findByText('Review when the month ends')).toBeDefined();
-  expect(screen.queryByRole('button', { name: 'Review this month' })).toBeNull();
+  await screen.findByRole('heading', { level: 1, name: 'Cash flow' });
+  const monthEnd = isMonthEnd(today);
+  expect(screen.queryAllByRole('button', { name: 'Review this month' })).toHaveLength(
+    monthEnd ? 1 : 0,
+  );
+  expect(document.getElementById('month-review') !== null).toBe(monthEnd);
+});
+
+test('a past month that needs review still offers it', async () => {
+  const past = previousMonth(localDate().slice(0, 7));
+  renderApp('/cash-flow', { monthlyBalances: [{ month: past, startBalance: 100 }] });
+  fireEvent.change(await screen.findByLabelText('Month'), { target: { value: past } });
+  expect(await screen.findByRole('button', { name: 'Review this month' })).toBeDefined();
+  expect(document.getElementById('month-review')).not.toBeNull();
+});
+
+test('a closing balance opens the next month, and completes the review', async () => {
+  const current = localDate().slice(0, 7);
+  const past = previousMonth(previousMonth(current));
+  const next = previousMonth(current);
+  renderApp('/', {
+    settings: [{ ...defaultSettings(), onboardingDone: true }],
+    monthlyBalances: [{ month: past, startBalance: 1000 }],
+  });
+  Element.prototype.scrollIntoView = vi.fn();
+  fireEvent.click(await screen.findByRole('link', { name: /balance review/, hidden: true }));
+  const review = await waitFor(() => {
+    const found = document.getElementById('month-review') as HTMLDetailsElement;
+    expect(found.open).toBe(true);
+    return found;
+  });
+  expect(within(review).getByText('Closing balance')).toBeDefined();
+  expect(within(review).queryByText('Next month opening')).toBeNull();
+  fireEvent.click(within(review).getByRole('button', { name: /closing balance$/ }));
+  fireEvent.change(await screen.findByLabelText(/Bank balance at the end of/), {
+    target: { value: '2500' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Save closing balance', hidden: true }));
+  await waitFor(() =>
+    expect(useTracker.getState().data.monthlyBalances).toContainEqual({
+      month: next,
+      startBalance: 2500,
+    }),
+  );
 });
 
 test('the app tour walks the pages and changes nothing', async () => {
@@ -553,10 +592,10 @@ describe('needs attention', () => {
     expect(((await screen.findByLabelText('Month')) as HTMLSelectElement).value).toBe(past);
     const review = document.getElementById('month-review') as HTMLDetailsElement;
     await waitFor(() => expect(review.open).toBe(true));
-    const set = within(review).getByRole('button', { name: /opening balance$/ });
+    const set = within(review).getByRole('button', { name: /closing balance$/ });
     fireEvent.click(set);
     expect(
-      await screen.findByRole('dialog', { name: 'Set bank balance', hidden: true }),
+      await screen.findByRole('dialog', { name: /closing balance$/, hidden: true }),
     ).toBeDefined();
   });
 
@@ -831,18 +870,23 @@ test('Face ID is turned on with the passphrase, and says when a device lacks it'
     </MemoryRouter>,
   );
   fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
-  fireEvent.change(await screen.findByLabelText('Passphrase to turn this on'), {
+  const toggle = await screen.findByRole('switch', {
+    name: 'Face ID or fingerprint',
+    hidden: true,
+  });
+  await waitFor(() => expect(toggle).toHaveProperty('disabled', false));
+  fireEvent.click(toggle);
+  fireEvent.change(await screen.findByLabelText('Enter your passphrase to turn this on'), {
     target: { value: 'my passphrase here' },
   });
-  await waitFor(() =>
-    expect(screen.getByRole('button', { name: 'Turn on', hidden: true })).toHaveProperty(
-      'disabled',
-      false,
-    ),
-  );
-  fireEvent.click(screen.getByRole('button', { name: 'Turn on', hidden: true }));
+  fireEvent.click(screen.getByRole('button', { name: 'Continue', hidden: true }));
   await waitFor(() => expect(passkey.enable).toHaveBeenCalledWith('my passphrase here'));
-  expect(await screen.findByRole('button', { name: 'Turn off', hidden: true })).toBeDefined();
+  await waitFor(() => expect(toggle).toHaveProperty('checked', true));
+  expect(screen.queryByLabelText('Enter your passphrase to turn this on')).toBeNull();
+  await waitFor(() => expect(toggle).toHaveProperty('disabled', false));
+  fireEvent.click(toggle);
+  await waitFor(() => expect(passkey.disable).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(toggle).toHaveProperty('checked', false));
   cleanup();
   passkey.available.mockResolvedValue(false);
   render(
