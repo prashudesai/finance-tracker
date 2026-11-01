@@ -94,14 +94,20 @@ export const familyAccess = (ownerUid: string): FamilyAccess => ({
 });
 
 /**
- * Confirms it's really them first, so a failed sign-in deletes nothing. Then removes
- * family access, the records and the account.
+ * Confirms it's really them first, so a failed sign-in deletes nothing. An owner's records
+ * and family access go too. A member loses only their own access. Then the sign-in goes.
  */
-export async function deleteAccount(user: User, clearRecords: () => Promise<void>) {
+export async function deleteAccount(user: User, owner: boolean, clearOwnData: () => Promise<void>) {
   await reauthenticateWithPopup(user, new GoogleAuthProvider());
-  const family = familyAccess(user.uid);
-  await Promise.all((await family.list()).map((member) => family.remove(member.email)));
-  await clearRecords();
+  if (owner) {
+    const family = familyAccess(user.uid);
+    await Promise.all((await family.list()).map((member) => family.remove(member.email)));
+    await clearOwnData();
+  } else if (user.email) {
+    // A member's access ends with this document, so their data goes first.
+    await clearOwnData();
+    await deleteDoc(memberDoc(user.email));
+  }
   await deleteUser(user);
 }
 

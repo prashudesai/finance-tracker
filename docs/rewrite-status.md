@@ -70,6 +70,8 @@ A scripted comparison of the visible text on every old page, at phone and deskto
 - Holdings derive invested and current values from contributions and valuations, instead of keeping running totals.
 - A contribution dated the same day as a valuation, or earlier, is treated as already included in that valuation.
 - Dated restore points are replaced by the change log, which undoes single changes. A whole-tracker rollback uses a backup.
+- Archiving was removed, so deleting is the only way to retire an account.
+- The balance history's NPS + PPF column shows contributions recorded that month, not the older app's scheduled amount.
 - The change log is shared across the family, and changes of more than 50 records keep a summary only.
 - History rows open a modal with Edit and Delete, in place of an Actions column. Phones show only the key columns.
 - Search and sync status show only at the end of a page, and search sits in a modal, as in the older app.

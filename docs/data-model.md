@@ -42,7 +42,7 @@ Email addresses in `memberships` are lowercase.
 | `valuations` | Dated value of a holding | The latest sets its current value |
 | `gratuityAccounts` | Joining date and basic salary | The estimate is calculated |
 | `projectionAdjustments` | Planned additions and withdrawals | |
-| `settings` | Custom values and projection assumptions | One document, `tracker` |
+| `settings` | Custom values, projection assumptions and uploaded profile photos | One document, `tracker` |
 | `monthReviews` | Months someone has reviewed | Holds a signature, so later changes ask for review again |
 | `interestCredits` | Annual PF and PPF interest | One per account per financial year |
 | `epsUpdates` | EPS balance corrections | Signed amounts |

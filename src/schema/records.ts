@@ -52,8 +52,6 @@ export const loanSchema = z.object({
   dailyInterestBasis: z.boolean().optional(),
   changes: z.array(loanChangeSchema).max(500),
   notes: notes.optional(),
-  /** Kept for its history, but left out of current totals. */
-  archived: z.boolean().optional(),
 });
 export type Loan = z.infer<typeof loanSchema>;
 
@@ -171,8 +169,6 @@ export const holdingSchema = z.object({
   uan: z.string().max(40).optional(),
   /** NPS scheme, such as Active Choice. */
   scheme: z.string().max(60).optional(),
-  /** Kept for its history, but left out of current totals and schedules. */
-  archived: z.boolean().optional(),
 });
 export type Holding = z.infer<typeof holdingSchema>;
 
@@ -297,6 +293,8 @@ export const trackerSettingsSchema = z.object({
   returns: z.record(z.string(), scenarioRates).default({}),
   projectionMonthly: z.record(z.string(), z.number()).default({}),
   onboardingDone: z.boolean().default(false),
+  /** Uploaded profile photos, small enough to keep here, by email address. */
+  photos: z.record(z.string(), z.string().max(60_000)).default({}),
   backupReminderDays: z.number().int().min(0).max(365).default(30),
   lastBackupOn: z.string().optional(),
   goal: z

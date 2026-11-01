@@ -1,8 +1,6 @@
 import {
-  Archive,
   ChevronRight,
   DatabaseBackup,
-  History,
   Info,
   Palette,
   RefreshCw,
@@ -12,9 +10,11 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import release from '../../release.json';
+import { syncedRecently } from '../../domain/analytics';
 import { clearWrites, createBackup, parseBackup, restoreWrites } from '../../domain/backup';
 import { undoWrites } from '../../domain/changes';
-import type { ChangeRecord } from '../../schema/records';
+import { TRACKER_SETTINGS_ID, type ChangeRecord, type TrackerSettings } from '../../schema/records';
 import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
 import type { Account, FamilyMember } from '../../Shell';
 import { downloadText } from '../../ui/download';
@@ -23,7 +23,9 @@ import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
-import { checkForUpdates, useAppUpdate, useInstallApp } from '../../ui/pwa';
+import { Avatar } from '../../ui/Avatar';
+import { resizePhoto } from '../../ui/photo';
+import { checkForUpdates, useAppUpdate, useInstallApp, type UpdateCheck } from '../../ui/pwa';
 import { useTheme } from '../../ui/theme';
 import { THEME_CHOICES } from '../../ui/themes';
 import ui from '../../ui/ui.module.css';
@@ -31,7 +33,7 @@ import ui from '../../ui/ui.module.css';
 type Panel =
   'info' | 'account' | 'family' | 'appearance' | 'archived' | 'changes' | 'data' | 'updates';
 
-const VERSION = '1.0.0';
+const VERSION = release.version;
 
 const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] = [
   { panel: 'info', icon: Info, title: 'App info', text: 'Features, calculations and PDF guide' },
@@ -54,18 +56,6 @@ const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] =
     text: 'Choose colors and display preferences',
   },
   {
-    panel: 'archived',
-    icon: Archive,
-    title: 'Archived accounts',
-    text: 'Restore closed accounts and loans',
-  },
-  {
-    panel: 'changes',
-    icon: History,
-    title: 'Change log',
-    text: 'See saved changes and undo them',
-  },
-  {
     panel: 'data',
     icon: DatabaseBackup,
     title: 'Data & backup',
@@ -85,7 +75,6 @@ function FamilyNames() {
 
   return (
     <div>
-      <div className={ui.groupLabel}>Family member names</div>
       <p className={ui.caption}>Names used in your records.</p>
       {members.length === 0 ? null : (
         <ul className={ui.list}>
@@ -130,84 +119,14 @@ function FamilyNames() {
   );
 }
 
-function ArchivedAccounts() {
-  const holdings = useTracker((state) => state.data.holdings);
-  const loans = useTracker((state) => state.data.loans);
-  const commit = useTracker((state) => state.commit);
-  const archivedHoldings = holdings.filter((row) => row.archived);
-  const archivedLoans = loans.filter((row) => row.archived);
-  if (archivedHoldings.length + archivedLoans.length === 0) {
-    return <p className={ui.empty}>No archived accounts.</p>;
-  }
-  return (
-    <div className={ui.page}>
-      <p className={ui.caption}>
-        Archived accounts are left out of current totals and projections. Restoring one resumes its
-        contributions, including any months missed while it was archived.
-      </p>
-      <ul className={ui.list}>
-        {archivedHoldings.map((row) => (
-          <li className={ui.row} key={row.id}>
-            <div className={ui.rowMain}>
-              <div className={ui.rowTitle}>{row.name}</div>
-              <div className={ui.rowDetail}>{row.type}</div>
-            </div>
-            <button
-              aria-label={`Restore ${row.name}`}
-              className={ui.quiet}
-              onClick={() =>
-                commit([
-                  {
-                    type: 'set',
-                    collection: 'holdings',
-                    id: row.id,
-                    value: { ...row, archived: false },
-                  },
-                ])
-              }
-              type="button"
-            >
-              Restore
-            </button>
-          </li>
-        ))}
-        {archivedLoans.map((row) => (
-          <li className={ui.row} key={row.id}>
-            <div className={ui.rowMain}>
-              <div className={ui.rowTitle}>{row.type}</div>
-              <div className={ui.rowDetail}>{row.member}</div>
-            </div>
-            <button
-              aria-label={`Restore ${row.type}`}
-              className={ui.quiet}
-              onClick={() =>
-                commit([
-                  {
-                    type: 'set',
-                    collection: 'loans',
-                    id: row.id,
-                    value: { ...row, archived: false },
-                  },
-                ])
-              }
-              type="button"
-            >
-              Restore
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function DataBackup() {
   const settings = useSettings();
   const save = useSaveSettings();
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
+  const syncedAt = useTracker((state) => state.syncedAt);
+  const synced = syncedRecently(syncedAt ? localDate(syncedAt) : null, localDate());
   const [status, setStatus] = useState('');
-  const [phrase, setPhrase] = useState('');
   const file = useRef<HTMLInputElement>(null);
 
   const restore = async (selected: File) => {
@@ -244,24 +163,26 @@ function DataBackup() {
           Export backup
         </button>
       </div>
-      <div className={ui.metric}>
-        <strong>Backup care</strong>
-        <p className={ui.caption}>
-          {settings.lastBackupOn ? `Last backup ${settings.lastBackupOn}.` : 'No backup yet.'}
-        </p>
-        <label className={ui.caption}>
-          Remind me{' '}
-          <select
-            className={ui.fieldSelect}
-            onChange={(event) => save({ backupReminderDays: Number(event.target.value) })}
-            value={settings.backupReminderDays}
-          >
-            <option value="7">Every 7 days</option>
-            <option value="30">Every 30 days</option>
-            <option value="0">Off</option>
-          </select>
-        </label>
-      </div>
+      {synced ? null : (
+        <div className={ui.metric}>
+          <strong>Backup care</strong>
+          <p className={ui.caption}>
+            {settings.lastBackupOn ? `Last backup ${settings.lastBackupOn}.` : 'No backup yet.'}
+          </p>
+          <label className={ui.caption}>
+            Remind me{' '}
+            <select
+              className={ui.fieldSelect}
+              onChange={(event) => save({ backupReminderDays: Number(event.target.value) })}
+              value={settings.backupReminderDays}
+            >
+              <option value="7">Every 7 days</option>
+              <option value="30">Every 30 days</option>
+              <option value="0">Off</option>
+            </select>
+          </label>
+        </div>
+      )}
       <div className={ui.metric}>
         <strong>Import backup</strong>
         <p className={ui.caption}>
@@ -283,30 +204,10 @@ function DataBackup() {
           Choose backup file
         </button>
       </div>
-      <div className={ui.metric}>
-        <strong>Clear all data</strong>
-        <p className={ui.caption}>Type DELETE to remove every record. Export a backup first.</p>
-        <div className={ui.actions} style={{ flexWrap: 'wrap' }}>
-          <input
-            aria-label="Type DELETE to confirm"
-            className={ui.fieldSelect}
-            onChange={(event) => setPhrase(event.target.value)}
-            value={phrase}
-          />
-          <button
-            className={ui.quiet}
-            disabled={phrase !== 'DELETE'}
-            onClick={() => {
-              commit(clearWrites(data));
-              setPhrase('');
-              setStatus('All records were cleared.');
-            }}
-            type="button"
-          >
-            Clear all data
-          </button>
-        </div>
-      </div>
+      <details className={ui.fold}>
+        <summary>Change log</summary>
+        <ChangeLog />
+      </details>
       {status ? (
         <p className={ui.notice} role="status">
           {status}
@@ -316,7 +217,7 @@ function DataBackup() {
   );
 }
 
-function FamilyAccessPanel({ account }: { account: Account }) {
+function FamilyMembers({ account }: { account: Account }) {
   const { family } = account;
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<FamilyMember['role']>('viewer');
@@ -339,14 +240,6 @@ function FamilyAccessPanel({ account }: { account: Account }) {
 
   return (
     <div className={ui.page}>
-      <p className={ui.caption}>
-        Viewer: view and export. Editor: add, edit and delete records. Owner: manage access, import
-        backups and clear all data. Copies someone has already downloaded can't be taken back.
-      </p>
-      <p>
-        Your role: <strong>{account.role}</strong>
-      </p>
-      <FamilyNames />
       {family ? (
         <>
           <form
@@ -466,9 +359,13 @@ const saveGuide = () =>
     file: 'finance-tracker-guide.pdf',
   });
 
+const withoutPhoto = (settings: TrackerSettings, email: string) =>
+  Object.fromEntries(Object.entries(settings.photos).filter(([owner]) => owner !== email));
+
 function DeleteAccount({ account }: { account: Account }) {
   const data = useTracker((state) => state.data);
   const repository = useTracker((state) => state.repository);
+  const settings = useSettings();
   const [phrase, setPhrase] = useState('');
   const [status, setStatus] = useState('');
   const { deleteAccount } = account;
@@ -477,8 +374,10 @@ function DeleteAccount({ account }: { account: Account }) {
     <div className={ui.metric}>
       <strong>Delete account</strong>
       <p className={ui.caption}>
-        Permanently deletes this tracker, its records and family access, then your sign-in. Google
-        asks you to confirm first. Export a backup before you do this.
+        {account.role === 'owner'
+          ? 'Permanently deletes this tracker, its records and family access, then your sign-in.'
+          : 'Permanently removes your access and your sign-in. The tracker stays with its owner.'}{' '}
+        Google asks you to confirm first.
       </p>
       <div className={ui.actions}>
         <input
@@ -492,7 +391,18 @@ function DeleteAccount({ account }: { account: Account }) {
           disabled={phrase !== 'DELETE MY ACCOUNT'}
           onClick={() => {
             deleteAccount(async () => {
-              await repository?.commit(clearWrites(data));
+              if (account.role === 'owner') await repository?.commit(clearWrites(data));
+              // Viewers can't write here, and can't have uploaded a photo either.
+              if (account.role === 'editor' && settings.photos[account.email]) {
+                await repository?.commit([
+                  {
+                    type: 'set',
+                    collection: 'settings',
+                    id: TRACKER_SETTINGS_ID,
+                    value: { ...settings, photos: withoutPhoto(settings, account.email) },
+                  },
+                ]);
+              }
             }).catch((error: unknown) => setStatus(String(error)));
           }}
           type="button"
@@ -505,6 +415,25 @@ function DeleteAccount({ account }: { account: Account }) {
           {status}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+function FamilyAccessPanel({ account }: { account: Account }) {
+  return (
+    <div className={ui.page}>
+      <section className={ui.metric}>
+        <h3 className={ui.panelTitle}>Family members</h3>
+        <FamilyNames />
+      </section>
+      <section className={ui.metric}>
+        <h3 className={ui.panelTitle}>Access</h3>
+        <p className={ui.caption}>
+          Your role: <strong>{account.role}</strong>. Viewers can view and export. Editors can add,
+          edit and delete records. Owners also manage access and import backups.
+        </p>
+        <FamilyMembers account={account} />
+      </section>
     </div>
   );
 }
@@ -568,32 +497,34 @@ function ChangeLog() {
   );
 }
 
+function ReleaseNotes({ title, notes }: { title: string; notes: string[] }) {
+  return (
+    <div>
+      <div className={ui.groupLabel}>{title}</div>
+      <ul className={ui.notes}>
+        {notes.map((note) => (
+          <li key={note}>{note}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function AppUpdates() {
   const { canInstall, install } = useInstallApp();
   const { updateReady, applyUpdate } = useAppUpdate();
-  const [status, setStatus] = useState('');
+  const [result, setResult] = useState<UpdateCheck | null>(null);
   const [checking, setChecking] = useState(false);
 
   const check = () => {
     setChecking(true);
     void checkForUpdates()
-      .then(setStatus)
+      .then(setResult)
       .finally(() => setChecking(false));
   };
 
   return (
     <div className={ui.page}>
-      <div className={ui.metric}>
-        <strong>Install app</strong>
-        <p className={ui.caption}>
-          {canInstall
-            ? 'Add Finance Tracker to your Home Screen or desktop.'
-            : 'Already installed, or use your browser menu to add it to your Home Screen.'}
-        </p>
-        <button className={ui.quiet} disabled={!canInstall} onClick={install} type="button">
-          Install app
-        </button>
-      </div>
       <div className={ui.metric}>
         <strong>Version {VERSION}</strong>
         <p className={ui.caption}>New versions wait for you to accept them.</p>
@@ -607,12 +538,86 @@ function AppUpdates() {
             </button>
           ) : null}
         </div>
+        {result ? (
+          <p className={ui.caption} role="status">
+            {updateReady ? 'A new version is ready.' : result.message}
+          </p>
+        ) : null}
+        {result?.next ? (
+          <ReleaseNotes notes={result.next.notes} title={`What's new in ${result.next.version}`} />
+        ) : null}
       </div>
-      {status ? (
-        <p className={ui.notice} role="status">
-          {updateReady ? 'A new version is ready.' : status}
+      <details className={ui.fold}>
+        <summary>In this version</summary>
+        <ReleaseNotes notes={release.notes} title={`Version ${VERSION}, ${release.released}`} />
+      </details>
+      <div className={ui.metric}>
+        <strong>Install app</strong>
+        <p className={ui.caption}>
+          {canInstall
+            ? 'Add Finance Tracker to your Home Screen or desktop.'
+            : 'Already installed, or use your browser menu to add it to your Home Screen.'}
         </p>
-      ) : null}
+        <button className={ui.quiet} disabled={!canInstall} onClick={install} type="button">
+          Install app
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ProfilePhoto({ account }: { account: Account }) {
+  const settings = useSettings();
+  const save = useSaveSettings();
+  const report = useTracker((state) => state.report);
+  const canEdit = useTracker((state) => state.canEdit);
+  const file = useRef<HTMLInputElement>(null);
+  const uploaded = settings.photos[account.email];
+
+  const setPhotos = (photos: Record<string, string>) => save({ photos });
+
+  return (
+    <div className={ui.metric}>
+      <strong>Profile photo</strong>
+      <div className={ui.photoRow}>
+        <Avatar account={account} size={64} />
+        {canEdit ? (
+          <div className={ui.actions}>
+            <input
+              accept="image/*"
+              aria-label="Choose a profile photo"
+              hidden
+              onChange={(event) => {
+                const chosen = event.target.files?.[0];
+                event.target.value = '';
+                if (!chosen) return;
+                resizePhoto(chosen).then(
+                  (photo) => setPhotos({ ...settings.photos, [account.email]: photo }),
+                  () => report('That picture could not be used. Try a JPEG or PNG.'),
+                );
+              }}
+              ref={file}
+              type="file"
+            />
+            <button className={ui.quiet} onClick={() => file.current?.click()} type="button">
+              Change photo
+            </button>
+            {uploaded ? (
+              <button
+                className={ui.quiet}
+                onClick={() => setPhotos(withoutPhoto(settings, account.email))}
+                type="button"
+              >
+                Use Google photo
+              </button>
+            ) : null}
+          </div>
+        ) : (
+          <p className={ui.caption}>
+            Your Google photo is used here. Ask the owner for edit access to change it.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -672,7 +677,6 @@ export function SettingsPage({ account }: { account: Account }) {
       )
       .finally(() => setSyncing(false));
   };
-  const initial = account.name.charAt(0).toUpperCase();
   const open = TILES.find((tile) => tile.panel === panel);
 
   return (
@@ -685,20 +689,7 @@ export function SettingsPage({ account }: { account: Account }) {
       <section aria-label="Your account" className={ui.card}>
         <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
           <div className={ui.cardHeader} style={{ justifyContent: 'flex-start' }}>
-            {account.photo ? (
-              <img
-                alt=""
-                height="40"
-                referrerPolicy="no-referrer"
-                src={account.photo}
-                style={{ borderRadius: '50%' }}
-                width="40"
-              />
-            ) : (
-              <span aria-hidden="true" className={ui.tileIcon} style={{ borderRadius: '50%' }}>
-                {initial}
-              </span>
-            )}
+            <Avatar account={account} size={40} />
             <div>
               <strong>{account.name}</strong>
               <div className={ui.caption}>{account.email}</div>
@@ -762,13 +753,12 @@ export function SettingsPage({ account }: { account: Account }) {
                   Sign out
                 </button>
               ) : null}
+              <ProfilePhoto account={account} />
               <DeleteAccount account={account} />
             </div>
           ) : null}
           {panel === 'family' ? <FamilyAccessPanel account={account} /> : null}
           {panel === 'appearance' ? <Appearance /> : null}
-          {panel === 'archived' ? <ArchivedAccounts /> : null}
-          {panel === 'changes' ? <ChangeLog /> : null}
           {panel === 'data' ? <DataBackup /> : null}
           {panel === 'updates' ? <AppUpdates /> : null}
         </Modal>

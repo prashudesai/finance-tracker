@@ -2,10 +2,12 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter } from 'react-router';
 import { createMemoryRepository } from './data/memoryRepository';
 import { previewData } from './data/previewData';
-import { defaultSettings, type Holding, type Loan } from './schema/records';
-import { Shell } from './Shell';
+import { defaultSettings, TRACKER_SETTINGS_ID, type Holding, type Loan } from './schema/records';
+import { TrendChart } from './features/dashboard/TrendChart';
+import { Shell, type Account } from './Shell';
 import { useTracker } from './store/tracker';
-import { localDate } from './ui/format';
+import { formatMonth, localDate } from './ui/format';
+import { previousMonth } from './domain/calendar';
 
 afterEach(() => {
   cleanup();
@@ -270,15 +272,6 @@ test('a new account is walked through setup, and can skip it', async () => {
   expect(screen.queryByText('Step 2 of 6')).toBeNull();
 });
 
-test('an archived holding leaves current totals and can be restored', async () => {
-  renderApp('/investments', { holdings: [{ ...fund, archived: true }] });
-  expect(await screen.findByText('No investments recorded yet.')).toBeDefined();
-  fireEvent.click(screen.getByRole('link', { name: 'Settings' }));
-  fireEvent.click(await screen.findByRole('button', { name: /Archived accounts/ }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Restore Index fund', hidden: true }));
-  expect(await screen.findByText('No archived accounts.')).toBeDefined();
-});
-
 test('editing a recurring amount keeps earlier months', async () => {
   renderApp('/cash-flow', {
     recurringRules: [
@@ -325,7 +318,7 @@ test('the change log lists a deletion and can undo it', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'Delete', hidden: true }));
   expect(await screen.findByText('No income this month.')).toBeDefined();
   fireEvent.click(screen.getByRole('link', { name: 'Settings' }));
-  fireEvent.click(await screen.findByRole('button', { name: /Change log/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /Data & backup/ }));
   fireEvent.click(
     await screen.findByRole('button', { name: 'Undo Deleted income · Salary', hidden: true }),
   );
@@ -441,7 +434,7 @@ test('checking for updates reports back in the app preview', async () => {
 
 test('the dashboard + opens the add menu and goes to the right entry', async () => {
   renderApp('/', { settings: [{ ...defaultSettings(), onboardingDone: true }] });
-  fireEvent.click(await screen.findByRole('button', { name: 'Add record' }));
+  await screen.findByRole('button', { name: 'Add record' });
   for (const name of [
     'Expense or loan payment',
     'Investment',
@@ -540,6 +533,50 @@ test('deleting an account needs the exact phrase, then clears records first', as
   expect(deleteAccount).toHaveBeenCalledTimes(1);
 });
 
+const memberAccount = (role: 'editor' | 'viewer', deleteAccount?: Account['deleteAccount']) => ({
+  name: 'M',
+  email: 'm@example.test',
+  role,
+  ...(deleteAccount ? { deleteAccount } : {}),
+});
+
+test("deleting a member's account removes their photo and leaves the records", async () => {
+  const deleteAccount = vi.fn(async (clear: () => Promise<void>) => clear());
+  const settings = {
+    ...defaultSettings(),
+    id: TRACKER_SETTINGS_ID,
+    photos: { 'm@example.test': 'data:image/jpeg;base64,AA', 'o@example.test': 'kept' },
+  };
+  const repository = createMemoryRepository({ holdings: [fund], settings: [settings] });
+  const commit = vi.spyOn(repository, 'commit');
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell account={memberAccount('editor', deleteAccount)} repository={repository} />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+  fireEvent.change(await screen.findByLabelText('Type DELETE MY ACCOUNT to confirm'), {
+    target: { value: 'DELETE MY ACCOUNT' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Delete account', hidden: true }));
+  await waitFor(() => expect(commit).toHaveBeenCalledTimes(1));
+  const writes = commit.mock.calls[0]?.[0] ?? [];
+  expect(writes).toHaveLength(1);
+  expect(writes[0]).toMatchObject({ collection: 'settings' });
+  expect(writes[0]).toHaveProperty('value.photos', { 'o@example.test': 'kept' });
+});
+
+test('viewers are told why they cannot change their photo', async () => {
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell account={memberAccount('viewer')} repository={createMemoryRepository({})} />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+  expect(await screen.findByText(/Ask the owner for edit access/)).toBeDefined();
+  expect(screen.queryByRole('button', { name: 'Change photo', hidden: true })).toBeNull();
+});
+
 test('+ Add new saves a value and selects it, and the old custom values tile is gone', async () => {
   renderApp('/cash-flow');
   const source = await screen.findByLabelText('Source');
@@ -590,6 +627,96 @@ test('EMI Payment asks for the loan and suggests the amount', async () => {
   expect(screen.getByLabelText('Payment type')).toBeDefined();
 });
 
+test('a part payment asks whether to keep or reduce the EMI, and saves the choice', async () => {
+  renderApp('/cash-flow', { loans: [loan] });
+  const form = (await screen.findByRole('button', { name: 'Add expense' })).closest('form');
+  if (!form) throw new Error('Expense form not found');
+  fireEvent.change(await screen.findByLabelText('Category'), { target: { value: 'EMI Payment' } });
+  fireEvent.change(await screen.findByLabelText('Select Loan/Debt'), { target: { value: 'l' } });
+  expect(screen.queryByLabelText('After this payment')).toBeNull();
+  fireEvent.change(screen.getByLabelText('Payment type'), { target: { value: 'part-payment' } });
+  fireEvent.change(within(form).getByLabelText('Amount (₹)'), { target: { value: '50000' } });
+  expect(await screen.findByText(/^EMI stays ₹10,000/)).toBeDefined();
+  fireEvent.change(await screen.findByLabelText('After this payment'), {
+    target: { value: 'reduce' },
+  });
+  expect(await screen.findByText(/^New EMI ₹/)).toBeDefined();
+  fireEvent.submit(form);
+  await waitFor(() => expect(useTracker.getState().data.expenses).toHaveLength(1));
+  expect(useTracker.getState().data.expenses[0]).toMatchObject({
+    repaymentType: 'part-payment',
+    partPaymentAction: 'reduce',
+  });
+});
+
+test('a pending month has no expense bar and says pending', () => {
+  const { container } = render(
+    <TrendChart
+      months={[
+        { month: '2026-10', income: 100, expenses: 80 },
+        { month: '2026-11', income: 100, expenses: 20, pending: true },
+      ]}
+    />,
+  );
+  const months = container.querySelectorAll('[class*="month"]');
+  expect(months[0]?.querySelectorAll('[class*="barExpense"]')).toHaveLength(1);
+  expect(months[1]?.querySelectorAll('[class*="barExpense"]')).toHaveLength(0);
+  expect(screen.getAllByText(/Pending/).length).toBeGreaterThan(0);
+});
+
+describe('monthly balances', () => {
+  const month = localDate().slice(0, 7);
+  const past = previousMonth(month);
+
+  test('asks before replacing a balance, and refuses a negative one', async () => {
+    renderApp('/cash-flow', { monthlyBalances: [{ month, startBalance: 500 }] });
+    fireEvent.click(await screen.findByRole('button', { name: '+ Set bank balance' }));
+    const amount = await screen.findByLabelText(/Bank balance at start/);
+    const save = screen.getByRole('button', { name: 'Save opening balance', hidden: true });
+    fireEvent.change(amount, { target: { value: '-1' } });
+    expect(save).toHaveProperty('disabled', true);
+    fireEvent.change(amount, { target: { value: '700' } });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    fireEvent.click(save);
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(useTracker.getState().data.monthlyBalances[0]?.startBalance).toBe(500);
+    confirm.mockReturnValue(true);
+    fireEvent.click(save);
+    await waitFor(() =>
+      expect(useTracker.getState().data.monthlyBalances[0]?.startBalance).toBe(700),
+    );
+    confirm.mockRestore();
+  });
+
+  test('history shows the breakdown of completed months and confirms deleting', async () => {
+    renderApp('/cash-flow', {
+      monthlyBalances: [
+        { month: past, startBalance: 900 },
+        { month, startBalance: 500 },
+      ],
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'View balance history' }));
+    const button = await screen.findByRole('button', {
+      name: `Delete opening balance for ${formatMonth(past)}`,
+      hidden: true,
+    });
+    expect(
+      screen.queryByRole('button', {
+        name: `Delete opening balance for ${formatMonth(month)}`,
+        hidden: true,
+      }),
+    ).toBeNull();
+    expect(screen.getByText('₹400')).toBeDefined();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    fireEvent.click(button);
+    expect(useTracker.getState().data.monthlyBalances).toHaveLength(2);
+    confirm.mockReturnValue(true);
+    fireEvent.click(button);
+    await waitFor(() => expect(useTracker.getState().data.monthlyBalances).toHaveLength(1));
+    confirm.mockRestore();
+  });
+});
+
 test('insurance offers its expense types and defaults to annual', async () => {
   renderApp('/cash-flow');
   fireEvent.change(await screen.findByLabelText('Category'), { target: { value: 'Insurance' } });
@@ -629,4 +756,59 @@ test('the header shows the Google photo when there is one', async () => {
   );
   await screen.findByRole('heading', { level: 1 });
   expect(container.querySelector('header img')?.getAttribute('src')).toContain('googleusercontent');
+});
+
+test('pull to refresh waits for a long enough pull', async () => {
+  renderApp('/');
+  await screen.findByRole('heading', { level: 1 });
+  const reload = vi.fn();
+  vi.stubGlobal('location', { ...window.location, reload });
+  const touch = (type: string, clientY: number) =>
+    fireEvent(window, Object.assign(new Event(type), { touches: [{ clientY }] }));
+  touch('touchstart', 100);
+  touch('touchmove', 160);
+  expect(await screen.findByText('Pull to refresh')).toBeDefined();
+  touch('touchend', 160);
+  expect(reload).not.toHaveBeenCalled();
+  touch('touchstart', 100);
+  touch('touchmove', 300);
+  expect(await screen.findByText('Release to refresh')).toBeDefined();
+  touch('touchend', 300);
+  expect(reload).toHaveBeenCalledTimes(1);
+  vi.unstubAllGlobals();
+});
+
+test('settings tiles match the old app, with family sections inside', async () => {
+  renderApp('/settings');
+  await screen.findByRole('button', { name: /App info/ });
+  const tiles = screen
+    .getAllByRole('button')
+    .map((button) => button.textContent ?? '')
+    .filter((text) =>
+      /^(App info|Account|Family access|Appearance|Data & backup|App & updates)/.test(text),
+    )
+    .map(
+      (text) =>
+        text.match(/^(App info|Account|Family access|Appearance|Data & backup|App & updates)/)?.[0],
+    );
+  expect(tiles).toEqual([
+    'App info',
+    'Account',
+    'Family access',
+    'Appearance',
+    'Data & backup',
+    'App & updates',
+  ]);
+  fireEvent.click(screen.getByRole('button', { name: /Family access/ }));
+  expect(
+    await screen.findByRole('heading', { name: 'Family members', hidden: true }),
+  ).toBeDefined();
+  expect(screen.getByRole('heading', { name: 'Access', hidden: true })).toBeDefined();
+});
+
+test('data & backup has no clear data option', async () => {
+  renderApp('/settings', { holdings: [fund] });
+  fireEvent.click(await screen.findByRole('button', { name: /Data & backup/ }));
+  await screen.findByRole('button', { name: 'Export backup', hidden: true });
+  expect(screen.queryByRole('button', { name: 'Clear all data', hidden: true })).toBeNull();
 });

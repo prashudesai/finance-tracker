@@ -14,7 +14,7 @@ import {
 } from '../../schema/records';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
-import { localDate } from '../../ui/format';
+import { formatMoney, localDate } from '../../ui/format';
 import { MemberField, useDefaultMember } from '../../ui/MemberField';
 import { Select } from '../../ui/Select';
 import ui from '../../ui/ui.module.css';
@@ -89,6 +89,7 @@ const expenseForm = expenseSchema
     member: z.string().max(100),
     loanId: z.string(),
     repaymentType: z.enum(['emi', 'part-payment']),
+    partPaymentAction: z.enum(['keep', 'reduce']),
   });
 type ExpenseValues = z.infer<typeof expenseForm>;
 
@@ -109,6 +110,7 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
       annual: initial?.isAnnual ? 'yes' : 'no',
       loanId: initial?.loanId ?? '',
       repaymentType: initial?.repaymentType ?? 'emi',
+      partPaymentAction: initial?.partPaymentAction ?? 'keep',
       notes: initial?.notes ?? '',
       ...(initial ? { amount: initial.amount } : {}),
     },
@@ -118,6 +120,8 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
   const loanId = watch('loanId');
   const date = watch('date');
   const repaymentType = watch('repaymentType');
+  const partPaymentAction = watch('partPaymentAction');
+  const amount = watch('amount');
   const isEmi = category === EMI_CATEGORY;
   const subcategories = EXPENSE_SUBCATEGORIES[category];
   const loaded = useRef(false);
@@ -139,11 +143,31 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
     if (!isLoanFailure(quote) && !quote.paidOff) setValue('amount', quote.amount);
   }, [date, expenses, initial, isEmi, loanId, loans, repaymentType, setValue]);
 
+  const partPaymentResult = (() => {
+    const loan = loans.find((row) => row.id === loanId);
+    if (!isEmi || !loan || repaymentType !== 'part-payment' || !(amount > 0) || !date) return '';
+    const id = initial?.id ?? 'preview';
+    const preview = {
+      id,
+      date,
+      amount,
+      category: EMI_CATEGORY,
+      loanId,
+      repaymentType,
+      partPaymentAction,
+    };
+    const others = loanPayments(expenses, loan.id).filter((row) => row.id !== id);
+    const result = rebuildLoan(loan, [...others, preview], { asOf: date });
+    if (isLoanFailure(result)) return result.error;
+    return `${partPaymentAction === 'reduce' ? 'New EMI' : 'EMI stays'} ${formatMoney(result.emi)} · Outstanding after this payment ${formatMoney(result.remaining)}`;
+  })();
+
   const save = ({
     annual,
     member,
     loanId: loan,
     repaymentType: kind,
+    partPaymentAction: action,
     ...values
   }: ExpenseValues) => {
     setError('');
@@ -156,6 +180,8 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
       ...(member ? { member } : {}),
       ...(isEmi ? { loanId: loan, repaymentType: kind, isAnnual: false } : {}),
     };
+    if (isEmi && kind === 'part-payment') value.partPaymentAction = action;
+    else delete value.partPaymentAction;
     if (isEmi) {
       const target = loans.find((row) => row.id === loan);
       if (!target) {
@@ -178,6 +204,7 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
       annual: 'no',
       loanId: '',
       repaymentType: 'emi',
+      partPaymentAction: 'keep',
       notes: '',
     });
     onDone?.();
@@ -211,13 +238,11 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
           <Field label="Select Loan/Debt">
             <select {...register('loanId')}>
               <option value="">-- Select Debt --</option>
-              {loans
-                .filter((row) => !row.archived)
-                .map((row) => (
-                  <option key={row.id} value={row.id}>
-                    {row.member ? `${row.type} · ${row.member}` : row.type}
-                  </option>
-                ))}
+              {loans.map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.member ? `${row.type} · ${row.member}` : row.type}
+                </option>
+              ))}
             </select>
           </Field>
           <Field label="Payment type">
@@ -226,6 +251,14 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
               <option value="part-payment">Part Payment</option>
             </select>
           </Field>
+          {repaymentType === 'part-payment' ? (
+            <Field label="After this payment">
+              <select {...register('partPaymentAction')}>
+                <option value="keep">Keep EMI same, shorten tenure</option>
+                <option value="reduce">Reduce EMI, keep tenure</option>
+              </select>
+            </Field>
+          ) : null}
         </>
       ) : null}
       <Field label="Amount (₹)" error={errors.amount?.message}>
@@ -237,6 +270,7 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
           {...register('amount', { valueAsNumber: true })}
         />
       </Field>
+      {partPaymentResult ? <p className={ui.caption}>{partPaymentResult}</p> : null}
       {isEmi ? null : (
         <Field label="Is Annual Expense?">
           <select {...register('annual')}>

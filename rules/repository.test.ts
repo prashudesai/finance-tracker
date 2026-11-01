@@ -113,6 +113,18 @@ test('clearing removes every record', async () => {
   expect(rows).toEqual([]);
 });
 
+test('deleting an account leaves nothing in any collection', async () => {
+  const db = asOwner();
+  const seed = { ...emptyTrackerData(), ...previewData() };
+  const repository = firestoreRepository(db, 'owner');
+  await repository.commit(restoreWrites(emptyTrackerData(), seed));
+  await repository.commit(clearWrites(seed));
+  for (const name of COLLECTION_NAMES) {
+    const { rows } = await nextRows(db, name, (found) => found.length === 0);
+    expect(rows, name).toEqual([]);
+  }
+});
+
 test('a commit larger than one batch saves every record', async () => {
   const db = asOwner();
   const value = { id: 'x', date: '2026-01-01', member: 'A', source: 'S', amount: 1 };

@@ -107,6 +107,51 @@ export const pmsTransfers = (data: TrackerData, month: string) =>
 export const closeMonth = (data: TrackerData, month: string) =>
   monthClose(data, month, pmsTransfers(data, month));
 
+const isRetirement = (holding: Holding) => holding.kind === 'nps' || holding.kind === 'ppf';
+
+export interface BalanceHistoryRow {
+  month: string;
+  opening: number;
+  income: number;
+  expenses: number;
+  pms: number;
+  /** NPS and PPF are tracked separately, so they don't change the surplus. */
+  retirement: number;
+  surplus: number;
+  houseExpense: number | null;
+}
+
+/** Completed months of a financial year that have a recorded balance, newest first. */
+export function balanceHistory(data: TrackerData, fy: number, today: string): BalanceHistoryRow[] {
+  const { start, end } = financialYearRange(fy);
+  const current = today.slice(0, 7);
+  return data.monthlyBalances
+    .filter(({ month }) => month < current && inRange(`${month}-01`, start, end))
+    .map(({ month, startBalance }) => {
+      const close = closeMonth(data, month);
+      return {
+        month,
+        opening: startBalance,
+        income: close.income,
+        expenses: close.expenses,
+        pms: pmsTransfers(data, month),
+        retirement: sumAmount(
+          contributionsOf(data, isRetirement).filter((row) => inMonth(row.date, month)),
+        ),
+        surplus: close.available,
+        houseExpense: close.unrecorded,
+      };
+    })
+    .sort((a, b) => b.month.localeCompare(a.month));
+}
+
+/** The current financial year, and any earlier one with a recorded balance. */
+export function balanceYears(data: TrackerData, today: string) {
+  const current = financialYearStart(today);
+  const years = data.monthlyBalances.map(({ month }) => financialYearStart(month));
+  return [...new Set([current, ...years])].filter((year) => year <= current).sort((a, b) => b - a);
+}
+
 /** Principal repaid across loans within a period, from each loan's replayed history. */
 function principalRepaid(data: TrackerData, today: string, match: (date: string) => boolean) {
   let total = 0;
@@ -318,15 +363,23 @@ export function uncheckedContributions(data: TrackerData, month: string) {
   );
 }
 
-/** Reminds someone to export once records exist and the last backup is old. */
-export function backupStatus(data: TrackerData, today: string) {
+/** Cloud sync this recent means the records are already safe. */
+const SYNC_COVERS_DAYS = 7;
+
+export function syncedRecently(syncedOn: string | null, today: string) {
+  return syncedOn !== null && toDayNumber(today) - toDayNumber(syncedOn) < SYNC_COVERS_DAYS;
+}
+
+/** Reminds someone to export when records exist, the last backup is old and sync has lapsed. */
+export function backupStatus(data: TrackerData, today: string, syncedOn: string | null = null) {
   const settings = data.settings[0];
   const days = settings?.backupReminderDays ?? 30;
   const last = settings?.lastBackupOn;
   const age = last ? toDayNumber(today) - toDayNumber(last) : null;
   const hasRecords = data.income.length + data.expenses.length + data.holdings.length > 0;
   return {
-    due: days > 0 && hasRecords && (age === null || age >= days),
+    due:
+      days > 0 && hasRecords && (age === null || age >= days) && !syncedRecently(syncedOn, today),
     label: age === null ? 'No backup exported yet' : `Last backup was ${age} days ago`,
   };
 }
@@ -344,6 +397,7 @@ export function attentionItems(
   data: TrackerData,
   today: string,
   pendingRecurring: number,
+  syncedOn: string | null = null,
 ): AttentionItem[] {
   const items: AttentionItem[] = [];
   const current = today.slice(0, 7);
@@ -365,7 +419,7 @@ export function attentionItems(
       path: '/cash-flow',
     });
   }
-  const backup = backupStatus(data, today);
+  const backup = backupStatus(data, today, syncedOn);
   if (backup.due) items.push({ label: backup.label, path: '/settings' });
   const unverified = unverifiedHoldings(data).length;
   if (unverified > 0) {

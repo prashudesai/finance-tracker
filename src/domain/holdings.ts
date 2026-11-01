@@ -131,7 +131,7 @@ export function dueContributions(
   for (const holding of holdings) {
     const amount = monthlyContribution(holding);
     const eps = holding.kind === 'pf' ? (holding.epsMonthly ?? 0) : 0;
-    if (holding.archived || !holding.autoStart || (amount <= 0 && eps <= 0)) continue;
+    if (!holding.autoStart || (amount <= 0 && eps <= 0)) continue;
     const anchor = Number(holding.autoStart.slice(-2));
     for (let step = 0; step < MAX_SCHEDULED_MONTHS; step++) {
       const date = addMonths(holding.autoStart, step, anchor);

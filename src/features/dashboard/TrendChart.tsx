@@ -3,7 +3,12 @@ import { formatCompactMoney, formatMoney, formatMonth, formatShortMonth } from '
 import ui from '../../ui/ui.module.css';
 import styles from './TrendChart.module.css';
 
-export function TrendChart({ months }: { months: MonthTrend[] }) {
+/** Full house expense stays pending until both bank balances are recorded. */
+export interface TrendRow extends MonthTrend {
+  pending?: boolean;
+}
+
+export function TrendChart({ months }: { months: TrendRow[] }) {
   const peak = Math.max(...months.flatMap((row) => [row.income, row.expenses]), 1);
   const height = (value: number) => `${(value / peak) * 100}%`;
 
@@ -24,13 +29,15 @@ export function TrendChart({ months }: { months: MonthTrend[] }) {
           <div className={styles.month} key={row.month}>
             <div className={styles.bars}>
               <span className={styles.barIncome} style={{ height: height(row.income) }} />
-              <span className={styles.barExpense} style={{ height: height(row.expenses) }} />
+              {row.pending ? null : (
+                <span className={styles.barExpense} style={{ height: height(row.expenses) }} />
+              )}
             </div>
             <span className={styles.label}>{formatShortMonth(row.month)}</span>
             <div className={styles.tooltip}>
               <strong>{formatMonth(row.month)}</strong>
               <span>Income {formatMoney(row.income)}</span>
-              <span>Expenses {formatMoney(row.expenses)}</span>
+              <span>Expenses {row.pending ? 'Pending' : formatMoney(row.expenses)}</span>
             </div>
           </div>
         ))}
@@ -50,7 +57,7 @@ export function TrendChart({ months }: { months: MonthTrend[] }) {
               <tr key={row.month}>
                 <th scope="row">{formatMonth(row.month)}</th>
                 <td>{formatMoney(row.income)}</td>
-                <td>{formatMoney(row.expenses)}</td>
+                <td>{row.pending ? 'Pending' : formatMoney(row.expenses)}</td>
               </tr>
             ))}
           </tbody>

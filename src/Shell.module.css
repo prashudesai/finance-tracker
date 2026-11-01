@@ -11,8 +11,17 @@
   justify-content: space-between;
   gap: 12px;
   padding: 10px var(--space);
-  background: var(--bg);
   border-bottom: 1px solid var(--border);
+}
+
+/* On a layer of its own: a filter on the header would contain the fixed phone nav. */
+.header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: var(--glass-blur);
 }
 
 .brand {
@@ -20,26 +29,6 @@
   align-items: center;
   gap: 10px;
   font-weight: 650;
-}
-
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  flex: none;
-  overflow: hidden;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid var(--border-strong);
-  border-radius: 50%;
-}
-
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
 }
 
 .profile {
@@ -74,8 +63,9 @@
   z-index: 2;
   display: flex;
   padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  border-top: 1px solid var(--glass-edge);
+  backdrop-filter: var(--glass-blur);
 }
 
 .link,
@@ -112,18 +102,13 @@
 }
 
 @media (min-width: 768px) {
-  /* A backdrop filter contains fixed children, so it stays off while the nav is fixed. */
-  .header {
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: blur(12px);
-  }
-
   .nav {
     position: static;
     padding: 0;
     background: none;
     border: 0;
     gap: 4px;
+    backdrop-filter: none;
   }
 
   .fullLabel {
@@ -231,7 +216,83 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
 
   .quickAdd {
     right: 20px;
-    bottom: 76px;
+    bottom: 20px;
+  }
+
+  .searchRight {
+    right: 20px;
+  }
+
+  .quickMenu {
+    inset: auto 20px 76px auto;
+  }
+}
+
+.searchRight {
+  right: 12px;
+  left: auto;
+}
+
+.quickMenu {
+  position: fixed;
+  inset: auto 12px calc(124px + env(safe-area-inset-bottom)) auto;
+  width: min(260px, calc(100vw - 24px));
+  margin: 0;
+  padding: 6px;
+  color: var(--text);
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  border-radius: 16px;
+  box-shadow: var(--lift);
+  backdrop-filter: var(--glass-blur);
+}
+
+.quickMenu button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: inherit;
+  font: inherit;
+  font-size: 0.92rem;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.quickMenu button:hover {
+  background: var(--accent-soft);
+}
+
+.pull {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  box-shadow: var(--lift);
+  backdrop-filter: var(--glass-blur);
+  pointer-events: none;
+}
+
+.spin {
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
   }
 }
 

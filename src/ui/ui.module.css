@@ -33,10 +33,16 @@
   align-content: start;
   min-width: 0;
   padding: 20px;
-  background: var(--surface);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--surface-raised) 88%, transparent),
+    var(--surface)
+  );
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent),
+    var(--shadow);
 }
 
 .hero {
@@ -66,16 +72,28 @@
 
 .tile {
   composes: card;
-  gap: 10px;
-  padding: 16px;
+  gap: 8px;
+  padding: 14px 16px;
 }
 
-@media (min-width: 620px) {
-  .tile {
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    gap: 12px;
-  }
+.tileHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tileHead .tileIcon {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 10px;
+}
+
+.statGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .tileIcon {
@@ -199,11 +217,18 @@
   border: 1px solid var(--accent);
   border-radius: 999px;
   cursor: pointer;
-  transition: filter 120ms ease;
+  transition:
+    filter 120ms ease,
+    transform 120ms ease;
 }
 
 .button:hover {
   filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: translateY(0);
 }
 
 .quiet {
@@ -392,18 +417,24 @@
 
 .dialog {
   width: min(560px, calc(100vw - 32px));
+  margin: auto;
   max-height: calc(100dvh - 32px);
   padding: 20px;
   color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: var(--lift);
+  backdrop-filter: var(--glass-blur);
+}
+
+.dialogWide {
+  width: min(1040px, calc(100vw - 32px));
 }
 
 .dialog::backdrop {
-  background: rgb(3 18 15 / 62%);
-  backdrop-filter: blur(3px);
+  background: rgb(3 18 15 / 45%);
+  backdrop-filter: blur(4px);
 }
 
 .dialogHeader {
@@ -449,6 +480,15 @@
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
+}
+
+@media (max-width: 700px) {
+  .sectionLabel {
+    display: grid;
+    justify-content: center;
+    justify-items: center;
+    gap: 2px;
+  }
 }
 
 .attention {
@@ -590,6 +630,16 @@
   white-space: nowrap;
 }
 
+.table.stackTable th,
+.table.stackTable td {
+  padding-inline: 8px;
+}
+
+.table.stackTable th {
+  vertical-align: bottom;
+  white-space: normal;
+}
+
 .numeric {
   text-align: right !important;
 }
@@ -687,18 +737,42 @@
   cursor: pointer;
 }
 
+.barList {
+  display: grid;
+}
+
 .barRow {
   display: grid;
-  grid-template-columns: minmax(90px, 1fr) minmax(0, 2fr) auto;
+  grid-template-columns: minmax(110px, 1fr) minmax(0, 2.4fr) 86px 170px;
   gap: 12px;
   align-items: center;
-  padding: 11px 0;
+  padding: 12px 8px;
+  color: inherit;
+  font-size: 0.88rem;
+  text-decoration: none;
   border-top: 1px solid var(--border);
-  font-size: 0.86rem;
+  border-radius: 10px;
+  transition: background-color 140ms ease;
 }
 
 .barRow:first-child {
   border-top: 0;
+}
+
+.barRow:hover {
+  background: var(--accent-soft);
+}
+
+.barValue {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.barGain {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .dot {
@@ -780,6 +854,112 @@ details.fold[open] > summary {
   width: 22px;
   height: 22px;
   border: 1px solid var(--border);
+  border-radius: 50%;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+}
+
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.panelTitle {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.notes {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.subtleLine {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+}
+
+.textLink {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.textLinkCenter {
+  composes: textLink;
+  display: block;
+  padding: 6px;
+  text-align: center;
+}
+
+.chip {
+  padding: 2px 8px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--accent-soft);
+  border-radius: 999px;
+}
+
+.linkCard {
+  composes: metric;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.linkCard:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.metricsThree {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.legendRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.legendRow i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
   border-radius: 50%;
 }
 
@@ -882,6 +1062,56 @@ details.fold[open] > summary {
 
 /* Phones show the page title alone, as the older app did. */
 @media (max-width: 700px) {
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metricsThree {
+    gap: 8px;
+  }
+
+  .metricsThree .metricValue {
+    font-size: 1rem;
+  }
+
+  .barList {
+    gap: 10px;
+  }
+
+  .barRow {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'name value'
+      'bar bar'
+      'gain gain';
+    gap: 6px 10px;
+    padding: 12px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .barRow:first-child {
+    border-top: 1px solid var(--border);
+  }
+
+  .barName {
+    grid-area: name;
+  }
+
+  .barRow > .stack {
+    grid-area: bar;
+  }
+
+  .barValue {
+    grid-area: value;
+  }
+
+  .barGain {
+    grid-area: gain;
+    text-align: left;
+  }
+
   /* iPhones zoom the page when a form field under 16px is tapped. */
   .field input,
   .field select {
@@ -898,6 +1128,43 @@ details.fold[open] > summary {
 
   .hideOnPhone {
     display: none;
+  }
+
+  /* Every figure stays readable on a phone, each with its own label. */
+  .stackTable thead {
+    display: none;
+  }
+
+  .stackTable,
+  .stackTable tbody,
+  .stackTable tr,
+  .stackTable td {
+    display: block;
+    width: 100%;
+  }
+
+  .stackTable tr {
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .stackTable tr:first-child {
+    border-top: 0;
+  }
+
+  .table.stackTable td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 12px;
+    text-align: right;
+    border: 0;
+  }
+
+  .stackTable td[data-label]::before {
+    content: attr(data-label);
+    color: var(--muted);
+    text-align: left;
   }
 
   .table th,

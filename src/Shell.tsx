@@ -6,7 +6,6 @@ import {
   Moon,
   SlidersHorizontal,
   Sun,
-  Users,
   Wallet,
 } from 'lucide-react';
 import { lazy, Suspense, useEffect } from 'react';
@@ -16,7 +15,9 @@ import type { TrackerRepository } from './data/repository';
 import { useSettings, useTracker } from './store/tracker';
 import styles from './Shell.module.css';
 import { localDate } from './ui/format';
+import { Avatar } from './ui/Avatar';
 import { GuidedTour } from './ui/GuidedTour';
+import { PullToRefresh } from './ui/PullToRefresh';
 import { PageEndTools } from './ui/SearchDialog';
 import { useAppUpdate } from './ui/pwa';
 import { useTheme } from './ui/theme';
@@ -59,7 +60,7 @@ export interface Account {
   role: 'owner' | 'editor' | 'viewer';
   photo?: string;
   signOut?: () => void;
-  deleteAccount?: (clearRecords: () => Promise<void>) => Promise<void>;
+  deleteAccount?: (clearOwnData: () => Promise<void>) => Promise<void>;
   family?: FamilyAccess;
 }
 
@@ -116,13 +117,7 @@ export function Shell({
     <div className={styles.shell}>
       <header className={styles.header}>
         <div className={styles.brand}>
-          <span aria-hidden="true" className={styles.avatar}>
-            {account.photo ? (
-              <img alt="" height="38" referrerPolicy="no-referrer" src={account.photo} width="38" />
-            ) : (
-              <Users size={18} />
-            )}
-          </span>
+          <Avatar account={account} size={38} />
           {settings.familyMembers.length > 1 ? (
             <select
               aria-label="Family profile"
@@ -214,6 +209,7 @@ export function Shell({
         )}
       </main>
       {loaded ? <PageEndTools /> : null}
+      <PullToRefresh />
       {tourOpen ? <GuidedTour /> : null}
     </div>
   );

@@ -163,16 +163,8 @@ export function useSaveSettings() {
     ]);
 }
 
-/**
- * Archived accounts leave current figures. Personal records follow the selected
- * profile, and household expenses stay shared.
- */
-export function selectView(source: TrackerData, profile: string | null): TrackerData {
-  const data = {
-    ...source,
-    holdings: source.holdings.filter((row) => !row.archived),
-    loans: source.loans.filter((row) => !row.archived),
-  };
+/** Personal records follow the selected profile. Household expenses stay shared. */
+export function selectView(data: TrackerData, profile: string | null): TrackerData {
   if (!profile) return data;
   const mine = <Row extends { member: string }>(rows: Row[]) =>
     rows.filter((row) => row.member === profile);

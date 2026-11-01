@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { searchRecords, SEARCH_KINDS, type SearchKind } from '../domain/search';
 import { useTracker, useView } from '../store/tracker';
 import { Field } from './Field';
@@ -118,6 +118,8 @@ export function PageEndTools() {
   const pending = useTracker((state) => state.pendingSaves);
   const syncedAt = useTracker((state) => state.syncedAt);
   const [online, setOnline] = useState(navigator.onLine);
+  // The dashboard's + sits on the right, so search moves left there.
+  const onDashboard = useLocation().pathname === '/';
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -133,7 +135,7 @@ export function PageEndTools() {
     <>
       <button
         aria-label="Search records"
-        className={atBottom ? styles.searchVisible : styles.search}
+        className={`${atBottom ? styles.searchVisible : styles.search} ${onDashboard ? '' : styles.searchRight}`}
         onClick={() => setOpen(true)}
         title="Search records"
         type="button"

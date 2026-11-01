@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { create } from 'zustand';
+import currentRelease from '../release.json';
 
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
@@ -74,18 +75,43 @@ export function useAppUpdate() {
   return { updateReady, applyUpdate };
 }
 
-/** Asks the server for a new version, and says plainly what happened. */
-export async function checkForUpdates() {
-  const { registration, updateReady } = useUpdateState.getState();
-  if (updateReady) return 'A new version is ready.';
-  if (!registration) return 'Updates are only available in the installed or hosted app.';
-  if (!navigator.onLine) return 'Connect to the internet to check for updates.';
+interface Release {
+  version: string;
+  notes: string[];
+}
+
+export interface UpdateCheck {
+  message: string;
+  next?: Release;
+}
+
+/** The newest release on the server, or null if it can't be read. */
+async function latestRelease() {
   try {
-    await registration.update();
+    const response = await fetch('/version.json', { cache: 'no-store' });
+    return response.ok ? ((await response.json()) as Release) : null;
   } catch {
-    return 'The check could not finish. Please try again.';
+    return null;
   }
-  return registration.installing || registration.waiting
-    ? 'Downloading the new version…'
-    : 'You have the latest version.';
+}
+
+/** Asks the server for a new version, and says plainly what happened. */
+export async function checkForUpdates(): Promise<UpdateCheck> {
+  const { registration, updateReady } = useUpdateState.getState();
+  if (!registration && !updateReady) {
+    return { message: 'Updates are only available in the installed or hosted app.' };
+  }
+  if (!navigator.onLine) return { message: 'Connect to the internet to check for updates.' };
+  try {
+    await registration?.update();
+  } catch {
+    return { message: 'The check could not finish. Please try again.' };
+  }
+  const release = await latestRelease();
+  const next = release && release.version !== currentRelease.version ? release : undefined;
+  if (updateReady) return { message: 'A new version is ready.', ...(next ? { next } : {}) };
+  if (registration?.installing || registration?.waiting || next) {
+    return { message: 'Downloading the new version…', ...(next ? { next } : {}) };
+  }
+  return { message: 'You have the latest version.' };
 }

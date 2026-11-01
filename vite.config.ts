@@ -1,10 +1,22 @@
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
+import release from './src/release.json' with { type: 'json' };
 
 export default defineConfig({
   plugins: [
     react(),
+    {
+      // Lets a running app read what a newer version includes.
+      name: 'release-notes',
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'version.json',
+          source: JSON.stringify(release),
+        });
+      },
+    },
     VitePWA({
       // Updates wait for the person to accept them, so unsaved work is never lost.
       registerType: 'prompt',

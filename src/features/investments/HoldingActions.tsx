@@ -1,4 +1,4 @@
-import { Archive, History, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { History, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { CategoryRow, PositionRow } from '../../domain/analytics';
 import type { RecordWrite } from '../../data/repository';
@@ -128,23 +128,6 @@ function HoldingCard({ row }: { row: PositionRow }) {
             type="button"
           >
             <Pencil size={14} />
-          </button>
-          <button
-            aria-label={`Archive ${holding.name}`}
-            className={ui.smallIcon}
-            onClick={() =>
-              commit([
-                {
-                  type: 'set',
-                  collection: 'holdings',
-                  id: holding.id,
-                  value: { ...holding, archived: true },
-                },
-              ])
-            }
-            type="button"
-          >
-            <Archive size={14} />
           </button>
           <button
             aria-label={`Delete ${holding.name}`}

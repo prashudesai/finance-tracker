@@ -107,10 +107,21 @@
 
 body {
   margin: 0;
+  /* The app's own pull to refresh replaces the browser's. */
+  overscroll-behavior-y: contain;
   color: var(--text);
   background: radial-gradient(900px 420px at 12% -8%, var(--bg-glow), transparent 70%), var(--bg);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
+}
+
+:root {
+  --glass: color-mix(in srgb, var(--surface-raised) 72%, transparent);
+  /* Long lists sit over busy pages, so dropdowns stay nearly solid. */
+  --glass-solid: color-mix(in srgb, var(--surface-raised) 95%, transparent);
+  --glass-edge: color-mix(in srgb, var(--text) 14%, transparent);
+  --glass-blur: blur(22px) saturate(150%);
+  --lift: 0 16px 40px rgb(0 0 0 / 24%);
 }
 
 h1,
@@ -186,10 +197,11 @@ option {
     padding: 6px;
     overflow-y: auto;
     color: var(--text);
-    background: var(--surface-raised);
-    border: 1px solid var(--border-strong);
+    background: var(--glass-solid);
+    border: 1px solid var(--glass-edge);
     border-radius: 14px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--lift);
+    backdrop-filter: var(--glass-blur);
   }
 
   option {
@@ -225,5 +237,18 @@ option {
 @media (prefers-reduced-motion: reduce) {
   select {
     transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  main > * {
+    animation: rise 220ms ease-out;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
 }

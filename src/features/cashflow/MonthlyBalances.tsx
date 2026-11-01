@@ -1,21 +1,28 @@
-import { useState } from 'react';
-import { closeMonth } from '../../domain/analytics';
-import { nextMonth } from '../../domain/calendar';
+import { useMemo, useState } from 'react';
+import {
+  balanceHistory,
+  balanceYears,
+  closeMonth,
+  type BalanceHistoryRow,
+} from '../../domain/analytics';
+import { financialYearLabel, financialYearStart, nextMonth } from '../../domain/calendar';
 import { recordId } from '../../data/repository';
 import { useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
-import { formatMoney, formatMonth } from '../../ui/format';
+import { formatMoney, formatMonth, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
+import { SortHeader, useSort, type SortValue } from '../../ui/useSort';
 
 function BalanceForm({ month, onDone }: { month: string; onDone: () => void }) {
   const commit = useTracker((state) => state.commit);
   const balances = useTracker((state) => state.data.monthlyBalances);
-  const existing = balances.find((row) => row.month === month);
+  const startingBalance = (key: string) => balances.find((row) => row.month === key)?.startBalance;
+  const opening = startingBalance(month);
   const [selected, setSelected] = useState(month);
-  const [amount, setAmount] = useState(existing ? String(existing.startBalance) : '');
+  const [amount, setAmount] = useState(opening === undefined ? '' : String(opening));
   const value = Number(amount);
-  const valid = amount !== '' && Number.isFinite(value);
+  const valid = amount !== '' && Number.isFinite(value) && value >= 0;
 
   return (
     <form
@@ -23,6 +30,14 @@ function BalanceForm({ month, onDone }: { month: string; onDone: () => void }) {
       onSubmit={(event) => {
         event.preventDefault();
         if (!valid) return;
+        if (
+          startingBalance(selected) !== undefined &&
+          !window.confirm(
+            `A bank balance already exists for ${formatMonth(selected)}. Update the same record?`,
+          )
+        ) {
+          return;
+        }
         const row = { month: selected, startBalance: value };
         commit([
           {
@@ -37,35 +52,172 @@ function BalanceForm({ month, onDone }: { month: string; onDone: () => void }) {
     >
       <Field label="Month">
         <input
-          onChange={(event) => setSelected(event.target.value)}
+          onChange={(event) => {
+            const existing = startingBalance(event.target.value);
+            setSelected(event.target.value);
+            setAmount(existing === undefined ? '' : String(existing));
+          }}
           type="month"
           value={selected}
         />
       </Field>
-      <Field label="Bank balance at start of month (₹)">
+      <Field
+        error={amount !== '' && !valid ? 'Enter a bank balance of zero or more.' : undefined}
+        label="Bank balance at start of selected month (₹)"
+      >
         <input
           inputMode="decimal"
+          min="0"
           onChange={(event) => setAmount(event.target.value)}
+          placeholder="50000"
           type="number"
           value={amount}
         />
       </Field>
       <div className={ui.formActions}>
         <button className={ui.button} disabled={!valid} type="submit">
-          Save balance
+          Save opening balance
         </button>
       </div>
+      <details className={ui.fold}>
+        <summary>How is the monthly balance calculated?</summary>
+        <div className={ui.caption}>
+          <p>
+            Calculated balance = opening balance + recorded income − recorded expenses − Stallion
+            PMS contributions.
+          </p>
+          <p>NPS, PPF and PF contributions are tracked separately and aren't deducted here.</p>
+          <p>
+            Enter a bank balance once, at the start of a month. It's also the previous month's
+            closing balance: November 1 opening is October 31 closing. When you first start, older
+            months don't need an opening balance. Don't enter the same expenses twice.
+          </p>
+        </div>
+      </details>
     </form>
+  );
+}
+
+const NEGATIVE_NOTE = 'Negative difference: review balances or missing income.';
+
+type HistoryColumn = keyof BalanceHistoryRow;
+
+const historyValue = (row: BalanceHistoryRow, column: HistoryColumn): SortValue =>
+  row[column] ?? Number.NEGATIVE_INFINITY;
+
+const MONEY_COLUMNS: { column: HistoryColumn; label: string }[] = [
+  { column: 'opening', label: 'Opening balance' },
+  { column: 'income', label: 'Monthly income' },
+  { column: 'expenses', label: 'Expenses' },
+  { column: 'pms', label: 'Stallion PMS' },
+  { column: 'retirement', label: 'NPS + PPF' },
+  { column: 'surplus', label: 'Surplus balance' },
+];
+
+function BalanceHistory() {
+  const data = useTracker((state) => state.data);
+  const commit = useTracker((state) => state.commit);
+  const today = localDate();
+  const [year, setYear] = useState(financialYearStart(today));
+  const rows = useMemo(() => balanceHistory(data, year, today), [data, year, today]);
+  const { sorted, sort, toggle } = useSort(rows, historyValue);
+
+  return (
+    <div className={ui.page}>
+      <Field label="Financial year">
+        <select onChange={(event) => setYear(Number(event.target.value))} value={year}>
+          {balanceYears(data, today).map((option) => (
+            <option key={option} value={option}>
+              {financialYearLabel(option)}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <p className={ui.caption}>Completed months only. Current and future months are hidden.</p>
+      {sorted.length === 0 ? (
+        <p className={ui.empty}>No completed monthly records for this financial year.</p>
+      ) : (
+        <div className={ui.tableWrap}>
+          <table className={`${ui.table} ${ui.stackTable}`}>
+            <thead>
+              <tr>
+                <SortHeader column="month" label="Month" onSort={toggle} sort={sort} />
+                {MONEY_COLUMNS.map(({ column, label }) => (
+                  <SortHeader
+                    column={column}
+                    key={column}
+                    label={label}
+                    numeric
+                    onSort={toggle}
+                    sort={sort}
+                  />
+                ))}
+                <SortHeader
+                  column="houseExpense"
+                  label="House expense"
+                  numeric
+                  onSort={toggle}
+                  sort={sort}
+                />
+                <th scope="col">
+                  <span className={ui.visuallyHidden}>Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((row) => (
+                <tr key={row.month}>
+                  <td>
+                    <strong>{formatMonth(row.month)}</strong>
+                  </td>
+                  {MONEY_COLUMNS.map(({ column, label }) => (
+                    <td className={ui.numeric} data-label={label} key={column}>
+                      {formatMoney(row[column] as number)}
+                    </td>
+                  ))}
+                  <td className={ui.numeric} data-label="House expense">
+                    <span>
+                      {row.houseExpense === null
+                        ? "Awaiting next month's opening balance"
+                        : formatMoney(row.houseExpense)}
+                      {row.houseExpense !== null && row.houseExpense < 0 ? (
+                        <span className={ui.caption} style={{ display: 'block' }}>
+                          {NEGATIVE_NOTE}
+                        </span>
+                      ) : null}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      aria-label={`Delete opening balance for ${formatMonth(row.month)}`}
+                      className={ui.quiet}
+                      onClick={() => {
+                        if (window.confirm(`Delete the balance for ${formatMonth(row.month)}?`)) {
+                          commit([
+                            { type: 'delete', collection: 'monthlyBalances', id: row.month },
+                          ]);
+                        }
+                      }}
+                      type="button"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 
 export function MonthlyBalances({ month }: { month: string }) {
   const data = useTracker((state) => state.data);
-  const commit = useTracker((state) => state.commit);
   const [setting, setSetting] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const close = closeMonth(data, month);
-  const rows = [...data.monthlyBalances].sort((a, b) => b.month.localeCompare(a.month));
 
   return (
     <section className={ui.card}>
@@ -99,7 +251,11 @@ export function MonthlyBalances({ month }: { month: string }) {
           <div className={ui.metricValue}>
             {close.unrecorded === null ? 'Pending' : formatMoney(close.unrecorded)}
           </div>
-          <div className={ui.caption}>Spending not recorded as expenses</div>
+          <div className={ui.caption}>
+            {close.unrecorded !== null && close.unrecorded < 0
+              ? NEGATIVE_NOTE
+              : 'Spending not recorded as expenses'}
+          </div>
         </div>
       </div>
       {setting ? (
@@ -108,29 +264,8 @@ export function MonthlyBalances({ month }: { month: string }) {
         </Modal>
       ) : null}
       {showHistory ? (
-        <Modal onClose={() => setShowHistory(false)} title="Balance history">
-          {rows.length === 0 ? (
-            <p className={ui.empty}>No balances recorded yet.</p>
-          ) : (
-            <ul className={ui.list}>
-              {rows.map((row) => (
-                <li className={ui.row} key={row.month}>
-                  <div className={ui.rowMain}>{formatMonth(row.month)}</div>
-                  <span className={ui.amount}>{formatMoney(row.startBalance)}</span>
-                  <button
-                    aria-label={`Delete ${formatMonth(row.month)}`}
-                    className={ui.quiet}
-                    onClick={() =>
-                      commit([{ type: 'delete', collection: 'monthlyBalances', id: row.month }])
-                    }
-                    type="button"
-                  >
-                    Delete
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+        <Modal onClose={() => setShowHistory(false)} title="Balance history" wide>
+          <BalanceHistory />
         </Modal>
       ) : null}
     </section>

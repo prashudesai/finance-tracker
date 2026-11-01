@@ -17,14 +17,14 @@ export function Stat({
 }) {
   return (
     <div className={ui.tile}>
-      <span aria-hidden="true" className={ui.tileIcon}>
-        <Icon size={20} />
-      </span>
-      <div>
-        <div className={ui.statLabel}>{label}</div>
-        <div className={`${ui.statValue} ${tone ?? ''}`}>{value}</div>
-        {detail ? <div className={ui.caption}>{detail}</div> : null}
+      <div className={ui.tileHead}>
+        <span aria-hidden="true" className={ui.tileIcon}>
+          <Icon size={18} />
+        </span>
+        <span className={ui.statLabel}>{label}</span>
       </div>
+      <div className={`${ui.statValue} ${tone ?? ''}`}>{value}</div>
+      {detail ? <div className={ui.caption}>{detail}</div> : null}
     </div>
   );
 }

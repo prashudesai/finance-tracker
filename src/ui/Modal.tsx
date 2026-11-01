@@ -8,11 +8,13 @@ export function Modal({
   onClose,
   children,
   fullScreenOnPhone = false,
+  wide = false,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   fullScreenOnPhone?: boolean;
+  wide?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
 
@@ -24,7 +26,7 @@ export function Modal({
   return (
     <dialog
       aria-label={title}
-      className={fullScreenOnPhone ? ui.dialogFull : ui.dialog}
+      className={`${fullScreenOnPhone ? ui.dialogFull : ui.dialog} ${wide ? ui.dialogWide : ''}`}
       onClose={onClose}
       ref={dialog}
     >

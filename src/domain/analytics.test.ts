@@ -3,6 +3,8 @@ import { defaultSettings, type Holding } from '../schema/records';
 import {
   attentionItems,
   backupStatus,
+  balanceHistory,
+  balanceYears,
   closeMonth,
   fullHouseExpense,
   memberPositions,
@@ -237,6 +239,15 @@ test('backup reminders follow the chosen interval', () => {
   expect(backupStatus(data(), '2026-02-15').due).toBe(false);
 });
 
+test('a recent cloud sync means no backup reminder', () => {
+  const state = data({
+    income: [{ id: 'i', date: '2026-01-01', member: 'A', source: 'S', amount: 1 }],
+  });
+  expect(backupStatus(state, '2026-02-15').due).toBe(true);
+  expect(backupStatus(state, '2026-02-15', '2026-02-10').due).toBe(false);
+  expect(backupStatus(state, '2026-02-15', '2026-02-01').due).toBe(true);
+});
+
 test('full house expense adds spending that was not recorded', () => {
   const state = data({
     income: [{ id: 'i', date: '2026-03-01', member: 'A', source: 'S', amount: 100 }],
@@ -247,6 +258,53 @@ test('full house expense adds spending that was not recorded', () => {
   });
   expect(fullHouseExpense(state, '2026-03')).toBe(60);
   expect(fullHouseExpense(data(), '2026-03')).toBe(0);
+});
+
+test('balance history lists completed months of one financial year, with their parts', () => {
+  const contribution = (id: string, holdingId: string, amount: number) => ({
+    id,
+    holdingId,
+    date: '2026-04-05',
+    amount,
+    automatic: false,
+  });
+  const state = data({
+    holdings: [
+      holding({ id: 'pms', type: 'Stallion PMS' }),
+      holding({ id: 'nps', kind: 'nps', type: 'NPS' }),
+    ],
+    contributions: [contribution('c1', 'pms', 5), contribution('c2', 'nps', 7)],
+    income: [{ id: 'i', date: '2026-04-01', member: 'A', source: 'S', amount: 100 }],
+    expenses: [
+      {
+        id: 'e',
+        date: '2026-04-02',
+        category: 'Food',
+        subcategory: '',
+        isAnnual: false,
+        amount: 20,
+      },
+    ],
+    monthlyBalances: [
+      { month: '2026-03', startBalance: 1 },
+      { month: '2026-04', startBalance: 10 },
+      { month: '2026-05', startBalance: 50 },
+      { month: '2026-06', startBalance: 60 },
+    ],
+  });
+  const rows = balanceHistory(state, 2026, '2026-06-15');
+  expect(rows.map((row) => row.month)).toEqual(['2026-05', '2026-04']);
+  expect(rows[1]).toEqual({
+    month: '2026-04',
+    opening: 10,
+    income: 100,
+    expenses: 20,
+    pms: 5,
+    retirement: 7,
+    surplus: 85,
+    houseExpense: 35,
+  });
+  expect(balanceYears(state, '2026-06-15')).toEqual([2026, 2025]);
 });
 
 test('member positions total each person', () => {
