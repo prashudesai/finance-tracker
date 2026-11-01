@@ -222,3 +222,13 @@ test('invalid stored records are reported, not shown', async () => {
     '1 saved record(s) could not be read and are hidden.',
   );
 });
+
+test('search finds a record and opens its page', async () => {
+  renderApp('/', {
+    income: [{ id: 'i', date: `${month}-01`, member: 'A', source: 'Salary', amount: 25_000 }],
+  });
+  fireEvent.click(await screen.findByRole('button', { name: 'Search records' }));
+  fireEvent.change(await screen.findByLabelText(/Search by name/), { target: { value: '25,000' } });
+  fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
+  expect(await screen.findByRole('heading', { level: 1, name: 'Cash flow' })).toBeDefined();
+});

@@ -16,6 +16,7 @@ import type { TrackerRepository } from './data/repository';
 import { useSettings, useTracker } from './store/tracker';
 import styles from './Shell.module.css';
 import { localDate } from './ui/format';
+import { SearchButton } from './ui/SearchDialog';
 import { useTheme } from './ui/theme';
 import ui from './ui/ui.module.css';
 
@@ -176,6 +177,7 @@ export function Shell({
           <p className={ui.empty}>Loading your records…</p>
         )}
       </main>
+      {loaded ? <SearchButton /> : null}
     </div>
   );
 }
