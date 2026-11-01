@@ -240,7 +240,7 @@ describe('quotes and daily loans', () => {
 
 /** The legacy ledger is the reference until it is deleted at cutover. */
 describe('parity with the legacy ledger', () => {
-  const legacy = createRequire(import.meta.url)('../../../dist/loan-ledger.js');
+  const legacy = createRequire(import.meta.url)('./reference/loan-ledger.cjs');
 
   function random(seed: number) {
     let value = seed;

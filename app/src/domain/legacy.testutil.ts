@@ -2,28 +2,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createContext, runInContext } from 'node:vm';
 
-/**
- * Loads named top-level functions from the legacy classic scripts, for parity tests.
- * Legacy keeps them in one shared scope, so they cannot be imported. Delete at cutover.
- */
-export function loadLegacyFunctions(
-  files: string[],
-  names: string[],
-  globals: Record<string, unknown> = {},
-) {
-  const source = files
-    .map((file) => readFileSync(resolve(process.cwd(), '../src/core', file), 'utf8'))
-    .join('\n');
-  const body = names.map((name) => {
-    const match = new RegExp(`^    (?:async )?function ${name}\\(`, 'm').exec(source);
-    if (!match) throw new Error(`Legacy function not found: ${name}`);
-    const lineEnd = source.indexOf('\n', match.index);
-    const line = source.slice(match.index, lineEnd).trimEnd();
-    return line.endsWith('}')
-      ? line
-      : source.slice(match.index, source.indexOf('\n    }', match.index) + 6);
-  });
+/** Runs the older app's frozen formulas, so parity tests keep a fixed reference. */
+export function loadLegacyFunctions(globals: Record<string, unknown> = {}) {
+  const source = readFileSync(resolve(process.cwd(), 'src/domain/reference/core.js'), 'utf8');
   const context = createContext({ ...globals });
-  runInContext(body.join('\n'), context);
+  runInContext(source, context);
   return context as unknown as Record<string, (...args: unknown[]) => never>;
 }

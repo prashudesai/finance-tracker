@@ -144,8 +144,8 @@ test('rejects two active EMI schedules for one loan', () => {
 /** The legacy module is the reference until it is deleted at cutover. */
 test('matches the legacy planner across schedules and loans', () => {
   const require = createRequire(import.meta.url);
-  const legacy = require('../../../dist/recurring.js');
-  const legacyLedger = require('../../../dist/loan-ledger.js');
+  const legacy = require('./reference/recurring.cjs');
+  const legacyLedger = require('./reference/loan-ledger.cjs');
 
   const toLegacy = (data: RecurringData) => ({
     recurringRules: data.rules.map((rule) => ({ endMonth: '', amountChanges: [], ...rule })),

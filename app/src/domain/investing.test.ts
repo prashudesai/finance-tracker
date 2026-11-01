@@ -117,7 +117,7 @@ describe('parity with the legacy formulas', () => {
   const dateKey = (value: number) => new Date(value * 86_400_000).toISOString().slice(0, 10);
 
   test('XIRR matches across seeded cash flows', () => {
-    const legacy = loadLegacyFunctions(['08-nps.js'], ['calculateXirr'], {
+    const legacy = loadLegacyFunctions({
       validCalendarDate: isValidDate,
     });
     for (let seed = 1; seed <= 1500; seed++) {
@@ -131,15 +131,11 @@ describe('parity with the legacy formulas', () => {
   });
 
   test('gratuity matches across service dates', () => {
-    const legacy = loadLegacyFunctions(
-      ['07-investments.js'],
-      ['shiftGratuityDate', 'gratuityService', 'estimateGratuity'],
-      {
-        validCalendarDate: isValidDate,
-        localDateKey: () => '2026-11-01',
-        GRATUITY_CAP: 2_000_000,
-      },
-    );
+    const legacy = loadLegacyFunctions({
+      validCalendarDate: isValidDate,
+      localDateKey: () => '2026-11-01',
+      GRATUITY_CAP: 2_000_000,
+    });
     for (let seed = 1; seed <= 1500; seed++) {
       const next = random(seed);
       const account: GratuityAccount = {
@@ -201,34 +197,21 @@ describe('parity with the legacy formulas', () => {
 
       const withGratuity =
         gratuityAccounts.length > 0 ? [...assets, gratuityAsset(1_000_000)] : assets;
-      const legacy = loadLegacyFunctions(
-        ['15-projections.js', '07-investments.js'],
-        [
-          'projectionMonthIndex',
-          'projectionMonthKey',
-          'projectionMonthEndDate',
-          'runGrowthProjection',
-          'shiftGratuityDate',
-          'gratuityService',
-          'estimateGratuity',
-          'totalGratuityEstimate',
-        ],
-        {
-          state: {
-            projectionSettings: {
-              includeMonthlyContributions: true,
-              excludedMonthlyContributions: excluded,
-            },
-            projectionAdjustments,
-            gratuityAccounts,
+      const legacy = loadLegacyFunctions({
+        state: {
+          projectionSettings: {
+            includeMonthlyContributions: true,
+            excludedMonthlyContributions: excluded,
           },
-          currentMonthKey: () => '2026-11',
-          localDateKey: () => '2026-11-01',
-          validCalendarDate: isValidDate,
-          profileRows: (rows: unknown[]) => rows,
-          GRATUITY_CAP: 2_000_000,
+          projectionAdjustments,
+          gratuityAccounts,
         },
-      );
+        currentMonthKey: () => '2026-11',
+        localDateKey: () => '2026-11-01',
+        validCalendarDate: isValidDate,
+        profileRows: (rows: unknown[]) => rows,
+        GRATUITY_CAP: 2_000_000,
+      });
       const reference = legacy.runGrowthProjection?.(withGratuity, years, scenario);
       const result = runProjection(withGratuity, {
         years,
