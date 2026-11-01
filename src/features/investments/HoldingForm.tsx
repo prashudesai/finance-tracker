@@ -59,10 +59,13 @@ const DATE_LABELS: Record<Holding['kind'], string> = {
 export function HoldingForm({
   kind,
   initial,
+  type: chosenType,
   onDone,
 }: {
   kind: Holding['kind'];
   initial?: Holding;
+  /** Starts the Investment Type dropdown on this value. */
+  type?: string;
   onDone: () => void;
 }) {
   const commit = useTracker((state) => state.commit);
@@ -78,7 +81,7 @@ export function HoldingForm({
   >({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: initial?.type ?? (fixedType || 'Mutual Funds'),
+      type: initial?.type ?? (fixedType || chosenType || 'Mutual Funds'),
       name: initial?.name ?? '',
       member: initial?.member ?? (defaultMember || 'Household'),
       date: initial?.date ?? today,

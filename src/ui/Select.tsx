@@ -111,6 +111,20 @@ function AddValueForm({
   );
 }
 
+/** The "+ Add new…" dialog, for menus as well as dropdowns. */
+export function AddValueDialog(props: {
+  list: CustomList;
+  existing: string[];
+  onCancel: () => void;
+  onSaved: (value: string) => void;
+}) {
+  return (
+    <Modal onClose={props.onCancel} title={`Add ${LABELS[props.list].toLowerCase()}`}>
+      <AddValueForm {...props} />
+    </Modal>
+  );
+}
+
 type Props = SelectHTMLAttributes<HTMLSelectElement> & {
   options: string[];
   placeholder?: string;
@@ -176,17 +190,15 @@ export const Select = forwardRef<HTMLSelectElement, Props>(function Select(
       </select>
       {adding && addTo
         ? createPortal(
-            <Modal onClose={() => setAdding(false)} title={`Add ${LABELS[addTo].toLowerCase()}`}>
-              <AddValueForm
-                existing={options}
-                list={addTo}
-                onCancel={() => setAdding(false)}
-                onSaved={(value) => {
-                  setAdding(false);
-                  setPending(value);
-                }}
-              />
-            </Modal>,
+            <AddValueDialog
+              existing={options}
+              list={addTo}
+              onCancel={() => setAdding(false)}
+              onSaved={(value) => {
+                setAdding(false);
+                setPending(value);
+              }}
+            />,
             document.body,
           )
         : null}

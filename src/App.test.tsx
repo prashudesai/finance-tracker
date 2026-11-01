@@ -462,6 +462,43 @@ test('the dashboard + opens the add menu and goes to the right entry', async () 
   expect(await screen.findByRole('dialog', { name: 'Add Income', hidden: true })).toBeDefined();
 });
 
+test('+ Add under Investment Portfolio lists the types and opens the chosen one', async () => {
+  renderApp('/investments', {
+    settings: [{ ...defaultSettings(), investmentTypes: ['Gold'] }],
+  });
+  const heading = await screen.findByRole('heading', { name: 'Investment Portfolio' });
+  const section = heading.closest('section');
+  if (!section) throw new Error('Portfolio section not found');
+  for (const name of ['Mutual Funds', 'Bonds', 'Fixed Deposits', 'Stallion PMS', 'Gold']) {
+    expect(within(section).getByRole('button', { name, hidden: true })).toBeDefined();
+  }
+  expect(within(section).queryByRole('button', { name: 'Investment', hidden: true })).toBeNull();
+  fireEvent.click(within(section).getByRole('button', { name: 'Bonds', hidden: true }));
+  const dialog = await screen.findByRole('dialog', { name: 'Add Bonds', hidden: true });
+  expect((within(dialog).getByLabelText('Investment Type') as HTMLSelectElement).value).toBe(
+    'Bonds',
+  );
+});
+
+test('+ Add new in the investment menu saves the type and opens it', async () => {
+  renderApp('/investments');
+  const heading = await screen.findByRole('heading', { name: 'Investment Portfolio' });
+  const section = heading.closest('section');
+  if (!section) throw new Error('Portfolio section not found');
+  fireEvent.click(within(section).getByRole('button', { name: '+ Add new…', hidden: true }));
+  const dialog = await screen.findByRole('dialog', {
+    name: 'Add investment type',
+    hidden: true,
+  });
+  fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'Gold' } });
+  fireEvent.change(within(dialog).getByLabelText('Growth calculation'), {
+    target: { value: 'market' },
+  });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Save and select', hidden: true }));
+  const form = await screen.findByRole('dialog', { name: 'Add Gold', hidden: true });
+  expect((within(form).getByLabelText('Investment Type') as HTMLSelectElement).value).toBe('Gold');
+});
+
 test('the + stays on the dashboard', async () => {
   renderApp('/debts');
   await screen.findByRole('heading', { level: 1 });

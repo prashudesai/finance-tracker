@@ -1,6 +1,7 @@
 import { ChevronRight, PiggyBank, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
+import { optionLists } from '../../domain/options';
 import {
   holdingRows,
   isPms,
@@ -23,6 +24,7 @@ import { Field } from '../../ui/Field';
 import { MemberField, useDefaultMember } from '../../ui/MemberField';
 import { formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
+import { AddValueDialog } from '../../ui/Select';
 import { PageHeader } from '../../ui/PageHeader';
 import { Metric } from '../../ui/Stat';
 import { useIsPhone } from '../../ui/useIsPhone';
@@ -126,11 +128,13 @@ function GratuityForm({ onDone }: { onDone: () => void }) {
   );
 }
 
+const ADD_NEW_TYPE = '__add_new__';
+
 function AddButton({
   onPick,
   kinds,
 }: {
-  onPick: (kind: Holding['kind'] | 'gratuity') => void;
+  onPick: (value: string) => void;
   kinds: [string, string][];
 }) {
   return (
@@ -140,7 +144,17 @@ function AddButton({
       </summary>
       <div
         className={ui.card}
-        style={{ position: 'absolute', right: 0, zIndex: 1, padding: 8, gap: 4, minWidth: 170 }}
+        style={{
+          position: 'absolute',
+          right: 0,
+          zIndex: 1,
+          padding: 8,
+          gap: 4,
+          minWidth: 170,
+          background: 'var(--surface-raised)',
+          maxHeight: '60dvh',
+          overflowY: 'auto',
+        }}
       >
         {kinds.map(([value, label]) => (
           <button
@@ -148,7 +162,7 @@ function AddButton({
             key={value}
             onClick={(event) => {
               event.currentTarget.closest('details')?.removeAttribute('open');
-              onPick(value as Holding['kind'] | 'gratuity');
+              onPick(value);
             }}
             type="button"
           >
@@ -179,7 +193,7 @@ function CategoryCard({
     <button className={ui.categoryCard} onClick={onOpen} type="button">
       <div className={ui.split}>
         <div>
-          <div style={{ fontSize: '1.1rem' }}>{CARD_TITLES[category.name] ?? category.name}</div>
+          <div style={{ fontWeight: 600 }}>{CARD_TITLES[category.name] ?? category.name}</div>
           <div className={ui.caption}>
             {category.count}{' '}
             {CARD_TITLES[category.name]
@@ -193,7 +207,7 @@ function CategoryCard({
         </div>
         <ChevronRight aria-hidden="true" size={16} />
       </div>
-      <div className={ui.metrics} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+      <div className={ui.compact}>
         <Metric label="Current value" value={formatMoney(category.current)} />
         <Metric label={primary.label} value={primary.value} tone={ui.gain} />
         <Metric label="Invested" value={formatMoney(category.invested)} />
@@ -223,7 +237,19 @@ export function InvestmentsPage() {
   const commit = useTracker((state) => state.commit);
   const today = localDate();
   const [adding, setAdding] = useState<Holding['kind'] | 'gratuity' | null>(null);
+  const [addingType, setAddingType] = useState<string | null>(null);
   const [openName, setOpenName] = useState<string | null>(null);
+  const [addingNewType, setAddingNewType] = useState(false);
+  const canEdit = useTracker((state) => state.canEdit);
+  const { investmentTypes } = optionLists(settings);
+  const addInvestment = (type: string) => {
+    setAddingType(type);
+    setAdding('investment');
+  };
+  const finishAdding = () => {
+    setAdding(null);
+    setAddingType(null);
+  };
   const [section, setSection] = useState<Section>(savedSection);
   const phone = useIsPhone();
   const { state: quickAdd } = useLocation() as {
@@ -330,14 +356,14 @@ export function InvestmentsPage() {
                 type="button"
               >
                 <span style={{ textAlign: 'left' }}>
-                  <strong style={{ fontSize: '1.15rem' }}>{holding.name}</strong>
+                  <strong>{holding.name}</strong>
                   <span className={ui.caption} style={{ display: 'block' }}>
                     {holding.member}
                   </span>
                 </span>
                 <ChevronRight aria-hidden="true" size={16} />
               </button>
-              <div className={ui.metrics} style={{ marginTop: 12 }}>
+              <div className={ui.compact} style={{ marginTop: 8 }}>
                 <Metric label="Current value" value={formatMoney(position.current)} />
                 <Metric label="Invested" value={formatMoney(position.invested)} />
                 <Metric
@@ -372,7 +398,19 @@ export function InvestmentsPage() {
               <h2 style={{ fontSize: '1.2rem' }}>Investment Portfolio</h2>
               <div className={ui.caption}>Stocks, mutual funds, ETFs and other holdings</div>
             </div>
-            <AddButton kinds={[['investment', 'Investment']]} onPick={setAdding} />
+            <AddButton
+              kinds={[
+                ...investmentTypes.map((type): [string, string] => [type, type]),
+                ...(canEdit ? [[ADD_NEW_TYPE, '+ Add new…'] as [string, string]] : []),
+              ]}
+              onPick={(type) => {
+                if (type === ADD_NEW_TYPE) {
+                  setAddingNewType(true);
+                  return;
+                }
+                addInvestment(type);
+              }}
+            />
           </div>
           {general.length === 0 ? (
             <p className={ui.empty}>No investments recorded yet.</p>
@@ -405,7 +443,7 @@ export function InvestmentsPage() {
                 ['nps', 'NPS account'],
                 ['gratuity', 'Gratuity estimate'],
               ]}
-              onPick={setAdding}
+              onPick={(kind) => setAdding(kind as Holding['kind'] | 'gratuity')}
             />
           </div>
           {retirement.length === 0 && data.gratuityAccounts.length === 0 ? (
@@ -534,11 +572,26 @@ export function InvestmentsPage() {
       ) : null}
       {adding && adding !== 'gratuity' ? (
         <Modal
-          onClose={() => setAdding(null)}
-          title={`Add ${adding === 'investment' ? 'investment' : adding.toUpperCase()}`}
+          onClose={finishAdding}
+          title={`Add ${adding === 'investment' ? (addingType ?? 'investment') : adding.toUpperCase()}`}
         >
-          <HoldingForm kind={adding} onDone={() => setAdding(null)} />
+          <HoldingForm
+            kind={adding}
+            onDone={finishAdding}
+            {...(addingType ? { type: addingType } : {})}
+          />
         </Modal>
+      ) : null}
+      {addingNewType ? (
+        <AddValueDialog
+          existing={investmentTypes}
+          list="investmentTypes"
+          onCancel={() => setAddingNewType(false)}
+          onSaved={(type) => {
+            setAddingNewType(false);
+            addInvestment(type);
+          }}
+        />
       ) : null}
       {open ? <CategoryDialog category={open} onClose={() => setOpenName(null)} /> : null}
     </div>

@@ -600,6 +600,34 @@
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 }
 
+/* Figures inside a tile: plain rows, without a box around each one. */
+.compact {
+  display: grid;
+  gap: 8px 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.compact:has(> :nth-child(4):last-child) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.compact .metric {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+
+.compact .label {
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+}
+
+.compact .metricValue {
+  margin-top: 1px;
+  font-size: 0.95rem;
+}
+
 .tableWrap {
   overflow-x: auto;
   border: 1px solid var(--border);
@@ -713,8 +741,9 @@
 
 .categoryCard {
   composes: card;
+  gap: 8px;
   width: 100%;
-  padding: 16px;
+  padding: 12px 14px;
   color: inherit;
   font: inherit;
   text-align: left;

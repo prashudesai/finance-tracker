@@ -53,7 +53,7 @@ function LoanCard({ summary, onOpen }: { summary: LoanSummary; onOpen: () => voi
     <button aria-label={`Open ${type}`} className={ui.categoryCard} onClick={onOpen} type="button">
       <div className={ui.split}>
         <div>
-          <div style={{ fontSize: '1.1rem' }}>{type}</div>
+          <div style={{ fontWeight: 600 }}>{type}</div>
           <div className={ui.caption}>{member}</div>
         </div>
         <span className={ui.tableActions} style={{ alignItems: 'center' }}>
@@ -63,7 +63,7 @@ function LoanCard({ summary, onOpen }: { summary: LoanSummary; onOpen: () => voi
       </div>
       {ledger ? (
         <>
-          <div className={ui.metrics} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+          <div className={ui.compact}>
             <Metric label="Remaining" value={formatMoney(ledger.remaining)} />
             <Metric label="EMI" value={formatMoney(ledger.emi)} />
             <Metric label="Interest rate" value={`${ledger.rate}%`} />
