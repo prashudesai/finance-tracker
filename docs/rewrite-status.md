@@ -35,7 +35,7 @@ Checked by hand on https://finance-trackerp.web.app, with real accounts: Google 
 
 ## Not verified
 
-- Removing a family member, and changing a member's access, on real Firebase.
+- Removing a family member, changing a member's access, and deleting an account, on real Firebase.
 - There are no Playwright tests in the repo yet. Main flows and PWA behaviour were checked with throwaway browser scripts.
 - Styled dropdown menus need a recent Chromium browser. Others show the native list.
 - Screen readers need checking on real devices.
@@ -44,11 +44,7 @@ Checked by hand on https://finance-trackerp.web.app, with real accounts: Google 
 
 ### Features
 
-The main features from the older app are built. These smaller details aren't yet:
-
-- [ ] Cash flow: column sorting and filters in the history tables, and the balance explainers
-- [ ] Analytics: View Details panels, the Family Split view and the fuller Investment Returns chart
-- [ ] Settings: profile photo, account deletion, Sync now with sync details, and backup reminders
+A scripted comparison of every old page, at phone and desktop widths, found no remaining features missing from the new app. Tables in the older app's retirement pages are shown as cards here, by design.
 
 ### Platform
 
@@ -74,6 +70,9 @@ The main features from the older app are built. These smaller details aren't yet
 - A contribution dated the same day as a valuation, or earlier, is treated as already included in that valuation.
 - Dated restore points are replaced by the change log, which undoes single changes. A whole-tracker rollback uses a backup.
 - The change log is shared across the family, and changes of more than 50 records keep a summary only.
+- History rows open a modal with Edit and Delete, in place of an Actions column. Phones show only the key columns.
+- Search and sync status show only at the end of a page, and search sits in a modal, as in the older app.
+- The profile photo comes from the Google account, in place of an upload.
 - The app tour is a short walk through each page, not element-by-element highlights.
 - PDFs use plain amounts marked INR, because the standard PDF fonts have no rupee sign.
 - A restore larger than 400 writes is sent in batches, so an interrupted restore can be partial. Restoring the backup again fixes it.

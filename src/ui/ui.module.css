@@ -893,6 +893,14 @@ details.fold[open] > summary {
 
 /* Phones show the page title alone, as the older app did. */
 @media (max-width: 700px) {
+  .cardHeader .button {
+    flex: none;
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
   .hideOnPhone {
     display: none;
   }
