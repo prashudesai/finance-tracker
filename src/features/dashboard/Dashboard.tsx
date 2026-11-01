@@ -315,10 +315,15 @@ export function Dashboard() {
             </span>
           </summary>
           <ul className={ui.list} style={{ marginTop: 10 }}>
-            {attention.map(({ label, path }) => (
+            {attention.map(({ label, path, state }) => (
               <li className={ui.row} key={label}>
                 <span className={ui.rowMain}>{label}</span>
-                <Link className={ui.textLink} to={path}>
+                <Link
+                  aria-label={`Review: ${label}`}
+                  className={ui.textLink}
+                  state={state}
+                  to={path}
+                >
                   Review ›
                 </Link>
               </li>

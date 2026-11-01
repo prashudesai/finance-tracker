@@ -499,6 +499,54 @@ test('+ Add new in the investment menu saves the type and opens it', async () =>
   expect((within(form).getByLabelText('Investment Type') as HTMLSelectElement).value).toBe('Gold');
 });
 
+describe('needs attention', () => {
+  const openReview = async (name: RegExp) => {
+    fireEvent.click(await screen.findByRole('link', { name, hidden: true }));
+    await screen.findByRole('heading', { level: 1 });
+  };
+  const seen = { settings: [{ ...defaultSettings(), onboardingDone: true }] };
+
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  test('a balance review opens that month with a way to set the balance', async () => {
+    const past = previousMonth(previousMonth(localDate().slice(0, 7)));
+    renderApp('/', { ...seen, monthlyBalances: [{ month: past, startBalance: 100 }] });
+    await openReview(/balance review/);
+    expect(((await screen.findByLabelText('Month')) as HTMLSelectElement).value).toBe(past);
+    const review = document.getElementById('month-review') as HTMLDetailsElement;
+    await waitFor(() => expect(review.open).toBe(true));
+    const set = within(review).getByRole('button', { name: /opening balance$/ });
+    fireEvent.click(set);
+    expect(
+      await screen.findByRole('dialog', { name: 'Set bank balance', hidden: true }),
+    ).toBeDefined();
+  });
+
+  test('a valuation opens the confirmation list', async () => {
+    renderApp('/', { ...seen, holdings: [fund] });
+    await openReview(/valuation/);
+    const list = await waitFor(() => {
+      const found = document.getElementById('record-freshness') as HTMLDetailsElement | null;
+      expect(found?.open).toBe(true);
+      return found;
+    });
+    expect(list).not.toBeNull();
+  });
+
+  test('a backup reminder opens Data & backup', async () => {
+    renderApp('/', { ...seen, holdings: [fund] });
+    await screen.findByRole('heading', { level: 1 });
+    await waitFor(() => expect(useTracker.getState().loaded).toBe(true));
+    useTracker.setState({ syncedAt: null });
+    await openReview(/backup/);
+    expect(
+      await screen.findByRole('dialog', { name: 'Data & backup', hidden: true }),
+    ).toBeDefined();
+  });
+});
+
 test('the + stays on the dashboard', async () => {
   renderApp('/debts');
   await screen.findByRole('heading', { level: 1 });

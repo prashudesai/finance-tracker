@@ -222,7 +222,7 @@ function RuleForm({ initial, onDone }: { initial?: RecurringRule; onDone: () => 
   );
 }
 
-export function Commitments() {
+export function Commitments({ open = false }: { open?: boolean }) {
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
   const report = useTracker((state) => state.report);
@@ -254,7 +254,7 @@ export function Commitments() {
   };
 
   return (
-    <details className={`${ui.card} ${ui.fold}`} open={pending.length > 0}>
+    <details className={`${ui.card} ${ui.fold}`} id="commitments" open={open}>
       <summary className={ui.split}>
         <span>Upcoming commitments</span>
         <span className={ui.caption} style={{ color: 'var(--accent)' }}>

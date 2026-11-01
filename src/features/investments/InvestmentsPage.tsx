@@ -27,6 +27,7 @@ import { Modal } from '../../ui/Modal';
 import { AddValueDialog } from '../../ui/Select';
 import { PageHeader } from '../../ui/PageHeader';
 import { Metric } from '../../ui/Stat';
+import { scrollToSection } from '../../ui/scroll';
 import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
 import { CategoryDialog } from './HoldingActions';
@@ -253,13 +254,14 @@ export function InvestmentsPage() {
   const [section, setSection] = useState<Section>(savedSection);
   const phone = useIsPhone();
   const { state: quickAdd } = useLocation() as {
-    state: { add?: 'investment' | 'pms'; open?: string } | null;
+    state: { add?: 'investment' | 'pms'; open?: string; confirm?: boolean } | null;
   };
 
   // The dashboard's add menu lands here with the entry to open.
   useEffect(() => {
     if (quickAdd?.add === 'investment') setAdding('investment');
     if (quickAdd?.add === 'pms') setOpenName(PMS_TYPE);
+    if (quickAdd?.confirm) scrollToSection('record-freshness');
     if (quickAdd?.open) {
       setOpenName(quickAdd.open);
       if (['PF', 'PPF', 'NPS'].includes(quickAdd.open)) setSection('retirement');
@@ -269,6 +271,11 @@ export function InvestmentsPage() {
   const showRetirement = !phone || section === 'retirement';
 
   const rows = holdingRows(data, today);
+  const unconfirmedFirst = [...rows].sort(
+    (a, b) =>
+      Number(valuationAge(b.holding.id, data, today) === 'Unverified') -
+      Number(valuationAge(a.holding.id, data, today) === 'Unverified'),
+  );
   const categories = portfolioCategories(rows);
   const current = rows.reduce((sum, row) => sum + row.position.current, 0);
   const invested = rows.reduce((sum, row) => sum + row.position.invested, 0);
@@ -528,13 +535,17 @@ export function InvestmentsPage() {
       ) : null}
 
       {rows.length > 0 ? (
-        <details className={`${ui.card} ${ui.fold}`}>
+        <details
+          className={`${ui.card} ${ui.fold}`}
+          id="record-freshness"
+          open={quickAdd?.confirm === true}
+        >
           <summary>Record freshness</summary>
           <p className={ui.caption}>
             Confirming records today's value against your statement. It doesn't change the balance.
           </p>
           <ul className={ui.list}>
-            {rows.map(({ holding, position }) => (
+            {unconfirmedFirst.map(({ holding, position }) => (
               <li className={ui.row} key={holding.id}>
                 <div className={ui.rowMain}>
                   <div className={ui.rowTitle}>{holding.name}</div>

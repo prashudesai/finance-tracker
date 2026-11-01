@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router';
 import release from '../../release.json';
 import { syncedRecently } from '../../domain/analytics';
 import { clearWrites, createBackup, parseBackup, restoreWrites } from '../../domain/backup';
@@ -658,7 +659,8 @@ function Appearance() {
 }
 
 export function SettingsPage({ account }: { account: Account }) {
-  const [panel, setPanel] = useState<Panel | null>(null);
+  const { state: target } = useLocation() as { state: { panel?: Panel } | null };
+  const [panel, setPanel] = useState<Panel | null>(target?.panel ?? null);
   const setTourOpen = useTracker((state) => state.setTourOpen);
   const repository = useTracker((state) => state.repository);
   const [syncing, setSyncing] = useState(false);

@@ -10,6 +10,7 @@ import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format'
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
 import { Metric, Stat } from '../../ui/Stat';
+import { scrollToSection } from '../../ui/scroll';
 import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
 import { Commitments } from './Commitments';
@@ -68,13 +69,22 @@ export function CashFlowPage() {
   const [history, setHistory] = useState<'income' | 'expense'>('income');
   const [reviewOpen, setReviewOpen] = useState(false);
   const phone = useIsPhone();
-  const { state: quickAdd } = useLocation() as { state: { add?: 'income' | 'expense' } | null };
+  const { state: quickAdd } = useLocation() as {
+    state: { add?: 'income' | 'expense'; review?: string; commitments?: boolean } | null;
+  };
 
   // The dashboard's add menu lands here with the entry to open.
   useEffect(() => {
-    if (!quickAdd?.add) return;
-    setHistory(quickAdd.add);
-    setAdding(quickAdd.add);
+    if (quickAdd?.add) {
+      setHistory(quickAdd.add);
+      setAdding(quickAdd.add);
+    }
+    if (quickAdd?.review) {
+      setMonth(quickAdd.review);
+      setReviewOpen(true);
+      scrollToSection('month-review');
+    }
+    if (quickAdd?.commitments) scrollToSection('commitments');
   }, [quickAdd]);
 
   const loanName = (id: string | undefined) =>
@@ -120,7 +130,7 @@ export function CashFlowPage() {
             onChange={(event) => setMonth(event.target.value)}
             value={month}
           >
-            {months.map((key) => (
+            {(months.includes(month) ? months : [...months, month]).map((key) => (
               <option key={key} value={key}>
                 {formatMonth(key)}
               </option>
@@ -135,7 +145,7 @@ export function CashFlowPage() {
         className={ui.primaryWide}
         onClick={() => {
           setReviewOpen(true);
-          document.getElementById('month-review')?.scrollIntoView({ behavior: 'smooth' });
+          scrollToSection('month-review');
         }}
         type="button"
       >
@@ -190,7 +200,7 @@ export function CashFlowPage() {
           <BalanceExplainer />
         </>
       )}
-      <Commitments />
+      <Commitments open={quickAdd?.commitments === true} />
       {phone ? null : (
         <div className={ui.twoColumn}>
           <section className={ui.card}>

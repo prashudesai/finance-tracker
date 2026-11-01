@@ -384,9 +384,14 @@ export function backupStatus(data: TrackerData, today: string, syncedOn: string 
   };
 }
 
+/** Tells the destination page which review to open. */
+export type AttentionTarget =
+  { review: string } | { panel: 'data' } | { confirm: true } | { commitments: true };
+
 export interface AttentionItem {
   label: string;
   path: string;
+  state: AttentionTarget;
 }
 
 const needs = (count: number, noun: string) =>
@@ -412,30 +417,42 @@ export function attentionItems(
       const close = closeMonth(data, month);
       if (month === current) return close.opening === null;
       return !close.complete || !monthReviewStatus(data, month).reviewed;
-    });
-  if (incomplete.length > 0) {
+    })
+    .sort()
+    .reverse();
+  const [latest] = incomplete;
+  if (latest) {
     items.push({
       label: `${needs(incomplete.length, 'household month')} balance review`,
       path: '/cash-flow',
+      state: { review: latest },
     });
   }
   const backup = backupStatus(data, today, syncedOn);
-  if (backup.due) items.push({ label: backup.label, path: '/settings' });
+  if (backup.due) {
+    items.push({ label: backup.label, path: '/settings', state: { panel: 'data' } });
+  }
   const unverified = unverifiedHoldings(data).length;
   if (unverified > 0) {
-    items.push({ label: `${needs(unverified, 'valuation')} confirmation`, path: '/investments' });
+    items.push({
+      label: `${needs(unverified, 'valuation')} confirmation`,
+      path: '/investments',
+      state: { confirm: true },
+    });
   }
   const unchecked = uncheckedContributions(data, current).length;
   if (unchecked > 0 && today === lastDayOfMonth(current)) {
     items.push({
       label: `${unchecked} automatic ${unchecked === 1 ? 'entry needs' : 'entries need'} a statement check`,
       path: '/cash-flow',
+      state: { review: current },
     });
   }
   if (pendingRecurring > 0) {
     items.push({
       label: `${pendingRecurring} recurring item${pendingRecurring === 1 ? '' : 's'} due`,
       path: '/cash-flow',
+      state: { commitments: true },
     });
   }
   return items;

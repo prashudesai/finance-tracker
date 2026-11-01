@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { closeMonth, monthReviewStatus, monthSignature } from '../../domain/analytics';
+import { nextMonth } from '../../domain/calendar';
 import { holdingContributions } from '../../domain/holdings';
 import { useTracker } from '../../store/tracker';
 import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format';
+import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
+import { BalanceForm } from './MonthlyBalances';
 
 export function MonthReview({
   month,
@@ -15,8 +19,13 @@ export function MonthReview({
 }) {
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
+  const canEdit = useTracker((state) => state.canEdit);
+  const [settingBalance, setSettingBalance] = useState<string | null>(null);
   const close = closeMonth(data, month);
   const status = monthReviewStatus(data, month);
+  // A closing balance only exists once the next month has started.
+  const unset = close.opening === null ? month : close.closing === null ? nextMonth(month) : null;
+  const missingBalance = unset && unset <= localDate().slice(0, 7) ? unset : null;
   const entries = data.holdings.flatMap((holding) =>
     holdingContributions(holding.id, data.contributions)
       .filter((row) => row.automatic && row.date.startsWith(month))
@@ -99,8 +108,17 @@ export function MonthReview({
           figures change later, it asks for review again.
         </p>
         <div className={ui.formActions}>
+          {missingBalance && canEdit ? (
+            <button
+              className={ui.button}
+              onClick={() => setSettingBalance(missingBalance)}
+              type="button"
+            >
+              Set {formatMonth(missingBalance)} opening balance
+            </button>
+          ) : null}
           <button
-            className={ui.button}
+            className={missingBalance ? ui.quiet : ui.button}
             disabled={!close.complete || status.reviewed}
             onClick={() =>
               commit([
@@ -123,6 +141,11 @@ export function MonthReview({
           </button>
         </div>
       </div>
+      {settingBalance ? (
+        <Modal onClose={() => setSettingBalance(null)} title="Set bank balance">
+          <BalanceForm month={settingBalance} onDone={() => setSettingBalance(null)} />
+        </Modal>
+      ) : null}
     </details>
   );
 }

@@ -829,6 +829,18 @@
   background: var(--series-income);
 }
 
+/* A collapsed card is only its heading, so it stays one line tall. A link can
+   scroll to these, and the margin keeps them clear of the sticky header. */
+.card.fold {
+  gap: 10px;
+  padding: 12px 16px;
+  scroll-margin-top: 76px;
+}
+
+.card.fold:not([open]) {
+  padding-block: 8px;
+}
+
 details.fold > summary {
   font-weight: 600;
   cursor: pointer;

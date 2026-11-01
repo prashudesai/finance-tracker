@@ -14,7 +14,7 @@ import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
 import { SortHeader, useSort, type SortValue } from '../../ui/useSort';
 
-function BalanceForm({ month, onDone }: { month: string; onDone: () => void }) {
+export function BalanceForm({ month, onDone }: { month: string; onDone: () => void }) {
   const commit = useTracker((state) => state.commit);
   const balances = useTracker((state) => state.data.monthlyBalances);
   const startingBalance = (key: string) => balances.find((row) => row.month === key)?.startBalance;

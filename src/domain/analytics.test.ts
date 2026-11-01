@@ -192,6 +192,7 @@ describe('reviews', () => {
 
   test('the attention list counts unreviewed months and unconfirmed values', () => {
     const items = attentionItems({ ...state, holdings: [holding({})] }, '2026-04-10', 2);
+    expect(items.every((row) => Object.keys(row.state).length > 0)).toBe(true);
     expect(items.map((row) => row.label)).toEqual([
       '1 household month needs balance review',
       'No backup exported yet',
