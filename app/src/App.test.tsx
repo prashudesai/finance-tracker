@@ -9,7 +9,7 @@ import { localDate } from './ui/format';
 
 afterEach(() => {
   cleanup();
-  useTracker.setState({ profile: null });
+  useTracker.setState({ profile: null, tourOpen: false });
 });
 
 // jsdom has no native dialog behaviour.
@@ -333,4 +333,15 @@ test('owners can manage family members', async () => {
   window.confirm = () => true;
   fireEvent.click(screen.getByRole('button', { name: 'Remove a@example.test', hidden: true }));
   expect(family.remove).toHaveBeenCalledWith('a@example.test');
+});
+
+test('the app tour walks the pages and changes nothing', async () => {
+  renderApp('/settings');
+  fireEvent.click(await screen.findByRole('button', { name: /App info/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Start app tour', hidden: true }));
+  const tour = await screen.findByRole('region', { name: 'App tour' });
+  fireEvent.click(within(tour).getByRole('button', { name: 'Next' }));
+  expect(await screen.findByRole('heading', { level: 1, name: 'Cash flow' })).toBeDefined();
+  fireEvent.click(within(tour).getByRole('button', { name: 'Skip' }));
+  expect(screen.queryByRole('region', { name: 'App tour' })).toBeNull();
 });

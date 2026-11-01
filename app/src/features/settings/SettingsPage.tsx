@@ -555,6 +555,7 @@ function Appearance() {
 
 export function SettingsPage({ account }: { account: Account }) {
   const [panel, setPanel] = useState<Panel | null>(null);
+  const setTourOpen = useTracker((state) => state.setTourOpen);
   const initial = account.name.charAt(0).toUpperCase();
   const open = TILES.find((tile) => tile.panel === panel);
 
@@ -598,11 +599,23 @@ export function SettingsPage({ account }: { account: Account }) {
       {open ? (
         <Modal onClose={() => setPanel(null)} title={open.title}>
           {panel === 'info' ? (
-            <p>
-              Track income, expenses, investments, retirement accounts and loans for your family.
-              Balances are always calculated from your records, so totals stay consistent across
-              devices.
-            </p>
+            <div className={ui.page}>
+              <p>
+                Track income, expenses, investments, retirement accounts and loans for your family.
+                Balances are always calculated from your records, so totals stay consistent across
+                devices.
+              </p>
+              <button
+                className={ui.quiet}
+                onClick={() => {
+                  setPanel(null);
+                  setTourOpen(true);
+                }}
+                type="button"
+              >
+                Start app tour
+              </button>
+            </div>
           ) : null}
           {panel === 'account' ? (
             <div className={ui.page}>

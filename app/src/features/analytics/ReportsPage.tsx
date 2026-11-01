@@ -1,4 +1,4 @@
-import { Download, Printer } from 'lucide-react';
+import { Download, FileText, Printer } from 'lucide-react';
 import { useState } from 'react';
 import {
   addMonths,
@@ -14,10 +14,11 @@ import {
   REPORT_TYPES,
   type ReportType,
 } from '../../domain/reports';
-import { useView } from '../../store/tracker';
+import { useTracker, useView } from '../../store/tracker';
 import { downloadText } from '../../ui/download';
 import { Field } from '../../ui/Field';
 import { formatDay, formatMoney, localDate } from '../../ui/format';
+import { downloadTablePdf, pdfAmount } from '../../ui/pdf';
 import { Metric } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 
@@ -25,6 +26,7 @@ const ROW_LIMIT = 200;
 
 export function ReportsPage() {
   const data = useView();
+  const report = useTracker((state) => state.report);
   const today = localDate();
   const thisFy = financialYearStart(today);
   const [start, setStart] = useState(financialYearRange(thisFy).start);
@@ -153,10 +155,38 @@ export function ReportsPage() {
             <button
               className={ui.quiet}
               disabled={rows.length === 0}
+              onClick={() =>
+                void downloadTablePdf({
+                  title: 'Finance report',
+                  subtitle: `${start} to ${end} · ${rows.length} records · Amounts in INR`,
+                  columns: [
+                    { label: 'Date', width: 26 },
+                    { label: 'Type', width: 40 },
+                    { label: 'Name', width: 80 },
+                    { label: 'Details', width: 92 },
+                    { label: 'Amount', width: 38, numeric: true },
+                  ],
+                  rows: rows.map((row) => [
+                    row.date,
+                    row.group,
+                    row.name,
+                    row.detail,
+                    pdfAmount(row.amount),
+                  ]),
+                  file: `finance-report-${start}-to-${end}.pdf`,
+                }).catch(() => report('The PDF could not be created. Please try again.'))
+              }
+              type="button"
+            >
+              <FileText size={16} /> PDF
+            </button>
+            <button
+              className={ui.quiet}
+              disabled={rows.length === 0}
               onClick={() => window.print()}
               type="button"
             >
-              <Printer size={16} /> Print or PDF
+              <Printer size={16} /> Print
             </button>
           </div>
         </div>

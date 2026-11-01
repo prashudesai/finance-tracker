@@ -740,3 +740,19 @@ details.fold[open] > summary {
   background: #e09a6a;
   border-color: #e09a6a;
 }
+
+@media print {
+  .card,
+  .hero,
+  .metric {
+    box-shadow: none;
+    background: none;
+    color: #000;
+    border-color: #999;
+  }
+
+  .button,
+  .quiet {
+    display: none;
+  }
+}

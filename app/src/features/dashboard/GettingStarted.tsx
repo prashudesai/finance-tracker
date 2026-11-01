@@ -40,6 +40,7 @@ export function GettingStarted() {
   const canEdit = useTracker((state) => state.canEdit);
   const settings = useSettings();
   const save = useSaveSettings();
+  const setTourOpen = useTracker((state) => state.setTourOpen);
   const [step, setStep] = useState(settings.familyMembers.length > 0 ? 1 : 0);
   const [name, setName] = useState('');
 
@@ -109,7 +110,14 @@ export function GettingStarted() {
               </button>
               <button
                 className={ui.button}
-                onClick={() => (step === STEPS.length ? finish() : setStep(step + 1))}
+                onClick={() => {
+                  if (step < STEPS.length) {
+                    setStep(step + 1);
+                    return;
+                  }
+                  finish();
+                  setTourOpen(true);
+                }}
                 type="button"
               >
                 {step === STEPS.length ? 'Finish' : 'Continue'}

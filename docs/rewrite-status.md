@@ -20,11 +20,15 @@ All pages from the older app's navigation exist and follow its layouts.
 | Planning | Goal planner and planned changes |
 | Data layer | Firestore repository tested on the emulator with the real rules |
 | Security rules | Written for all collections and tested on the emulator |
+| Change log | Saved changes with who made them, and undo that refuses to overwrite later edits |
+| Family | Invite, change access and remove members |
+| Exports | CSV, print, and generated PDFs for reports and loan history |
+| Onboarding | Guided setup and an app tour |
 | PWA | Installable, app shell works offline, updates wait for acceptance, security policy applied |
 
 ## Not verified
 
-- Google sign-in and invites haven't run against real Firebase. The security policy allows the sign-in hosts, but no real sign-in has exercised it.
+- Google sign-in and family management haven't run against real Firebase. The security policy allows the sign-in hosts, but no real sign-in has exercised it.
 - Rules for `app/` aren't deployed, so sign-in against the real project would be refused data access.
 - Offline data and queued writes are expected from Firestore's local cache, but only the app shell has been tested offline.
 - There are no Playwright tests in the repo yet. Main flows and PWA behaviour were checked with throwaway browser scripts.
@@ -33,13 +37,9 @@ All pages from the older app's navigation exist and follow its layouts.
 
 ## Remaining
 
-### Features still missing from the older app
+### Features
 
-- [ ] Guided tour
-- [ ] Change log and dated restore points
-- [ ] Removing family members from access, and shared payment confirmations
-- [ ] Generated PDF exports (reports use the browser's print to PDF for now)
-- [ ] Named tests from `tests/first-emi.cjs`, `tests/short-first-interest.cjs`, `tests/revised-emi.cjs` and `tests/sbi-daily.cjs`
+All features from the older app are built, apart from the deliberate differences listed below.
 
 ### Platform
 
@@ -70,6 +70,10 @@ All pages from the older app's navigation exist and follow its layouts.
 - Holdings derive invested and current values from contributions and valuations, instead of keeping running totals.
 - A contribution dated the same day as a valuation, or earlier, is treated as already included in that valuation.
 - PF and PPF interest credits are recorded as a new valuation rather than a separate credit list.
+- Dated restore points are replaced by the change log, which undoes single changes. A whole-tracker rollback uses a backup.
+- The change log is shared across the family, and changes of more than 50 records keep a summary only.
+- The app tour is a short walk through each page, not element-by-element highlights.
+- PDFs use plain amounts marked INR, because the standard PDF fonts have no rupee sign.
 - A restore larger than 400 writes is sent in batches, so an interrupted restore can be partial. Restoring the backup again fixes it.
 - Scheduled contributions post once after records load, with fixed IDs, so two devices can't post the same month twice.
 - The expenses series is amber, not rose, because rose fails the colour-blindness check against mint.

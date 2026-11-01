@@ -19,6 +19,8 @@ households/{ownerUid}/
   gratuityAccounts/{id}
   projectionAdjustments/{id}
   settings/tracker
+  monthReviews/{id}
+  changes/{id}
 ```
 
 Email addresses in `memberships` are lowercase.
@@ -39,6 +41,8 @@ Email addresses in `memberships` are lowercase.
 | `gratuityAccounts` | Joining date and basic salary | The estimate is calculated |
 | `projectionAdjustments` | Planned additions and withdrawals | |
 | `settings` | Custom values and projection assumptions | One document, `tracker` |
+| `monthReviews` | Months someone has reviewed | Holds a signature, so later changes ask for review again |
+| `changes` | The change log | Newest 200, with earlier values for undo |
 
 ## Loans
 

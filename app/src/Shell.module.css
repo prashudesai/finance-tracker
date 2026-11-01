@@ -170,7 +170,36 @@
 }
 
 @media print {
-  .searchButton {
+  .searchButton,
+  .header,
+  .nav,
+  .tour {
     display: none;
+  }
+}
+
+.tour {
+  position: fixed;
+  right: 12px;
+  bottom: calc(148px + env(safe-area-inset-bottom));
+  left: 12px;
+  z-index: 3;
+  display: grid;
+  gap: 8px;
+  max-width: 420px;
+  margin-left: auto;
+  padding: 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+@media (min-width: 768px) {
+  .tour {
+    right: 88px;
+    bottom: 24px;
+    left: auto;
+    width: 400px;
   }
 }

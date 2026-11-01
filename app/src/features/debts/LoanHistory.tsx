@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { FileText, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
   dailyStatement,
@@ -13,6 +13,7 @@ import { useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
 import { formatDay, formatMoney, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
+import { downloadTablePdf, pdfAmount } from '../../ui/pdf';
 import ui from '../../ui/ui.module.css';
 
 type Entry = 'payment' | 'part-payment' | 'rate' | 'topup' | 'emi';
@@ -168,6 +169,7 @@ function EntryForm({ loan, onDone }: { loan: Loan; onDone: () => void }) {
 export function LoanHistory({ loan, onClose }: { loan: Loan; onClose: () => void }) {
   const expenses = useTracker((state) => state.data.expenses);
   const commit = useTracker((state) => state.commit);
+  const report = useTracker((state) => state.report);
   const today = localDate();
   const payments = loanPayments(expenses, loan.id);
   const ledger = rebuildLoan(loan, payments, { asOf: today });
@@ -187,6 +189,41 @@ export function LoanHistory({ loan, onClose }: { loan: Loan; onClose: () => void
           loan={loan}
           onDone={() => undefined}
         />
+        {newest.length > 0 ? (
+          <div className={ui.formActions}>
+            <button
+              className={ui.quiet}
+              onClick={() =>
+                void downloadTablePdf({
+                  title: `${loan.type} Payment History`,
+                  subtitle: `Oldest to newest · Generated ${today} · Amounts in INR`,
+                  columns: [
+                    { label: 'Date', width: 30 },
+                    { label: 'Entry', width: 45 },
+                    { label: 'Paid', width: 50, numeric: true },
+                    { label: 'Interest', width: 50, numeric: true },
+                    { label: 'Principal', width: 50, numeric: true },
+                    { label: 'Balance', width: 50, numeric: true },
+                  ],
+                  rows: [...newest]
+                    .reverse()
+                    .map((row) => [
+                      row.date,
+                      row.repaymentType === 'part-payment' ? 'Part payment' : 'EMI payment',
+                      pdfAmount(row.amount),
+                      pdfAmount(splits.get(row.id)?.interestPaid ?? 0),
+                      pdfAmount(splits.get(row.id)?.principalPaid ?? 0),
+                      pdfAmount(after.get(row.id) ?? 0),
+                    ]),
+                  file: `${loan.type.toLowerCase().replaceAll(' ', '-')}-history.pdf`,
+                }).catch(() => report('The PDF could not be created. Please try again.'))
+              }
+              type="button"
+            >
+              <FileText size={16} /> Save PDF
+            </button>
+          </div>
+        ) : null}
         {isLoanFailure(ledger) ? (
           <p className={ui.fieldError} role="alert">
             {ledger.error}

@@ -16,6 +16,7 @@ import type { TrackerRepository } from './data/repository';
 import { useSettings, useTracker } from './store/tracker';
 import styles from './Shell.module.css';
 import { localDate } from './ui/format';
+import { GuidedTour } from './ui/GuidedTour';
 import { SearchButton } from './ui/SearchDialog';
 import { useAppUpdate } from './ui/pwa';
 import { useTheme } from './ui/theme';
@@ -96,6 +97,7 @@ export function Shell({
   const settings = useSettings();
   const { theme, toggle } = useTheme();
   const { updateReady, applyUpdate } = useAppUpdate();
+  const tourOpen = useTracker((state) => state.tourOpen);
 
   useEffect(
     () => connect(repository, account.role !== 'viewer', account.email),
@@ -201,6 +203,7 @@ export function Shell({
         )}
       </main>
       {loaded ? <SearchButton /> : null}
+      {tourOpen ? <GuidedTour /> : null}
     </div>
   );
 }
