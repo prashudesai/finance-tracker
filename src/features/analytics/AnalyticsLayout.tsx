@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import { PageHeader } from '../../ui/PageHeader';
 import ui from '../../ui/ui.module.css';
 
@@ -9,13 +9,24 @@ const TABS = [
 ];
 
 export function AnalyticsLayout() {
+  const { pathname } = useLocation();
+  const projection = pathname.startsWith('/analytics/projection');
   return (
     <div className={ui.page}>
-      <PageHeader
-        eyebrow="Financial insights"
-        subtitle="Explore your portfolio, monthly cash flow, debt progress and recorded activity in one place."
-        title="Analytics"
-      />
+      {projection ? (
+        <PageHeader
+          action={<span className={ui.chip}>Projection starts today</span>}
+          eyebrow="Plan ahead"
+          subtitle="Compare possible portfolio paths using today's investment values, contribution choices and return assumptions."
+          title="Growth Projection"
+        />
+      ) : (
+        <PageHeader
+          eyebrow="Financial insights"
+          subtitle="Explore your portfolio, monthly cash flow, debt progress and recorded activity in one place."
+          title="Analytics"
+        />
+      )}
       <nav aria-label="Analytics sections" className={ui.tabs}>
         {TABS.map(({ to, label, end }) => (
           <NavLink

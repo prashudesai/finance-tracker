@@ -24,6 +24,9 @@
   --warning-text: #ffd089;
   --shadow: 0 12px 32px rgb(0 0 0 / 22%);
   --hero: linear-gradient(135deg, #1f4a42, #15322e 62%);
+  --scenario-stress: #d96560;
+  --scenario-base: #3494de;
+  --scenario-optimistic: #1fac79;
   --radius: 20px;
   --radius-small: 12px;
   --space: 16px;
@@ -42,6 +45,9 @@
   color-scheme: light;
   --bg: #eef5f2;
   --bg-glow: rgb(14 159 126 / 12%);
+  --scenario-stress: #c8493f;
+  --scenario-base: #1f78c8;
+  --scenario-optimistic: #0e8a5f;
   --surface: #ffffff;
   --surface-raised: #f5faf8;
   --surface-sunken: #e6f0ec;
@@ -70,6 +76,9 @@
     color-scheme: light;
     --bg: #eef5f2;
     --bg-glow: rgb(14 159 126 / 12%);
+    --scenario-stress: #c8493f;
+    --scenario-base: #1f78c8;
+    --scenario-optimistic: #0e8a5f;
     --surface: #ffffff;
     --surface-raised: #f5faf8;
     --surface-sunken: #e6f0ec;

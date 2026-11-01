@@ -66,7 +66,7 @@ test.each([
   ['/investments', 'Investments'],
   ['/debts', 'Debt & EMI Tracker'],
   ['/analytics', 'Analytics'],
-  ['/analytics/projection', 'Analytics'],
+  ['/analytics/projection', 'Growth Projection'],
   ['/analytics/reports', 'Analytics'],
   ['/settings', 'Settings'],
 ])('%s renders with full sample data', async (path, title) => {
@@ -545,6 +545,37 @@ describe('needs attention', () => {
       await screen.findByRole('dialog', { name: 'Data & backup', hidden: true }),
     ).toBeDefined();
   });
+});
+
+test('desktop projection follows the chosen scenario and edits assumptions', async () => {
+  renderApp('/analytics/projection', { holdings: [fund] });
+  expect(await screen.findByRole('heading', { level: 1, name: 'Growth Projection' })).toBeDefined();
+  expect(await screen.findByText('Base · 5-year projection')).toBeDefined();
+  expect(screen.getByRole('columnheader', { name: /Base growth/ })).toBeDefined();
+  fireEvent.click(screen.getByRole('button', { name: /^Stress/ }));
+  expect(await screen.findByText('Stress · 5-year projection')).toBeDefined();
+  expect(screen.getByRole('columnheader', { name: /Stress closing value/ })).toBeDefined();
+  expect(screen.getByLabelText('Mutual Funds annual step-up', { exact: false })).toBeDefined();
+  expect(screen.getByRole('switch', { name: 'Include monthly contributions' })).toBeDefined();
+});
+
+test('phone projection opens assumptions by group and keeps goals last', async () => {
+  window.matchMedia = ((query: string) => ({
+    matches: query === '(max-width: 700px)',
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  })) as unknown as typeof window.matchMedia;
+  renderApp('/analytics/projection', { holdings: [fund] });
+  expect(await screen.findByRole('heading', { level: 1, name: 'Growth Projection' })).toBeDefined();
+  expect(screen.queryByLabelText(/Mutual Funds annual step-up/)).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /Market linked/ }));
+  expect(await screen.findByLabelText(/Mutual Funds annual step-up/)).toBeDefined();
+  const headings = screen.getByText('Current Values and Assumptions');
+  const planned = screen.getByText('Planned one-time changes');
+  const goal = screen.getByText('Goal planning');
+  expect(headings.compareDocumentPosition(planned) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(planned.compareDocumentPosition(goal) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  Reflect.deleteProperty(window, 'matchMedia');
 });
 
 test('the + stays on the dashboard', async () => {

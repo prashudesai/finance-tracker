@@ -15,6 +15,10 @@ export const formatMoney = (value: number) => rupees.format(value);
 
 export const formatCompactMoney = (value: number) => compactRupees.format(value);
 
+/** Always in lakhs, so a column of large values stays comparable. */
+export const formatLakhs = (value: number, digits = 2) =>
+  `${value < 0 ? '−' : ''}₹${(Math.abs(value) / 100_000).toFixed(digits)}L`;
+
 export function localDate(now = new Date()) {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');

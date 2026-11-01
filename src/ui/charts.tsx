@@ -139,18 +139,31 @@ export function ColumnChart({ title, bars }: { title: string; bars: Segment[] })
 
 export interface LineSeries {
   name: string;
+  /** A fixed colour, for series with a meaning of their own. */
+  color?: string;
   points: { label: string; value: number }[];
 }
 
-export function LineChart({ title, series }: { title: string; series: LineSeries[] }) {
+export function LineChart({
+  title,
+  series,
+  narrow = false,
+  height: chosenHeight,
+}: {
+  title: string;
+  series: LineSeries[];
+  height?: number | undefined;
+  /** Draws for a phone's width, so the labels stay readable. */
+  narrow?: boolean;
+}) {
   const values = series.flatMap((line) => line.points.map((point) => point.value));
   const labels = series[0]?.points.map((point) => point.label) ?? [];
   if (values.length === 0) return <p className={ui.empty}>Nothing to chart yet.</p>;
   const low = Math.min(...values);
   const high = Math.max(...values);
   const span = high - low || 1;
-  const width = 900;
-  const height = 300;
+  const width = narrow ? 400 : 900;
+  const height = chosenHeight ?? (narrow ? 260 : 300);
   const top = 12;
   const bottom = 26;
   const left = 64;
@@ -158,14 +171,14 @@ export function LineChart({ title, series }: { title: string; series: LineSeries
     left + (labels.length > 1 ? (index / (labels.length - 1)) * (width - left - 16) : 0);
   const y = (value: number) => top + (1 - (value - low) / span) * (height - top - bottom);
   const ticks = [high, (high + low) / 2, low];
-  const stride = Math.max(1, Math.ceil(labels.length / 7));
+  const stride = Math.max(1, Math.ceil(labels.length / (narrow ? 3 : 7)));
   return (
     <figure className={styles.line}>
       {series.length > 1 ? (
         <figcaption className={styles.lineLegend}>
           {series.map((line, index) => (
             <span key={line.name}>
-              <i style={{ background: chartColor(index) }} /> {line.name}
+              <i style={{ background: line.color ?? chartColor(index) }} /> {line.name}
             </span>
           ))}
         </figcaption>
@@ -198,7 +211,7 @@ export function LineChart({ title, series }: { title: string; series: LineSeries
             <polyline
               fill="none"
               points={line.points.map((point, index) => `${x(index)},${y(point.value)}`).join(' ')}
-              stroke={chartColor(seriesIndex)}
+              stroke={line.color ?? chartColor(seriesIndex)}
               strokeLinejoin="round"
               strokeWidth="2"
             />
@@ -206,7 +219,7 @@ export function LineChart({ title, series }: { title: string; series: LineSeries
               <circle
                 cx={x(index)}
                 cy={y(point.value)}
-                fill={chartColor(seriesIndex)}
+                fill={line.color ?? chartColor(seriesIndex)}
                 key={point.label}
                 r="4"
               >
