@@ -1,19 +1,16 @@
-# Finance Tracker
+# Personal Finance Tracker
 
-A family finance PWA, mid-rewrite. All new work goes in `app/` (React, TypeScript, Vite, Firebase). `src/`, `dist/`, `tools/` and `tests/` are the legacy app.
+A family finance PWA built with React, TypeScript, Vite and Firebase, live at https://finance-trackerp.web.app.
 
 Read [docs/rewrite-status.md](docs/rewrite-status.md) before starting a feature, and [docs/architecture.md](docs/architecture.md) before changing how data flows.
 
 ## Current situation
 
-- Existing data is throwaway. Don't add migrations or compatibility with legacy formats.
-- Legacy code is a reference only. Don't fix or extend it. It gets deleted once `app/` has parity.
+- This project is `finance-trackerp`, pinned in `.firebaserc`. The older app is a separate project, `finance-tracker-bc7c9`. Never deploy this repo to it.
+- The older app's code was removed from this repo. It remains in git history, up to commit `d34c2af`.
 - The encrypted vault was dropped on purpose. Don't restore it from git history.
-- `app/` deploys to the test project `finance-trackerp`, pinned in `app/.firebaserc`. Don't deploy it to the live project `finance-tracker-bc7c9`: its `firestore.rules` would lock out the older app. Pushes to `main` still deploy the older app, and `app/**` changes are excluded from that workflow.
 
 ## Commands
-
-Run from `app/`:
 
 ```bash
 npm install --ignore-scripts
@@ -44,42 +41,33 @@ npm run build
 ```
 
 - `dev:preview` runs the app on sample in-memory data with no Firebase or sign-in, on port 5173. The sign-in screen is at `/signin`.
-- `npm test` covers domain logic and UI. It reads `../dist/*.js` for the parity tests.
 - `test:rules` covers the security rules and Firestore repository on the emulator, and needs Java 17 or later.
 
-Before calling work done, run typecheck, lint, tests and build. Run `test:rules` too if `firestore.rules` changed. For UI changes, also check the running app at phone and desktop widths.
+Before calling work done, run typecheck, lint, tests and build. Run `test:rules` too if `firestore.rules` or the data layer changed. For UI changes, also check the running app at phone and desktop widths.
 
 ## Rules
 
 **Layers.** Dependencies point one way: `features` → `store` → `data`, and anything may use `domain` and `schema`.
 
-- `app/src/domain`: pure functions only, with no React, Firebase, DOM or current-time access. Pass `today` in.
-- `app/src/schema`: Zod schemas are the single source of record types. Derive types with `z.infer`.
-- `app/src/data`: the only place that touches Firestore, behind `TrackerRepository`.
-- `app/src/features/<page>`: one folder per screen.
-- `app/src/ui`: shared styles, formatting and small components.
+- `src/domain`: pure functions only, with no React, Firebase, DOM or current-time access. Pass `today` in.
+- `src/schema`: Zod schemas are the single source of record types. Derive types with `z.infer`.
+- `src/data`: the only place that touches Firestore, behind `TrackerRepository`.
+- `src/features/<page>`: one folder per screen.
+- `src/ui`: shared styles, formatting and small components.
 
 **Store facts, derive the rest.** Never save a value that can be calculated. A loan stores opening terms and dated changes, and a holding stores its opening position, contributions and valuations. Balances always come from `rebuildLoan` and `holdingPosition`. Don't add cached totals to a record.
 
-**Rendering never writes.** Changes happen in event handlers through `commit`. Legacy accruals ran during render, and that must not come back.
+**Rendering never writes.** Changes happen in event handlers through `commit`.
 
 **Don't lose user-visible failures.** When a domain function returns errors, show them. Use plain language in messages shown to users, not library defaults.
 
 **Money and dates.** Dates are `YYYY-MM-DD` strings and months are `YYYY-MM`, compared as strings and calculated in UTC through `domain/calendar.ts`. Round money with `roundMoney`. Display with `formatMoney`.
 
-**Styling.** Use CSS Modules and the tokens in `ui/tokens.css`, with no `!important`. Design for phone width first, with no horizontal page scroll. No inline event attributes or `innerHTML`.
+**Financial results.** `src/domain/reference` holds the older app's formulas, frozen, for parity tests. Don't edit it. A deliberate change to a calculation updates the tests and is recorded in the status doc. After porting or changing a calculation, confirm its test can fail by breaking the code on purpose, then restore it.
 
-**Design.** The brand is deep teal surfaces with mint accents, large rounded cards and the logo in `src/assets`. New and changed pages follow the older app's layout: same sections, order and labels. Compare with the live app at https://finance-tracker-bc7c9.web.app, or run legacy locally as `tests/emerald-flow-browser.cjs` does. Dropdowns are styled once, in `ui/tokens.css`. Icons come from `lucide-react`. Lead each screen with its most useful number. Check both themes.
+**Styling.** Use CSS Modules and the tokens in `ui/tokens.css`. Design for phone width first, with no horizontal page scroll. No inline event attributes or `innerHTML`. Dropdowns are styled once, in `ui/tokens.css`.
 
-## Porting from legacy
-
-1. Read the legacy code and its tests, and any spec in [docs/legacy/](docs/legacy/README.md).
-2. Port the calculation into `domain/` as pure TypeScript.
-3. Add unit tests, plus a seeded parity test against the legacy code. See `domain/loan.test.ts`, and `domain/legacy.testutil.ts` for functions in `src/core`.
-4. Confirm the parity test can fail by breaking the port on purpose, then restore it.
-5. Build the screen, and update [docs/rewrite-status.md](docs/rewrite-status.md).
-
-Financial results must match legacy exactly unless the difference is a deliberate fix recorded in the status doc.
+**Design.** The brand is deep teal surfaces with mint accents, large rounded cards and the logo in `src/assets`. Icons come from `lucide-react`. Lead each screen with its most useful number. Check both themes.
 
 ## Version pins
 
@@ -88,4 +76,4 @@ Financial results must match legacy exactly unless the difference is a deliberat
 
 ## Git
 
-Work happens on `rewrite/react-typescript`. Commit, push or deploy only when asked.
+Commit, push or deploy only when asked.

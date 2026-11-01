@@ -1,6 +1,6 @@
 # Data model
 
-Record types are defined in `app/src/schema/records.ts`. That file is the source of truth, and this page explains the layout and the reasoning.
+Record types are defined in `src/schema/records.ts`. That file is the source of truth, and this page explains the layout and the reasoning.
 
 ## Firestore layout
 

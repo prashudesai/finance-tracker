@@ -59,9 +59,9 @@ The older app saved all data as one large chunked snapshot, with its own Indexed
 
 ## Security
 
-- Firestore rules in `app/firestore.rules` are the access boundary, and every Firestore path is denied unless a rule allows it.
+- Firestore rules in `firestore.rules` are the access boundary, and every Firestore path is denied unless a rule allows it.
 - A household's ID is its owner's UID.
 - The owner creates an invite, and only the invited person can accept it. Without that step, anyone could push a stranger into their household.
 - Editors and viewers get access only through an accepted membership. Viewers can't write.
-- `app/firebase.json` sets a Content Security Policy for hosting.
+- `firebase.json` sets a Content Security Policy for hosting.
 - Rules can't validate record contents in depth, so schemas protect the client from bad rows rather than protecting the database from a hostile editor.

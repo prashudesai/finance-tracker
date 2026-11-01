@@ -1,23 +1,48 @@
 {
-  "name": "personal-finance-tracker",
-  "version": "2026.10.30.7",
+  "name": "finance-tracker",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "test": "node tests/first-emi.cjs && node tests/recurring.cjs && node tests/loan-ledger.cjs && node tests/state-loans.cjs && node tests/cloud-store.cjs && node tests/family-policy.cjs && node tests/pwa-worker.cjs && node tests/pwa-client.cjs && node tests/audit.cjs && node tests/recurring-performance.cjs && node tests/app-info-startup.cjs && node tests/startup-render.cjs && node tests/family-tiles.cjs && node tests/short-first-interest.cjs && node tests/revised-emi.cjs && node tests/manual-emi.cjs && node tests/member-defaults.cjs && node tests/profile-icon.cjs && node tests/member-management.cjs && node tests/sbi-daily.cjs && node tests/daily-interest-visibility.cjs && node tests/recurring-orphans-ui.cjs && node tests/loan-history-exports.cjs && node tests/cloud-refresh-icon.cjs && node tests/audit-hardening.cjs && node tests/pft_deep_regression.js && node tests/pft_edit_regression.js && node tests/pft_input_report_tests.js && node tests/projection-parity.cjs && node tests/first-name.cjs && node tests/mobile-nav.cjs && node tests/startup.cjs && node tests/full-project-hardening.cjs && node tests/package-integrity.cjs && node tests/signin-screen.cjs && node tests/cloud-notice.cjs && node tests/record-recovery.cjs && node tests/finance-model.cjs && node tests/finance-insights.cjs && node tests/build-layout.cjs && node tests/lazy-refresh.cjs && node tests/attention.cjs && node tests/record-search.cjs && node tests/review-model.cjs && node tests/projection-inputs.cjs && node tests/dashboard-savings-average.cjs && node tests/getting-started.cjs && node tests/dashboard-full-house-expense.cjs",
-    "test:emerald": "node tests/emerald-flow-browser.cjs && node tests/cash-flow-browser.cjs && node tests/optimization-browser.cjs && node tests/auth-preload-browser.cjs && node tests/finance-insights-browser.cjs",
-    "test:cash-flow": "node tests/cash-flow-browser.cjs",
-    "test:all": "npm test && npm run test:emerald && npm run test:pwa",
-    "build": "node tools/build.cjs",
-    "test:performance": "node tests/performance-browser.cjs",
-    "test:pwa": "node tests/pwa-browser.cjs",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-review-test \"node tests/review-rules.cjs\"",
-    "test:startup": "node tests/optimization-browser.cjs"
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev:preview": "VITE_DATA_SOURCE=memory vite --port 5173 --strictPort",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-finance-tracker \"vitest run --config rules/vitest.config.ts\""
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "@hookform/resolvers": "7.0.1",
+    "firebase": "13.1.0",
+    "jspdf": "4.2.1",
+    "lucide-react": "1.66.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-hook-form": "7.91.0",
+    "react-router": "8.5.1",
+    "zod": "4.6.7",
+    "zustand": "5.0.16"
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "5.0.2",
-    "esbuild": "0.28.2",
-    "firebase": "12.19.0",
+    "@firebase/rules-unit-testing": "6.0.0",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "eslint": "10.14.0",
     "firebase-tools": "13.31.2",
-    "playwright": "1.62.1"
+    "jsdom": "30.1.3",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.5",
+    "vite-plugin-pwa": "2.0.0",
+    "vitest": "5.0.5"
   }
 }

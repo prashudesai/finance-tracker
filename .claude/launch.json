@@ -4,7 +4,7 @@
     {
       "name": "finance-preview",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "app", "run", "dev:preview"],
+      "runtimeArgs": ["run", "dev:preview"],
       "port": 5173
     }
   ]

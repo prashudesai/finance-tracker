@@ -1,99 +1,75 @@
 rules_version = '2';
+
+// A household's ID is its owner's UID. Other people join through a membership
+// document, which the owner creates and only the invited person can accept.
 service cloud.firestore {
   match /databases/{database}/documents {
-    function verified() {
-      return request.auth != null && request.auth.token.email_verified == true
-        && request.auth.token.email is string
-        && !exists(/databases/$(database)/documents/deletedAccounts/$(request.auth.uid));
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
     }
-    function owns(uid) { return verified() && request.auth.uid == uid; }
-    function member(uid) {
-      return get(/databases/$(database)/documents/familyInvites/$(uid + '~' + request.auth.token.email.lower())).data;
+
+    function email() {
+      return request.auth.token.email.lower();
     }
-    function canRead(uid) {
-      return !exists(/databases/$(database)/documents/deletedAccounts/$(uid)) && (owns(uid) || (verified() && member(uid).ownerUid == uid
-        && member(uid).email == request.auth.token.email.lower()
-        && member(uid).status == 'accepted'
-        && member(uid).role in ['viewer', 'editor']));
+
+    function membershipPath() {
+      return /databases/$(database)/documents/memberships/$(email());
     }
-    function canEdit(uid) {
-      return !exists(/databases/$(database)/documents/deletedAccounts/$(uid)) && (owns(uid) || (verified() && member(uid).ownerUid == uid
-        && member(uid).email == request.auth.token.email.lower()
-        && member(uid).status == 'accepted' && member(uid).role == 'editor'));
+
+    function acceptedRole(household) {
+      let membership = get(membershipPath()).data;
+      return membership.householdId == household && membership.accepted == true
+        ? membership.role
+        : null;
     }
-    function validInvite(id, data) {
-      return data.keys().hasOnly(['ownerUid','ownerEmail','email','role','status'])
-        && data.ownerUid is string && data.ownerUid.matches('^[A-Za-z0-9_-]+$') && data.ownerEmail is string && data.email is string
-        && data.email.size() <= 254 && data.email == data.email.lower()
-        && data.email.matches('^[^ /@]+@[^ /@]+[.][^ /@]+$')
-        && id == data.ownerUid + '~' + data.email
-        && data.role in ['viewer','editor'] && data.status in ['pending','accepted'];
+
+    function isOwner(household) {
+      return signedIn() && request.auth.uid == household;
     }
-    match /familyInvites/{id} {
-      allow get: if verified() && request.auth.uid.matches('^[A-Za-z0-9_-]+$') && id.matches('^' + request.auth.uid + '~.*$');
-      allow get, list: if verified() && (resource.data.ownerUid == request.auth.uid
-        || resource.data.email == request.auth.token.email.lower());
-      allow create: if verified() && validInvite(id, request.resource.data)
-        && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.ownerEmail == request.auth.token.email.lower()
-        && request.resource.data.email != request.auth.token.email.lower()
-        && request.resource.data.status == 'pending';
-      allow update: if verified() && validInvite(id, request.resource.data)
-        && request.resource.data.ownerUid == resource.data.ownerUid
-        && request.resource.data.ownerEmail == resource.data.ownerEmail
-        && request.resource.data.email == resource.data.email
-        && ((resource.data.ownerUid == request.auth.uid
-          && request.resource.data.status == resource.data.status)
-          || (resource.data.email == request.auth.token.email.lower()
-          && resource.data.status == 'pending' && request.resource.data.status == 'accepted'
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])));
-      allow delete: if owns(resource.data.ownerUid);
+
+    function canRead(household) {
+      return isOwner(household)
+        || (signedIn() && exists(membershipPath()) && acceptedRole(household) in ['editor', 'viewer']);
     }
-    // Account photo belongs only to the signed-in person, including family viewers.
-    match /users/{uid}/profile/photo {
-      allow read: if owns(uid);
-      allow create, update: if owns(uid)
-        && request.resource.data.keys().hasOnly(['image'])
-        && request.resource.data.image is string
-        && request.resource.data.image.size() <= 120000
-        && (request.resource.data.image == '' || request.resource.data.image.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$'));
-      allow delete: if owns(uid);
+
+    function canEdit(household) {
+      return isOwner(household)
+        || (signedIn() && exists(membershipPath()) && acceptedRole(household) == 'editor');
     }
-    // Shared review metadata is separate so older tracker clients cannot erase it.
-    match /users/{uid}/reviews/current {
-      function validReview() {
-        return request.resource.data.keys().hasOnly(['format','revision','epoch','payload','updatedBy','updatedAt'])
-          && request.resource.data.format == 1
-          && request.resource.data.epoch is string && request.resource.data.epoch.size() > 0 && request.resource.data.epoch.size() <= 100
-          && request.resource.data.revision is int
-          && request.resource.data.payload is string
-          && request.resource.data.payload.size() <= 200000
-          && request.resource.data.updatedBy == request.auth.uid
-          && request.resource.data.updatedAt == request.time;
-      }
-      allow read: if canRead(uid);
-      allow create: if canEdit(uid) && validReview() && request.resource.data.revision == 1;
-      allow update: if canEdit(uid) && validReview() && request.resource.data.revision == resource.data.revision + 1
-        && (owns(uid) || request.resource.data.epoch == resource.data.epoch);
-      allow delete: if owns(uid);
+
+    match /memberships/{address} {
+      allow read: if signedIn()
+        && (address == email() || resource.data.householdId == request.auth.uid);
+
+      allow create: if signedIn()
+        && address != email()
+        && request.resource.data.keys().hasOnly(['householdId', 'role', 'accepted'])
+        && request.resource.data.householdId == request.auth.uid
+        && request.resource.data.role in ['editor', 'viewer']
+        && request.resource.data.accepted == false;
+
+      // Owners may change the role. Invitees may only accept.
+      allow update: if signedIn() && (
+        (resource.data.householdId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
+          && request.resource.data.role in ['editor', 'viewer'])
+        || (address == email()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['accepted'])
+          && request.resource.data.accepted == true)
+      );
+
+      allow delete: if signedIn()
+        && (resource.data.householdId == request.auth.uid || address == email());
     }
-    match /users/{uid}/tracker/current {
-      allow read: if canRead(uid);
-      allow create: if canEdit(uid) && request.resource.data.format == 1
-        && request.resource.data.revision == 1;
-      allow update: if canEdit(uid) && request.resource.data.format == 1
-        && request.resource.data.revision == resource.data.revision + 1
-        && (owns(uid) || (request.resource.data.previous.generation == resource.data.generation
-          && request.resource.data.previous.count == resource.data.count));
+
+    match /households/{household}/{collection}/{record} {
+      allow read: if canRead(household);
+      allow write: if canEdit(household)
+        && collection in ['income', 'expenses', 'loans', 'recurringRules',
+                          'recurringOccurrences', 'monthlyBalances', 'holdings',
+                          'contributions', 'valuations', 'gratuityAccounts',
+                          'projectionAdjustments', 'settings', 'monthReviews',
+                          'changes'];
     }
-    match /users/{uid}/snapshots/{snapshot}/chunks/{chunk} {
-      allow read: if canRead(uid);
-      allow delete: if owns(uid);
-      allow create: if canEdit(uid)
-        && request.resource.data.keys().hasOnly(['payload'])
-        && request.resource.data.payload is string
-        && request.resource.data.payload.size() <= 250000;
-    }
-    match /{document=**} { allow read, write: if false; }
   }
 }

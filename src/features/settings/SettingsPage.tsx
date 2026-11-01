@@ -38,7 +38,7 @@ type Panel =
   | 'data'
   | 'updates';
 
-const VERSION = '0.1.0';
+const VERSION = '1.0.0';
 
 const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] = [
   { panel: 'info', icon: Info, title: 'App info', text: 'Features and calculations' },

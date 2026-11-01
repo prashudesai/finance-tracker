@@ -42,3 +42,7 @@ Desktop.ini
 .idea/
 *.swp
 *.swo
+
+# Build output
+dist/
+dev-dist/

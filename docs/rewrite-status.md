@@ -1,10 +1,10 @@
-# Rewrite status
+# Status
 
-Last updated 2026-11-01. The rewrite is on `rewrite/react-typescript`. It's deployed to the `finance-trackerp` test project at https://finance-trackerp.web.app, and the older app is still what runs in production.
+Last updated 2026-11-01. The app is live at https://finance-trackerp.web.app. The older app remains at its own address, in its own Firebase project.
 
 ## Done
 
-All pages from the older app's navigation exist and follow its layouts.
+All pages from the older app exist and follow its layouts.
 
 | Area | State |
 |---|---|
@@ -48,19 +48,13 @@ All features from the older app are built, apart from the deliberate differences
 - [ ] Bundle budgets, and more code splitting (the Firebase chunk is about 187 KB gzipped)
 - [ ] Playwright tests at phone and desktop widths
 
-### Cutover
-
-- [ ] Save the parity tests' legacy results as fixtures, because those tests read `dist/*.js` and `src/core`
-- [ ] Deploy rules and the new app
-- [ ] Promote `app/` to the repo root
-- [ ] Delete `src/`, `dist/`, `tools/`, `tests/` and `docs/legacy/`
-
 ## Decisions
 
 - **Vault dropped.** The encrypted vault won't return.
 - **Fresh start for data.** Existing data is throwaway, so there's no migration.
 - **One document per record.** Replaces the chunked snapshot and custom sync.
 - **Derived figures.** Loans and holdings store history only.
+- **New address.** The app lives on `finance-trackerp`, so the older app and its data stay untouched at their old address.
 - **The older app is the design template.** Pages keep its sections, order and labels.
 - **Recovery generation, chunk verification and draft fixes not ported.** They guarded the snapshot format, which no longer exists.
 

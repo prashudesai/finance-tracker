@@ -1,16 +1,12 @@
-# Finance Tracker
+# Personal Finance Tracker
 
-Family income, expenses, loans, investments and retirement accounts in an offline-capable web app, with owner, editor and viewer roles.
+Family income, expenses, loans, investments and retirement accounts in an installable, offline-capable web app, with owner, editor and viewer roles.
 
-The app is being rewritten in React, TypeScript and Firebase. New work is in [app/](app/). The older app in this repository stays as a reference until the rewrite reaches parity.
+Live at https://finance-trackerp.web.app. Built with React, TypeScript, Vite and Firebase.
 
-## Try it
+## Run it
 
 Node 22 or later is required.
-
-```bash
-cd app
-```
 
 ```bash
 npm install --ignore-scripts
@@ -22,10 +18,37 @@ npm run dev:preview
 
 Open http://localhost:5173. This uses sample data held in memory, so you don't need Firebase or a sign-in.
 
+## Check it
+
+```bash
+npm run typecheck
+```
+
+```bash
+npm run lint
+```
+
+```bash
+npm test
+```
+
+```bash
+npm run test:rules
+```
+
+`test:rules` runs on the Firestore emulator and needs Java 17 or later.
+
+## Deploy it
+
+Nothing deploys automatically. This builds and deploys the app and its security rules:
+
+```bash
+npm run build && npx firebase deploy --only firestore:rules,hosting --project finance-trackerp
+```
+
 ## Documentation
 
-- [CLAUDE.md](CLAUDE.md): working rules and commands
+- [CLAUDE.md](CLAUDE.md): working rules
 - [docs/architecture.md](docs/architecture.md): how the app is built and why
 - [docs/data-model.md](docs/data-model.md): what is stored in Firestore
-- [docs/rewrite-status.md](docs/rewrite-status.md): what is done and what remains
-- [docs/legacy/](docs/legacy/README.md): behaviour specs and notes from the older app
+- [docs/rewrite-status.md](docs/rewrite-status.md): what changed from the older app, and what's left

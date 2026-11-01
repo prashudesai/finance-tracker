@@ -1,16 +1,11 @@
-name: Check the new app
+name: Check the app
 
 on:
   pull_request:
-    paths:
-      - 'app/**'
-      - '.github/workflows/app-checks.yml'
   push:
     branches:
+      - main
       - rewrite/react-typescript
-    paths:
-      - 'app/**'
-      - '.github/workflows/app-checks.yml'
 
 permissions:
   contents: read
@@ -18,16 +13,12 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: app
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: app/package-lock.json
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
