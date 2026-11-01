@@ -1,11 +1,21 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { optionLists } from '../../domain/options';
-import { expenseSchema, incomeSchema, type Expense, type Income } from '../../schema/records';
+import { isLoanFailure, quotePayment, rebuildLoan } from '../../domain/loan';
+import { ANNUAL_BY_DEFAULT, EXPENSE_SUBCATEGORIES, optionLists } from '../../domain/options';
+import { loanPayments } from '../../domain/recurring';
+import {
+  EMI_CATEGORY,
+  expenseSchema,
+  incomeSchema,
+  type Expense,
+  type Income,
+} from '../../schema/records';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
+import { MemberField, useDefaultMember } from '../../ui/MemberField';
 import { Select } from '../../ui/Select';
 import ui from '../../ui/ui.module.css';
 
@@ -22,9 +32,15 @@ export function IncomeForm({ initial, onDone }: { initial?: Income; onDone?: () 
   const commit = useTracker((state) => state.commit);
   const settings = useSettings();
   const options = optionLists(settings);
+  const defaultMember = useDefaultMember();
   const { register, handleSubmit, reset, formState } = useForm<IncomeValues>({
     resolver: zodResolver(incomeForm),
-    defaultValues: initial ?? { date: localDate(), member: '', source: 'Salary', notes: '' },
+    defaultValues: initial ?? {
+      date: localDate(),
+      member: defaultMember || 'Household',
+      source: 'Salary',
+      notes: '',
+    },
   });
   const { errors } = formState;
 
@@ -37,19 +53,9 @@ export function IncomeForm({ initial, onDone }: { initial?: Income; onDone?: () 
 
   return (
     <form className={ui.form} onSubmit={(event) => void handleSubmit(save)(event)}>
-      <Field label="Family member" error={errors.member?.message}>
-        {options.familyMembers.length > 0 ? (
-          <Select
-            options={options.familyMembers}
-            placeholder="-- Select family member --"
-            {...register('member')}
-          />
-        ) : (
-          <input {...register('member')} />
-        )}
-      </Field>
+      <MemberField error={errors.member?.message} {...register('member')} />
       <Field label="Source" error={errors.source?.message}>
-        <Select options={options.incomeSources} {...register('source')} />
+        <Select addTo="incomeSources" options={options.incomeSources} {...register('source')} />
       </Field>
       <Field label="Amount (₹)" error={errors.amount?.message}>
         <input
@@ -63,7 +69,7 @@ export function IncomeForm({ initial, onDone }: { initial?: Income; onDone?: () 
       <Field label="Date" error={errors.date?.message}>
         <input type="date" {...register('date')} />
       </Field>
-      <Field label="Notes (optional)" error={errors.notes?.message}>
+      <Field label="Notes (Optional)" error={errors.notes?.message}>
         <input placeholder="e.g., performance bonus" {...register('notes')} />
       </Field>
       <div className={ui.formActions}>
@@ -81,29 +87,66 @@ const expenseForm = expenseSchema
     subcategory: z.string().max(100),
     annual: z.enum(['no', 'yes']),
     member: z.string().max(100),
+    loanId: z.string(),
+    repaymentType: z.enum(['emi', 'part-payment']),
   });
 type ExpenseValues = z.infer<typeof expenseForm>;
 
 export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: () => void }) {
   const commit = useTracker((state) => state.commit);
+  const expenses = useTracker((state) => state.data.expenses);
+  const loans = useTracker((state) => state.data.loans);
   const settings = useSettings();
   const options = optionLists(settings);
-  const { register, handleSubmit, reset, formState } = useForm<ExpenseValues>({
+  const [error, setError] = useState('');
+  const { register, handleSubmit, reset, watch, setValue, formState } = useForm<ExpenseValues>({
     resolver: zodResolver(expenseForm),
-    defaultValues: initial
-      ? { ...initial, member: initial.member ?? '', annual: initial.isAnnual ? 'yes' : 'no' }
-      : {
-          date: localDate(),
-          category: 'Groceries',
-          subcategory: '',
-          member: '',
-          annual: 'no',
-          notes: '',
-        },
+    defaultValues: {
+      date: initial?.date ?? localDate(),
+      category: initial?.category ?? 'Healthcare',
+      subcategory: initial?.subcategory ?? '',
+      member: initial?.member ?? '',
+      annual: initial?.isAnnual ? 'yes' : 'no',
+      loanId: initial?.loanId ?? '',
+      repaymentType: initial?.repaymentType ?? 'emi',
+      notes: initial?.notes ?? '',
+      ...(initial ? { amount: initial.amount } : {}),
+    },
   });
   const { errors } = formState;
+  const category = watch('category');
+  const loanId = watch('loanId');
+  const date = watch('date');
+  const repaymentType = watch('repaymentType');
+  const isEmi = category === EMI_CATEGORY;
+  const subcategories = EXPENSE_SUBCATEGORIES[category];
+  const loaded = useRef(false);
 
-  const save = ({ annual, member, ...values }: ExpenseValues) => {
+  // Follows the older form: these categories default to annual, and an EMI suggests its amount.
+  useEffect(() => {
+    if (!loaded.current) {
+      loaded.current = true;
+      return;
+    }
+    setValue('annual', ANNUAL_BY_DEFAULT.includes(category) ? 'yes' : 'no');
+    setValue('subcategory', '');
+  }, [category, setValue]);
+
+  useEffect(() => {
+    const loan = loans.find((row) => row.id === loanId);
+    if (initial || !isEmi || !loan || repaymentType !== 'emi' || !date) return;
+    const quote = quotePayment(loan, loanPayments(expenses, loan.id), date);
+    if (!isLoanFailure(quote) && !quote.paidOff) setValue('amount', quote.amount);
+  }, [date, expenses, initial, isEmi, loanId, loans, repaymentType, setValue]);
+
+  const save = ({
+    annual,
+    member,
+    loanId: loan,
+    repaymentType: kind,
+    ...values
+  }: ExpenseValues) => {
+    setError('');
     const id = initial?.id ?? crypto.randomUUID();
     const value: Expense = {
       ...initial,
@@ -111,27 +154,80 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
       id,
       isAnnual: annual === 'yes',
       ...(member ? { member } : {}),
+      ...(isEmi ? { loanId: loan, repaymentType: kind, isAnnual: false } : {}),
     };
+    if (isEmi) {
+      const target = loans.find((row) => row.id === loan);
+      if (!target) {
+        setError('Select the loan this payment is for.');
+        return;
+      }
+      const others = loanPayments(expenses, loan).filter((row) => row.id !== id);
+      const check = rebuildLoan(target, [...others, value], { asOf: localDate() });
+      if (isLoanFailure(check)) {
+        setError(check.error);
+        return;
+      }
+    }
     commit([{ type: 'set', collection: 'expenses', id, value }]);
-    reset({ ...values, member: '', annual: 'no', subcategory: '', notes: '' });
+    reset({
+      date: values.date,
+      category: values.category,
+      subcategory: '',
+      member: '',
+      annual: 'no',
+      loanId: '',
+      repaymentType: 'emi',
+      notes: '',
+    });
     onDone?.();
   };
 
   return (
     <form className={ui.form} onSubmit={(event) => void handleSubmit(save)(event)}>
-      <Field label="Family member (optional)">
+      <MemberField
+        label="Family Member (Optional)"
+        placeholder="-- Household / unspecified --"
+        {...register('member')}
+      />
+      <Field label="Category" error={errors.category?.message}>
         <Select
-          options={options.familyMembers}
-          placeholder="-- Household / unspecified --"
-          {...register('member')}
+          addTo="expenseCategories"
+          options={options.expenseCategories}
+          {...register('category')}
         />
       </Field>
-      <Field label="Category" error={errors.category?.message}>
-        <Select options={options.expenseCategories} {...register('category')} />
-      </Field>
-      <Field label="Details (optional)" error={errors.subcategory?.message}>
-        <input {...register('subcategory')} />
-      </Field>
+      {subcategories ? (
+        <Field label="Expense type">
+          <Select
+            options={subcategories}
+            placeholder="-- Select type --"
+            {...register('subcategory')}
+          />
+        </Field>
+      ) : null}
+      {isEmi ? (
+        <>
+          <Field label="Select Loan/Debt">
+            <select {...register('loanId')}>
+              <option value="">-- Select Debt --</option>
+              {loans
+                .filter((row) => !row.archived)
+                .map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.member ? `${row.type} · ${row.member}` : row.type}
+                  </option>
+                ))}
+            </select>
+          </Field>
+          <Field label="Payment type">
+            <select {...register('repaymentType')}>
+              <option value="emi">Monthly EMI</option>
+              <option value="part-payment">Part Payment</option>
+            </select>
+          </Field>
+        </>
+      ) : null}
       <Field label="Amount (₹)" error={errors.amount?.message}>
         <input
           inputMode="decimal"
@@ -141,18 +237,25 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
           {...register('amount', { valueAsNumber: true })}
         />
       </Field>
-      <Field label="Is annual expense?">
-        <select {...register('annual')}>
-          <option value="no">No</option>
-          <option value="yes">Yes</option>
-        </select>
-      </Field>
+      {isEmi ? null : (
+        <Field label="Is Annual Expense?">
+          <select {...register('annual')}>
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </Field>
+      )}
       <Field label="Date" error={errors.date?.message}>
         <input type="date" {...register('date')} />
       </Field>
-      <Field label="Notes (optional)" error={errors.notes?.message}>
+      <Field label="Notes (Optional)" error={errors.notes?.message}>
         <input placeholder="e.g., Medical checkup" {...register('notes')} />
       </Field>
+      {error ? (
+        <p className={ui.fieldError} role="alert" style={{ gridColumn: '1 / -1', margin: 0 }}>
+          {error}
+        </p>
+      ) : null}
       <div className={ui.formActions}>
         <button className={`${ui.button} ${ui.expense}`} type="submit">
           {initial ? 'Save expense' : 'Add expense'}

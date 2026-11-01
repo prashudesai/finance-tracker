@@ -119,19 +119,23 @@ export function Shell({
           <span aria-hidden="true" className={styles.avatar}>
             <Users size={18} />
           </span>
-          <select
-            aria-label="Family profile"
-            className={styles.profile}
-            onChange={(event) => setProfile(event.target.value || null)}
-            value={profile ?? ''}
-          >
-            <option value="">My finances</option>
-            {settings.familyMembers.map((member) => (
-              <option key={member} value={member}>
-                {member}
-              </option>
-            ))}
-          </select>
+          {settings.familyMembers.length > 1 ? (
+            <select
+              aria-label="Family profile"
+              className={styles.profile}
+              onChange={(event) => setProfile(event.target.value || null)}
+              value={profile ?? ''}
+            >
+              <option value="">My finances</option>
+              {settings.familyMembers.map((member) => (
+                <option key={member} value={member}>
+                  {member}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span>My finances</span>
+          )}
         </div>
         <nav aria-label="Main" className={styles.nav}>
           {LINKS.map(({ to, label, short, icon: Icon }) => (

@@ -23,7 +23,6 @@ households/{ownerUid}/
   changes/{id}
   interestCredits/{id}
   epsUpdates/{id}
-  statementChecks/{id}
 ```
 
 Email addresses in `memberships` are lowercase.
@@ -47,7 +46,6 @@ Email addresses in `memberships` are lowercase.
 | `monthReviews` | Months someone has reviewed | Holds a signature, so later changes ask for review again |
 | `interestCredits` | Annual PF and PPF interest | One per account per financial year |
 | `epsUpdates` | EPS balance corrections | Signed amounts |
-| `statementChecks` | Balances compared with statements | Changes no money |
 | `changes` | The change log | Newest 200, with earlier values for undo |
 
 ## Loans

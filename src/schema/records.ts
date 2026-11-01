@@ -37,7 +37,8 @@ export type LoanChange = z.infer<typeof loanChangeSchema>;
 export const loanSchema = z.object({
   id,
   type: name,
-  member: name,
+  /** Blank means the loan isn't tied to one person. */
+  member: z.string().max(100).default(''),
   date,
   principal: money,
   openingRate: number.nonnegative('Enter zero or more.'),
@@ -50,6 +51,7 @@ export const loanSchema = z.object({
   firstEmiInterestMethod: z.enum(['monthly', 'short-actual365']).optional(),
   dailyInterestBasis: z.boolean().optional(),
   changes: z.array(loanChangeSchema).max(500),
+  notes: notes.optional(),
   /** Kept for its history, but left out of current totals. */
   archived: z.boolean().optional(),
 });
@@ -214,19 +216,6 @@ export const epsUpdateSchema = z.object({
   amount: number,
 });
 export type EpsUpdate = z.infer<typeof epsUpdateSchema>;
-
-/** A balance compared with a statement. It records the check and changes no money. */
-export const statementCheckSchema = z.object({
-  id,
-  accountKind: z.enum(['holding', 'loan']),
-  accountId: id,
-  accountName: z.string().max(200),
-  date,
-  statementBalance: number,
-  trackerBalance: number,
-  notes: z.string().max(240).optional(),
-});
-export type StatementCheck = z.infer<typeof statementCheckSchema>;
 
 export const gratuityAccountSchema = z.object({
   id,

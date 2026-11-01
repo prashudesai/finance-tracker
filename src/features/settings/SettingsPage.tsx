@@ -2,10 +2,8 @@ import {
   Archive,
   ChevronRight,
   DatabaseBackup,
-  FileCheck,
   History,
   Info,
-  ListPlus,
   Palette,
   RefreshCw,
   Smartphone,
@@ -14,7 +12,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { statementAccounts } from '../../domain/analytics';
 import { clearWrites, createBackup, parseBackup, restoreWrites } from '../../domain/backup';
 import { undoWrites } from '../../domain/changes';
 import type { ChangeRecord } from '../../schema/records';
@@ -23,7 +20,7 @@ import type { Account, FamilyMember } from '../../Shell';
 import { downloadText } from '../../ui/download';
 import { downloadTablePdf } from '../../ui/pdf';
 import { Field } from '../../ui/Field';
-import { formatMoney, localDate, signedMoney } from '../../ui/format';
+import { localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
 import { checkForUpdates, useAppUpdate, useInstallApp } from '../../ui/pwa';
@@ -32,16 +29,7 @@ import { THEME_CHOICES } from '../../ui/themes';
 import ui from '../../ui/ui.module.css';
 
 type Panel =
-  | 'info'
-  | 'account'
-  | 'family'
-  | 'appearance'
-  | 'values'
-  | 'archived'
-  | 'statements'
-  | 'changes'
-  | 'data'
-  | 'updates';
+  'info' | 'account' | 'family' | 'appearance' | 'archived' | 'changes' | 'data' | 'updates';
 
 const VERSION = '1.0.0';
 
@@ -66,22 +54,10 @@ const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] =
     text: 'Choose colors and display preferences',
   },
   {
-    panel: 'values',
-    icon: ListPlus,
-    title: 'Custom values',
-    text: 'Family members, categories and sources',
-  },
-  {
     panel: 'archived',
     icon: Archive,
     title: 'Archived accounts',
     text: 'Restore closed accounts and loans',
-  },
-  {
-    panel: 'statements',
-    icon: FileCheck,
-    title: 'Statement checks',
-    text: 'Compare balances with your statements',
   },
   {
     panel: 'changes',
@@ -98,92 +74,58 @@ const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] =
   { panel: 'updates', icon: Smartphone, title: 'App & updates', text: `Version ${VERSION}` },
 ];
 
-type ListKey =
-  'familyMembers' | 'incomeSources' | 'expenseCategories' | 'debtTypes' | 'investmentTypes';
-
-const LISTS: { key: ListKey; label: string }[] = [
-  { key: 'familyMembers', label: 'Family members' },
-  { key: 'incomeSources', label: 'Income sources' },
-  { key: 'expenseCategories', label: 'Expense categories' },
-  { key: 'debtTypes', label: 'Loan types' },
-  { key: 'investmentTypes', label: 'Investment types' },
-];
-
-function CustomValues() {
+function FamilyNames() {
   const settings = useSettings();
   const save = useSaveSettings();
-  const [key, setKey] = useState<ListKey>('familyMembers');
-  const [text, setText] = useState('');
-  const [growth, setGrowth] = useState<'market' | 'fixed' | 'no-return'>('market');
-  const value = text.trim();
-  const exists = settings[key].some((item) => item.toLowerCase() === value.toLowerCase());
+  const canEdit = useTracker((state) => state.canEdit);
+  const [name, setName] = useState('');
+  const value = name.trim();
+  const members = settings.familyMembers;
+  const exists = members.some((item) => item.toLowerCase() === value.toLowerCase());
 
   return (
-    <div className={ui.page}>
-      <form
-        className={ui.form}
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!value || exists) return;
-          save({
-            [key]: [...settings[key], value],
-            ...(key === 'investmentTypes'
-              ? { growthTypes: { ...settings.growthTypes, [value]: growth } }
-              : {}),
-          });
-          setText('');
-        }}
-      >
-        <Field label="Value category">
-          <select onChange={(event) => setKey(event.target.value as ListKey)} value={key}>
-            {LISTS.map((list) => (
-              <option key={list.key} value={list.key}>
-                {list.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="New value">
-          <input maxLength={60} onChange={(event) => setText(event.target.value)} value={text} />
-        </Field>
-        {key === 'investmentTypes' ? (
-          <Field label="Growth behaviour">
-            <select
-              onChange={(event) => setGrowth(event.target.value as typeof growth)}
-              value={growth}
-            >
-              <option value="market">Market linked</option>
-              <option value="fixed">Fixed return</option>
-              <option value="no-return">No return</option>
-            </select>
-          </Field>
-        ) : null}
-        <div className={ui.formActions}>
-          <button className={ui.button} disabled={!value || exists} type="submit">
-            + Add
-          </button>
-        </div>
-      </form>
-      {settings[key].length === 0 ? (
-        <p className={ui.empty}>No custom values yet.</p>
-      ) : (
+    <div>
+      <div className={ui.groupLabel}>Family member names</div>
+      <p className={ui.caption}>Names used in your records.</p>
+      {members.length === 0 ? null : (
         <ul className={ui.list}>
-          {settings[key].map((item) => (
+          {members.map((item) => (
             <li className={ui.row} key={item}>
               <div className={ui.rowMain}>{item}</div>
-              <button
-                aria-label={`Remove ${item}`}
-                className={ui.quiet}
-                onClick={() => save({ [key]: settings[key].filter((row) => row !== item) })}
-                type="button"
-              >
-                Remove
-              </button>
+              {canEdit ? (
+                <button
+                  aria-label={`Remove ${item}`}
+                  className={ui.quiet}
+                  onClick={() => save({ familyMembers: members.filter((row) => row !== item) })}
+                  type="button"
+                >
+                  Remove
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>
       )}
-      <p className={ui.caption}>Removing a value keeps it on records that already use it.</p>
+      {canEdit ? (
+        <form
+          className={ui.form}
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!value || exists) return;
+            save({ familyMembers: [...members, value] });
+            setName('');
+          }}
+        >
+          <Field label="Add a name">
+            <input maxLength={60} onChange={(event) => setName(event.target.value)} value={name} />
+          </Field>
+          <div className={ui.formActions}>
+            <button className={ui.button} disabled={!value || exists} type="submit">
+              + Add
+            </button>
+          </div>
+        </form>
+      ) : null}
     </div>
   );
 }
@@ -314,10 +256,9 @@ function DataBackup() {
             onChange={(event) => save({ backupReminderDays: Number(event.target.value) })}
             value={settings.backupReminderDays}
           >
-            <option value="7">every week</option>
-            <option value="30">every month</option>
-            <option value="90">every 3 months</option>
-            <option value="0">never</option>
+            <option value="7">Every 7 days</option>
+            <option value="30">Every 30 days</option>
+            <option value="0">Off</option>
           </select>
         </label>
       </div>
@@ -405,6 +346,7 @@ function FamilyAccessPanel({ account }: { account: Account }) {
       <p>
         Your role: <strong>{account.role}</strong>
       </p>
+      <FamilyNames />
       {family ? (
         <>
           <form
@@ -494,113 +436,6 @@ function FamilyAccessPanel({ account }: { account: Account }) {
           {status}
         </p>
       ) : null}
-    </div>
-  );
-}
-
-function StatementChecks() {
-  const data = useTracker((state) => state.data);
-  const commit = useTracker((state) => state.commit);
-  const today = localDate();
-  const accounts = statementAccounts(data, today);
-  const [selected, setSelected] = useState(accounts[0]?.id ?? '');
-  const [statement, setStatement] = useState('');
-  const [notes, setNotes] = useState('');
-  const account = accounts.find((row) => row.id === selected);
-  const balance = Number(statement);
-  const valid = account !== undefined && statement !== '' && balance >= 0;
-  const rows = [...data.statementChecks].sort((a, b) => b.date.localeCompare(a.date));
-  if (accounts.length === 0) return <p className={ui.empty}>No accounts to compare yet.</p>;
-
-  return (
-    <div className={ui.page}>
-      <p className={ui.caption}>
-        Compare today's tracker balance with a current statement. This records a check and doesn't
-        change any balance. Correct an account or EMI on its own page, then check again.
-      </p>
-      <form
-        className={ui.form}
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!valid || !account) return;
-          const id = crypto.randomUUID();
-          commit([
-            {
-              type: 'set',
-              collection: 'statementChecks',
-              id,
-              value: {
-                id,
-                accountKind: account.kind,
-                accountId: account.id,
-                accountName: account.name,
-                date: today,
-                statementBalance: balance,
-                trackerBalance: account.balance,
-                ...(notes.trim() ? { notes: notes.trim() } : {}),
-              },
-            },
-          ]);
-          setStatement('');
-          setNotes('');
-        }}
-      >
-        <Field label="Account">
-          <select onChange={(event) => setSelected(event.target.value)} value={selected}>
-            {accounts.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Statement balance (₹)">
-          <input
-            inputMode="decimal"
-            onChange={(event) => setStatement(event.target.value)}
-            step="0.01"
-            type="number"
-            value={statement}
-          />
-        </Field>
-        <Field label="Statement reference or notes">
-          <input maxLength={240} onChange={(event) => setNotes(event.target.value)} value={notes} />
-        </Field>
-        {account ? (
-          <p className={ui.caption} style={{ gridColumn: '1 / -1', margin: 0 }}>
-            Tracker balance {formatMoney(account.balance)}
-            {statement !== '' ? ` · Difference ${signedMoney(balance - account.balance)}` : ''}
-          </p>
-        ) : null}
-        <div className={ui.formActions}>
-          <button className={ui.button} disabled={!valid} type="submit">
-            Save statement check
-          </button>
-        </div>
-      </form>
-      {rows.length === 0 ? (
-        <p className={ui.empty}>No statement checks yet.</p>
-      ) : (
-        <ul className={ui.list}>
-          {rows.map((row) => {
-            const difference = row.statementBalance - row.trackerBalance;
-            return (
-              <li className={ui.row} key={row.id}>
-                <div className={ui.rowMain}>
-                  <div className={ui.rowTitle}>{row.accountName}</div>
-                  <div className={ui.rowDetail}>
-                    {row.date} · Statement {formatMoney(row.statementBalance)}
-                    {row.notes ? ` · ${row.notes}` : ''}
-                  </div>
-                </div>
-                <span className={`${ui.amount} ${difference === 0 ? ui.gain : ui.loss}`}>
-                  {difference === 0 ? 'Matches' : signedMoney(difference)}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
     </div>
   );
 }
@@ -932,9 +767,7 @@ export function SettingsPage({ account }: { account: Account }) {
           ) : null}
           {panel === 'family' ? <FamilyAccessPanel account={account} /> : null}
           {panel === 'appearance' ? <Appearance /> : null}
-          {panel === 'values' ? <CustomValues /> : null}
           {panel === 'archived' ? <ArchivedAccounts /> : null}
-          {panel === 'statements' ? <StatementChecks /> : null}
           {panel === 'changes' ? <ChangeLog /> : null}
           {panel === 'data' ? <DataBackup /> : null}
           {panel === 'updates' ? <AppUpdates /> : null}

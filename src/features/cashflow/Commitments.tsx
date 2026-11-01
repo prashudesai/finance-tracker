@@ -16,9 +16,10 @@ import {
   type RecurringData,
 } from '../../domain/recurring';
 import { recordId, type RecordWrite, type TrackerData } from '../../data/repository';
-import type { RecurringRule } from '../../schema/records';
+import { EMI_CATEGORY, type RecurringRule } from '../../schema/records';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
+import { MemberField, useDefaultMember } from '../../ui/MemberField';
 import { formatDay, formatMoney, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { Select } from '../../ui/Select';
@@ -77,6 +78,7 @@ function RuleForm({ initial, onDone }: { initial?: RecurringRule; onDone: () => 
   const loans = useTracker((state) => state.data.loans);
   const settings = useSettings();
   const options = optionLists(settings);
+  const defaultMember = useDefaultMember();
   const { register, handleSubmit, watch, formState } = useForm<RuleValues>({
     resolver: zodResolver(ruleForm),
     defaultValues: initial
@@ -99,7 +101,7 @@ function RuleForm({ initial, onDone }: { initial?: RecurringRule; onDone: () => 
           kind: 'expense',
           name: '',
           label: '',
-          member: '',
+          member: defaultMember,
           loanId: '',
           day: 1,
           startMonth: localDate().slice(0, 7),
@@ -184,7 +186,12 @@ function RuleForm({ initial, onDone }: { initial?: RecurringRule; onDone: () => 
         <>
           <Field label={kind === 'income' ? 'Source' : 'Category'}>
             <Select
-              options={kind === 'income' ? options.incomeSources : options.expenseCategories}
+              addTo={kind === 'income' ? 'incomeSources' : 'expenseCategories'}
+              options={
+                kind === 'income'
+                  ? options.incomeSources
+                  : options.expenseCategories.filter((item) => item !== EMI_CATEGORY)
+              }
               {...register('label')}
             />
           </Field>
@@ -199,11 +206,7 @@ function RuleForm({ initial, onDone }: { initial?: RecurringRule; onDone: () => 
           </Field>
         </>
       )}
-      {kind === 'income' ? (
-        <Field label="Family member">
-          <input {...register('member')} />
-        </Field>
-      ) : null}
+      {kind === 'income' ? <MemberField {...register('member')} /> : null}
       <Field label="Day of month (0 = last day)" error={errors.day?.message}>
         <input type="number" {...register('day', { valueAsNumber: true })} />
       </Field>

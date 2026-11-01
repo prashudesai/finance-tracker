@@ -81,7 +81,11 @@ export const useTracker = create<TrackerState>((set, get) => ({
     }
 
     const stops = COLLECTION_NAMES.map((name) => watch(name));
-    return () => stops.forEach((stop) => stop());
+    return () => {
+      stops.forEach((stop) => stop());
+      // Nothing from this session may show in the next, such as after signing out.
+      set({ data: emptyTrackerData(), loaded: false, syncedAt: null });
+    };
   },
 
   // Screens update from the subscription, including while offline, so this never blocks them.

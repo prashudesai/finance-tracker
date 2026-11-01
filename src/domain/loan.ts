@@ -128,6 +128,10 @@ function emiFor(balance: number, annualRate: number, months: number, roundUp = f
   return roundUp ? Math.ceil(exact - 1e-9) : Math.round(exact);
 }
 
+/** The EMI that clears a balance over a tenure, for the loan form. */
+export const suggestedEmi = (principal: number, annualRate: number, months: number) =>
+  emiFor(principal, annualRate, months);
+
 export function estimateExtraFirstEmiInterest(loan: Loan) {
   if (loan.dailyInterestBasis || !loan.firstEmiDate) return 0;
   const anniversary = monthlyAnniversary(loan.date);

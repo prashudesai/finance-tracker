@@ -243,6 +243,7 @@ export function previewData(): Partial<TrackerData> {
         familyMembers: MEMBERS,
         onboardingDone: true,
         investmentTypes: ['Index ETFs', 'Cash Reserve'],
+        expenseCategories: ['Groceries', 'Utilities', 'Dining out', 'Transport'],
         growthTypes: { 'Index ETFs': 'market', 'Cash Reserve': 'no-return' },
       },
     ],

@@ -14,7 +14,6 @@ import {
   projectionAdjustmentSchema,
   recurringOccurrenceSchema,
   recurringRuleSchema,
-  statementCheckSchema,
   trackerSettingsSchema,
   valuationSchema,
   type ChangeRecord,
@@ -31,7 +30,6 @@ import {
   type ProjectionAdjustment,
   type RecurringOccurrence,
   type RecurringRule,
-  type StatementCheck,
   type TrackerSettings,
   type Valuation,
 } from '../schema/records';
@@ -53,7 +51,6 @@ export interface TrackerData {
   changes: ChangeRecord[];
   interestCredits: InterestCredit[];
   epsUpdates: EpsUpdate[];
-  statementChecks: StatementCheck[];
 }
 
 export type CollectionName = keyof TrackerData;
@@ -75,7 +72,6 @@ export const COLLECTIONS: { [Name in CollectionName]: z.ZodType<TrackerData[Name
   changes: changeRecordSchema,
   interestCredits: interestCreditSchema,
   epsUpdates: epsUpdateSchema,
-  statementChecks: statementCheckSchema,
 };
 
 export const COLLECTION_NAMES = Object.keys(COLLECTIONS) as CollectionName[];
@@ -97,7 +93,6 @@ export const emptyTrackerData = (): TrackerData => ({
   changes: [],
   interestCredits: [],
   epsUpdates: [],
-  statementChecks: [],
 });
 
 export type RecordWrite =

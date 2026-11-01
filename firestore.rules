@@ -69,8 +69,7 @@ service cloud.firestore {
                           'recurringOccurrences', 'monthlyBalances', 'holdings',
                           'contributions', 'valuations', 'gratuityAccounts',
                           'projectionAdjustments', 'settings', 'monthReviews',
-                          'changes', 'interestCredits', 'epsUpdates',
-                          'statementChecks'];
+                          'changes', 'interestCredits', 'epsUpdates'];
     }
   }
 }

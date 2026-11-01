@@ -3,15 +3,16 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { addMonths, isValidDate } from '../../domain/calendar';
 import { growthType } from '../../domain/holdings';
-import { optionLists } from '../../domain/options';
+import { NPS_SCHEMES, optionLists } from '../../domain/options';
 import type { Holding } from '../../schema/records';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
+import { MemberField, useDefaultMember } from '../../ui/MemberField';
 import { Select } from '../../ui/Select';
 import ui from '../../ui/ui.module.css';
 
-const LABELS: Record<Holding['kind'], string> = {
+const SAVE_LABELS: Record<Holding['kind'], string> = {
   investment: 'investment',
   pf: 'PF account',
   ppf: 'PPF account',
@@ -26,10 +27,10 @@ const optionalAmount = z.preprocess(
 
 const formSchema = z.object({
   type: z.string().trim().min(1, 'This field is required.'),
-  name: z.string().trim().min(1, 'This field is required.').max(100),
+  name: z.string().trim().max(100),
   member: z.string().trim().min(1, 'This field is required.').max(100),
   date: z.string().refine(isValidDate, 'Enter a valid date.'),
-  openingInvested: amount,
+  openingInvested: optionalAmount,
   openingValue: amount,
   rate: optionalAmount,
   monthly: optionalAmount,
@@ -41,11 +42,19 @@ const formSchema = z.object({
   autoStart: z.string(),
   uan: z.string().max(40),
   scheme: z.string().max(60),
+  notes: z.string().max(500),
 });
 type FormInput = z.input<typeof formSchema>;
 type FormValues = z.output<typeof formSchema>;
 
 const nextMonthStart = (today: string) => `${addMonths(today, 1).slice(0, 7)}-01`;
+
+const DATE_LABELS: Record<Holding['kind'], string> = {
+  investment: 'Purchase Date',
+  pf: 'Last Updated',
+  ppf: 'Opening Date',
+  nps: 'Start Date',
+};
 
 export function HoldingForm({
   kind,
@@ -59,14 +68,19 @@ export function HoldingForm({
   const commit = useTracker((state) => state.commit);
   const settings = useSettings();
   const options = optionLists(settings);
+  const defaultMember = useDefaultMember();
   const today = localDate();
-  const fixedLabel = kind === 'investment' ? '' : kind.toUpperCase();
-  const { register, handleSubmit, watch, formState } = useForm<FormInput, unknown, FormValues>({
+  const fixedType = kind === 'investment' ? '' : kind.toUpperCase();
+  const { register, handleSubmit, watch, setError, formState } = useForm<
+    FormInput,
+    unknown,
+    FormValues
+  >({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: initial?.type ?? (fixedLabel || 'Mutual Funds'),
+      type: initial?.type ?? (fixedType || 'Mutual Funds'),
       name: initial?.name ?? '',
-      member: initial?.member ?? '',
+      member: initial?.member ?? (defaultMember || 'Household'),
       date: initial?.date ?? today,
       openingInvested: initial?.openingInvested,
       openingValue: initial?.openingValue,
@@ -80,6 +94,7 @@ export function HoldingForm({
       autoStart: initial?.autoStart ?? nextMonthStart(today),
       uan: initial?.uan ?? '',
       scheme: initial?.scheme ?? '',
+      notes: initial?.notes ?? '',
     },
   });
   const { errors } = formState;
@@ -90,16 +105,27 @@ export function HoldingForm({
     kind === 'ppf' ||
     (kind === 'investment' && growthType(type, settings) === 'fixed');
 
-  const save = ({ autoStart, uan, scheme, ...values }: FormValues) => {
+  const save = ({ autoStart, uan, scheme, name, notes, ...values }: FormValues) => {
+    const account = kind === 'pf' ? uan : name;
+    if (kind === 'investment' && !name) {
+      setError('name', { message: 'This field is required.' });
+      return;
+    }
     const id = initial?.id ?? crypto.randomUUID();
     const value = {
+      ...initial,
       ...values,
       id,
       kind,
+      // Retirement accounts are known by their number, or by their kind without one.
+      name: account || initial?.name || `${fixedType} Account`,
+      // PF records one balance, so it starts as both invested and current.
+      openingInvested: values.openingInvested ?? initial?.openingInvested ?? values.openingValue,
       monthly: values.monthly ?? 0,
       ...(values.autoContribute ? { autoStart } : {}),
       ...(kind === 'pf' && uan ? { uan } : {}),
       ...(kind === 'nps' && scheme ? { scheme } : {}),
+      ...(notes ? { notes } : {}),
     };
     commit([{ type: 'set', collection: 'holdings', id, value }]);
     onDone();
@@ -118,62 +144,84 @@ export function HoldingForm({
 
   return (
     <form className={ui.form} onSubmit={(event) => void handleSubmit(save)(event)}>
+      <MemberField error={errors.member?.message} {...register('member')} />
       {kind === 'investment' ? (
-        <Field label="Type" error={errors.type?.message}>
-          <Select options={options.investmentTypes} {...register('type')} />
-        </Field>
+        <>
+          <Field label="Investment Type" error={errors.type?.message}>
+            <Select
+              addTo="investmentTypes"
+              options={options.investmentTypes}
+              {...register('type')}
+            />
+          </Field>
+          <Field label="Investment Name" error={errors.name?.message}>
+            <input {...register('name')} />
+          </Field>
+        </>
       ) : null}
-      <Field label={`${LABELS[kind]} name`} error={errors.name?.message}>
-        <input {...register('name')} />
-      </Field>
-      <Field label="Family member" error={errors.member?.message}>
-        {options.familyMembers.length > 0 ? (
-          <Select
-            options={options.familyMembers}
-            placeholder="-- Select family member --"
-            {...register('member')}
-          />
-        ) : (
-          <input {...register('member')} />
-        )}
-      </Field>
       {kind === 'pf' ? (
-        <Field label="UAN (optional)">
+        <Field label="Account Number (UAN)">
           <input {...register('uan')} />
         </Field>
       ) : null}
-      {kind === 'nps' ? (
-        <Field label="Scheme (optional)">
-          <input placeholder="e.g., Active Choice" {...register('scheme')} />
+      {kind === 'ppf' || kind === 'nps' ? (
+        <Field label="Account Number">
+          <input {...register('name')} />
         </Field>
       ) : null}
-      <Field label="Start date" error={errors.date?.message}>
-        <input type="date" {...register('date')} />
-      </Field>
-      {number('Invested so far (₹)', 'openingInvested', errors.openingInvested?.message)}
-      {number('Current value (₹)', 'openingValue', errors.openingValue?.message)}
-      {showsRate ? number('Interest rate (% a year)', 'rate', errors.rate?.message) : null}
       {kind === 'pf' ? (
         <>
-          {number('Employee monthly (₹)', 'employee', errors.employee?.message)}
-          {number('Employer monthly (₹)', 'employer', errors.employer?.message)}
-          {number('EPS monthly (₹)', 'epsMonthly', errors.epsMonthly?.message)}
-          {number('EPS balance (₹)', 'epsOpening', errors.epsOpening?.message)}
+          {number('Employee Contribution (₹)', 'employee', errors.employee?.message)}
+          {number('Employer Contribution — total (₹)', 'employer', errors.employer?.message)}
+          {number(
+            'Employer portion to EPS per month (₹)',
+            'epsMonthly',
+            errors.epsMonthly?.message,
+          )}
+          {number('Current EPS balance (₹)', 'epsOpening', errors.epsOpening?.message)}
+          {number('Current PF Balance (₹)', 'openingValue', errors.openingValue?.message)}
         </>
-      ) : (
-        number('Monthly contribution (₹)', 'monthly', errors.monthly?.message)
-      )}
+      ) : null}
+      {kind === 'ppf' ? (
+        <>
+          {number('Total Invested (₹)', 'openingInvested', errors.openingInvested?.message)}
+          {number('Current Balance (₹)', 'openingValue', errors.openingValue?.message)}
+        </>
+      ) : null}
+      {kind === 'investment' || kind === 'nps' ? (
+        <>
+          {number('Invested Amount (₹)', 'openingInvested', errors.openingInvested?.message)}
+          {number('Current Value (₹)', 'openingValue', errors.openingValue?.message)}
+        </>
+      ) : null}
+      <Field label={DATE_LABELS[kind]} error={errors.date?.message}>
+        <input type="date" {...register('date')} />
+      </Field>
+      {kind === 'nps' ? (
+        <Field label="Scheme Type">
+          <Select options={NPS_SCHEMES} placeholder="-- Select scheme --" {...register('scheme')} />
+        </Field>
+      ) : null}
+      {showsRate ? number('Interest Rate (% p.a.)', 'rate', errors.rate?.message) : null}
+      {kind === 'pf'
+        ? null
+        : number('Monthly Contribution (₹)', 'monthly', errors.monthly?.message)}
       <label className={ui.check}>
         <input type="checkbox" {...register('autoContribute')} /> Add contributions automatically
       </label>
       {auto ? (
-        <Field label="First contribution date">
+        <Field label="First Monthly Contribution Date">
           <input type="date" {...register('autoStart')} />
+        </Field>
+      ) : null}
+      {kind === 'investment' ? (
+        <Field label="Notes">
+          <input {...register('notes')} />
         </Field>
       ) : null}
       <div className={ui.formActions}>
         <button className={ui.button} type="submit">
-          Save {LABELS[kind]}
+          Save {SAVE_LABELS[kind]}
         </button>
       </div>
     </form>

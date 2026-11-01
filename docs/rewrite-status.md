@@ -21,11 +21,12 @@ All pages from the older app exist and follow its layouts.
 | Data layer | Firestore repository tested on the emulator with the real rules |
 | Security rules | Written for all collections and tested on the emulator |
 | Change log | Saved changes with who made them, and undo that refuses to overwrite later edits |
-| Family | Invite, change access and remove members |
+| Family | Invite, change access and remove members. Names live in Family access, and dropdowns hide with one member |
+| Forms | Old fields, lists and + Add new… options, including tenure-based EMI |
 | Exports | CSV, print, and generated PDFs for reports and loan history |
 | Onboarding | Guided setup and an app tour |
 | Themes | All eight colour themes from the older app, in light and dark, contrast-tested |
-| Retirement detail | Interest credits, EPS history and statement checks |
+| Retirement detail | Interest credits and EPS history |
 | Phone layouts | Title-only headers, full-screen entry forms, and Investments and Retirement tabs |
 | PWA | Installable, app shell works offline, check for updates, updates wait for acceptance, security policy applied |
 

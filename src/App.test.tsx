@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { createMemoryRepository } from './data/memoryRepository';
 import { previewData } from './data/previewData';
@@ -168,10 +168,8 @@ test('adding income validates, then lists the record', async () => {
   const submit = await screen.findByRole('button', { name: 'Add income' });
   fireEvent.click(submit);
   expect((await screen.findAllByRole('alert')).map((alert) => alert.textContent)).toEqual([
-    'This field is required.',
     'Enter a number.',
   ]);
-  fireEvent.change(screen.getByLabelText('Family member'), { target: { value: 'Sam' } });
   fireEvent.change(screen.getAllByLabelText('Amount (₹)')[0] as HTMLElement, {
     target: { value: '5000' },
   });
@@ -540,4 +538,77 @@ test('deleting an account needs the exact phrase, then clears records first', as
   });
   fireEvent.click(button);
   expect(deleteAccount).toHaveBeenCalledTimes(1);
+});
+
+test('+ Add new saves a value and selects it, and the old custom values tile is gone', async () => {
+  renderApp('/cash-flow');
+  const source = await screen.findByLabelText('Source');
+  fireEvent.change(source, { target: { value: '__add_new__' } });
+  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'Freelance' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save and select', hidden: true }));
+  await waitFor(() => expect((source as HTMLSelectElement).value).toBe('Freelance'));
+  fireEvent.click(screen.getAllByRole('link', { name: /Settings/ })[0] as HTMLElement);
+  await screen.findByRole('button', { name: /App info/ });
+  expect(screen.queryByRole('button', { name: /Custom values/ })).toBeNull();
+});
+
+test('+ Add new refuses a duplicate', async () => {
+  renderApp('/cash-flow');
+  fireEvent.change(await screen.findByLabelText('Source'), { target: { value: '__add_new__' } });
+  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'salary' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save and select', hidden: true }));
+  expect((await screen.findByRole('alert', { hidden: true })).textContent).toBe(
+    'That value already exists.',
+  );
+});
+
+test('a single family member needs no dropdown, and records use them', async () => {
+  renderApp('/cash-flow', { settings: [{ ...defaultSettings(), familyMembers: ['Sam'] }] });
+  await screen.findByRole('heading', { level: 1, name: 'Cash flow' });
+  expect(screen.queryByLabelText('Family profile')).toBeNull();
+  expect(screen.queryByLabelText('Family Member')).toBeNull();
+  fireEvent.change(screen.getAllByLabelText('Amount (₹)')[0] as HTMLElement, {
+    target: { value: '5000' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Add income' }));
+  expect(await screen.findByText('Sam')).toBeDefined();
+});
+
+test('two family members bring the dropdowns back', async () => {
+  renderApp('/cash-flow', { settings: [{ ...defaultSettings(), familyMembers: ['A', 'B'] }] });
+  expect(await screen.findByLabelText('Family profile')).toBeDefined();
+  expect(screen.getByLabelText('Family Member')).toBeDefined();
+});
+
+test('EMI Payment asks for the loan and suggests the amount', async () => {
+  renderApp('/cash-flow', { loans: [loan] });
+  fireEvent.change(await screen.findByLabelText('Category'), { target: { value: 'EMI Payment' } });
+  fireEvent.change(await screen.findByLabelText('Select Loan/Debt'), { target: { value: 'l' } });
+  await waitFor(() =>
+    expect((screen.getAllByLabelText('Amount (₹)')[1] as HTMLInputElement).value).toBe('10000'),
+  );
+  expect(screen.getByLabelText('Payment type')).toBeDefined();
+});
+
+test('insurance offers its expense types and defaults to annual', async () => {
+  renderApp('/cash-flow');
+  fireEvent.change(await screen.findByLabelText('Category'), { target: { value: 'Insurance' } });
+  expect(await screen.findByLabelText('Expense type')).toBeDefined();
+  await waitFor(() =>
+    expect((screen.getByLabelText('Is Annual Expense?') as HTMLSelectElement).value).toBe('yes'),
+  );
+});
+
+test('the loan form fills the EMI from the tenure until it is typed over', async () => {
+  renderApp('/debts');
+  fireEvent.click(await screen.findByRole('button', { name: 'Add Loan' }));
+  const field = (name: string) => screen.getByLabelText(name) as HTMLInputElement;
+  await screen.findByLabelText('Tenure (Months)');
+  fireEvent.change(field('Principal Amount (₹)'), { target: { value: '1200000' } });
+  fireEvent.change(field('Interest Rate (% p.a.)'), { target: { value: '0' } });
+  fireEvent.change(field('Tenure (Months)'), { target: { value: '120' } });
+  await waitFor(() => expect(field('EMI (₹)').value).toBe('10000'));
+  fireEvent.change(field('EMI (₹)'), { target: { value: '12000' } });
+  fireEvent.change(field('Tenure (Months)'), { target: { value: '60' } });
+  await waitFor(() => expect(field('EMI (₹)').value).toBe('12000'));
 });

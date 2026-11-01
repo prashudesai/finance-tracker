@@ -20,6 +20,7 @@ import {
 import { useSettings, useTracker, useView } from '../../store/tracker';
 import { Donut } from '../../ui/charts';
 import { Field } from '../../ui/Field';
+import { MemberField, useDefaultMember } from '../../ui/MemberField';
 import { formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
@@ -83,7 +84,7 @@ function SectionTabs({
 
 function GratuityForm({ onDone }: { onDone: () => void }) {
   const commit = useTracker((state) => state.commit);
-  const [member, setMember] = useState('');
+  const [member, setMember] = useState(useDefaultMember());
   const [date, setDate] = useState('');
   const [salary, setSalary] = useState('');
   const id = crypto.randomUUID();
@@ -100,9 +101,11 @@ function GratuityForm({ onDone }: { onDone: () => void }) {
         onDone();
       }}
     >
-      <Field label="Family member">
-        <input onChange={(event) => setMember(event.target.value)} value={member} />
-      </Field>
+      <MemberField
+        name="member"
+        onChange={(event) => setMember(event.target.value)}
+        value={member}
+      />
       <Field label="Date of joining">
         <input onChange={(event) => setDate(event.target.value)} type="date" value={date} />
       </Field>
