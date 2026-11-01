@@ -79,6 +79,7 @@ function PortfolioRow({ row, peak, index }: { row: CategoryRow; peak: number; in
 
 export function Dashboard() {
   const data = useView();
+  const household = useTracker((state) => state.data);
   const syncedAt = useTracker((state) => state.syncedAt);
   const phone = useIsPhone();
   const today = localDate();
@@ -106,6 +107,7 @@ export function Dashboard() {
   );
   const attention = attentionItems(
     data,
+    household,
     today,
     pending.length,
     syncedAt ? localDate(syncedAt) : null,

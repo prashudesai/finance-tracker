@@ -398,25 +398,27 @@ const needs = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? ' needs' : 's need'}`;
 
 /** Things that need a look, shown as the dashboard's attention bar. */
+/** `view` is the selected profile's records. Bank balances belong to the whole household. */
 export function attentionItems(
-  data: TrackerData,
+  view: TrackerData,
+  household: TrackerData,
   today: string,
   pendingRecurring: number,
   syncedOn: string | null = null,
 ): AttentionItem[] {
   const items: AttentionItem[] = [];
   const current = today.slice(0, 7);
-  const recorded = new Set(data.monthlyBalances.map((row) => row.month));
+  const recorded = new Set(household.monthlyBalances.map((row) => row.month));
   const first = [...recorded].sort()[0];
-  const months = [...monthTotals(data).keys()].filter(
+  const months = [...monthTotals(household).keys()].filter(
     (month) => month <= current && (!first || month >= first),
   );
   const incomplete = [...new Set([...months, ...recorded])]
     .filter((month) => month <= current)
     .filter((month) => {
-      const close = closeMonth(data, month);
+      const close = closeMonth(household, month);
       if (month === current) return close.opening === null;
-      return !close.complete || !monthReviewStatus(data, month).reviewed;
+      return !close.complete || !monthReviewStatus(household, month).reviewed;
     })
     .sort()
     .reverse();
@@ -428,11 +430,11 @@ export function attentionItems(
       state: { review: latest },
     });
   }
-  const backup = backupStatus(data, today, syncedOn);
+  const backup = backupStatus(household, today, syncedOn);
   if (backup.due) {
     items.push({ label: backup.label, path: '/settings', state: { panel: 'data' } });
   }
-  const unverified = unverifiedHoldings(data).length;
+  const unverified = unverifiedHoldings(view).length;
   if (unverified > 0) {
     items.push({
       label: `${needs(unverified, 'valuation')} confirmation`,
@@ -440,7 +442,7 @@ export function attentionItems(
       state: { confirm: true },
     });
   }
-  const unchecked = uncheckedContributions(data, current).length;
+  const unchecked = uncheckedContributions(view, current).length;
   if (unchecked > 0 && today === lastDayOfMonth(current)) {
     items.push({
       label: `${unchecked} automatic ${unchecked === 1 ? 'entry needs' : 'entries need'} a statement check`,

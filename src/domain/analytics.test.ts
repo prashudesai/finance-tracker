@@ -191,7 +191,8 @@ describe('reviews', () => {
   });
 
   test('the attention list counts unreviewed months and unconfirmed values', () => {
-    const items = attentionItems({ ...state, holdings: [holding({})] }, '2026-04-10', 2);
+    const withHolding = { ...state, holdings: [holding({})] };
+    const items = attentionItems(withHolding, withHolding, '2026-04-10', 2);
     expect(items.every((row) => Object.keys(row.state).length > 0)).toBe(true);
     expect(items.map((row) => row.label)).toEqual([
       '1 household month needs balance review',
@@ -306,6 +307,33 @@ test('balance history lists completed months of one financial year, with their p
     houseExpense: 35,
   });
   expect(balanceYears(state, '2026-06-15')).toEqual([2026, 2025]);
+});
+
+test('month reviews follow the household, whichever profile is selected', () => {
+  const household = data({
+    income: [
+      { id: 'a', date: '2026-03-01', member: 'A', source: 'S', amount: 100 },
+      { id: 'b', date: '2026-03-02', member: 'B', source: 'S', amount: 50 },
+    ],
+    monthlyBalances: [
+      { month: '2026-03', startBalance: 10 },
+      { month: '2026-04', startBalance: 20 },
+    ],
+  });
+  const reviewed = {
+    ...household,
+    monthReviews: [
+      {
+        id: 'month_2026-03',
+        month: '2026-03',
+        signature: monthSignature(household, '2026-03'),
+        reviewedAt: '2026-04-01',
+      },
+    ],
+  };
+  const view = { ...reviewed, income: reviewed.income.filter((row) => row.member === 'A') };
+  const labels = attentionItems(view, reviewed, '2026-04-15', 0).map((row) => row.label);
+  expect(labels.filter((label) => label.includes('balance review'))).toEqual([]);
 });
 
 test('member positions total each person', () => {
