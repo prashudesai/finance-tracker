@@ -28,7 +28,7 @@ All pages from the older app's navigation exist and follow its layouts.
 
 ## Not verified
 
-- Google sign-in and family management haven't run against real Firebase. The security policy allows the sign-in hosts, but no real sign-in has exercised it.
+- Google sign-in works on the test project, under the deployed security policy. Family invites and member management haven't run against real Firebase yet.
 - Rules for `app/` are deployed to the test project only, not the live project.
 - Offline data and queued writes are expected from Firestore's local cache, but only the app shell has been tested offline.
 - There are no Playwright tests in the repo yet. Main flows and PWA behaviour were checked with throwaway browser scripts.
