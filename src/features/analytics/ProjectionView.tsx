@@ -23,6 +23,8 @@ import {
 } from './ProjectionParts';
 
 const MAX_YEARS = 10;
+/** Longer than the slider, for anyone planning further ahead. */
+const MAX_TYPED_YEARS = 40;
 
 const toneOf = (scenario: Scenario) =>
   ({ '--tone': `var(--scenario-${scenario})` }) as CSSProperties;
@@ -50,6 +52,7 @@ function Settings({
   const hasGratuity = useTracker((state) => state.data.gratuityAccounts.length > 0);
   const phone = useIsPhone();
   const [years, setYears] = useState(settings.projectionYears);
+  const [typed, setTyped] = useState(String(settings.projectionYears));
   const [managing, setManaging] = useState(false);
   const paying = assets.filter((asset) => asset.monthly > 0);
   const included = paying.filter((asset) => !settings.excludedContributions.includes(asset.name));
@@ -62,7 +65,15 @@ function Settings({
     groups.set(group, (groups.get(group) ?? 0) + asset.monthly);
   }
   const gratuityIncluded = hasGratuity && settings.includeGratuity;
-  const commitYears = () => save({ projectionYears: years });
+  const saveYears = (value: number) => {
+    const next = Math.min(MAX_TYPED_YEARS, Math.max(1, Math.round(value) || 1));
+    setYears(next);
+    setTyped(String(next));
+    if (next !== settings.projectionYears) save({ projectionYears: next });
+  };
+  const commitYears = () => saveYears(years);
+  // Follows the saved value, so the slider doesn't shift while it's being dragged.
+  const sliderEnd = Math.max(MAX_YEARS, settings.projectionYears);
 
   return (
     <section className={`${ui.card} ${styles.settings}`}>
@@ -71,22 +82,38 @@ function Settings({
       <div className={styles.horizon}>
         <input
           aria-label="Projection years"
-          max={Math.max(MAX_YEARS, settings.projectionYears)}
+          max={sliderEnd}
           min="1"
-          onChange={(event) => setYears(Number(event.target.value))}
+          onChange={(event) => {
+            setYears(Number(event.target.value));
+            setTyped(event.target.value);
+          }}
           onKeyUp={commitYears}
           onMouseUp={commitYears}
           onTouchEnd={commitYears}
           type="range"
           value={years}
         />
-        <span className={styles.years}>
-          {years} {years === 1 ? 'year' : 'years'}
-        </span>
+        <label className={styles.years}>
+          <input
+            aria-label="Number of years"
+            inputMode="numeric"
+            max={MAX_TYPED_YEARS}
+            min="1"
+            onBlur={() => saveYears(Number(typed))}
+            onChange={(event) => setTyped(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur();
+            }}
+            type="number"
+            value={typed}
+          />
+          {Number(typed) === 1 ? 'year' : 'years'}
+        </label>
       </div>
       <div className={styles.range}>
         <span>1 year</span>
-        <span>{MAX_YEARS} years</span>
+        <span>{sliderEnd} years</span>
       </div>
       <div className={styles.toggleBox}>
         <label className={styles.toggleRow}>

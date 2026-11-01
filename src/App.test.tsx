@@ -559,6 +559,19 @@ test('desktop projection follows the chosen scenario and edits assumptions', asy
   expect(screen.getByRole('switch', { name: 'Include monthly contributions' })).toBeDefined();
 });
 
+test('projection years can be typed past the end of the slider', async () => {
+  renderApp('/analytics/projection', { holdings: [fund] });
+  const box = await screen.findByLabelText('Number of years');
+  fireEvent.change(box, { target: { value: '15' } });
+  fireEvent.blur(box);
+  await waitFor(() => expect(useTracker.getState().data.settings[0]?.projectionYears).toBe(15));
+  expect(await screen.findByText('Base · 15-year projection')).toBeDefined();
+  expect(screen.getByLabelText('Projection years')).toHaveProperty('max', '15');
+  fireEvent.change(box, { target: { value: '99' } });
+  fireEvent.blur(box);
+  await waitFor(() => expect(useTracker.getState().data.settings[0]?.projectionYears).toBe(40));
+});
+
 test('phone projection opens assumptions by group and keeps goals last', async () => {
   window.matchMedia = ((query: string) => ({
     matches: query === '(max-width: 700px)',
