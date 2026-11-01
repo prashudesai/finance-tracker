@@ -95,7 +95,8 @@ export function Shell({
   const profile = useTracker((state) => state.profile);
   const setProfile = useTracker((state) => state.setProfile);
   const settings = useSettings();
-  const { theme, toggle } = useTheme();
+  const theme = useTheme((state) => state.theme);
+  const toggle = useTheme((state) => state.toggle);
   const { updateReady, applyUpdate } = useAppUpdate();
   const tourOpen = useTracker((state) => state.tourOpen);
 

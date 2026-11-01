@@ -345,3 +345,20 @@ test('the app tour walks the pages and changes nothing', async () => {
   fireEvent.click(within(tour).getByRole('button', { name: 'Skip' }));
   expect(screen.queryByRole('region', { name: 'App tour' })).toBeNull();
 });
+
+test('a colour theme applies from Settings and the header agrees on mode', async () => {
+  renderApp('/settings');
+  fireEvent.click(await screen.findByRole('button', { name: /Appearance/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /Obsidian Black/, hidden: true }));
+  expect(document.documentElement.style.getPropertyValue('--bg')).toMatch(/#000000|#ededed/);
+  fireEvent.click(await screen.findByRole('button', { name: /Modern/, hidden: true }));
+  expect(document.documentElement.style.getPropertyValue('--bg')).toBe('');
+  const before = document.documentElement.dataset.theme;
+  fireEvent.click(
+    screen.getAllByRole('button', {
+      name: /^Switch to (light|dark) mode$/,
+      hidden: true,
+    })[0] as HTMLElement,
+  );
+  expect(document.documentElement.dataset.theme).not.toBe(before);
+});

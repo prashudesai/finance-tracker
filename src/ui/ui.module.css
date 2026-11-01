@@ -741,6 +741,48 @@ details.fold[open] > summary {
   border-color: #e09a6a;
 }
 
+.themeGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.themeChoice {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.themeChoice:hover {
+  border-color: var(--border-strong);
+}
+
+.themeChoice[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.themeSwatches {
+  display: flex;
+  gap: 4px;
+}
+
+.themeSwatches i {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+
 @media print {
   .card,
   .hero,

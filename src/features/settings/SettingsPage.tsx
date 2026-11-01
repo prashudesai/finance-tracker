@@ -25,6 +25,7 @@ import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
 import { useInstallApp } from '../../ui/pwa';
 import { useTheme } from '../../ui/theme';
+import { THEME_CHOICES } from '../../ui/themes';
 import ui from '../../ui/ui.module.css';
 
 type Panel =
@@ -540,15 +541,36 @@ function AppUpdates() {
 }
 
 function Appearance() {
-  const { theme, toggle } = useTheme();
+  const { theme, toggle, palette, setPalette } = useTheme();
   return (
     <div className={ui.page}>
-      <p>
-        Current mode: <strong>{theme === 'dark' ? 'Dark' : 'Light'}</strong>
-      </p>
-      <button className={ui.quiet} onClick={toggle} type="button">
-        Switch to {theme === 'dark' ? 'light' : 'dark'} mode
-      </button>
+      <div className={ui.split}>
+        <span>
+          Mode: <strong>{theme === 'dark' ? 'Dark' : 'Light'}</strong>
+        </span>
+        <button className={ui.quiet} onClick={toggle} type="button">
+          Switch to {theme === 'dark' ? 'light' : 'dark'} mode
+        </button>
+      </div>
+      <div className={ui.themeGrid} role="group" aria-label="Color themes">
+        {THEME_CHOICES.map(({ key, label, swatches }) => (
+          <button
+            aria-pressed={palette === key}
+            className={ui.themeChoice}
+            key={key}
+            onClick={() => setPalette(key)}
+            type="button"
+          >
+            <span aria-hidden="true" className={ui.themeSwatches}>
+              {swatches.map((color) => (
+                <i key={color} style={{ background: color }} />
+              ))}
+            </span>
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className={ui.caption}>Your choice is saved on this device.</p>
     </div>
   );
 }

@@ -132,7 +132,7 @@ h2 {
 select {
   appearance: none;
   padding-right: 34px !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2369d6bb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-image: var(--select-arrow);
   background-position: right 11px center;
   background-repeat: no-repeat;
   cursor: pointer;

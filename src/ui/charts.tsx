@@ -9,7 +9,7 @@ export interface Segment {
 
 /** Fixed order, so a category keeps its colour wherever it appears. */
 export const CHART_COLORS = [
-  '#69d6bb',
+  'var(--accent)',
   '#d9a24a',
   '#7f9cf5',
   '#e0838c',
