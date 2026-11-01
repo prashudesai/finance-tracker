@@ -52,7 +52,11 @@ export function GettingStarted() {
 
   const firstName = name.trim();
   const current = STEPS[step - 1];
-  const finish = () => save({ onboardingDone: true });
+  // The tour follows however setup ends, and has its own Skip button.
+  const finish = () => {
+    save({ onboardingDone: true });
+    setTourOpen(true);
+  };
 
   return (
     <section aria-label="Set up your finances" className={ui.card}>
@@ -116,7 +120,6 @@ export function GettingStarted() {
                     return;
                   }
                   finish();
-                  setTourOpen(true);
                 }}
                 type="button"
               >

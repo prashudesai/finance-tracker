@@ -151,6 +151,43 @@ test('another device opens with the passphrase or recovery code, not a wrong one
   await expect(gate.unlock('a replacement passphrase')).resolves.toMatchObject({ status: 'open' });
 });
 
+test('Face ID unlock opens the tracker, and turning it off retires it', async () => {
+  const secret = crypto.getRandomValues(new Uint8Array(32));
+  const rawId = crypto.getRandomValues(new Uint8Array(16)).buffer;
+  const credential = () => ({
+    rawId,
+    getClientExtensionResults: () => ({
+      prf: { enabled: true, results: { first: secret.buffer } },
+    }),
+  });
+  vi.stubGlobal('PublicKeyCredential', {
+    isUserVerifyingPlatformAuthenticatorAvailable: () => Promise.resolve(true),
+  });
+  const credentials = {
+    create: vi.fn(() => Promise.resolve(credential())),
+    get: vi.fn(() => Promise.resolve(credential())),
+  };
+  vi.stubGlobal('navigator', { credentials });
+
+  const { codec, tools } = await setUpOwner();
+  await firestoreRepository(owner(), 'owner', codec).commit([
+    { type: 'set', collection: 'income', id: income.id, value: income },
+  ]);
+  await expect(tools.passkey.enable('wrong passphrase')).rejects.toThrow('not correct');
+  await tools.passkey.enable(PASS);
+
+  const gate = gateOf(await start(owner(), 'owner', 'owner@example.com', 'owner'));
+  expect(gate.canUsePasskey).toBe(true);
+  const opened = await gate.unlockWithPasskey();
+  if (opened.status !== 'open') throw new Error('Did not open');
+  expect(await firstRow(owner(), opened.codec)).toEqual([income]);
+
+  await tools.passkey.disable();
+  const after = gateOf(await start(owner(), 'owner', 'owner@example.com', 'owner'));
+  expect(after.canUsePasskey).toBe(false);
+  vi.unstubAllGlobals();
+});
+
 test('a family member reads shared records only after the owner approves', async () => {
   const { codec, owner: tools } = await setUpOwner();
   await firestoreRepository(owner(), 'owner', codec).commit([

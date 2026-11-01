@@ -69,6 +69,12 @@ export interface Account {
 export interface AccountSecurity {
   changePassphrase(current: string, next: string): Promise<void>;
   newRecoveryCode(passphrase: string): Promise<string>;
+  passkey: {
+    available(): Promise<boolean>;
+    enabled(): boolean;
+    enable(passphrase: string): Promise<void>;
+    disable(): Promise<void>;
+  };
 }
 
 export interface FamilyMember {

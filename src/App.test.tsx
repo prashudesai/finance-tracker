@@ -358,6 +358,28 @@ test('owners can manage family members', async () => {
   expect(family.remove).toHaveBeenCalledWith('a@example.test');
 });
 
+describe('the tour follows quick setup', () => {
+  test('after finishing every step', async () => {
+    renderApp('/', { settings: [{ ...defaultSettings(), familyMembers: ['A'] }] });
+    const setup = await screen.findByRole('region', { name: 'Set up your finances' });
+    expect(screen.queryByRole('region', { name: 'App tour' })).toBeNull();
+    for (let step = 0; step < 4; step += 1) {
+      fireEvent.click(within(setup).getByRole('button', { name: 'Continue' }));
+    }
+    fireEvent.click(await within(setup).findByRole('button', { name: 'Finish' }));
+    expect(await screen.findByRole('region', { name: 'App tour' })).toBeDefined();
+    await waitFor(() =>
+      expect(screen.queryByRole('region', { name: 'Set up your finances' })).toBeNull(),
+    );
+  });
+
+  test('after skipping setup', async () => {
+    renderApp('/');
+    fireEvent.click(await screen.findByRole('button', { name: 'Skip setup' }));
+    expect(await screen.findByRole('region', { name: 'App tour' })).toBeDefined();
+  });
+});
+
 test('the app tour walks the pages and changes nothing', async () => {
   renderApp('/settings');
   fireEvent.click(await screen.findByRole('button', { name: /App info/ }));
@@ -776,6 +798,48 @@ test('delete account says what to type, accepts lowercase, and shows a failure',
     'textContent',
     'Google sign-in was cancelled.',
   );
+});
+
+test('Face ID is turned on with the passphrase, and says when a device lacks it', async () => {
+  const passkey = {
+    available: vi.fn(async () => true),
+    enabled: vi.fn(() => false),
+    enable: vi.fn(async () => undefined),
+    disable: vi.fn(async () => undefined),
+  };
+  const security = {
+    changePassphrase: vi.fn(async () => undefined),
+    newRecoveryCode: vi.fn(async () => 'CODE'),
+    passkey,
+  };
+  const account = { name: 'O', email: 'o@example.test', role: 'owner' as const, security };
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell account={account} repository={createMemoryRepository()} />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+  fireEvent.change(await screen.findByLabelText('Passphrase to turn this on'), {
+    target: { value: 'my passphrase here' },
+  });
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Turn on', hidden: true })).toHaveProperty(
+      'disabled',
+      false,
+    ),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Turn on', hidden: true }));
+  await waitFor(() => expect(passkey.enable).toHaveBeenCalledWith('my passphrase here'));
+  expect(await screen.findByRole('button', { name: 'Turn off', hidden: true })).toBeDefined();
+  cleanup();
+  passkey.available.mockResolvedValue(false);
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell account={account} repository={createMemoryRepository()} />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+  expect(await screen.findByText(/doesn't support it yet/)).toBeDefined();
 });
 
 test('the owner approves a family member after comparing their code', async () => {

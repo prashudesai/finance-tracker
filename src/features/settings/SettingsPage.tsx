@@ -505,6 +505,86 @@ function DeleteAccount({ account }: { account: Account }) {
   );
 }
 
+function DeviceUnlock({ security }: { security: AccountSecurity }) {
+  const { passkey } = security;
+  const [available, setAvailable] = useState<boolean | null>(null);
+  const [enabled, setEnabled] = useState(passkey.enabled());
+  const [passphrase, setPassphrase] = useState('');
+  const [status, setStatus] = useState('');
+  const [working, setWorking] = useState(false);
+
+  useEffect(() => {
+    void passkey.available().then(setAvailable);
+  }, [passkey]);
+
+  const run = (task: () => Promise<void>, done: string, next: boolean) => {
+    setWorking(true);
+    setStatus('');
+    task()
+      .then(
+        () => {
+          setEnabled(next);
+          setPassphrase('');
+          setStatus(done);
+        },
+        (error: unknown) => setStatus(failureText(error)),
+      )
+      .finally(() => setWorking(false));
+  };
+
+  return (
+    <div className={ui.metric}>
+      <strong>Face ID or fingerprint</strong>
+      {available === false ? (
+        <p className={ui.caption}>This device or browser doesn't support it yet.</p>
+      ) : enabled ? (
+        <>
+          <p className={ui.caption}>
+            On for this device. The app asks when it opens, and again if you come back after 5
+            minutes away.
+          </p>
+          <button
+            className={ui.quiet}
+            disabled={working}
+            onClick={() => run(passkey.disable, 'Turned off.', false)}
+            type="button"
+          >
+            Turn off
+          </button>
+        </>
+      ) : (
+        <>
+          <p className={ui.caption}>
+            Unlock with your face or fingerprint when the app opens, instead of staying open on this
+            device. Your passphrase and recovery code still work.
+          </p>
+          <Field label="Passphrase to turn this on">
+            <input
+              autoComplete="current-password"
+              onChange={(event) => setPassphrase(event.target.value)}
+              type="password"
+              value={passphrase}
+            />
+          </Field>
+          <button
+            className={ui.quiet}
+            disabled={!passphrase || working || available === null}
+            onClick={() => run(() => passkey.enable(passphrase), 'Turned on.', true)}
+            type="button"
+          >
+            Turn on
+          </button>
+        </>
+      )}
+      {status ? (
+        <p className={ui.caption} role="status">
+          {status}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function SecurityPanel({ security }: { security: AccountSecurity }) {
   const [current, setCurrent] = useState('');
   const [fresh, setFresh] = useState({ passphrase: '', repeat: '' });
@@ -913,6 +993,7 @@ export function SettingsPage({ account }: { account: Account }) {
                 </button>
               ) : null}
               <ProfilePhoto account={account} />
+              {account.security ? <DeviceUnlock security={account.security} /> : null}
               {account.security ? <SecurityPanel security={account.security} /> : null}
               <DeleteAccount account={account} />
             </div>

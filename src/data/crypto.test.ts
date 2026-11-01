@@ -6,9 +6,11 @@ import {
   encryptBackup,
   importPrivateKey,
   isEncryptedBackup,
+  lockWithPasskey,
   lockForMember,
   openForMember,
   safetyCode,
+  unlockWithPasskey,
   unlockWithPassphrase,
   unlockWithRecoveryCode,
   withNewDataKey,
@@ -56,6 +58,15 @@ test('both people see the same safety code, and a swapped key shows a different 
   expect(code).toMatch(/^\d{4} \d{4} \d{4}$/);
   expect(await safetyCode('home', a.keyring.publicKey)).toBe(code);
   expect(await safetyCode('home', b.keyring.publicKey)).not.toBe(code);
+});
+
+test('a passkey secret opens the private key, and another one does not', async () => {
+  const { pkcs8 } = await createKeyring(PASS);
+  const secret = crypto.getRandomValues(new Uint8Array(32));
+  const locked = await lockWithPasskey(pkcs8, { id: 'a', salt: 'b', secret });
+  expect(await unlockWithPasskey(locked, secret)).toEqual(pkcs8);
+  const other = crypto.getRandomValues(new Uint8Array(32));
+  await expect(unlockWithPasskey(locked, other)).rejects.toThrow();
 });
 
 describe('records', () => {

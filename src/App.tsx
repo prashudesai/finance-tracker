@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { createMemoryRepository } from './data/memoryRepository';
 import type { TrackerRepository } from './data/repository';
@@ -95,8 +95,27 @@ function useFirebaseSession(): Session {
   return session;
 }
 
+const RELOCK_AFTER_MS = 5 * 60 * 1000;
+
+/** With Face ID on, coming back after a break reloads, which asks again. */
+function useRelockOnReturn(enabled: () => boolean) {
+  useEffect(() => {
+    let hiddenAt = 0;
+    const update = () => {
+      if (document.hidden) hiddenAt = Date.now();
+      else if (hiddenAt && Date.now() - hiddenAt > RELOCK_AFTER_MS && enabled()) {
+        window.location.reload();
+      }
+    };
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, [enabled]);
+}
+
 function SignedInApp() {
   const session = useFirebaseSession();
+  const passkey = session.status === 'ready' ? session.account.security?.passkey : undefined;
+  useRelockOnReturn(useCallback(() => passkey?.enabled() ?? false, [passkey]));
   if (session.status === 'loading') return null;
   if (session.status === 'signed-out') {
     return <SignIn error={session.error} onSignIn={session.signIn} />;

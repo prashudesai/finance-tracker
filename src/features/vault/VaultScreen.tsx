@@ -1,4 +1,4 @@
-import { KeyRound, ShieldCheck } from 'lucide-react';
+import { Fingerprint, KeyRound, ShieldCheck } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { MIN_PASSPHRASE_LENGTH } from '../../data/crypto';
 import type { VaultAccess, VaultGate } from '../../data/vault';
@@ -212,9 +212,23 @@ function Unlock({
   return (
     <Screen
       onSignOut={onSignOut}
-      text="Enter your passphrase to open your records on this device."
+      text={
+        gate.canUsePasskey
+          ? 'Use Face ID or your fingerprint, or enter your passphrase.'
+          : 'Enter your passphrase to open your records on this device.'
+      }
       title="Unlock your tracker"
     >
+      {gate.canUsePasskey ? (
+        <button
+          className={ui.button}
+          disabled={working}
+          onClick={() => void run(async () => onAccess(await gate.unlockWithPasskey()))}
+          type="button"
+        >
+          <Fingerprint size={16} /> Unlock with Face ID or fingerprint
+        </button>
+      ) : null}
       <form
         className={ui.form}
         onSubmit={(event: FormEvent) => {

@@ -104,6 +104,13 @@ export interface Keyring {
   publicKey: JsonWebKey;
   passphrase: LockedSecret;
   recovery: LockedSecret;
+  passkeys?: LockedWithPasskey[];
+}
+
+/** The private key, locked by a secret only a device's passkey can produce. */
+export interface LockedWithPasskey extends Sealed {
+  id: string;
+  salt: string;
 }
 
 const PRIVATE_KEY = 'private-key';
@@ -147,6 +154,38 @@ export async function withNewRecoveryCode(keyring: Keyring, pkcs8: Uint8Array) {
   const recoveryCode = createRecoveryCode();
   const recovery = await lockWithSecret(pkcs8, normalizeRecoveryCode(recoveryCode), RECOVERY_KEY);
   return { keyring: { ...keyring, recovery }, recoveryCode };
+}
+
+const PASSKEY_CONTEXT = 'passkey';
+
+async function keyFromPasskey(secret: Uint8Array) {
+  const material = await crypto.subtle.importKey('raw', buffer(secret), 'HKDF', false, [
+    'deriveKey',
+  ]);
+  return crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new ArrayBuffer(32),
+      info: buffer(toBytes(PASSKEY_CONTEXT)),
+    },
+    material,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+}
+
+export async function lockWithPasskey(
+  pkcs8: Uint8Array,
+  { id, salt, secret }: { id: string; salt: string; secret: Uint8Array },
+): Promise<LockedWithPasskey> {
+  const sealed = await seal(await keyFromPasskey(secret), pkcs8, PASSKEY_CONTEXT);
+  return { id, salt, ...sealed };
+}
+
+export async function unlockWithPasskey(locked: LockedWithPasskey, secret: Uint8Array) {
+  return unseal(await keyFromPasskey(secret), locked, PASSKEY_CONTEXT);
 }
 
 /** Every data key a household has used, so records written before a change stay readable. */

@@ -7,6 +7,8 @@ const open = { status: 'open' } as VaultAccess;
 function gate(overrides: Partial<VaultGate>): VaultGate {
   return {
     hasKeyring: true,
+    canUsePasskey: false,
+    unlockWithPasskey: vi.fn(),
     create: vi.fn(),
     unlock: vi.fn(),
     recover: vi.fn(),
@@ -81,4 +83,14 @@ test('someone waiting sees their code and is told when not yet approved', async 
   expect(screen.getByText('1234 5678 9012')).toBeDefined();
   fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
   expect(await screen.findByText('Not approved yet.')).toBeDefined();
+});
+
+test('Face ID is offered only when this account has it', async () => {
+  const unlockWithPasskey = vi.fn(async () => open);
+  const { onAccess } = show(gate({ canUsePasskey: true, unlockWithPasskey }));
+  fireEvent.click(screen.getByRole('button', { name: /Face ID or fingerprint/ }));
+  await waitFor(() => expect(onAccess).toHaveBeenCalledWith(open));
+  cleanup();
+  show(gate({}));
+  expect(screen.queryByRole('button', { name: /Face ID/ })).toBeNull();
 });
