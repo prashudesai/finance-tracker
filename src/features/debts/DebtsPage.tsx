@@ -1,4 +1,13 @@
-import { Clock, CreditCard, History, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  ChevronRight,
+  Clock,
+  CreditCard,
+  History,
+  ListChecks,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router';
 import { loanPayments, stopSchedules } from '../../domain/recurring';
@@ -16,8 +25,9 @@ import { useTracker, useView } from '../../store/tracker';
 import { formatMoney, formatPercent, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
-import { Stat } from '../../ui/Stat';
+import { Metric, Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
+import { useIsPhone } from '../../ui/useIsPhone';
 import { SortHeader, useSort } from '../../ui/useSort';
 import { LoanForm } from './LoanForm';
 import { LoanHistory } from './LoanHistory';
@@ -34,6 +44,86 @@ function loanSortValue({ type, ledger }: LoanSummary, column: LoanColumn) {
   return (ledger?.remaining ?? 0) > 0 ? 'Active' : 'Paid off';
 }
 
+/** A phone tile keeps the main figures. Everything else opens in LoanDetails. */
+function LoanCard({ summary, onOpen }: { summary: LoanSummary; onOpen: () => void }) {
+  const { type, member, ledger, error } = summary;
+  const active = (ledger?.remaining ?? 0) > 0;
+  const paid = ledger ? paidShare(ledger) : 0;
+  return (
+    <button aria-label={`Open ${type}`} className={ui.categoryCard} onClick={onOpen} type="button">
+      <div className={ui.split}>
+        <div>
+          <div style={{ fontSize: '1.1rem' }}>{type}</div>
+          <div className={ui.caption}>{member}</div>
+        </div>
+        <span className={ui.tableActions} style={{ alignItems: 'center' }}>
+          <span className={active ? ui.badge : ui.badgeDone}>{active ? 'Active' : 'Paid off'}</span>
+          <ChevronRight aria-hidden="true" size={16} />
+        </span>
+      </div>
+      {ledger ? (
+        <>
+          <div className={ui.metrics} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+            <Metric label="Remaining" value={formatMoney(ledger.remaining)} />
+            <Metric label="EMI" value={formatMoney(ledger.emi)} />
+            <Metric label="Interest rate" value={`${ledger.rate}%`} />
+            <Metric label="EMIs left (est.)" value={String(remainingEmis(ledger) ?? '—')} />
+          </div>
+          <div className={ui.meter} style={{ height: 5, margin: '4px 0' }}>
+            <span className={ui.meterFill} style={{ width: `${paid * 100}%` }} />
+          </div>
+          <span className={`${ui.caption} ${ui.gain}`}>{formatPercent(paid)} paid</span>
+        </>
+      ) : (
+        <span className={ui.fieldError}>{error}</span>
+      )}
+    </button>
+  );
+}
+
+function LoanDetails({
+  summary,
+  onClose,
+  onHistory,
+  onEdit,
+  onDelete,
+}: {
+  summary: LoanSummary;
+  onClose: () => void;
+  onHistory: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { type, ledger } = summary;
+  return (
+    <Modal onClose={onClose} title={type}>
+      <div className={ui.page}>
+        {ledger ? (
+          <div className={ui.metrics} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+            <Metric label="Remaining principal" value={formatMoney(ledger.remaining)} />
+            <Metric label="EMI" value={formatMoney(ledger.emi)} />
+            <Metric label="Total borrowed" value={formatMoney(ledger.totalPrincipal)} />
+            <Metric label="Rate" value={`${ledger.rate}%`} />
+            <Metric label="Remaining EMIs (est.)" value={String(remainingEmis(ledger) ?? '—')} />
+            <Metric label="Interest paid" value={formatMoney(ledger.interestPaid)} />
+          </div>
+        ) : null}
+        <div className={ui.actions}>
+          <button className={ui.quiet} onClick={onHistory} type="button">
+            <History size={14} /> History
+          </button>
+          <button className={ui.quiet} onClick={onEdit} type="button">
+            <Pencil size={14} /> Edit
+          </button>
+          <button className={ui.quiet} onClick={onDelete} type="button">
+            <Trash2 size={14} /> Delete
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 export function DebtsPage() {
   const data = useView();
   const commit = useTracker((state) => state.commit);
@@ -42,10 +132,14 @@ export function DebtsPage() {
   const [adding, setAdding] = useState(quickAdd?.add === true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [historyId, setHistoryId] = useState<string | null>(null);
+  const [detailsId, setDetailsId] = useState<string | null>(null);
+  const phone = useIsPhone();
   const summaries = summarizeLoans(data, today);
   const { sorted, sort, toggle } = useSort(summaries, loanSortValue);
   const editing = data.loans.find((loan) => loan.id === editingId);
   const history = data.loans.find((loan) => loan.id === historyId);
+  const details = summaries.find((summary) => summary.id === detailsId);
+  const detailsLoan = data.loans.find((loan) => loan.id === detailsId);
 
   const remove = (loan: Loan) => {
     const stopped = stopSchedules(
@@ -119,6 +213,16 @@ export function DebtsPage() {
         </div>
         {summaries.length === 0 ? (
           <p className={ui.empty}>No loans recorded yet.</p>
+        ) : phone ? (
+          <div className={ui.threeColumn}>
+            {sorted.map((summary) => (
+              <LoanCard
+                key={summary.id}
+                onOpen={() => setDetailsId(summary.id)}
+                summary={summary}
+              />
+            ))}
+          </div>
         ) : (
           <div className={ui.tableWrap}>
             <table className={ui.table}>
@@ -228,6 +332,24 @@ export function DebtsPage() {
           </div>
         )}
       </section>
+      {details && detailsLoan ? (
+        <LoanDetails
+          onClose={() => setDetailsId(null)}
+          onDelete={() => {
+            setDetailsId(null);
+            remove(detailsLoan);
+          }}
+          onEdit={() => {
+            setDetailsId(null);
+            setEditingId(details.id);
+          }}
+          onHistory={() => {
+            setDetailsId(null);
+            setHistoryId(details.id);
+          }}
+          summary={details}
+        />
+      ) : null}
       {adding ? (
         <Modal onClose={() => setAdding(false)} title="Add Loan">
           <LoanForm onDone={() => setAdding(false)} />

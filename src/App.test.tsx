@@ -397,6 +397,20 @@ describe('on a phone', () => {
     Reflect.deleteProperty(window, 'matchMedia');
   });
 
+  test('loans are tiles with the main figures, and the rest opens on tap', async () => {
+    renderApp('/debts', { loans: [loan] });
+    const tile = await screen.findByRole('button', { name: 'Open Car' });
+    expect(within(tile).getByText('Remaining')).toBeDefined();
+    expect(within(tile).getByText('Interest rate')).toBeDefined();
+    expect(within(tile).getByText('EMIs left (est.)')).toBeDefined();
+    expect(within(tile).queryByText('Total borrowed')).toBeNull();
+    expect(screen.queryByRole('table')).toBeNull();
+    fireEvent.click(tile);
+    expect(await screen.findByText('Total borrowed')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'History', hidden: true }));
+    expect(await screen.findByRole('dialog', { name: /Car/, hidden: true })).toBeDefined();
+  });
+
   test('each history tab offers only its own add button', async () => {
     renderApp('/cash-flow');
     expect(await screen.findByRole('heading', { name: 'Income History' })).toBeDefined();
