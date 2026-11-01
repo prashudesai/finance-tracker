@@ -40,7 +40,7 @@ npm run test:rules
 npm run build
 ```
 
-- `dev:preview` runs the app on sample in-memory data with no Firebase or sign-in, on port 5173. The sign-in screen is at `/signin`.
+- `dev:preview` runs the app on sample in-memory data with no Firebase or sign-in, on port 5173. The sign-in screen is at `/signin`, and the encryption screens at `/setup`, `/unlock` and `/waiting`.
 - `test:rules` covers the security rules and Firestore repository on the emulator, and needs Java 17 or later.
 
 Before calling work done, run typecheck, lint, tests and build. Run `test:rules` too if `firestore.rules` or the data layer changed. For UI changes, also check the running app at phone and desktop widths.

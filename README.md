@@ -18,6 +18,8 @@ npm run dev:preview
 
 Open http://localhost:5173. This uses sample data held in memory, so you don't need Firebase or a sign-in.
 
+Signed-in features are stand-ins that never reach Firebase. To see the encryption screens, open `/setup`, `/unlock` or `/waiting`.
+
 ## Check it
 
 ```bash

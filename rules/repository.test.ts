@@ -105,6 +105,29 @@ test('an invalid document is counted, not shown', async () => {
   expect(invalid).toBe(1);
 });
 
+test('a change decrypts only the record that changed', async () => {
+  const db = asOwner();
+  const row = (id: string, amount: number) => ({
+    type: 'set' as const,
+    collection: 'income' as const,
+    id,
+    value: { id, date: '2026-01-01', member: 'A', source: 'S', amount },
+  });
+  const repository = firestoreRepository(db, 'owner', codec);
+  await repository.commit([row('a', 1), row('b', 2), row('c', 3)]);
+  const open = vi.spyOn(codec, 'open');
+  const stop = repository.subscribe(
+    'income',
+    () => undefined,
+    () => undefined,
+  );
+  await vi.waitFor(() => expect(open).toHaveBeenCalledTimes(3));
+  await repository.commit([row('b', 20)]);
+  await vi.waitFor(() => expect(open).toHaveBeenCalledTimes(4));
+  stop();
+  open.mockRestore();
+});
+
 test('clearing removes every record', async () => {
   const db = asOwner();
   const seed = { ...emptyTrackerData(), ...previewData() };

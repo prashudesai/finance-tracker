@@ -28,18 +28,31 @@ export function firestoreRepository(
   return {
     subscribe(name, onRows, onError) {
       let latest = 0;
+      // One change shouldn't mean decrypting a whole collection again.
+      let opened = new Map<string, { c: string; value: Promise<unknown> }>();
       return onSnapshot(
         collection(db, path(name)),
         (snapshot) => {
           latest += 1;
           const version = latest;
-          const opened = snapshot.docs
+          const current = new Map<string, { c: string; value: Promise<unknown> }>();
+          for (const row of snapshot.docs) {
+            const stored = row.data();
             // Records saved before encryption are left alone and not shown.
-            .filter((row) => isSealed(row.data()))
-            .map((row) =>
-              codec.open(name, row.id, row.data() as SealedRecord).catch(() => undefined),
+            if (!isSealed(stored)) continue;
+            const known = opened.get(row.id);
+            current.set(
+              row.id,
+              known?.c === stored.c
+                ? known
+                : {
+                    c: stored.c,
+                    value: codec.open(name, row.id, stored).catch(() => undefined),
+                  },
             );
-          void Promise.all(opened).then((rows) => {
+          }
+          opened = current;
+          void Promise.all([...current.values()].map((row) => row.value)).then((rows) => {
             // Decrypting takes time, so an older snapshot may finish after a newer one.
             if (version !== latest) return;
             const { rows: valid, invalidCount } = parseRows(name, rows);

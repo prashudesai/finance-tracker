@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router';
 import { createMemoryRepository } from './data/memoryRepository';
 import type { TrackerRepository } from './data/repository';
 import type { VaultAccess, VaultGate } from './data/vault';
+import { previewAccount, previewGate, previewWaiting } from './data/previewAccount';
 import { previewData } from './data/previewData';
 import { SignIn } from './features/auth/SignIn';
 import { VaultScreen, WaitingForApproval } from './features/vault/VaultScreen';
@@ -144,13 +145,38 @@ function SignedInApp() {
 
 const preview = createMemoryRepository(previewData());
 
+const leavePreviewVault = () => window.location.assign('/signin');
+
+function PreviewVault({ gate }: { gate: VaultGate }) {
+  return (
+    <VaultScreen
+      gate={gate}
+      onAccess={() => undefined}
+      onSignOut={leavePreviewVault}
+      onStartOver={leavePreviewVault}
+    />
+  );
+}
+
 export function App() {
   return (
     <BrowserRouter>
       {import.meta.env.VITE_DATA_SOURCE === 'memory' ? (
         <Routes>
           <Route element={<SignIn onSignIn={() => undefined} />} path="/signin" />
-          <Route element={<Shell repository={preview} />} path="*" />
+          <Route element={<PreviewVault gate={previewGate(false)} />} path="/setup" />
+          <Route element={<PreviewVault gate={previewGate(true)} />} path="/unlock" />
+          <Route
+            element={
+              <WaitingForApproval
+                access={previewWaiting}
+                onAccess={() => undefined}
+                onSignOut={leavePreviewVault}
+              />
+            }
+            path="/waiting"
+          />
+          <Route element={<Shell account={previewAccount} repository={preview} />} path="*" />
         </Routes>
       ) : (
         <SignedInApp />
