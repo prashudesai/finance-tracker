@@ -94,6 +94,13 @@
   }
 }
 
+/* Sizes are in rem, so this scales phones as a whole, to near the older app's density. */
+@media (max-width: 700px) {
+  html {
+    font-size: 87.5%;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

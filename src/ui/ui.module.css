@@ -882,6 +882,12 @@ details.fold[open] > summary {
 
 /* Phones show the page title alone, as the older app did. */
 @media (max-width: 700px) {
+  /* iPhones zoom the page when a form field under 16px is tapped. */
+  .field input,
+  .field select {
+    font-size: 16px;
+  }
+
   .cardHeader .button {
     flex: none;
     min-height: 40px;
