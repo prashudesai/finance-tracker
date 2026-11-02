@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useEffect, useRef, type ReactNode } from 'react';
+import { useTracker } from '../store/tracker';
 import ui from './ui.module.css';
 
 /** A native dialog, which traps focus and restores it when closed. */
@@ -17,6 +18,8 @@ export function Modal({
   wide?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  // The page's own message sits behind a dialog, where it can't be seen.
+  const error = useTracker((state) => state.error);
 
   useEffect(() => {
     const element = dialog.current;
@@ -36,6 +39,11 @@ export function Modal({
           <X size={18} />
         </button>
       </div>
+      {error ? (
+        <p className={ui.notice} role="alert">
+          {error}
+        </p>
+      ) : null}
       {children}
     </dialog>
   );

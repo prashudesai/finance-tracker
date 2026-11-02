@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { buildChange, pruneWrites } from '../domain/changes';
 import { dueContributions } from '../domain/holdings';
 import {
+  COLLECTIONS,
   COLLECTION_NAMES,
   emptyTrackerData,
   type CollectionName,
@@ -93,6 +94,15 @@ export const useTracker = create<TrackerState>((set, get) => ({
     const { canEdit, data, actor, repository } = get();
     if (!canEdit) {
       set({ error: 'Viewer access can look at records but not change them.' });
+      return;
+    }
+    // Saved anyway, a record like this would come back hidden, and could hide a whole loan.
+    const refused = writes.some(
+      (write) =>
+        write.type === 'set' && !COLLECTIONS[write.collection].safeParse(write.value).success,
+    );
+    if (refused) {
+      set({ error: "That wasn't saved, because a date, amount or name is missing or too large." });
       return;
     }
     set({ error: null });
