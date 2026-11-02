@@ -189,7 +189,7 @@ export function Dashboard() {
       </div>
       <div className={ui.meterLegend}>
         <span>Assets {formatPercent(worth.assetShare)}</span>
-        <span>Debts {formatPercent(1 - worth.assetShare)}</span>
+        <span>Debts {formatPercent(worth.debts > 0 ? 1 - worth.assetShare : 0)}</span>
       </div>
     </section>
   );

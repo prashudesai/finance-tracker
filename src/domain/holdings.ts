@@ -32,20 +32,35 @@ export interface HoldingData {
   epsUpdates?: EpsUpdate[];
 }
 
+const indexes = new WeakMap<object, Map<string, unknown[]>>();
+
+/** Rows by holding. Lists are replaced rather than edited, so each is grouped only once. */
+function rowsOfHolding<Row extends { holdingId: string }>(holdingId: string, rows: Row[]) {
+  let index = indexes.get(rows) as Map<string, Row[]> | undefined;
+  if (!index) {
+    index = new Map();
+    for (const row of rows) {
+      const group = index.get(row.holdingId);
+      if (group) group.push(row);
+      else index.set(row.holdingId, [row]);
+    }
+    indexes.set(rows, index);
+  }
+  return index.get(holdingId) ?? [];
+}
+
 /** Rows for one holding, active only, oldest first. */
 export function holdingContributions(holdingId: string, contributions: Contribution[]) {
-  return contributions
-    .filter((row) => row.holdingId === holdingId && !row.skipped)
+  return rowsOfHolding(holdingId, contributions)
+    .filter((row) => !row.skipped)
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export function latestValuation(holdingId: string, valuations: Valuation[]) {
-  return valuations
-    .filter((row) => row.holdingId === holdingId)
-    .reduce<Valuation | null>(
-      (latest, row) => (latest && latest.date > row.date ? latest : row),
-      null,
-    );
+  return rowsOfHolding(holdingId, valuations).reduce<Valuation | null>(
+    (latest, row) => (latest && latest.date > row.date ? latest : row),
+    null,
+  );
 }
 
 export interface HoldingPosition {

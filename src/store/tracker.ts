@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { buildChange, pruneWrites, undoWrites } from '../domain/changes';
 import { dueContributions } from '../domain/holdings';
+import { plainError } from '../data/errors';
 import {
+  COLLECTIONS,
   COLLECTION_NAMES,
   emptyTrackerData,
   type CollectionName,
@@ -77,7 +79,8 @@ export const useTracker = create<TrackerState>((set, get) => ({
     });
     const ready = new Set<CollectionName>();
     const invalid = new Map<CollectionName, number>();
-    const fail = (error: Error) => set({ error: error.message });
+    const fail = (error: Error) =>
+      set({ error: plainError(error, 'Your records could not be loaded. Please try again.') });
 
     function watch<Name extends CollectionName>(name: Name) {
       return repository.subscribe(
@@ -111,6 +114,15 @@ export const useTracker = create<TrackerState>((set, get) => ({
       set({ error: 'Viewer access can look at records but not change them.' });
       return;
     }
+    // Saved anyway, a record like this would come back hidden, and could hide a whole loan.
+    const refused = writes.some(
+      (write) =>
+        write.type === 'set' && !COLLECTIONS[write.collection].safeParse(write.value).success,
+    );
+    if (refused) {
+      set({ error: "That wasn't saved, because a date, amount or name is missing or too large." });
+      return;
+    }
     set({ error: null });
     const change =
       options.log === false
@@ -136,7 +148,7 @@ export const useTracker = create<TrackerState>((set, get) => ({
       .catch((error: unknown) => {
         set({
           toast: null,
-          error: error instanceof Error ? error.message : 'The change could not be saved.',
+          error: plainError(error, 'The change could not be saved. Please try again.'),
         });
       })
       .finally(() => set((state) => ({ pendingSaves: state.pendingSaves - 1 })));
@@ -216,7 +228,8 @@ export function useSaveSettings() {
 
 /** Personal records follow the selected profile. Household expenses stay shared. */
 export function selectView(data: TrackerData, profile: string | null): TrackerData {
-  if (!profile) return data;
+  // A name removed from the family, with its profile still selected, shows everyone.
+  if (!profile || !data.settings[0]?.familyMembers.includes(profile)) return data;
   const mine = <Row extends { member: string }>(rows: Row[]) =>
     rows.filter((row) => row.member === profile);
   const holdings = mine(data.holdings);

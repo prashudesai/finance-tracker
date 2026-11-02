@@ -1,3 +1,4 @@
+import { previewData } from '../data/previewData';
 import { emptyTrackerData, type TrackerData } from '../data/repository';
 import { defaultSettings, type Holding } from '../schema/records';
 import {
@@ -10,6 +11,7 @@ import {
   memberPositions,
   financialSummary,
   holdingRows,
+  monthCloser,
   monthlyOverview,
   monthReviewStatus,
   monthSignature,
@@ -353,4 +355,44 @@ test('member positions total each person', () => {
     ['A', 50_000],
     ['B', -10_000],
   ]);
+});
+
+describe('one pass over the records gives the same figures', () => {
+  const sample = { ...emptyTrackerData(), ...previewData() };
+  const months = sample.monthlyBalances.map((row) => row.month);
+
+  test('every month closes as it does on its own', () => {
+    const closeOf = monthCloser(sample);
+    expect(sample.contributions.length).toBeGreaterThan(0);
+    for (const month of months) expect(closeOf(month)).toEqual(closeMonth(sample, month));
+  });
+
+  test('months to review match each month checked on its own', () => {
+    const [first, second] = [...months].sort();
+    const reviewed = {
+      ...sample,
+      monthReviews: [
+        {
+          id: 'a',
+          month: first ?? '',
+          signature: monthSignature(sample, first ?? ''),
+          reviewedAt: '2026-01-01',
+        },
+        { id: 'b', month: second ?? '', signature: 'stale', reviewedAt: '2026-01-01' },
+      ],
+    };
+    const today = '2026-11-15';
+    const expected = months
+      .filter((month) => month <= today.slice(0, 7))
+      .filter((month) => {
+        const close = closeMonth(reviewed, month);
+        if (month === today.slice(0, 7)) return close.opening === null;
+        return !close.complete || !monthReviewStatus(reviewed, month).reviewed;
+      })
+      .sort()
+      .reverse();
+    expect(monthsToReview(reviewed, today)).toEqual(expected);
+    expect(monthsToReview(reviewed, today)).not.toContain(first);
+    expect(monthsToReview(reviewed, today)).toContain(second);
+  });
 });

@@ -14,10 +14,18 @@ import {
 } from '../../schema/records';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
-import { formatMoney, localDate } from '../../ui/format';
+import { formatMoney, formatMonth, localDate } from '../../ui/format';
 import { MemberField, useDefaultMember } from '../../ui/MemberField';
 import { Select } from '../../ui/Select';
 import ui from '../../ui/ui.module.css';
+
+/** A schedule accounts for its records by month, so one can't be moved out of it. */
+function leavesSchedule(row: { recurringMonth?: string | undefined } | undefined, date: string) {
+  const month = row?.recurringMonth;
+  return month && !date.startsWith(month)
+    ? `This came from a recurring schedule, so it stays in ${formatMonth(month)}.`
+    : null;
+}
 
 const incomeForm = incomeSchema.pick({
   date: true,
@@ -33,7 +41,7 @@ export function IncomeForm({ initial, onDone }: { initial?: Income; onDone?: () 
   const settings = useSettings();
   const options = optionLists(settings);
   const defaultMember = useDefaultMember();
-  const { register, handleSubmit, reset, formState } = useForm<IncomeValues>({
+  const { register, handleSubmit, reset, setError, formState } = useForm<IncomeValues>({
     resolver: zodResolver(incomeForm),
     defaultValues: initial ?? {
       date: localDate(),
@@ -45,6 +53,11 @@ export function IncomeForm({ initial, onDone }: { initial?: Income; onDone?: () 
   const { errors } = formState;
 
   const save = (values: IncomeValues) => {
+    const moved = leavesSchedule(initial, values.date);
+    if (moved) {
+      setError('date', { message: moved });
+      return;
+    }
     const id = initial?.id ?? crypto.randomUUID();
     commit([{ type: 'set', collection: 'income', id, value: { ...initial, ...values, id } }]);
     reset({ date: values.date, member: values.member, source: values.source, notes: '' });
@@ -100,7 +113,7 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
   const settings = useSettings();
   const options = optionLists(settings);
   const [error, setError] = useState('');
-  const { register, handleSubmit, reset, watch, setValue, formState } = useForm<ExpenseValues>({
+  const form = useForm<ExpenseValues>({
     resolver: zodResolver(expenseForm),
     defaultValues: {
       date: initial?.date ?? localDate(),
@@ -115,6 +128,7 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
       ...(initial ? { amount: initial.amount } : {}),
     },
   });
+  const { register, handleSubmit, reset, watch, setValue, formState } = form;
   const { errors } = formState;
   const category = watch('category');
   const loanId = watch('loanId');
@@ -124,14 +138,12 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
   const amount = watch('amount');
   const isEmi = category === EMI_CATEGORY;
   const subcategories = EXPENSE_SUBCATEGORIES[category];
-  const loaded = useRef(false);
+  const shownCategory = useRef(category);
 
   // Follows the older form: these categories default to annual, and an EMI suggests its amount.
   useEffect(() => {
-    if (!loaded.current) {
-      loaded.current = true;
-      return;
-    }
+    if (shownCategory.current === category) return;
+    shownCategory.current = category;
     setValue('annual', ANNUAL_BY_DEFAULT.includes(category) ? 'yes' : 'no');
     setValue('subcategory', '');
   }, [category, setValue]);
@@ -171,6 +183,11 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
     ...values
   }: ExpenseValues) => {
     setError('');
+    const moved = leavesSchedule(initial, values.date);
+    if (moved) {
+      form.setError('date', { message: moved });
+      return;
+    }
     const id = initial?.id ?? crypto.randomUUID();
     const value: Expense = {
       ...initial,
@@ -180,8 +197,16 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
       ...(member ? { member } : {}),
       ...(isEmi ? { loanId: loan, repaymentType: kind, isAnnual: false } : {}),
     };
+    // `initial` must not bring back what was just cleared.
+    if (!member) delete value.member;
     if (isEmi && kind === 'part-payment') value.partPaymentAction = action;
     else delete value.partPaymentAction;
+    if (!isEmi) {
+      delete value.loanId;
+      delete value.repaymentType;
+      delete value.interestOverride;
+      delete value.interestPaid;
+    }
     if (isEmi) {
       const target = loans.find((row) => row.id === loan);
       if (!target) {

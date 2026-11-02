@@ -36,10 +36,17 @@ export function monthTotals({ income, expenses }: Pick<CashflowData, 'income' | 
   return totals;
 }
 
+export const balancesByMonth = ({ monthlyBalances }: Pick<CashflowData, 'monthlyBalances'>) =>
+  new Map(monthlyBalances.map((row) => [row.month, row.startBalance]));
+
 /** `transfers` is money moved out to PMS, which reduces what is available. */
-export function monthClose(data: CashflowData, month: string, transfers = 0): MonthClose {
-  const totals = monthTotals(data).get(month) ?? { income: 0, expenses: 0 };
-  const balances = new Map(data.monthlyBalances.map((row) => [row.month, row.startBalance]));
+export function closeFrom(
+  monthly: Map<string, MonthTotals>,
+  balances: Map<string, number>,
+  month: string,
+  transfers = 0,
+): MonthClose {
+  const totals = monthly.get(month) ?? { income: 0, expenses: 0 };
   const opening = balances.get(month) ?? null;
   const closing = balances.get(nextMonth(month)) ?? null;
   const available = (opening ?? 0) + totals.income - totals.expenses - transfers;
@@ -54,6 +61,9 @@ export function monthClose(data: CashflowData, month: string, transfers = 0): Mo
     complete,
   };
 }
+
+export const monthClose = (data: CashflowData, month: string, transfers = 0) =>
+  closeFrom(monthTotals(data), balancesByMonth(data), month, transfers);
 
 export interface MonthTrend extends MonthTotals {
   month: string;

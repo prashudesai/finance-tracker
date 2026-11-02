@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useEffect, useRef, type ReactNode, type TouchEvent } from 'react';
+import { useTracker } from '../store/tracker';
 import ui from './ui.module.css';
 
 const SWIPE_TO_CLOSE = 90;
@@ -43,6 +44,9 @@ export function Modal({
     },
   };
 
+  // The page's own message sits behind a dialog, where it can't be seen.
+  const error = useTracker((state) => state.error);
+
   useEffect(() => {
     const element = dialog.current;
     if (element && !element.open) element.showModal();
@@ -61,6 +65,11 @@ export function Modal({
           <X size={18} />
         </button>
       </div>
+      {error ? (
+        <p className={ui.notice} role="alert">
+          {error}
+        </p>
+      ) : null}
       {children}
     </dialog>
   );

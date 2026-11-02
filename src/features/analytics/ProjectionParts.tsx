@@ -50,6 +50,11 @@ export function RateInput({
       inputMode="decimal"
       key={value}
       onBlur={(event) => {
+        // A cleared field shows the saved rate again, instead of becoming 0%.
+        if (event.target.value === '') {
+          event.target.value = String(Number(value.toFixed(2)));
+          return;
+        }
         const next = Number(event.target.value);
         if (Number.isFinite(next) && next !== value) onChange(next);
       }}

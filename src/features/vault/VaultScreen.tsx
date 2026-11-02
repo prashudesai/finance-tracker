@@ -1,6 +1,7 @@
 import { Check, Fingerprint, KeyRound, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { MIN_PASSPHRASE_LENGTH } from '../../data/crypto';
+import { plainError } from '../../data/errors';
 import type { VaultAccess, VaultGate } from '../../data/vault';
 import { Field } from '../../ui/Field';
 import ui from '../../ui/ui.module.css';
@@ -47,7 +48,7 @@ function useTask() {
     try {
       await task();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'That did not work. Please try again.');
+      setError(plainError(failure, 'That did not work. Please try again.'));
     } finally {
       setWorking(false);
     }

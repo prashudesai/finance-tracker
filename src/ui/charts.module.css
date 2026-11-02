@@ -1,6 +1,6 @@
 .donut {
   display: grid;
-  grid-template-columns: minmax(130px, 170px) 1fr;
+  grid-template-columns: minmax(130px, 170px) minmax(0, 1fr);
   gap: 18px;
   align-items: center;
 }
@@ -42,7 +42,7 @@
 
 .legend li {
   display: grid;
-  grid-template-columns: 10px 1fr auto;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
 }

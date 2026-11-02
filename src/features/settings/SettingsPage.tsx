@@ -15,6 +15,7 @@ import release from '../../release.json';
 import { syncedRecently } from '../../domain/analytics';
 import { createBackup, parseBackup, restoreWrites } from '../../domain/backup';
 import { undoWrites } from '../../domain/changes';
+import { plainError } from '../../data/errors';
 import { TRACKER_SETTINGS_ID, type ChangeRecord, type TrackerSettings } from '../../schema/records';
 import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
 import type { Account, AccountSecurity, FamilyMember } from '../../Shell';
@@ -139,6 +140,7 @@ function DataBackup() {
   const save = useSaveSettings();
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
+  const canEdit = useTracker((state) => state.canEdit);
   const syncedAt = useTracker((state) => state.syncedAt);
   const synced = syncedRecently(syncedAt ? localDate(syncedAt) : null, localDate());
   const [status, setStatus] = useState('');
@@ -157,13 +159,17 @@ function DataBackup() {
         isEncryptedBackup(text) ? await decryptBackup(text, passphrase) : text,
       );
       const count = Object.values(backup).reduce((sum, rows) => sum + rows.length, 0);
+      if (!canEdit) {
+        setStatus('Viewer access can look at records but not change them.');
+        return;
+      }
       if (!window.confirm(`Replace all current records with ${count} records from this backup?`)) {
         return;
       }
       commit(restoreWrites(data, backup));
       setStatus(`Restored ${count} records.`);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'This backup could not be read.');
+      setStatus(plainError(error, 'This backup could not be read.'));
     }
   };
 
@@ -197,7 +203,7 @@ function DataBackup() {
             encryptBackup(createBackup(data, new Date().toISOString()), passphrase).then(
               (file) => {
                 downloadText(`finance-backup-${localDate()}.json`, file, 'application/json');
-                save({ lastBackupOn: localDate() });
+                if (canEdit) save({ lastBackupOn: localDate() });
               },
               (error: unknown) => setStatus(failureText(error)),
             );
@@ -279,8 +285,12 @@ function FamilyMembers({ account }: { account: Account }) {
       () => {
         setStatus(done);
         refresh();
+        return true;
       },
-      (error: unknown) => setStatus(failureText(error)),
+      (error: unknown) => {
+        setStatus(failureText(error));
+        return false;
+      },
     );
 
   return (
@@ -336,7 +346,9 @@ function FamilyMembers({ account }: { account: Account }) {
               void run(
                 family.invite(email, role),
                 `Invited ${email}. They accept when they next sign in.`,
-              ).then(() => setEmail(''));
+              ).then((sent) => {
+                if (sent) setEmail('');
+              });
             }}
           >
             <Field label="Google email">
@@ -452,8 +464,7 @@ const withoutPhoto = (settings: TrackerSettings, email: string) =>
 
 const DELETE_PHRASE = 'DELETE MY ACCOUNT';
 
-const failureText = (error: unknown) =>
-  error instanceof Error ? error.message : 'That did not work. Please try again.';
+const failureText = (error: unknown) => plainError(error, 'That did not work. Please try again.');
 
 function DeleteAccount({ account }: { account: Account }) {
   const repository = useTracker((state) => state.repository);
@@ -516,6 +527,21 @@ function DeleteAccount({ account }: { account: Account }) {
         </p>
       ) : null}
     </div>
+  );
+}
+
+function GuideButton() {
+  const report = useTracker((state) => state.report);
+  return (
+    <button
+      className={ui.quiet}
+      onClick={() => {
+        saveGuide().catch(() => report('The PDF could not be created. Please try again.'));
+      }}
+      type="button"
+    >
+      Save PDF guide
+    </button>
   );
 }
 
@@ -1072,9 +1098,7 @@ export function SettingsPage({ account }: { account: Account }) {
               >
                 Start app tour
               </button>
-              <button className={ui.quiet} onClick={() => void saveGuide()} type="button">
-                Save PDF guide
-              </button>
+              <GuideButton />
             </div>
           ) : null}
           {panel === 'account' ? (

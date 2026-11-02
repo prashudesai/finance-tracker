@@ -170,7 +170,8 @@ export function LineChart({
   const x = (index: number) =>
     left + (labels.length > 1 ? (index / (labels.length - 1)) * (width - left - 16) : 0);
   const y = (value: number) => top + (1 - (value - low) / span) * (height - top - bottom);
-  const ticks = [high, (high + low) / 2, low];
+  // A flat line has one level, and two gridlines there would share a key.
+  const ticks = [...new Set([high, (high + low) / 2, low])];
   const stride = Math.max(1, Math.ceil(labels.length / (narrow ? 3 : 7)));
   return (
     <figure className={styles.line}>

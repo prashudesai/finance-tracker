@@ -117,7 +117,16 @@ function RuleForm({ initial, onDone }: { initial?: RecurringRule; onDone: () => 
         initial.kind === 'emi'
           ? initial
           : withAmountChange(initial, values.amount ?? initial.amount, month);
-      const value = { ...changed, name: values.name, day: values.day };
+      const details =
+        initial.kind === 'income'
+          ? {
+              source: values.label || initial.source,
+              member: values.member || initial.member,
+            }
+          : initial.kind === 'expense'
+            ? { category: values.label || initial.category }
+            : {};
+      const value = { ...changed, ...details, name: values.name, day: values.day };
       commit([{ type: 'set', collection: 'recurringRules', id: initial.id, value }]);
       onDone();
       return;
@@ -237,7 +246,15 @@ export function Commitments({ open = false }: { open?: boolean }) {
   const active = data.recurringRules.filter((rule) => !rule.paused);
 
   const run = (request: OccurrenceRequest) => {
-    const result = applyOccurrences(recurring, [request], today);
+    let result: ReturnType<typeof applyOccurrences>;
+    try {
+      result = applyOccurrences(recurring, [request], today);
+    } catch {
+      report(
+        'This could not be saved, because a recurring entry no longer matches its schedule. If one was moved to another month, move it back and try again.',
+      );
+      return;
+    }
     const writes = newRecordWrites(data, result.data);
     if (writes.length > 0) commit(writes);
     if (result.errors.length > 0) report(result.errors.join(' '));
