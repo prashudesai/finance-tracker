@@ -21,7 +21,7 @@ All pages from the older app exist and follow its layouts.
 | Data layer          | Firestore repository tested on the emulator with the real rules                                                         |
 | Security rules      | Written for all collections and tested on the emulator                                                                  |
 | Change log          | Saved changes with who made them, and undo that refuses to overwrite later edits                                        |
-| Family              | Invite, change access and remove members. Names live in Family access, and dropdowns hide with one member               |
+| Family              | One form adds a name, with an optional invite. Change access and remove members. Dropdowns hide with one member         |
 | Forms               | Old fields, lists and + Add new… options, including tenure-based EMI                                                    |
 | Exports             | CSV, print, and generated PDFs for reports and loan history                                                             |
 | Onboarding          | Guided setup and an app tour                                                                                            |

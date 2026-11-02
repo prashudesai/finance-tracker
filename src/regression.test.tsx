@@ -323,12 +323,16 @@ test('a failed invite keeps the typed address', async () => {
   );
   fireEvent.click(await screen.findByRole('button', { name: /^Family access/ }));
   const box = within(await screen.findByRole('dialog', { name: 'Family access' }));
-  fireEvent.change(box.getByLabelText('Their name'), { target: { value: 'Priya' } });
-  fireEvent.change(box.getByLabelText('Google email'), { target: { value: 'new@example.test' } });
-  fireEvent.click(box.getByRole('button', { name: 'Send invite' }));
+  fireEvent.change(box.getByLabelText('Name'), { target: { value: 'Priya' } });
+  fireEvent.change(box.getByLabelText('Google email (optional)'), {
+    target: { value: 'new@example.test' },
+  });
+  fireEvent.click(box.getByRole('button', { name: 'Add and invite' }));
   await box.findByText('That invite did not work.');
   expect(screen.queryByRole('option', { name: 'Priya', hidden: true })).toBeNull();
-  expect((box.getByLabelText('Google email') as HTMLInputElement).value).toBe('new@example.test');
+  expect((box.getByLabelText('Google email (optional)') as HTMLInputElement).value).toBe(
+    'new@example.test',
+  );
 });
 
 test('a tracker with no debts does not say debts are 100%', async () => {
@@ -406,10 +410,74 @@ test('inviting someone puts their name in the profile list and record forms', as
   expect(screen.queryByLabelText('Family profile')).toBeNull();
   fireEvent.click(await screen.findByRole('button', { name: /^Family access/ }));
   const box = within(await screen.findByRole('dialog', { name: 'Family access' }));
-  fireEvent.change(box.getByLabelText('Their name'), { target: { value: 'Priya' } });
-  fireEvent.change(box.getByLabelText('Google email'), { target: { value: 'new@example.test' } });
-  fireEvent.click(box.getByRole('button', { name: 'Send invite' }));
+  fireEvent.change(box.getByLabelText('Name'), { target: { value: 'Priya' } });
+  fireEvent.change(box.getByLabelText('Google email (optional)'), {
+    target: { value: 'new@example.test' },
+  });
+  fireEvent.click(box.getByRole('button', { name: 'Add and invite' }));
   const profile = await screen.findByLabelText('Family profile', { selector: 'select' });
   expect(within(profile).getByRole('option', { name: 'Asha', hidden: true })).toBeDefined();
   expect(within(profile).getByRole('option', { name: 'Priya', hidden: true })).toBeDefined();
+});
+
+test('a name without an email adds only the name, with no invite', async () => {
+  const family = {
+    list: async () => [],
+    invite: vi.fn(async () => undefined),
+    setRole: async () => undefined,
+    remove: async () => undefined,
+    watchRequests: () => () => undefined,
+    approve: async () => undefined,
+    deny: async () => undefined,
+  };
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell
+        account={{ name: 'Asha Rao', email: 'o@example.test', role: 'owner', family }}
+        repository={createMemoryRepository({
+          settings: [{ ...settings, onboardingDone: true, familyMembers: ['Asha'] }],
+        })}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^Family access/ }));
+  const box = within(await screen.findByRole('dialog', { name: 'Family access' }));
+  expect(box.queryByLabelText('Access')).toBeNull();
+  fireEvent.change(box.getByLabelText('Name'), { target: { value: 'Kiran' } });
+  fireEvent.click(box.getByRole('button', { name: '+ Add' }));
+  await box.findByText('Kiran');
+  expect(family.invite).not.toHaveBeenCalled();
+});
+
+test('an email shows the access choice and invites a name already listed', async () => {
+  const family = {
+    list: async () => [],
+    invite: vi.fn(async () => undefined),
+    setRole: async () => undefined,
+    remove: async () => undefined,
+    watchRequests: () => () => undefined,
+    approve: async () => undefined,
+    deny: async () => undefined,
+  };
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell
+        account={{ name: 'Asha Rao', email: 'o@example.test', role: 'owner', family }}
+        repository={createMemoryRepository({
+          settings: [{ ...settings, onboardingDone: true, familyMembers: ['Asha', 'Priya'] }],
+        })}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^Family access/ }));
+  const box = within(await screen.findByRole('dialog', { name: 'Family access' }));
+  fireEvent.change(box.getByLabelText('Name'), { target: { value: 'Priya' } });
+  expect((box.getByRole('button', { name: '+ Add' }) as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.change(box.getByLabelText('Google email (optional)'), {
+    target: { value: 'p@example.test' },
+  });
+  fireEvent.change(box.getByLabelText('Access'), { target: { value: 'editor' } });
+  fireEvent.click(box.getByRole('button', { name: 'Add and invite' }));
+  await box.findByText(/Invited p@example.test/);
+  expect(family.invite).toHaveBeenCalledWith('p@example.test', 'editor');
 });

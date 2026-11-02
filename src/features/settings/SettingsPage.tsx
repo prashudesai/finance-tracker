@@ -81,14 +81,42 @@ const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] =
   },
 ];
 
-function FamilyNames({ accountName }: { accountName: string }) {
+function FamilyNames({ account, onInvited }: { account: Account; onInvited: () => void }) {
+  const { family } = account;
   const settings = useSettings();
   const save = useSaveSettings();
   const canEdit = useTracker((state) => state.canEdit);
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState<FamilyMember['role']>('viewer');
+  const [status, setStatus] = useState('');
+  const [sending, setSending] = useState(false);
   const value = name.trim();
+  const address = email.trim();
   const members = settings.familyMembers;
   const exists = members.some((item) => item.toLowerCase() === value.toLowerCase());
+  const addName = () => save({ familyMembers: addFamilyName(members, value, account.name) });
+  const clear = () => {
+    setName('');
+    setEmail('');
+  };
+
+  const invite = (invites: NonNullable<Account['family']>) => {
+    setSending(true);
+    setStatus('');
+    invites
+      .invite(address, role)
+      .then(
+        () => {
+          addName();
+          clear();
+          setStatus(`Invited ${address}. They accept when they next sign in.`);
+          onInvited();
+        },
+        (error: unknown) => setStatus(failureText(error)),
+      )
+      .finally(() => setSending(false));
+  };
 
   return (
     <div>
@@ -122,20 +150,62 @@ function FamilyNames({ accountName }: { accountName: string }) {
           className={ui.form}
           onSubmit={(event) => {
             event.preventDefault();
-            if (!value || exists) return;
-            save({ familyMembers: addFamilyName(members, value, accountName) });
-            setName('');
+            if (!value || sending) return;
+            if (family && address) {
+              invite(family);
+            } else if (!exists) {
+              addName();
+              clear();
+              setStatus('');
+            }
           }}
         >
-          <Field label="Add a name">
-            <input maxLength={60} onChange={(event) => setName(event.target.value)} value={name} />
+          <Field label="Name">
+            <input
+              maxLength={60}
+              onChange={(event) => setName(event.target.value)}
+              required
+              value={name}
+            />
           </Field>
+          {family ? (
+            <Field label="Google email (optional)">
+              <input
+                onChange={(event) => setEmail(event.target.value)}
+                type="email"
+                value={email}
+              />
+            </Field>
+          ) : null}
+          {family && address ? (
+            <Field label="Access">
+              <select
+                onChange={(event) => setRole(event.target.value as FamilyMember['role'])}
+                value={role}
+              >
+                <option value="viewer">Viewer</option>
+                <option value="editor">Editor</option>
+              </select>
+            </Field>
+          ) : null}
+          {family ? (
+            <p className={ui.caption}>Add their email if they should sign in too.</p>
+          ) : null}
           <div className={ui.formActions}>
-            <button className={ui.button} disabled={!value || exists} type="submit">
-              + Add
+            <button
+              className={ui.button}
+              disabled={!value || sending || (exists && !address)}
+              type="submit"
+            >
+              {address ? 'Add and invite' : '+ Add'}
             </button>
           </div>
         </form>
+      ) : null}
+      {status ? (
+        <p className={ui.notice} role="status">
+          {status}
+        </p>
       ) : null}
     </div>
   );
@@ -273,20 +343,16 @@ function DataBackup() {
   );
 }
 
-function FamilyMembers({ account }: { account: Account }) {
+function FamilyMembers({ account, invites }: { account: Account; invites: number }) {
   const { family } = account;
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const settings = useSettings();
-  const save = useSaveSettings();
-  const [role, setRole] = useState<FamilyMember['role']>('viewer');
   const [status, setStatus] = useState('');
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const requests = useTracker((state) => state.accessRequests);
 
   const refresh = useCallback(() => {
     family?.list().then(setMembers, (error: unknown) => setStatus(failureText(error)));
-  }, [family]);
+    // A new invite changes the list.
+  }, [family, invites]);
   useEffect(refresh, [refresh]);
 
   const run = (action: Promise<void>, done: string) =>
@@ -348,52 +414,6 @@ function FamilyMembers({ account }: { account: Account }) {
               </ul>
             </div>
           ) : null}
-          <form
-            className={ui.form}
-            onSubmit={(event) => {
-              event.preventDefault();
-              void run(
-                family.invite(email, role),
-                `Invited ${email}. They accept when they next sign in.`,
-              ).then((sent) => {
-                if (!sent) return;
-                save({ familyMembers: addFamilyName(settings.familyMembers, name, account.name) });
-                setEmail('');
-                setName('');
-              });
-            }}
-          >
-            <Field label="Their name">
-              <input
-                maxLength={60}
-                onChange={(event) => setName(event.target.value)}
-                required
-                value={name}
-              />
-            </Field>
-            <Field label="Google email">
-              <input
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                type="email"
-                value={email}
-              />
-            </Field>
-            <Field label="Access">
-              <select
-                onChange={(event) => setRole(event.target.value as FamilyMember['role'])}
-                value={role}
-              >
-                <option value="viewer">Viewer</option>
-                <option value="editor">Editor</option>
-              </select>
-            </Field>
-            <div className={ui.formActions}>
-              <button className={ui.button} type="submit">
-                Send invite
-              </button>
-            </div>
-          </form>
           <div>
             <div className={ui.groupLabel}>Members</div>
             {members.length === 0 ? (
@@ -745,11 +765,12 @@ function SecurityPanel({ security }: { security: AccountSecurity }) {
 }
 
 function FamilyAccessPanel({ account }: { account: Account }) {
+  const [invites, setInvites] = useState(0);
   return (
     <div className={ui.page}>
       <section className={ui.metric}>
         <h3 className={ui.panelTitle}>Family members</h3>
-        <FamilyNames accountName={account.name} />
+        <FamilyNames account={account} onInvited={() => setInvites((count) => count + 1)} />
       </section>
       <section className={ui.metric}>
         <h3 className={ui.panelTitle}>Access</h3>
@@ -757,7 +778,7 @@ function FamilyAccessPanel({ account }: { account: Account }) {
           Your role: <strong>{account.role}</strong>. Viewers can view and export. Editors can add,
           edit and delete records. Owners also manage access and import backups.
         </p>
-        <FamilyMembers account={account} />
+        <FamilyMembers account={account} invites={invites} />
       </section>
     </div>
   );
