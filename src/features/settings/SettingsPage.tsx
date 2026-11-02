@@ -284,8 +284,12 @@ function FamilyMembers({ account }: { account: Account }) {
       () => {
         setStatus(done);
         refresh();
+        return true;
       },
-      (error: unknown) => setStatus(failureText(error)),
+      (error: unknown) => {
+        setStatus(failureText(error));
+        return false;
+      },
     );
 
   return (
@@ -328,7 +332,9 @@ function FamilyMembers({ account }: { account: Account }) {
               void run(
                 family.invite(email, role),
                 `Invited ${email}. They accept when they next sign in.`,
-              ).then(() => setEmail(''));
+              ).then((sent) => {
+                if (sent) setEmail('');
+              });
             }}
           >
             <Field label="Google email">

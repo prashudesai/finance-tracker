@@ -293,3 +293,28 @@ test('a viewer is told a restore is not available, not that it worked', async ()
   await box.findByText(/Viewer access/);
   expect(box.queryByText(/^Restored/)).toBeNull();
 });
+
+test('a failed invite keeps the typed address', async () => {
+  const family: FamilyAccess = {
+    requests: () => Promise.resolve([]),
+    approve: () => Promise.resolve(),
+    list: () => Promise.resolve([]),
+    invite: () => Promise.reject(new Error('That invite did not work.')),
+    setRole: () => Promise.resolve(),
+    remove: () => Promise.resolve(),
+  };
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell
+        account={{ name: 'O', email: 'o@example.test', role: 'owner', family }}
+        repository={createMemoryRepository({ settings: [settings] })}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^Family access/ }));
+  const box = within(await screen.findByRole('dialog', { name: 'Family access' }));
+  fireEvent.change(box.getByLabelText('Google email'), { target: { value: 'new@example.test' } });
+  fireEvent.click(box.getByRole('button', { name: 'Send invite' }));
+  await box.findByText('That invite did not work.');
+  expect((box.getByLabelText('Google email') as HTMLInputElement).value).toBe('new@example.test');
+});
