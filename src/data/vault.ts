@@ -7,11 +7,13 @@ import {
   getDocs,
   getDocsFromServer,
   limit,
+  onSnapshot,
   query,
   setDoc,
   where,
   writeBatch,
   type Firestore,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import {
   createCodec,
@@ -80,7 +82,10 @@ export interface VaultTools {
 
 export interface OwnerTools {
   requests(): Promise<AccessRequest[]>;
+  /** Calls `onChange` now and whenever someone asks for access. Returns how to stop. */
+  watchRequests(onChange: (requests: AccessRequest[]) => void): () => void;
   approve(request: AccessRequest): Promise<void>;
+  deny(request: AccessRequest): Promise<void>;
   /** Drops a member from the keys, then locks every record with a new key. */
   removeMember(email: string): Promise<void>;
 }
@@ -249,16 +254,27 @@ export async function startVault(
 
   const ownerTools = (start: HouseholdSecret, codec: RecordCodec): OwnerTools => {
     let secret = start;
+    const requestArea = collection(db, 'households', householdId, 'requests');
+    const toRequests = (rows: QueryDocumentSnapshot[]) =>
+      Promise.all(
+        rows.map(async (row) => {
+          const { email, publicKey } = row.data() as { email: string; publicKey: JsonWebKey };
+          return { uid: row.id, email, code: await safetyCode(householdId, publicKey) };
+        }),
+      );
     return {
-      async requests() {
-        const rows = await getDocs(collection(db, 'households', householdId, 'requests'));
-        return Promise.all(
-          rows.docs.map(async (row) => {
-            const { email, publicKey } = row.data() as { email: string; publicKey: JsonWebKey };
-            return { uid: row.id, email, code: await safetyCode(householdId, publicKey) };
-          }),
-        );
+      requests: async () => toRequests((await getDocs(requestArea)).docs),
+      watchRequests(onChange) {
+        let latest = 0;
+        return onSnapshot(requestArea, (snapshot) => {
+          latest += 1;
+          const version = latest;
+          void toRequests(snapshot.docs).then((requests) => {
+            if (version === latest) onChange(requests);
+          });
+        });
       },
+      deny: ({ uid }) => deleteDoc(requestDoc(uid)),
       async approve({ uid, email, code }) {
         const stored = (await getDocFromServer(requestDoc(uid))).data() as
           { publicKey: JsonWebKey } | undefined;
@@ -331,7 +347,9 @@ export async function startVault(
   };
 
   const enter = async (privateKey: CryptoKey, publicKey: JsonWebKey): Promise<VaultAccess> => {
-    let secret = await openOwnKeys(privateKey, false);
+    let secret = await openOwnKeys(privateKey, false).catch(() => {
+      throw new Error('You no longer have access. Ask the owner for a new invite.');
+    });
     if (!secret) {
       if (owner) {
         const encrypted = await hasEncryptedRecords().catch(() => {
@@ -343,7 +361,9 @@ export async function startVault(
         secret = createHouseholdSecret();
         await shareWith(user.uid, user.email, publicKey, secret);
       } else {
-        await setDoc(requestDoc(user.uid), { email: user.email, publicKey });
+        await setDoc(requestDoc(user.uid), { email: user.email, publicKey }).catch(() => {
+          throw new Error('You no longer have access. Ask the owner for a new invite.');
+        });
         return {
           status: 'waiting',
           code: await safetyCode(householdId, publicKey),

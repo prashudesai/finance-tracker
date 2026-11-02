@@ -337,8 +337,9 @@ test('owners can manage family members', async () => {
     invite: async () => undefined,
     setRole: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
-    requests: vi.fn(async () => [{ uid: 'n', email: 'new@example.test', code: '1234 5678 9012' }]),
+    watchRequests: vi.fn(() => () => undefined),
     approve: vi.fn(async () => undefined),
+    deny: vi.fn(async () => undefined),
   };
   render(
     <MemoryRouter initialEntries={['/settings']}>
@@ -938,28 +939,63 @@ test('passphrase settings stay compact until one is chosen', async () => {
   expect(await screen.findByText('NEW-CODE')).toBeDefined();
 });
 
-test('the owner approves a family member after comparing their code', async () => {
+describe('a family member asking for access', () => {
   const request = { uid: 'n', email: 'new@example.test', code: '1234 5678 9012' };
-  const family = {
-    list: vi.fn(async () => []),
-    invite: vi.fn(async () => undefined),
-    setRole: vi.fn(async () => undefined),
-    remove: vi.fn(async () => undefined),
-    requests: vi.fn(async () => [request]),
-    approve: vi.fn(async () => undefined),
+  const setUp = (path: string) => {
+    const family = {
+      list: vi.fn(async () => []),
+      invite: vi.fn(async () => undefined),
+      setRole: vi.fn(async () => undefined),
+      remove: vi.fn(async () => undefined),
+      watchRequests: vi.fn((onChange: (rows: (typeof request)[]) => void) => {
+        onChange([request]);
+        return () => undefined;
+      }),
+      approve: vi.fn(async () => undefined),
+      deny: vi.fn(async () => undefined),
+    };
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <Shell
+          account={{ name: 'O', email: 'o@example.test', role: 'owner', family }}
+          repository={createMemoryRepository({
+            settings: [{ ...defaultSettings(), onboardingDone: true }],
+          })}
+        />
+      </MemoryRouter>,
+    );
+    return family;
   };
-  render(
-    <MemoryRouter initialEntries={['/settings']}>
-      <Shell
-        account={{ name: 'O', email: 'o@example.test', role: 'owner', family }}
-        repository={createMemoryRepository()}
-      />
-    </MemoryRouter>,
-  );
-  fireEvent.click(await screen.findByRole('button', { name: /Family access/ }));
-  expect(await screen.findByText('Code 1234 5678 9012')).toBeDefined();
-  fireEvent.click(screen.getByRole('button', { name: 'Approve new@example.test', hidden: true }));
-  await waitFor(() => expect(family.approve).toHaveBeenCalledWith(request));
+
+  test('the owner is alerted, and the alert opens the approval', async () => {
+    setUp('/');
+    const link = await screen.findByRole('link', {
+      name: 'Review: new@example.test wants access',
+      hidden: true,
+    });
+    fireEvent.click(link);
+    expect(await screen.findByText('Code 1234 5678 9012')).toBeDefined();
+  });
+
+  test('the owner can approve', async () => {
+    const family = setUp('/settings');
+    fireEvent.click(await screen.findByRole('button', { name: /Family access/ }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Approve new@example.test', hidden: true }),
+    );
+    await waitFor(() => expect(family.approve).toHaveBeenCalledWith(request));
+  });
+
+  test('the owner can deny, after confirming', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const family = setUp('/settings');
+    fireEvent.click(await screen.findByRole('button', { name: /Family access/ }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Deny new@example.test', hidden: true }),
+    );
+    await waitFor(() => expect(family.deny).toHaveBeenCalledWith(request));
+    confirm.mockRestore();
+  });
 });
 
 test('a backup needs a strong passphrase before it can be exported', async () => {

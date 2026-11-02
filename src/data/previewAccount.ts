@@ -10,11 +10,18 @@ const DEMO_CODE = 'ABCD-EFGH-JKLM-NPQR-STUV-WXYZ-2345';
 let members: FamilyMember[] = [
   { email: 'jamie@example.test', role: 'editor', accepted: true },
   { email: 'sam@example.test', role: 'viewer', accepted: false },
+  { email: 'riya@example.test', role: 'viewer', accepted: true },
 ];
 let requests: FamilyRequest[] = [
   { uid: 'preview-member', email: 'riya@example.test', code: '4827 1936 5504' },
 ];
 let faceId = false;
+let requestListener: (rows: FamilyRequest[]) => void = () => undefined;
+
+function closeRequest(uid: string) {
+  requests = requests.filter((row) => row.uid !== uid);
+  requestListener(requests);
+}
 
 export const previewAccount: Account = {
   name: 'Preview',
@@ -40,10 +47,20 @@ export const previewAccount: Account = {
   },
   family: {
     list: () => Promise.resolve(members),
-    requests: () => Promise.resolve(requests),
-    approve({ uid, email }) {
-      requests = requests.filter((row) => row.uid !== uid);
-      members = [...members, { email, role: 'viewer', accepted: true }];
+    watchRequests(onChange) {
+      requestListener = onChange;
+      onChange(requests);
+      return () => {
+        requestListener = () => undefined;
+      };
+    },
+    approve({ uid }) {
+      closeRequest(uid);
+      return Promise.resolve();
+    },
+    deny({ uid, email }) {
+      closeRequest(uid);
+      members = members.filter((row) => row.email !== email);
       return Promise.resolve();
     },
     invite(email, role) {

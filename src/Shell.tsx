@@ -90,8 +90,9 @@ export interface FamilyRequest {
 }
 
 export interface FamilyAccess {
-  requests(): Promise<FamilyRequest[]>;
+  watchRequests(onChange: (requests: FamilyRequest[]) => void): () => void;
   approve(request: FamilyRequest): Promise<void>;
+  deny(request: FamilyRequest): Promise<void>;
   list(): Promise<FamilyMember[]>;
   invite(email: string, role: FamilyMember['role']): Promise<void>;
   setRole(email: string, role: FamilyMember['role']): Promise<void>;
@@ -116,6 +117,7 @@ export function Shell({
   const error = useTracker((state) => state.error);
   const invalidRecords = useTracker((state) => state.invalidRecords);
   const runSchedules = useTracker((state) => state.runSchedules);
+  const setAccessRequests = useTracker((state) => state.setAccessRequests);
   const profile = useTracker((state) => state.profile);
   const setProfile = useTracker((state) => state.setProfile);
   const settings = useSettings();
@@ -133,6 +135,15 @@ export function Shell({
   useEffect(() => {
     if (loaded) runSchedules(localDate());
   }, [loaded, runSchedules]);
+
+  const family = account?.family;
+  useEffect(() => {
+    const stop = family?.watchRequests(setAccessRequests);
+    return () => {
+      stop?.();
+      setAccessRequests([]);
+    };
+  }, [family, setAccessRequests]);
 
   return (
     <div className={styles.shell}>

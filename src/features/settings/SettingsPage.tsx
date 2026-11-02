@@ -17,7 +17,7 @@ import { createBackup, parseBackup, restoreWrites } from '../../domain/backup';
 import { undoWrites } from '../../domain/changes';
 import { TRACKER_SETTINGS_ID, type ChangeRecord, type TrackerSettings } from '../../schema/records';
 import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
-import type { Account, AccountSecurity, FamilyMember, FamilyRequest } from '../../Shell';
+import type { Account, AccountSecurity, FamilyMember } from '../../Shell';
 import { downloadText } from '../../ui/download';
 import { downloadTablePdf } from '../../ui/pdf';
 import { Field } from '../../ui/Field';
@@ -265,11 +265,10 @@ function FamilyMembers({ account }: { account: Account }) {
   const [role, setRole] = useState<FamilyMember['role']>('viewer');
   const [status, setStatus] = useState('');
   const [members, setMembers] = useState<FamilyMember[]>([]);
-  const [requests, setRequests] = useState<FamilyRequest[]>([]);
+  const requests = useTracker((state) => state.accessRequests);
 
   const refresh = useCallback(() => {
     family?.list().then(setMembers, (error: unknown) => setStatus(failureText(error)));
-    family?.requests().then(setRequests, (error: unknown) => setStatus(failureText(error)));
   }, [family]);
   useEffect(refresh, [refresh]);
 
@@ -290,26 +289,39 @@ function FamilyMembers({ account }: { account: Account }) {
             <div>
               <div className={ui.groupLabel}>Waiting for approval</div>
               <p className={ui.caption}>
-                Ask them to read out the code on their screen, by phone or in person. Approve only
-                if it matches exactly.
+                For extra safety, check the code matches the one on their screen before you approve.
               </p>
               <ul className={ui.list}>
                 {requests.map((request) => (
-                  <li className={ui.row} key={request.uid}>
-                    <div className={ui.rowMain}>
+                  <li className={ui.row} key={request.uid} style={{ flexWrap: 'wrap' }}>
+                    <div className={ui.rowMain} style={{ flexBasis: '100%' }}>
                       <div className={ui.rowTitle}>{request.email}</div>
                       <div className={ui.rowDetail}>Code {request.code}</div>
                     </div>
-                    <button
-                      aria-label={`Approve ${request.email}`}
-                      className={ui.button}
-                      onClick={() =>
-                        void run(family.approve(request), `Approved ${request.email}.`)
-                      }
-                      type="button"
-                    >
-                      Approve
-                    </button>
+                    <div className={ui.actions}>
+                      <button
+                        aria-label={`Approve ${request.email}`}
+                        className={ui.button}
+                        onClick={() =>
+                          void run(family.approve(request), `Approved ${request.email}.`)
+                        }
+                        type="button"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        aria-label={`Deny ${request.email}`}
+                        className={ui.quiet}
+                        onClick={() => {
+                          if (window.confirm(`Deny access for ${request.email}?`)) {
+                            void run(family.deny(request), `Denied ${request.email}.`);
+                          }
+                        }}
+                        type="button"
+                      >
+                        Deny
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>

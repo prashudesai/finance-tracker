@@ -10,6 +10,7 @@ import {
   type TrackerRepository,
 } from '../data/repository';
 import { defaultSettings, TRACKER_SETTINGS_ID, type TrackerSettings } from '../schema/records';
+import type { AccessRequest } from '../data/vault';
 
 interface TrackerState {
   data: TrackerData;
@@ -22,6 +23,8 @@ interface TrackerState {
   /** Who the change log names. */
   actor: string;
   tourOpen: boolean;
+  /** People waiting for the owner's approval. */
+  accessRequests: AccessRequest[];
   /** Saves not yet confirmed by the server. They wait here while offline. */
   pendingSaves: number;
   syncedAt: Date | null;
@@ -30,6 +33,7 @@ interface TrackerState {
   /** Saves writes. Scheduled and housekeeping writes pass `log: false`. */
   commit(writes: RecordWrite[], options?: { log?: boolean }): void;
   setTourOpen(open: boolean): void;
+  setAccessRequests(requests: AccessRequest[]): void;
   report(message: string): void;
   setProfile(profile: string | null): void;
   /** Posts scheduled contributions that are due. Safe to run from every device. */
@@ -45,6 +49,7 @@ export const useTracker = create<TrackerState>((set, get) => ({
   profile: null,
   actor: '',
   tourOpen: false,
+  accessRequests: [],
   pendingSaves: 0,
   syncedAt: null,
   repository: null,
@@ -120,6 +125,10 @@ export const useTracker = create<TrackerState>((set, get) => ({
         set({ error: error instanceof Error ? error.message : 'The change could not be saved.' });
       })
       .finally(() => set((state) => ({ pendingSaves: state.pendingSaves - 1 })));
+  },
+
+  setAccessRequests(accessRequests) {
+    set({ accessRequests });
   },
 
   setTourOpen(open) {

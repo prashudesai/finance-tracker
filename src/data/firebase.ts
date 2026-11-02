@@ -106,8 +106,12 @@ export const familyAccess = (ownerUid: string, owner: OwnerTools): FamilyAccess 
   invite: (email, role) =>
     setDoc(memberDoc(email), { householdId: ownerUid, role, accepted: false }),
   setRole: (email, role) => updateDoc(memberDoc(email), { role }),
-  requests: () => owner.requests(),
+  watchRequests: (onChange) => owner.watchRequests(onChange),
   approve: (request) => owner.approve(request),
+  async deny(request) {
+    await deleteDoc(memberDoc(request.email));
+    await owner.deny(request);
+  },
   async remove(email) {
     await owner.removeMember(email);
     await deleteDoc(memberDoc(email));

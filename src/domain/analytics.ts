@@ -386,7 +386,7 @@ export function backupStatus(data: TrackerData, today: string, syncedOn: string 
 
 /** Tells the destination page which review to open. */
 export type AttentionTarget =
-  { review: string } | { panel: 'data' } | { confirm: true } | { commitments: true };
+  { review: string } | { panel: 'data' | 'family' } | { confirm: true } | { commitments: true };
 
 export interface AttentionItem {
   label: string;

@@ -383,7 +383,7 @@ export function WaitingForApproval({
   return (
     <Screen
       onSignOut={onSignOut}
-      text="Ask the tracker's owner to approve you in Settings, under Family access. Check this code matches on their screen, by phone or in person, not by a message in this app."
+      text="The tracker's owner has been asked to approve you. For extra safety, they may check this code with you."
       title="Waiting for approval"
     >
       <div className={ui.notice}>

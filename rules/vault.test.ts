@@ -234,6 +234,36 @@ test('a family member reads shared records only after the owner approves', async
   expect(rows.map((row) => row.id).sort()).toEqual(['from-member', 'salary-record']);
 });
 
+test('the owner hears about a request live, and a denied member is shut out', async () => {
+  const { owner: tools } = await setUpOwner();
+  const seen: string[][] = [];
+  const stop = tools.watchRequests((rows) => seen.push(rows.map((row) => row.email)));
+  await raw((db) =>
+    setDoc(doc(db, 'memberships/member@example.com'), {
+      householdId: 'owner',
+      role: 'editor',
+      accepted: true,
+    }),
+  );
+  const gate = gateOf(await start(member(), 'member', 'member@example.com', 'owner', true));
+  const waiting = await (await gate.create(PASS)).enter();
+  if (waiting.status !== 'waiting') throw new Error('Member should be waiting');
+  await vi.waitFor(() => expect(seen.at(-1)).toEqual(['member@example.com']));
+  const [request] = await tools.requests();
+  if (!request) throw new Error('No request arrived');
+  await tools.deny(request);
+  await raw(async (db) => {
+    const { deleteDoc } = await import('firebase/firestore');
+    await deleteDoc(doc(db, 'memberships/member@example.com'));
+  });
+  await vi.waitFor(() => expect(seen.at(-1)).toEqual([]));
+  stop();
+  await expect(waiting.retry()).rejects.toThrow('no longer have access');
+  expect(
+    await raw(async (db) => (await getDoc(doc(db, 'households/owner/keys/member'))).exists()),
+  ).toBe(false);
+});
+
 test('approval is refused if the key changed after the code was shown', async () => {
   const { owner: tools } = await setUpOwner();
   await raw((db) =>

@@ -81,6 +81,7 @@ export function Dashboard() {
   const data = useView();
   const household = useTracker((state) => state.data);
   const syncedAt = useTracker((state) => state.syncedAt);
+  const accessRequests = useTracker((state) => state.accessRequests);
   const phone = useIsPhone();
   const today = localDate();
   const month = today.slice(0, 7);
@@ -105,13 +106,20 @@ export function Dashboard() {
     },
     today,
   );
-  const attention = attentionItems(
-    data,
-    household,
-    today,
-    pending.length,
-    syncedAt ? localDate(syncedAt) : null,
-  );
+  const attention = [
+    ...accessRequests.map(({ email }) => ({
+      label: `${email} wants access`,
+      path: '/settings',
+      state: { panel: 'family' as const },
+    })),
+    ...attentionItems(
+      data,
+      household,
+      today,
+      pending.length,
+      syncedAt ? localDate(syncedAt) : null,
+    ),
+  ];
 
   const rows = holdingRows(data, today);
   const categories = portfolioCategories(rows).sort((a, b) =>
