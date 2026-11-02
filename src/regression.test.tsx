@@ -219,6 +219,22 @@ const fund: Holding = {
   uan: 'UAN 1',
 };
 
+test('clearing a holding note, or turning off its schedule, sticks', async () => {
+  connect({ holdings: [fund] });
+  render(<HoldingForm initial={fund} kind="pf" onDone={() => undefined} />);
+  fireEvent.click(screen.getByLabelText(/Add contributions automatically/));
+  fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
+  await waitFor(() => expect(state().holdings[0]?.autoStart).toBeUndefined());
+  cleanup();
+
+  const investment = { ...fund, kind: 'investment' as const, type: 'Mutual Funds' };
+  connect({ holdings: [investment] });
+  render(<HoldingForm initial={investment} kind="investment" onDone={() => undefined} />);
+  change('Notes', '');
+  fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
+  await waitFor(() => expect(state().holdings[0]?.notes).toBeUndefined());
+});
+
 const VIEWER: Account = { name: 'V', email: 'v@example.test', role: 'viewer' };
 
 async function openData(account: Account, seed: Partial<TrackerData> = {}) {

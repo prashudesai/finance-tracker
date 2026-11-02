@@ -115,7 +115,7 @@ export function HoldingForm({
       return;
     }
     const id = initial?.id ?? crypto.randomUUID();
-    const value = {
+    const value: Partial<Holding> = {
       ...initial,
       ...values,
       id,
@@ -130,6 +130,12 @@ export function HoldingForm({
       ...(kind === 'nps' && scheme ? { scheme } : {}),
       ...(notes ? { notes } : {}),
     };
+    // `initial` must not bring back what was just cleared. A leftover start date kept a PF
+    // account's pension share posting each month after its schedule was turned off.
+    if (!values.autoContribute) delete value.autoStart;
+    if (!notes) delete value.notes;
+    if (!uan) delete value.uan;
+    if (!scheme) delete value.scheme;
     commit([{ type: 'set', collection: 'holdings', id, value }]);
     onDone();
   };
