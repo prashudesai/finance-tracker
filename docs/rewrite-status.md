@@ -83,3 +83,5 @@ A scripted comparison of the visible text on every old page, at phone and deskto
 - A restore larger than 400 writes is sent in batches, so an interrupted restore can be partial. Restoring the backup again fixes it.
 - Scheduled contributions post once after records load, with fixed IDs, so two devices can't post the same month twice.
 - The expenses series is amber, not rose, because rose fails the colour-blindness check against mint.
+- A record posted by a recurring schedule stays in its month. Its day and amount can still be edited.
+- Saving refuses a record that wouldn't pass its schema when read back, instead of storing it hidden.
