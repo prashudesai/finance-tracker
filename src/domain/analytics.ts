@@ -7,7 +7,7 @@ import {
   previousMonth,
   toDayNumber,
 } from './calendar';
-import { monthClose, monthTotals } from './cashflow';
+import { balancesByMonth, closeFrom, monthClose, monthTotals, type MonthClose } from './cashflow';
 import {
   holdingContributions,
   holdingPosition,
@@ -107,6 +107,18 @@ export const pmsTransfers = (data: TrackerData, month: string) =>
 export const closeMonth = (data: TrackerData, month: string) =>
   monthClose(data, month, pmsTransfers(data, month));
 
+/** Each month's figures from one pass over the records, for work across many months. */
+export function monthCloser(data: TrackerData): (month: string) => MonthClose {
+  const totals = monthTotals(data);
+  const balances = balancesByMonth(data);
+  const transfers = new Map<string, number>();
+  for (const row of contributionsOf(data, isPms)) {
+    const month = row.date.slice(0, 7);
+    transfers.set(month, (transfers.get(month) ?? 0) + row.amount);
+  }
+  return (month) => closeFrom(totals, balances, month, transfers.get(month) ?? 0);
+}
+
 const isRetirement = (holding: Holding) => holding.kind === 'nps' || holding.kind === 'ppf';
 
 export interface BalanceHistoryRow {
@@ -125,10 +137,11 @@ export interface BalanceHistoryRow {
 export function balanceHistory(data: TrackerData, fy: number, today: string): BalanceHistoryRow[] {
   const { start, end } = financialYearRange(fy);
   const current = today.slice(0, 7);
+  const closeOf = monthCloser(data);
   return data.monthlyBalances
     .filter(({ month }) => month < current && inRange(`${month}-01`, start, end))
     .map(({ month, startBalance }) => {
-      const close = closeMonth(data, month);
+      const close = closeOf(month);
       return {
         month,
         opening: startBalance,
@@ -403,6 +416,10 @@ export const isMonthEnd = (today: string) => today === lastDayOfMonth(today.slic
 /** Months missing a balance or a review, newest first. */
 export function monthsToReview(household: TrackerData, today: string) {
   const current = today.slice(0, 7);
+  const closeOf = monthCloser(household);
+  const reviews = new Map(
+    [...household.monthReviews].reverse().map((row) => [row.month, row.signature]),
+  );
   const recorded = new Set(household.monthlyBalances.map((row) => row.month));
   const first = [...recorded].sort()[0];
   const months = [...monthTotals(household).keys()].filter(
@@ -411,10 +428,10 @@ export function monthsToReview(household: TrackerData, today: string) {
   return [...new Set([...months, ...recorded])]
     .filter((month) => month <= current)
     .filter((month) => {
-      const close = closeMonth(household, month);
+      const close = closeOf(month);
       // A running month only needs its opening balance until its last day.
       if (month === current && !isMonthEnd(today)) return close.opening === null;
-      return !close.complete || !monthReviewStatus(household, month).reviewed;
+      return !close.complete || reviews.get(month) !== JSON.stringify(close);
     })
     .sort()
     .reverse();
