@@ -244,11 +244,16 @@ export async function startVault(
         await batch.commit();
       }
     }
-    return next;
   };
 
-  const ownerTools = (start: HouseholdSecret, codec: RecordCodec): OwnerTools => {
-    let secret = start;
+  const ownerTools = (
+    privateKey: CryptoKey,
+    start: HouseholdSecret,
+    codec: RecordCodec,
+  ): OwnerTools => {
+    // Asked of the server each time: a removal that stopped partway has already shared a newer
+    // key, and records locked with it would be lost if that key were ever replaced.
+    const latest = async () => (await openOwnKeys(privateKey, true)) ?? start;
     return {
       async requests() {
         const rows = await getDocs(collection(db, 'households', householdId, 'requests'));
@@ -265,11 +270,11 @@ export async function startVault(
         if (!stored || (await safetyCode(householdId, stored.publicKey)) !== code) {
           throw new Error('This request changed. Check the code with them again.');
         }
-        await shareWith(uid, email, stored.publicKey, secret);
+        await shareWith(uid, email, stored.publicKey, await latest());
         await deleteDoc(requestDoc(uid));
       },
       async removeMember(email) {
-        secret = await rotate(secret, codec, email);
+        await rotate(await latest(), codec, email);
         const waiting = await getDocs(
           query(collection(db, 'households', householdId, 'requests'), where('email', '==', email)),
         );
@@ -360,7 +365,7 @@ export async function startVault(
       status: 'open',
       codec,
       tools: tools(),
-      ...(owner ? { owner: ownerTools(secret, codec) } : {}),
+      ...(owner ? { owner: ownerTools(privateKey, secret, codec) } : {}),
     };
   };
 

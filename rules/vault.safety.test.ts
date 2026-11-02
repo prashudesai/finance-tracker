@@ -239,3 +239,38 @@ test('a member deleting their account removes only their own access', async () =
   await assertFails(getDocs(collection(member(), 'households/owner/income')));
   expect((await rowsOf(owner(), codec)).rows).toHaveLength(1);
 });
+
+test('removing a member again after a failure loses no records', async () => {
+  const { codec, owner: tools } = await setUpOwner();
+  await seed(codec, 6);
+  const expense = {
+    id: 'bill',
+    date: '2026-03-02',
+    category: 'Utilities',
+    subcategory: '',
+    amount: 900,
+    isAnnual: false,
+  };
+  await firestoreRepository(owner(), 'owner', codec).commit([
+    { type: 'set', collection: 'expenses', id: expense.id, value: expense },
+  ]);
+  await addMember(tools, 'editor');
+
+  // Income is re-encrypted first, then one unreadable expense stops the job partway.
+  const [bill] = await stored('expenses');
+  if (!bill) throw new Error('Nothing stored');
+  const original = bill.data();
+  await tamper(bill.id, 'expenses');
+  await expect(tools.removeMember('member@example.com')).rejects.toThrow();
+  expect((await stored()).every((row) => row.data().k === 2)).toBe(true);
+
+  await raw((db) => setDoc(doc(db, 'households/owner/expenses', bill.id), original));
+  await tools.removeMember('member@example.com');
+
+  // A new device, holding only what the server has, reads everything.
+  const again = await gateOf(await startOwner(owner())).unlock(PASS);
+  if (again.status !== 'open') throw new Error('Did not open');
+  const { rows, invalid } = await rowsOf(owner(), again.codec);
+  expect(invalid).toBe(0);
+  expect(rows).toHaveLength(6);
+});
