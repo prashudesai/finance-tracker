@@ -320,6 +320,7 @@ export function DebtsPage() {
                             className={ui.smallIcon}
                             onClick={() => setHistoryId(id)}
                             type="button"
+                            data-tip="View history"
                           >
                             <History size={14} />
                           </button>
@@ -328,6 +329,7 @@ export function DebtsPage() {
                             className={ui.smallIcon}
                             onClick={() => setEditingId(id)}
                             type="button"
+                            data-tip="Edit"
                           >
                             <Pencil size={14} />
                           </button>
@@ -336,6 +338,7 @@ export function DebtsPage() {
                             className={ui.smallIcon}
                             onClick={() => loan && remove(loan)}
                             type="button"
+                            data-tip="Delete"
                           >
                             <Trash2 size={14} />
                           </button>

@@ -270,6 +270,7 @@ export function PlannedChanges() {
               commit([{ type: 'delete', collection: 'projectionAdjustments', id: row.id }])
             }
             type="button"
+            data-tip="Delete"
           >
             <Trash2 size={14} />
           </button>

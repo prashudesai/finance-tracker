@@ -350,6 +350,7 @@ export function Commitments({ open = false }: { open?: boolean }) {
                   className={ui.smallIcon}
                   onClick={() => setEditing(rule)}
                   type="button"
+                  data-tip="Edit"
                 >
                   <Pencil size={14} />
                 </button>
@@ -358,6 +359,7 @@ export function Commitments({ open = false }: { open?: boolean }) {
                   className={ui.smallIcon}
                   onClick={() => stop(rule)}
                   type="button"
+                  data-tip="Stop"
                 >
                   <Square size={14} />
                 </button>

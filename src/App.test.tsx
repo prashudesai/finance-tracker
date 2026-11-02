@@ -510,6 +510,17 @@ test('viewers see the month review but cannot act on it', async () => {
   expect(screen.queryByRole('button', { name: 'Mark month reviewed', hidden: true })).toBeNull();
 });
 
+test('icon buttons name themselves when pointed at or focused', async () => {
+  renderApp('/debts', { loans: [loan] });
+  const edit = await screen.findByRole('button', { name: 'Edit Car' });
+  expect(edit.getAttribute('data-tip')).toBe('Edit');
+  expect(edit.hasAttribute('title')).toBe(false);
+  fireEvent.mouseOver(edit);
+  expect(await screen.findByText('Edit')).toBeDefined();
+  fireEvent.pointerDown(document.body);
+  await waitFor(() => expect(screen.queryByText('Edit')).toBeNull());
+});
+
 test('the app tour walks the pages and changes nothing', async () => {
   renderApp('/settings');
   fireEvent.click(await screen.findByRole('button', { name: /App info/ }));

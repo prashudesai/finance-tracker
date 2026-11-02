@@ -61,7 +61,13 @@ export function Modal({
     >
       <div className={ui.dialogHeader} {...swipeHandlers}>
         <h2>{title}</h2>
-        <button aria-label="Close" className={ui.iconButton} onClick={onClose} type="button">
+        <button
+          aria-label="Close"
+          className={ui.iconButton}
+          onClick={onClose}
+          type="button"
+          data-tip="Close"
+        >
           <X size={18} />
         </button>
       </div>

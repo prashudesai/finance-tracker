@@ -110,25 +110,30 @@ function HoldingCard({ row }: { row: PositionRow }) {
         <div className={ui.actions}>
           <button
             aria-label={`Update value of ${holding.name}`}
-            className={ui.smallIcon}
+            className={ui.labelledIcon}
             onClick={() => setAction('value')}
             type="button"
+            data-tip="Update value"
           >
             <RefreshCw size={14} />
+            <span>Update</span>
           </button>
           <button
             aria-label={`Add contribution to ${holding.name}`}
-            className={ui.smallIcon}
+            className={ui.labelledIcon}
             onClick={() => setAction('contribution')}
             type="button"
+            data-tip="Add contribution"
           >
             <Plus size={14} />
+            <span>Add</span>
           </button>
           <button
             aria-label={`Contribution history of ${holding.name}`}
             className={ui.smallIcon}
             onClick={() => setAction('history')}
             type="button"
+            data-tip="View history"
           >
             <History size={14} />
           </button>
@@ -137,6 +142,7 @@ function HoldingCard({ row }: { row: PositionRow }) {
             className={ui.smallIcon}
             onClick={() => setAction('edit')}
             type="button"
+            data-tip="Edit"
           >
             <Pencil size={14} />
           </button>
@@ -145,6 +151,7 @@ function HoldingCard({ row }: { row: PositionRow }) {
             className={ui.smallIcon}
             onClick={remove}
             type="button"
+            data-tip="Delete"
           >
             <Trash2 size={14} />
           </button>

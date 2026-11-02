@@ -20,6 +20,7 @@ import { GuidedTour } from './ui/GuidedTour';
 import { PullToRefresh } from './ui/PullToRefresh';
 import { PageSkeleton } from './ui/Skeleton';
 import { Toast } from './ui/Toast';
+import { Tooltip } from './ui/Tooltip';
 import { PageEndTools } from './ui/SearchDialog';
 import { useAppUpdate } from './ui/pwa';
 import { useTheme } from './ui/theme';
@@ -205,6 +206,7 @@ export function Shell({
             className={ui.iconButton}
             onClick={toggle}
             type="button"
+            data-tip={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -257,6 +259,7 @@ export function Shell({
       </main>
       {loaded ? <PageEndTools /> : null}
       <Toast />
+      <Tooltip />
       <PullToRefresh />
       {tourOpen ? <GuidedTour /> : null}
     </div>

@@ -558,6 +558,7 @@ export function InvestmentsPage() {
                             ])
                           }
                           type="button"
+                          data-tip="Delete"
                         >
                           <Trash2 size={14} />
                         </button>

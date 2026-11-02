@@ -380,6 +380,7 @@ export function LoanHistory({ loan, onClose }: { loan: Loan; onClose: () => void
                           className={ui.smallIcon}
                           onClick={() => setCorrecting(row)}
                           type="button"
+                          data-tip="Correct interest"
                         >
                           <Pencil size={14} />
                         </button>
@@ -390,6 +391,7 @@ export function LoanHistory({ loan, onClose }: { loan: Loan; onClose: () => void
                             commit([{ type: 'delete', collection: 'expenses', id: row.id }])
                           }
                           type="button"
+                          data-tip="Delete"
                         >
                           <Trash2 size={14} />
                         </button>

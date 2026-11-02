@@ -139,6 +139,7 @@ export function HistoryTable<Row extends { id: string }>({
             disabled={current === 0}
             onClick={() => setPage(current - 1)}
             type="button"
+            data-tip="Previous page"
           >
             <ChevronLeft size={14} />
           </button>
@@ -148,6 +149,7 @@ export function HistoryTable<Row extends { id: string }>({
             disabled={current >= pages - 1}
             onClick={() => setPage(current + 1)}
             type="button"
+            data-tip="Next page"
           >
             <ChevronRight size={14} />
           </button>

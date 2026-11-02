@@ -140,6 +140,7 @@ function InterestCredits({ holding }: { holding: Holding }) {
                   commit([{ type: 'delete', collection: 'interestCredits', id: row.id }])
                 }
                 type="button"
+                data-tip="Delete"
               >
                 <Trash2 size={14} />
               </button>
@@ -216,6 +217,7 @@ function EpsHistory({ holding }: { holding: Holding }) {
                   className={ui.smallIcon}
                   onClick={() => commit([{ type: 'delete', collection: 'epsUpdates', id: row.id }])}
                   type="button"
+                  data-tip="Delete"
                 >
                   <Trash2 size={14} />
                 </button>
