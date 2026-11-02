@@ -235,6 +235,18 @@ test('clearing a holding note, or turning off its schedule, sticks', async () =>
   await waitFor(() => expect(state().holdings[0]?.notes).toBeUndefined());
 });
 
+test('notes that are too long say so in plain language', () => {
+  const result = incomeSchema.safeParse({
+    id: 'i',
+    date: '2026-01-01',
+    member: 'A',
+    source: 'B',
+    amount: 1,
+    notes: 'x'.repeat(501),
+  });
+  expect(result.error?.issues[0]?.message).toBe('Use 500 characters or fewer.');
+});
+
 const VIEWER: Account = { name: 'V', email: 'v@example.test', role: 'viewer' };
 
 async function openData(account: Account, seed: Partial<TrackerData> = {}) {

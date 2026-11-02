@@ -14,7 +14,7 @@ const name = z
   .trim()
   .min(1, 'This field is required.')
   .max(100, 'Use 100 characters or fewer.');
-const notes = z.string().max(500);
+const notes = z.string().max(500, 'Use 500 characters or fewer.');
 
 export const EMI_CATEGORY = 'EMI Payment';
 

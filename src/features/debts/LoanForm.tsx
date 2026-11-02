@@ -48,7 +48,7 @@ const formSchema = z.object({
   principalPaidBeforeTracking: optional,
   interestPaidBeforeTracking: optional,
   dailyInterestBasis: z.boolean(),
-  notes: z.string().max(500),
+  notes: z.string().max(500, 'Use 500 characters or fewer.'),
 });
 type FormInput = z.input<typeof formSchema>;
 type FormValues = z.output<typeof formSchema>;
@@ -193,7 +193,7 @@ export function LoanForm({ initial, onDone }: { initial?: Loan; onDone: () => vo
       </Field>
       {number('Principal paid before tracking (₹)', 'principalPaidBeforeTracking')}
       {number('Interest paid before tracking (₹)', 'interestPaidBeforeTracking')}
-      <Field label="Notes (Optional)">
+      <Field label="Notes (Optional)" error={errors.notes?.message}>
         <input {...register('notes')} />
       </Field>
       <label className={ui.check}>

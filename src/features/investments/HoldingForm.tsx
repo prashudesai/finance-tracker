@@ -42,7 +42,7 @@ const formSchema = z.object({
   autoStart: z.string(),
   uan: z.string().max(40),
   scheme: z.string().max(60),
-  notes: z.string().max(500),
+  notes: z.string().max(500, 'Use 500 characters or fewer.'),
 });
 type FormInput = z.input<typeof formSchema>;
 type FormValues = z.output<typeof formSchema>;
@@ -227,7 +227,7 @@ export function HoldingForm({
         </div>
       ) : null}
       {kind === 'investment' ? (
-        <Field label="Notes">
+        <Field label="Notes" error={errors.notes?.message}>
           <input {...register('notes')} />
         </Field>
       ) : null}
