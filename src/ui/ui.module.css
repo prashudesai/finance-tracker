@@ -159,7 +159,7 @@
 .form {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
 }
 
 .formActions {
@@ -171,6 +171,7 @@
 
 .field {
   display: grid;
+  min-width: 0;
   gap: 4px;
   color: var(--muted);
   font-size: 0.82rem;
@@ -178,12 +179,16 @@
 
 .field label {
   display: grid;
+  min-width: 0;
   gap: 6px;
 }
 
 .field input,
 .field select {
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 11px 12px;
   color: var(--text);
   font: inherit;
@@ -195,6 +200,20 @@
 
 .field select {
   min-height: 46px;
+}
+
+/* iPhone Safari gives date boxes a fixed inner width, which pushes them off the screen. */
+.field input[type='date'],
+.field input[type='month'] {
+  display: block;
+  min-height: 46px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.field input::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
 }
 
 .fieldError {
