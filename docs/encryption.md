@@ -26,7 +26,7 @@ Reminders stay on the device for the same reason: a server can't send a reminder
 
 **Family.** An invited member accepts, creates a keyring and writes their public key to `requests`. The owner sees an alert in Needs attention, and can approve or deny. Both people see a safety code derived from that key. Comparing it is optional but recommended, because it's what stops someone with database access swapping in their own key. An owner who skips it is trusting the database for that one approval. Approval re-reads the key and refuses if the code no longer matches. Denying removes the request and the invite.
 
-**Removal.** The owner's device adds a new data key, shares it with everyone else, re-encrypts every record and then removes the membership. If that fails partway, removing them again finishes the job. Other members pick up the new key the first time they meet a record that needs it.
+**Removal.** The owner's device adds a new data key, shares it with everyone else, re-encrypts every record and then removes the membership. If that fails partway, removing them again finishes the job. A damaged record can't be re-encrypted, so it's skipped and doesn't block the removal. Other members pick up the new key the first time they meet a record that needs it.
 
 **Lost secrets.** A passphrase can be replaced with the recovery code. Without either, the records can't be opened, and the only way forward is to delete them and start again.
 

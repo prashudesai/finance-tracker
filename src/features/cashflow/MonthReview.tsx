@@ -95,6 +95,7 @@ export function MonthReview({
                   <label className={ui.check}>
                     <input
                       checked={row.confirmed === true}
+                      disabled={!canEdit}
                       onChange={(event) =>
                         commit([
                           {
@@ -124,29 +125,31 @@ export function MonthReview({
               Set {formatMonth(month)} {needsOpening ? 'opening' : 'closing'} balance
             </button>
           ) : null}
-          <button
-            className={needsOpening || needsClosing ? ui.quiet : ui.button}
-            disabled={!close.complete || status.reviewed}
-            onClick={() => {
-              commit([
-                {
-                  type: 'set',
-                  collection: 'monthReviews',
-                  id,
-                  value: {
+          {canEdit ? (
+            <button
+              className={needsOpening || needsClosing ? ui.quiet : ui.button}
+              disabled={!close.complete || status.reviewed}
+              onClick={() => {
+                commit([
+                  {
+                    type: 'set',
+                    collection: 'monthReviews',
                     id,
-                    month,
-                    signature: monthSignature(data, month),
-                    reviewedAt: localDate(),
+                    value: {
+                      id,
+                      month,
+                      signature: monthSignature(data, month),
+                      reviewedAt: localDate(),
+                    },
                   },
-                },
-              ]);
-              onReviewed();
-            }}
-            type="button"
-          >
-            Mark month reviewed
-          </button>
+                ]);
+                onReviewed();
+              }}
+              type="button"
+            >
+              Mark month reviewed
+            </button>
+          ) : null}
         </div>
       </div>
       {settingBalance ? (

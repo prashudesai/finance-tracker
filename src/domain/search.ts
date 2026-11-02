@@ -20,7 +20,14 @@ export interface SearchResult {
   amount: number;
   date: string;
   path: string;
+  /** Tells the destination page which record to open. */
+  state: SearchTarget;
 }
+
+export type SearchTarget =
+  | { found: { kind: 'income' | 'expense'; id: string; month: string } }
+  | { open: string }
+  | { loan: string };
 
 const MIN_QUERY_LENGTH = 2;
 export const SEARCH_LIMIT = 40;
@@ -47,6 +54,7 @@ export function searchRecords(data: TrackerData, query: string, kind: SearchKind
       amount: row.amount,
       date: row.date,
       path: '/cash-flow',
+      state: { found: { kind: 'income' as const, id: row.id, month: row.date.slice(0, 7) } },
       fields: [row.member, row.source, row.notes, row.date, row.amount, 'income'],
     })),
     ...data.expenses.map((row) => ({
@@ -57,6 +65,7 @@ export function searchRecords(data: TrackerData, query: string, kind: SearchKind
       amount: row.amount,
       date: row.date,
       path: '/cash-flow',
+      state: { found: { kind: 'expense' as const, id: row.id, month: row.date.slice(0, 7) } },
       fields: [row.category, row.subcategory, row.notes, row.date, row.amount, 'expense'],
     })),
     ...data.holdings.map((row) => ({
@@ -67,6 +76,7 @@ export function searchRecords(data: TrackerData, query: string, kind: SearchKind
       amount: row.openingInvested,
       date: row.date,
       path: '/investments',
+      state: { open: categoryOf(row) },
       fields: [
         row.name,
         row.type,
@@ -85,6 +95,7 @@ export function searchRecords(data: TrackerData, query: string, kind: SearchKind
       amount: row.ledger?.remaining ?? 0,
       date: data.loans.find((loan) => loan.id === row.id)?.date ?? '',
       path: '/debts',
+      state: { loan: row.id },
       fields: [row.type, row.member, row.ledger?.remaining, row.ledger?.emi, 'debt', 'loan'],
     })),
   ];

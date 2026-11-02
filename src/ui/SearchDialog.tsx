@@ -60,7 +60,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
               className={ui.quiet}
               onClick={() => {
                 onClose();
-                void navigate(row.path);
+                void navigate(row.path, { state: row.state });
               }}
               type="button"
             >

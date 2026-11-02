@@ -8,6 +8,7 @@ import { Shell, type Account } from './Shell';
 import { useTracker } from './store/tracker';
 import { formatMonth, localDate } from './ui/format';
 import { isMonthEnd } from './domain/analytics';
+import { searchRecords } from './domain/search';
 import { previousMonth } from './domain/calendar';
 
 afterEach(() => {
@@ -458,6 +459,55 @@ test('a new tracker explains what to do next', async () => {
   cleanup();
   renderApp('/debts');
   expect(await screen.findByRole('button', { name: 'Add your first loan' })).toBeDefined();
+});
+
+describe('deleting asks first', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  test('a loan stays if the answer is no', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    renderApp('/debts', { loans: [loan] });
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete Car' }));
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(useTracker.getState().data.loans).toHaveLength(1);
+    confirm.mockReturnValue(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Car' }));
+    await waitFor(() => expect(useTracker.getState().data.loans).toEqual([]));
+  });
+});
+
+test('search opens the exact income record, in its own month', async () => {
+  const past = previousMonth(localDate().slice(0, 7));
+  const income = { id: 'found', date: `${past}-03`, member: 'A', source: 'Bonus', amount: 4321 };
+  renderApp('/', {
+    income: [income],
+    settings: [{ ...defaultSettings(), onboardingDone: true }],
+  });
+  const results = await waitFor(() => {
+    expect(useTracker.getState().data.income).toHaveLength(1);
+    return searchRecords(useTracker.getState().data, 'Bonus', 'all', localDate()).results;
+  });
+  expect(results[0]?.state).toEqual({ found: { kind: 'income', id: 'found', month: past } });
+});
+
+test('viewers see the month review but cannot act on it', async () => {
+  const past = previousMonth(localDate().slice(0, 7));
+  render(
+    <MemoryRouter initialEntries={['/cash-flow']}>
+      <Shell
+        account={{ name: 'V', email: 'v@example.test', role: 'viewer' }}
+        repository={createMemoryRepository({
+          monthlyBalances: [
+            { month: past, startBalance: 100 },
+            { month: localDate().slice(0, 7), startBalance: 100 },
+          ],
+        })}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.change(await screen.findByLabelText('Month'), { target: { value: past } });
+  await waitFor(() => expect(document.getElementById('month-review')).not.toBeNull());
+  expect(screen.queryByRole('button', { name: 'Mark month reviewed', hidden: true })).toBeNull();
 });
 
 test('the app tour walks the pages and changes nothing', async () => {

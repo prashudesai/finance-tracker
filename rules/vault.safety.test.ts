@@ -260,14 +260,13 @@ test('removing a member again after a failure loses no records', async () => {
   ]);
   await addMember(tools, 'editor');
 
-  // Income is re-encrypted first, then one unreadable expense stops the job partway.
   const [bill] = await stored('expenses');
   if (!bill) throw new Error('Nothing stored');
   const original = bill.data();
-  await tamper(bill.id, 'expenses');
-  await expect(tools.removeMember('member@example.com')).rejects.toThrow();
+  await tools.removeMember('member@example.com');
   expect((await stored()).every((row) => row.data().k === 2)).toBe(true);
 
+  // Putting one record back on the old key leaves the state a job stopped partway would.
   await raw((db) => setDoc(doc(db, 'households/owner/expenses', bill.id), original));
   await tools.removeMember('member@example.com');
 

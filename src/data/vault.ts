@@ -246,8 +246,11 @@ export async function startVault(
       for (let start = 0; start < stale.length; start += BATCH_SIZE) {
         const batch = writeBatch(db);
         for (const row of stale.slice(start, start + BATCH_SIZE)) {
-          const value = await codec.open(name, row.id, row.data() as SealedRecord);
-          batch.set(row.ref, await rewriter.seal(name, row.id, value as object));
+          // A damaged record can't be read by anyone, so it mustn't stop a removal.
+          const value = await codec
+            .open(name, row.id, row.data() as SealedRecord)
+            .catch(() => null);
+          if (value) batch.set(row.ref, await rewriter.seal(name, row.id, value as object));
         }
         await batch.commit();
       }

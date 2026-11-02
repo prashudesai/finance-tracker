@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
-import { useCallback, useState, type ReactNode } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
 import { SortHeader, useSort, type SortValue } from '../../ui/useSort';
@@ -28,6 +28,7 @@ export function HistoryTable<Row extends { id: string }>({
   details,
   onEdit,
   onDelete,
+  openId = null,
 }: {
   title: string;
   action?: ReactNode;
@@ -40,9 +41,12 @@ export function HistoryTable<Row extends { id: string }>({
   details?: (row: Row) => [string, string][];
   onEdit: (row: Row) => void;
   onDelete: (row: Row) => void;
+  /** A record to show straight away, such as one chosen in Search. */
+  openId?: string | null;
 }) {
   const [page, setPage] = useState(0);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(openId);
+  useEffect(() => setSelectedId(openId), [openId]);
   const selected = rows.find((row) => row.id === selectedId);
 
   const valueOf = useCallback(

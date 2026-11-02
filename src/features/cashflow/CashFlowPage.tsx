@@ -77,7 +77,12 @@ export function CashFlowPage() {
   const [reviewOpen, setReviewOpen] = useState(false);
   const phone = useIsPhone();
   const { state: quickAdd } = useLocation() as {
-    state: { add?: 'income' | 'expense'; review?: string; commitments?: boolean } | null;
+    state: {
+      add?: 'income' | 'expense';
+      review?: string;
+      commitments?: boolean;
+      found?: { kind: 'income' | 'expense'; id: string; month: string };
+    } | null;
   };
 
   // The dashboard's add menu lands here with the entry to open.
@@ -92,6 +97,10 @@ export function CashFlowPage() {
       scrollToSection('month-review');
     }
     if (quickAdd?.commitments) scrollToSection('commitments');
+    if (quickAdd?.found) {
+      setMonth(quickAdd.found.month);
+      setHistory(quickAdd.found.kind);
+    }
   }, [quickAdd]);
 
   // A reviewed month leaves the screen: the next one opens, or the card closes.
@@ -272,6 +281,7 @@ export function CashFlowPage() {
             onDelete={(row) => commit([{ type: 'delete', collection: 'income', id: row.id }])}
             onEdit={setEditingIncome}
             rows={newest(data.income)}
+            openId={quickAdd?.found?.kind === 'income' ? quickAdd.found.id : null}
             title="Income History"
             action={
               phone ? (
@@ -295,6 +305,7 @@ export function CashFlowPage() {
             onDelete={(row) => commit([{ type: 'delete', collection: 'expenses', id: row.id }])}
             onEdit={setEditingExpense}
             rows={newest(data.expenses)}
+            openId={quickAdd?.found?.kind === 'expense' ? quickAdd.found.id : null}
             title="Expense History"
             action={
               phone ? (

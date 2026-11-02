@@ -1,11 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { BrowserRouter } from 'react-router';
 import { plainError } from './data/errors';
-import { createMemoryRepository } from './data/memoryRepository';
 import type { TrackerRepository } from './data/repository';
 import type { VaultAccess, VaultGate } from './data/vault';
-import { previewAccount, previewGate, previewWaiting } from './data/previewAccount';
-import { previewData } from './data/previewData';
 import { SignIn } from './features/auth/SignIn';
 import { installErrorReporting } from './ui/errorSink';
 import { LoadingScreen } from './ui/Skeleton';
@@ -150,41 +147,19 @@ function SignedInApp() {
   return <Shell account={session.account} repository={session.repository} />;
 }
 
-const preview = createMemoryRepository(previewData());
-
-const leavePreviewVault = () => window.location.assign('/signin');
-
-function PreviewVault({ gate }: { gate: VaultGate }) {
-  return (
-    <VaultScreen
-      gate={gate}
-      onAccess={() => undefined}
-      onSignOut={leavePreviewVault}
-      onStartOver={leavePreviewVault}
-    />
-  );
-}
+// The sample-data app is left out of real builds entirely.
+const PreviewApp =
+  import.meta.env.VITE_DATA_SOURCE === 'memory'
+    ? lazy(() => import('./PreviewApp').then(({ PreviewApp: Page }) => ({ default: Page })))
+    : null;
 
 export function App() {
   return (
     <BrowserRouter>
-      {import.meta.env.VITE_DATA_SOURCE === 'memory' ? (
-        <Routes>
-          <Route element={<SignIn onSignIn={() => undefined} />} path="/signin" />
-          <Route element={<PreviewVault gate={previewGate(false)} />} path="/setup" />
-          <Route element={<PreviewVault gate={previewGate(true)} />} path="/unlock" />
-          <Route
-            element={
-              <WaitingForApproval
-                access={previewWaiting}
-                onAccess={() => undefined}
-                onSignOut={leavePreviewVault}
-              />
-            }
-            path="/waiting"
-          />
-          <Route element={<Shell account={previewAccount} repository={preview} />} path="*" />
-        </Routes>
+      {PreviewApp ? (
+        <Suspense fallback={<LoadingScreen />}>
+          <PreviewApp />
+        </Suspense>
       ) : (
         <SignedInApp />
       )}

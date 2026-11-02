@@ -316,6 +316,19 @@ test('a removed member cannot read anything, even with the stored data', async (
   expect(await firstRow(owner(), again.codec)).toEqual([income]);
 });
 
+test('a damaged record does not stop a member being removed', async () => {
+  const { codec, owner: tools } = await setUpOwner();
+  await firestoreRepository(owner(), 'owner', codec).commit([
+    { type: 'set', collection: 'income', id: income.id, value: income },
+  ]);
+  await addMember(tools);
+  await raw((db) =>
+    setDoc(doc(db, 'households/owner/income/bad'), { k: 1, iv: 'AAAA', c: 'AAAA' }),
+  );
+  await tools.removeMember('member@example.com');
+  expect(await firstRow(owner(), codec)).toEqual([income]);
+});
+
 test('a remaining member follows the new key without being approved again', async () => {
   const { codec, owner: tools } = await setUpOwner();
   const staying = await addMember(tools);

@@ -69,6 +69,7 @@ function HoldingCard({ row }: { row: PositionRow }) {
   const close = () => setAction(null);
 
   const remove = () => {
+    if (!window.confirm(`Delete ${holding.name} and all its history?`)) return;
     const writes: RecordWrite[] = [
       { type: 'delete', collection: 'holdings', id: holding.id },
       ...data.contributions

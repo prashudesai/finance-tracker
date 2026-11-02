@@ -132,12 +132,15 @@ export function DebtsPage() {
   const data = useView();
   const commit = useTracker((state) => state.commit);
   const today = localDate();
-  const { state: quickAdd } = useLocation() as { state: { add?: boolean } | null };
+  const { state: quickAdd } = useLocation() as {
+    state: { add?: boolean; loan?: string } | null;
+  };
   const [adding, setAdding] = useState(quickAdd?.add === true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [historyId, setHistoryId] = useState<string | null>(null);
-  const [detailsId, setDetailsId] = useState<string | null>(null);
   const phone = useIsPhone();
+  const chosen = quickAdd?.loan ?? null;
+  const [historyId, setHistoryId] = useState<string | null>(phone ? null : chosen);
+  const [detailsId, setDetailsId] = useState<string | null>(phone ? chosen : null);
   const summaries = summarizeLoans(data, today);
   const { sorted, sort, toggle } = useSort(summaries, loanSortValue);
   const editing = data.loans.find((loan) => loan.id === editingId);
@@ -146,6 +149,7 @@ export function DebtsPage() {
   const detailsLoan = data.loans.find((loan) => loan.id === detailsId);
 
   const remove = (loan: Loan) => {
+    if (!window.confirm(`Delete ${loan.type} and its EMI payment records?`)) return;
     const stopped = stopSchedules(
       {
         rules: data.recurringRules,
