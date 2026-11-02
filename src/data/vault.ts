@@ -127,7 +127,13 @@ export interface OwnerTools {
 
 export type VaultAccess =
   | { status: 'open'; codec: RecordCodec; tools: VaultTools; owner?: OwnerTools }
-  | { status: 'waiting'; code: string; retry(): Promise<VaultAccess> };
+  | {
+      status: 'waiting';
+      code: string;
+      retry(): Promise<VaultAccess>;
+      /** Calls `onOpen` once the owner approves. Returns how to stop. */
+      watch(onOpen: (access: VaultAccess) => void): () => void;
+    };
 
 /** What the unlock screen can do. */
 export interface VaultGate {
@@ -496,6 +502,16 @@ export async function startVault(
           status: 'waiting',
           code: await safetyCode(householdId, publicKey),
           retry: () => enter(privateKey, publicKey),
+          watch: (onOpen) =>
+            onSnapshot(
+              memberDoc(user.uid),
+              (snapshot) => {
+                if (!snapshot.exists()) return;
+                // "Check again" stays available if this can't finish.
+                void enter(privateKey, publicKey).then(onOpen, () => undefined);
+              },
+              () => undefined,
+            ),
         };
       }
     }

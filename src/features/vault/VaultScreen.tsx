@@ -472,10 +472,13 @@ export function WaitingForApproval({
 }) {
   const { working, error, run } = useTask();
   const [note, setNote] = useState('');
+
+  useEffect(() => access.watch(onAccess), [access, onAccess]);
+
   return (
     <Screen
       onSignOut={onSignOut}
-      text="The tracker's owner has been asked to approve you. For extra safety, they may check this code with you."
+      text="The tracker's owner has been asked to approve you. This screen opens by itself once they do. For extra safety, they may check this code with you."
       title="Waiting for approval"
     >
       <div className={ui.notice}>

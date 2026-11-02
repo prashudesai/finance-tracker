@@ -89,10 +89,21 @@ test('starting over needs the exact phrase', async () => {
 });
 
 test('someone waiting sees their code and is told when not yet approved', async () => {
-  const retry = vi.fn(async (): Promise<VaultAccess> => ({ status: 'waiting', code: '1', retry }));
+  const watch = () => () => undefined;
+  const retry = vi.fn(async (): Promise<VaultAccess> => ({
+    status: 'waiting',
+    code: '1',
+    retry,
+    watch,
+  }));
   render(
     <WaitingForApproval
-      access={{ status: 'waiting', code: '1234 5678 9012', retry }}
+      access={{
+        status: 'waiting',
+        code: '1234 5678 9012',
+        retry,
+        watch: () => () => undefined,
+      }}
       onAccess={vi.fn()}
       onSignOut={vi.fn()}
     />,
@@ -279,4 +290,27 @@ describe('first-time setup', () => {
     show(gate({ hasKeyring: true }));
     expect(screen.queryByRole('button', { name: 'Agree and continue' })).toBeNull();
   });
+});
+
+test('someone waiting moves on by themselves once approved', async () => {
+  const onAccess = vi.fn();
+  const stop = vi.fn();
+  const { unmount } = render(
+    <WaitingForApproval
+      access={{
+        status: 'waiting',
+        code: '1234 5678 9012',
+        retry: vi.fn(),
+        watch: (onOpen) => {
+          onOpen(open);
+          return stop;
+        },
+      }}
+      onAccess={onAccess}
+      onSignOut={vi.fn()}
+    />,
+  );
+  expect(onAccess).toHaveBeenCalledWith(open);
+  unmount();
+  expect(stop).toHaveBeenCalled();
 });

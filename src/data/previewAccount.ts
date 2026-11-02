@@ -130,4 +130,5 @@ export const previewWaiting: Extract<VaultAccess, { status: 'waiting' }> = {
   status: 'waiting',
   code: '4827 1936 5504',
   retry: () => Promise.resolve(previewWaiting),
+  watch: () => () => undefined,
 };

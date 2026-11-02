@@ -362,6 +362,29 @@ test('setup records which privacy page was agreed to', async () => {
   expect(keyring.data()?.agreedToPrivacy).toBe(PRIVACY_VERSION);
 });
 
+test('a waiting member opens by themselves once the owner approves', async () => {
+  const { owner: tools } = await setUpOwner();
+  await raw((db) =>
+    setDoc(doc(db, 'memberships/member@example.com'), {
+      householdId: 'owner',
+      role: 'editor',
+      accepted: true,
+    }),
+  );
+  const gate = gateOf(await start(member(), 'member', 'member@example.com', 'owner', true));
+  const waiting = await (await gate.create(PASS)).enter();
+  if (waiting.status !== 'waiting') throw new Error('Member should be waiting');
+  const opened: VaultAccess[] = [];
+  const stop = waiting.watch((access) => opened.push(access));
+  await new Promise((done) => setTimeout(done, 200));
+  expect(opened).toEqual([]);
+  const [request] = await tools.requests();
+  if (!request) throw new Error('No request arrived');
+  await tools.approve(request);
+  await vi.waitFor(() => expect(opened[0]?.status).toBe('open'));
+  stop();
+});
+
 test('a member hears as soon as their membership is removed', async () => {
   const { owner: tools } = await setUpOwner();
   await addMember(tools);
