@@ -1,5 +1,6 @@
 import { createMemoryRepository } from '../data/memoryRepository';
-import { useTracker } from './tracker';
+import { selectView, useTracker } from './tracker';
+import { defaultSettings } from '../schema/records';
 import type { TrackerRepository } from '../data/repository';
 
 afterEach(() => useTracker.setState({ error: null, repository: null, profile: null }));
@@ -57,4 +58,15 @@ test('a failed save and a failed load show plain language, not the library error
   };
   useTracker.getState().connect(failing, true);
   expect(useTracker.getState().error).not.toContain('insufficient permissions');
+});
+test('a profile that no longer exists shows the whole household', () => {
+  const base = useTracker.getState().data;
+  const income = { id: 'i', date: '2026-01-01', member: 'Alex', source: 'Salary', amount: 5 };
+  const settings = { ...defaultSettings(), familyMembers: ['Alex'] };
+  const data = { ...base, income: [income], settings: [settings] };
+  expect(selectView(data, 'Jamie').income).toEqual([income]);
+  expect(selectView(data, 'Alex').income).toEqual([income]);
+  expect(selectView({ ...data, income: [{ ...income, member: 'Sam' }] }, 'Alex').income).toEqual(
+    [],
+  );
 });

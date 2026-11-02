@@ -177,7 +177,8 @@ export function useSaveSettings() {
 
 /** Personal records follow the selected profile. Household expenses stay shared. */
 export function selectView(data: TrackerData, profile: string | null): TrackerData {
-  if (!profile) return data;
+  // A name removed from the family, with its profile still selected, shows everyone.
+  if (!profile || !data.settings[0]?.familyMembers.includes(profile)) return data;
   const mine = <Row extends { member: string }>(rows: Row[]) =>
     rows.filter((row) => row.member === profile);
   const holdings = mine(data.holdings);
