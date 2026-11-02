@@ -31,6 +31,8 @@ import {
   MIN_PASSPHRASE_LENGTH,
 } from '../../data/crypto';
 import { PassphraseFields, RecoveryCode, validPassphrase } from '../vault/VaultScreen';
+import { reminderCalendar } from '../../domain/reminders';
+import { errorReportsAllowed, setErrorReportsAllowed } from '../../ui/errorSink';
 import { Avatar } from '../../ui/Avatar';
 import { resizePhoto } from '../../ui/photo';
 import { checkForUpdates, useAppUpdate, useInstallApp, type UpdateCheck } from '../../ui/pwa';
@@ -567,7 +569,7 @@ function DeviceUnlock({ security }: { security: AccountSecurity }) {
         {available === false
           ? "This device or browser doesn't support it yet."
           : enabled
-            ? 'On. The app asks when it opens, and again after 5 minutes away. Turning this off removes it from all your devices.'
+            ? 'On for this device. The app asks when it opens, and again after 5 minutes away.'
             : 'Off. This device is saved, so it stays unlocked until you sign out. Turn this on to ask for your face or fingerprint when the app opens.'}
       </p>
       {asking ? (
@@ -787,6 +789,58 @@ function ReleaseNotes({ title, notes }: { title: string; notes: string[] }) {
   );
 }
 
+function Reminders() {
+  const data = useTracker((state) => state.data);
+  return (
+    <div className={ui.metric}>
+      <strong>EMI reminders</strong>
+      <p className={ui.caption}>
+        Add your EMI dates and month-end review to your phone's calendar. It reminds you the day
+        before and on the day, even with the app closed. Loan names go to your calendar, not your
+        amounts. Add them again after a new loan.
+      </p>
+      <button
+        className={ui.quiet}
+        onClick={() =>
+          downloadText(
+            'finance-reminders.ics',
+            reminderCalendar(data, localDate()),
+            'text/calendar',
+          )
+        }
+        type="button"
+      >
+        Add to my calendar
+      </button>
+    </div>
+  );
+}
+
+function ErrorReports() {
+  const [allowed, setAllowed] = useState(errorReportsAllowed());
+  return (
+    <div className={ui.metric}>
+      <label className={ui.toggleRow}>
+        <strong>Send error reports</strong>
+        <input
+          checked={allowed}
+          className={ui.switch}
+          onChange={(event) => {
+            setAllowed(event.target.checked);
+            setErrorReportsAllowed(event.target.checked);
+          }}
+          role="switch"
+          type="checkbox"
+        />
+      </label>
+      <p className={ui.caption}>
+        If something breaks, send what failed, on which screen and app version. Never your records,
+        names, amounts or email.
+      </p>
+    </div>
+  );
+}
+
 function AppUpdates() {
   const { canInstall, install } = useInstallApp();
   const { updateReady, applyUpdate } = useAppUpdate();
@@ -824,6 +878,8 @@ function AppUpdates() {
           <ReleaseNotes notes={result.next.notes} title={`What's new in ${result.next.version}`} />
         ) : null}
       </div>
+      <Reminders />
+      <ErrorReports />
       <details className={ui.fold}>
         <summary>In this version</summary>
         <ReleaseNotes notes={release.notes} title={`Version ${VERSION}, ${release.released}`} />

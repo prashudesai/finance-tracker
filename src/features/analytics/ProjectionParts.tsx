@@ -148,7 +148,7 @@ export function GoalPlanner({ assets }: { assets: ProjectionAsset[] }) {
         </p>
       ) : null}
       <p className={ui.caption}>Portfolio only. Debt and gratuity are excluded.</p>
-      <div className={ui.tableWrap}>
+      <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
         <table className={ui.table}>
           <thead>
             <tr>

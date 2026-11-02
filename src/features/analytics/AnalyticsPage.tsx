@@ -31,7 +31,7 @@ function ViewDetails({ headers, rows }: { headers: string[]; rows: string[][] })
   return (
     <details className={ui.fold}>
       <summary>View Details</summary>
-      <div className={ui.tableWrap}>
+      <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
         <table className={ui.table}>
           <thead>
             <tr>

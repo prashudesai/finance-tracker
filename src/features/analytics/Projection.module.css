@@ -133,7 +133,8 @@
 }
 
 .scenarioValue {
-  color: var(--tone);
+  /* Blended towards the text colour, so it stays readable in every theme. */
+  color: color-mix(in srgb, var(--tone) 70%, var(--text));
   font-size: 1.3rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;

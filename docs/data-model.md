@@ -6,6 +6,7 @@ Record types are defined in `src/schema/records.ts`. That file is the source of 
 
 ```text
 memberships/{email}                   Invite: householdId, role, accepted
+errorReports/{id}                     Sanitized failures. Can only be added, and hold no records or names
 keyrings/{uid}                        Public key, plus the private key locked by a passphrase and a recovery code
 households/{ownerUid}/
   keys/{uid}                          The household's keys, locked to one member

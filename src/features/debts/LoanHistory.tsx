@@ -348,7 +348,7 @@ export function LoanHistory({ loan, onClose }: { loan: Loan; onClose: () => void
           {newest.length === 0 ? (
             <p className={ui.empty}>No payments recorded yet.</p>
           ) : (
-            <div className={ui.tableWrap}>
+            <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
               <table className={ui.table}>
                 <thead>
                   <tr>

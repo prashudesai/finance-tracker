@@ -1,11 +1,11 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "released": "2026-11-01",
   "notes": [
-    "Smoother loading, with placeholders instead of a blank screen",
-    "Save confirmations with a quick Undo",
-    "Pop-ups slide up on phones and swipe away",
-    "Clearer empty pages, list icons and gentle chart animation",
-    "Owners get an alert to approve or deny family requests"
+    "EMI and month-end reminders, in the app and in your phone calendar",
+    "Face ID can now be turned off on one device at a time",
+    "Anonymous error reports, which you can turn off",
+    "Better support for keyboards and screen readers",
+    "Copy code now confirms it worked"
   ]
 }

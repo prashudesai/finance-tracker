@@ -482,7 +482,7 @@ function Breakdown({ rows, scenario }: { rows: ProjectionYear[]; scenario: Scena
   return (
     <section className={ui.card}>
       <h2 style={{ fontSize: '1.2rem' }}>Financial Year Breakdown</h2>
-      <div className={ui.tableWrap}>
+      <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
         <table className={ui.table}>
           <thead>
             <tr>

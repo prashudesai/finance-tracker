@@ -1,4 +1,4 @@
-import { Fingerprint, KeyRound, ShieldCheck } from 'lucide-react';
+import { Check, Fingerprint, KeyRound, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { MIN_PASSPHRASE_LENGTH } from '../../data/crypto';
 import type { VaultAccess, VaultGate } from '../../data/vault';
@@ -106,18 +106,47 @@ export function PassphraseFields({
 export const validPassphrase = ({ passphrase, repeat }: { passphrase: string; repeat: string }) =>
   passphrase.length >= MIN_PASSPHRASE_LENGTH && passphrase === repeat;
 
+type CopyResult = 'copied' | 'failed' | null;
+
+/** The clipboard can be refused, so this falls back to copying the selected text. */
+function copyText(text: string, element: HTMLElement | null) {
+  const select = () => {
+    if (!element) return false;
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    return document.execCommand?.('copy') === true;
+  };
+  const clipboard = navigator.clipboard?.writeText(text);
+  return clipboard ? clipboard.then(() => true, select) : Promise.resolve(select());
+}
+
 export function RecoveryCode({ code }: { code: string }) {
+  const [result, setResult] = useState<CopyResult>(null);
+  const text = useRef<HTMLParagraphElement>(null);
   return (
     <div className={ui.notice}>
       <div className={ui.label}>Your recovery code</div>
-      <p className={ui.recoveryCode}>{code}</p>
+      <p className={ui.recoveryCode} ref={text}>
+        {code}
+      </p>
       <button
         className={ui.quiet}
-        onClick={() => void navigator.clipboard?.writeText(code)}
+        onClick={() => {
+          void copyText(code, text.current).then((done) => setResult(done ? 'copied' : 'failed'));
+        }}
         type="button"
       >
-        Copy code
+        {result === 'copied' ? <Check size={16} /> : null}
+        {result === 'copied' ? 'Copied' : 'Copy code'}
       </button>
+      {result === 'failed' ? (
+        <p className={ui.caption} role="alert">
+          This browser blocked copying. The code is selected, so copy it by hand, or write it down.
+        </p>
+      ) : null}
     </div>
   );
 }

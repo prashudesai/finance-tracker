@@ -175,3 +175,43 @@ describe('setup offers Face ID after the recovery code', () => {
     expect(screen.queryByText('Use Face ID or fingerprint?')).toBeNull();
   });
 });
+
+describe('copying the recovery code', () => {
+  const showCode = async () => {
+    const enter = vi.fn(async () => open);
+    const create = vi.fn(async () => ({
+      recoveryCode: 'ABCD-EFGH',
+      passkeyAvailable: false,
+      enablePasskey: vi.fn(),
+      enter,
+    }));
+    show(gate({ hasKeyring: false, create }));
+    const value = { target: { value: 'a long passphrase' } };
+    fireEvent.change(screen.getByLabelText('Passphrase'), value);
+    fireEvent.change(screen.getByLabelText('Repeat passphrase'), value);
+    fireEvent.click(screen.getByRole('button', { name: 'Create passphrase' }));
+    await screen.findByText('ABCD-EFGH');
+  };
+  const clipboard = (writeText?: () => Promise<void>) =>
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: writeText ? { writeText } : undefined,
+    });
+
+  test('confirms on screen when it worked', async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    clipboard(writeText);
+    await showCode();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeDefined();
+    expect(writeText).toHaveBeenCalledWith('ABCD-EFGH');
+  });
+
+  test('says so when the browser refuses', async () => {
+    clipboard(() => Promise.reject(new Error('denied')));
+    await showCode();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
+    expect((await screen.findByRole('alert')).textContent).toContain('blocked copying');
+    clipboard();
+  });
+});

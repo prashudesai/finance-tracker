@@ -12,6 +12,7 @@ import {
   type User,
 } from 'firebase/auth';
 import {
+  addDoc,
   doc,
   collection,
   deleteDoc,
@@ -25,6 +26,7 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from 'firebase/firestore';
+import type { ErrorReport } from '../domain/errorReport';
 import type { FamilyAccess } from '../Shell';
 import type { RecordCodec } from './crypto';
 import { firestoreRepository } from './firestoreRepository';
@@ -65,6 +67,10 @@ export const signOutUser = async () => {
   if (auth.currentUser) await forgetOnDevice(auth.currentUser.uid);
   await signOut(auth);
 };
+
+/** Errors only, sanitized on the device. Records and names never pass through here. */
+export const sendErrorReport = (report: ErrorReport) =>
+  addDoc(collection(db, 'errorReports'), report);
 
 export const openVault = (user: User, membership: VaultMembership) =>
   startVault(db, { uid: user.uid, email: user.email?.toLowerCase() ?? '' }, membership);

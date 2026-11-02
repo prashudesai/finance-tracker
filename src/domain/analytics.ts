@@ -3,6 +3,7 @@ import { EMI_CATEGORY, PMS_TYPE, type Holding, type TrackerSettings } from '../s
 import {
   financialYearRange,
   financialYearStart,
+  addDays,
   lastDayOfMonth,
   previousMonth,
   toDayNumber,
@@ -17,6 +18,7 @@ import {
 import { isLoanFailure } from './loan';
 import { summarizeLoans, totalOutstanding } from './summary';
 import { rebuildLoan } from './loan';
+import { emiReminders } from './reminders';
 import { loanPayments } from './recurring';
 
 export const isPms = (holding: Holding) => holding.type === PMS_TYPE;
@@ -437,6 +439,20 @@ export function attentionItems(
       label: `${needs(incomplete.length, 'household month')} balance review`,
       path: '/cash-flow',
       state: { review: latest },
+    });
+  }
+  for (const { name, date } of emiReminders(view, today)) {
+    items.push({
+      label: `${name} EMI due ${date === today ? 'today' : 'tomorrow'}`,
+      path: '/cash-flow',
+      state: { commitments: true },
+    });
+  }
+  if (addDays(today, 1) === lastDayOfMonth(current)) {
+    items.push({
+      label: 'Month-end review is tomorrow',
+      path: '/cash-flow',
+      state: { commitments: true },
     });
   }
   const backup = backupStatus(household, today, syncedOn);

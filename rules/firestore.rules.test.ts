@@ -200,3 +200,28 @@ describe('encryption', () => {
     await assertSucceeds(getDoc(doc(owner(), 'households/owner/requests/ed')));
   });
 });
+
+describe('error reports', () => {
+  const report = {
+    name: 'TypeError',
+    message: 'x is not a function',
+    source: 'index.js:1',
+    route: '/',
+    version: '1.0.0',
+    day: '2026-01-01',
+    device: 'phone',
+  };
+
+  test('anyone signed in can add one, but nobody can read or change it', async () => {
+    await assertSucceeds(setDoc(doc(stranger(), 'errorReports/a'), report));
+    await assertFails(getDoc(doc(owner(), 'errorReports/a')));
+    await assertFails(setDoc(doc(owner(), 'errorReports/a'), report));
+  });
+
+  test('extra fields and long messages are refused', async () => {
+    await assertFails(setDoc(doc(owner(), 'errorReports/b'), { ...report, amount: 5 }));
+    await assertFails(
+      setDoc(doc(owner(), 'errorReports/c'), { ...report, message: 'x'.repeat(200) }),
+    );
+  });
+});

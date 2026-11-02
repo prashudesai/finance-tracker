@@ -9,7 +9,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { lazy, Suspense, useEffect } from 'react';
-import { NavLink, Route, Routes } from 'react-router';
+import { NavLink, Route, Routes, useLocation } from 'react-router';
 import { Dashboard } from './features/dashboard/Dashboard';
 import type { TrackerRepository } from './data/repository';
 import { useSettings, useTracker } from './store/tracker';
@@ -138,6 +138,16 @@ export function Shell({
     if (loaded) runSchedules(localDate());
   }, [loaded, runSchedules]);
 
+  // A new title is how screen readers know the page changed.
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const heading = document.querySelector('main h1')?.textContent;
+      document.title = heading ? `${heading} · Finance Tracker` : 'Personal Finance Tracker';
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname, loaded]);
+
   const family = account?.family;
   useEffect(() => {
     const stop = family?.watchRequests(setAccessRequests);
@@ -149,6 +159,9 @@ export function Shell({
 
   return (
     <div className={styles.shell}>
+      <a className={styles.skipLink} href="#main-content">
+        Skip to content
+      </a>
       <header className={styles.header}>
         <div className={styles.brand}>
           <Avatar account={account} size={38} />
@@ -204,7 +217,7 @@ export function Shell({
           </NavLink>
         </div>
       </header>
-      <main className={styles.main}>
+      <main className={styles.main} id="main-content" tabIndex={-1}>
         {updateReady ? (
           <div className={`${ui.notice} ${ui.split}`} role="status">
             <span>Update available. Finish what you're typing, then update.</span>

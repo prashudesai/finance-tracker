@@ -116,14 +116,17 @@ export interface VaultGate {
 
 const passkeyFlag = (uid: string) => `finance-vault-passkey:${uid}`;
 
-/** A device with this set keeps no key, so each visit needs Face ID or a fingerprint. */
-function devicePasskey(uid: string, value?: boolean) {
+/**
+ * The passkey this device uses. A device with one keeps no key, so each visit needs Face ID or
+ * a fingerprint. Pass an id to set it, or null to clear it.
+ */
+function devicePasskey(uid: string, value?: string | null) {
   try {
-    if (value === true) localStorage.setItem(passkeyFlag(uid), '1');
-    if (value === false) localStorage.removeItem(passkeyFlag(uid));
-    return localStorage.getItem(passkeyFlag(uid)) === '1';
+    if (value) localStorage.setItem(passkeyFlag(uid), value);
+    if (value === null) localStorage.removeItem(passkeyFlag(uid));
+    return localStorage.getItem(passkeyFlag(uid));
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -172,7 +175,7 @@ async function recallFromDevice(uid: string) {
 }
 
 export async function forgetOnDevice(uid: string) {
-  devicePasskey(uid, false);
+  devicePasskey(uid, null);
   try {
     await deviceStore<undefined>('readwrite', (store) => store.delete(uid));
   } catch {
@@ -298,7 +301,7 @@ export async function startVault(
     const locked = await lockWithPasskey(pkcs8, await createPasskey(user));
     await setDoc(keyringDoc, { ...keyring, passkeys: [...(keyring.passkeys ?? []), locked] });
     await forgetOnDevice(user.uid);
-    devicePasskey(user.uid, true);
+    devicePasskey(user.uid, locked.id);
   };
 
   const tools = (): VaultTools => {
@@ -330,16 +333,18 @@ export async function startVault(
       forgetDevice: () => forgetOnDevice(user.uid),
       passkey: {
         available: passkeysAvailable,
-        enabled: () => devicePasskey(user.uid),
+        enabled: () => devicePasskey(user.uid) !== null,
         async enable(passphrase) {
           const keyring = await currentKeyring();
           await addPasskey(keyring, await unlockCurrent(keyring, passphrase));
         },
         async disable() {
           const keyring = await currentKeyring();
-          const updated = { ...keyring };
-          delete updated.passkeys;
-          await setDoc(keyringDoc, updated);
+          // Other devices keep theirs. Devices set up before this hold no id, so all go.
+          const mine = devicePasskey(user.uid);
+          const passkeys = (keyring.passkeys ?? []).filter(({ id }) => id !== mine);
+          const known = passkeys.length < (keyring.passkeys ?? []).length;
+          await setDoc(keyringDoc, { ...keyring, passkeys: known ? passkeys : [] });
           await forgetOnDevice(user.uid);
         },
       },
@@ -386,12 +391,15 @@ export async function startVault(
 
   const enterWith = async (pkcs8: Uint8Array, keyring: Keyring) => {
     const privateKey = await importPrivateKey(pkcs8);
-    if (!devicePasskey(user.uid)) await rememberOnDevice(user.uid, privateKey);
+    if (devicePasskey(user.uid) === null) await rememberOnDevice(user.uid, privateKey);
     return enter(privateKey, keyring.publicKey);
   };
 
   const keyring = await readKeyring();
-  if (keyring && !keyring.passkeys?.length) devicePasskey(user.uid, false);
+  const mine = devicePasskey(user.uid);
+  if (keyring && mine !== null && !keyring.passkeys?.some(({ id }) => id === mine)) {
+    devicePasskey(user.uid, null);
+  }
   const remembered = keyring ? await recallFromDevice(user.uid) : null;
   if (keyring && remembered) return { access: await enter(remembered, keyring.publicKey) };
 
@@ -401,7 +409,7 @@ export async function startVault(
     gate: {
       hasKeyring: keyring !== undefined,
       canUsePasskey,
-      autoPasskey: canUsePasskey && devicePasskey(user.uid),
+      autoPasskey: canUsePasskey && devicePasskey(user.uid) !== null,
       async unlockWithPasskey() {
         const stored = await readKeyring();
         const entries = stored?.passkeys ?? [];
@@ -410,7 +418,7 @@ export async function startVault(
         const entry = entries.find((row) => row.id === id);
         if (!entry) throw new Error('This device could not unlock the tracker.');
         const pkcs8 = await unlockWithPasskey(entry, secret);
-        devicePasskey(user.uid, true);
+        devicePasskey(user.uid, entry.id);
         return enterWith(pkcs8, stored);
       },
       async create(passphrase) {

@@ -69,7 +69,7 @@ export function HistoryTable<Row extends { id: string }>({
         </span>
         <strong>{total}</strong>
       </div>
-      <div className={ui.tableWrap}>
+      <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
         <table className={ui.table}>
           <thead>
             <tr>
@@ -96,7 +96,6 @@ export function HistoryTable<Row extends { id: string }>({
                   >
                     {index === 0 ? (
                       <button
-                        aria-label={`Open ${describe(row)}`}
                         className={ui.rowOpen}
                         onClick={(event) => {
                           event.stopPropagation();
@@ -104,6 +103,7 @@ export function HistoryTable<Row extends { id: string }>({
                         }}
                         type="button"
                       >
+                        <span className={ui.visuallyHidden}>Open {describe(row)}, </span>
                         {column.cell(row)}
                       </button>
                     ) : (

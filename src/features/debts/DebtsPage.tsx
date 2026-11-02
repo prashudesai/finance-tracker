@@ -51,10 +51,13 @@ function LoanCard({ summary, onOpen }: { summary: LoanSummary; onOpen: () => voi
   const active = (ledger?.remaining ?? 0) > 0;
   const paid = ledger ? paidShare(ledger) : 0;
   return (
-    <button aria-label={`Open ${type}`} className={ui.categoryCard} onClick={onOpen} type="button">
+    <button className={ui.categoryCard} onClick={onOpen} type="button">
       <div className={ui.split}>
         <div>
-          <div style={{ fontWeight: 600 }}>{type}</div>
+          <div style={{ fontWeight: 600 }}>
+            <span className={ui.visuallyHidden}>Open </span>
+            {type}
+          </div>
           <div className={ui.caption}>{member}</div>
         </div>
         <span className={ui.tableActions} style={{ alignItems: 'center' }}>
@@ -234,7 +237,7 @@ export function DebtsPage() {
             ))}
           </div>
         ) : (
-          <div className={ui.tableWrap}>
+          <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
             <table className={ui.table}>
               <thead>
                 <tr>

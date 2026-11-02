@@ -771,6 +771,7 @@
 }
 
 .recoveryCode {
+  user-select: all;
   margin: 6px 0;
   font-size: 1rem;
   font-weight: 700;
@@ -1079,7 +1080,7 @@ details.fold[open] > summary {
 }
 
 .expense {
-  color: var(--accent-text);
+  color: #2a1405;
   background: #e09a6a;
   border-color: #e09a6a;
 }

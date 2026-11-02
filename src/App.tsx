@@ -6,6 +6,7 @@ import type { VaultAccess, VaultGate } from './data/vault';
 import { previewAccount, previewGate, previewWaiting } from './data/previewAccount';
 import { previewData } from './data/previewData';
 import { SignIn } from './features/auth/SignIn';
+import { installErrorReporting } from './ui/errorSink';
 import { LoadingScreen } from './ui/Skeleton';
 import { VaultScreen, WaitingForApproval } from './features/vault/VaultScreen';
 import { Shell, type Account } from './Shell';
@@ -34,6 +35,7 @@ function useFirebaseSession(): Session {
 
   useEffect(() => {
     let stop: (() => void) | undefined;
+    let stopReports: (() => void) | undefined;
     let active = true;
     void import('./data/firebase').then((firebase) => {
       if (!active) return;
@@ -42,6 +44,7 @@ function useFirebaseSession(): Session {
           setSession({ status: 'signed-out', signIn, error: String(error) });
         });
       };
+      stopReports = installErrorReporting(firebase.sendErrorReport);
       stop = firebase.watchUser((user) => {
         if (!user) {
           setSession({ status: 'signed-out', signIn });
@@ -91,6 +94,7 @@ function useFirebaseSession(): Session {
     return () => {
       active = false;
       stop?.();
+      stopReports?.();
     };
   }, []);
 
