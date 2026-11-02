@@ -23,6 +23,7 @@ import type { RecordWrite } from '../../data/repository';
 import type { Loan } from '../../schema/records';
 import { useTracker, useView } from '../../store/tracker';
 import { formatMoney, formatPercent, localDate } from '../../ui/format';
+import { EmptyState } from '../../ui/EmptyState';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
 import { Metric, Stat } from '../../ui/Stat';
@@ -212,7 +213,16 @@ export function DebtsPage() {
           </button>
         </div>
         {summaries.length === 0 ? (
-          <p className={ui.empty}>No loans recorded yet.</p>
+          <EmptyState
+            action={
+              <button className={ui.quiet} onClick={() => setAdding(true)} type="button">
+                Add your first loan
+              </button>
+            }
+            icon={CreditCard}
+            text="Add a loan to follow its balance, EMIs and interest."
+            title="No loans recorded yet."
+          />
         ) : phone ? (
           <div className={ui.threeColumn}>
             {sorted.map((summary) => (

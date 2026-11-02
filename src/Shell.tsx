@@ -18,6 +18,8 @@ import { localDate } from './ui/format';
 import { Avatar } from './ui/Avatar';
 import { GuidedTour } from './ui/GuidedTour';
 import { PullToRefresh } from './ui/PullToRefresh';
+import { PageSkeleton } from './ui/Skeleton';
+import { Toast } from './ui/Toast';
 import { PageEndTools } from './ui/SearchDialog';
 import { useAppUpdate } from './ui/pwa';
 import { useTheme } from './ui/theme';
@@ -222,7 +224,7 @@ export function Shell({
           </p>
         ) : null}
         {loaded ? (
-          <Suspense fallback={<p className={ui.empty}>Loading…</p>}>
+          <Suspense fallback={<PageSkeleton label="Loading…" />}>
             <Routes>
               <Route element={<Dashboard />} path="/" />
               <Route element={<CashFlowPage />} path="/cash-flow" />
@@ -237,10 +239,11 @@ export function Shell({
             </Routes>
           </Suspense>
         ) : (
-          <p className={ui.empty}>Loading your records…</p>
+          <PageSkeleton />
         )}
       </main>
       {loaded ? <PageEndTools /> : null}
+      <Toast />
       <PullToRefresh />
       {tourOpen ? <GuidedTour /> : null}
     </div>

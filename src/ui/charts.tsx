@@ -209,7 +209,9 @@ export function LineChart({
         {series.map((line, seriesIndex) => (
           <g key={line.name}>
             <polyline
+              className={styles.drawnLine}
               fill="none"
+              pathLength={1}
               points={line.points.map((point, index) => `${x(index)},${y(point.value)}`).join(' ')}
               stroke={line.color ?? chartColor(seriesIndex)}
               strokeLinejoin="round"

@@ -8,6 +8,7 @@ import { monthTotals } from '../../domain/cashflow';
 import type { Expense, Income } from '../../schema/records';
 import { useTracker, useView } from '../../store/tracker';
 import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format';
+import { CategoryLabel } from '../../ui/CategoryLabel';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
 import { Metric, Stat } from '../../ui/Stat';
@@ -24,7 +25,11 @@ const MONTH_CHOICES = 24;
 
 const INCOME_COLUMNS: Column<Income>[] = [
   { header: 'Member', secondary: true, cell: (row) => row.member, sortValue: (row) => row.member },
-  { header: 'Source', cell: (row) => row.source, sortValue: (row) => row.source },
+  {
+    header: 'Source',
+    cell: (row) => <CategoryLabel income name={row.source} />,
+    sortValue: (row) => row.source,
+  },
   {
     header: 'Amount',
     numeric: true,
@@ -108,7 +113,11 @@ export function CashFlowPage() {
     data.loans.find((loan) => loan.id === id)?.type ?? '';
   const expenseNote = (row: Expense) => loanName(row.loanId) || row.subcategory || row.notes || '—';
   const expenseColumns: Column<Expense>[] = [
-    { header: 'Category', cell: (row) => row.category, sortValue: (row) => row.category },
+    {
+      header: 'Category',
+      cell: (row) => <CategoryLabel name={row.category} />,
+      sortValue: (row) => row.category,
+    },
     {
       header: 'Amount',
       numeric: true,

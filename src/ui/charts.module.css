@@ -130,3 +130,16 @@
   margin-right: 4px;
   border-radius: 3px;
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .drawnLine {
+    stroke-dasharray: 1;
+    animation: draw 600ms ease-out;
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}

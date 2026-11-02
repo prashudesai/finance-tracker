@@ -127,3 +127,21 @@
 .month:hover .tooltip {
   display: grid;
 }
+
+.month {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .barIncome,
+  .barExpense {
+    transform-origin: bottom;
+    animation: grow 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+}

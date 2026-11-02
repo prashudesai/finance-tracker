@@ -12,7 +12,7 @@ import { previousMonth } from './domain/calendar';
 
 afterEach(() => {
   cleanup();
-  useTracker.setState({ profile: null, tourOpen: false });
+  useTracker.setState({ profile: null, tourOpen: false, toast: null });
 });
 
 // jsdom has no ResizeObserver.
@@ -430,6 +430,26 @@ test('a closing balance opens the next month, and completes the review', async (
       startBalance: 2500,
     }),
   );
+});
+
+test('a save confirms itself, and Undo takes it back', async () => {
+  renderApp('/cash-flow', { settings: [{ ...defaultSettings(), familyMembers: ['A', 'B'] }] });
+  const form = (await screen.findByRole('button', { name: 'Add income' })).closest('form');
+  if (!form) throw new Error('Income form not found');
+  fireEvent.change(within(form).getByLabelText('Family Member'), { target: { value: 'A' } });
+  fireEvent.change(within(form).getByLabelText('Amount (₹)'), { target: { value: '500' } });
+  fireEvent.submit(form);
+  fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+  await waitFor(() => expect(useTracker.getState().data.income).toEqual([]));
+  expect(await screen.findByText('Undone')).toBeDefined();
+});
+
+test('a new tracker explains what to do next', async () => {
+  renderApp('/investments');
+  expect(await screen.findByRole('button', { name: 'Add your first investment' })).toBeDefined();
+  cleanup();
+  renderApp('/debts');
+  expect(await screen.findByRole('button', { name: 'Add your first loan' })).toBeDefined();
 });
 
 test('the app tour walks the pages and changes nothing', async () => {

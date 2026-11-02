@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { MonthTrend } from '../../domain/cashflow';
 import { formatCompactMoney, formatMoney, formatMonth, formatShortMonth } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
@@ -9,6 +10,8 @@ export interface TrendRow extends MonthTrend {
 }
 
 export function TrendChart({ months }: { months: TrendRow[] }) {
+  const [chosen, setChosen] = useState<string | null>(null);
+  const detail = months.find((row) => row.month === chosen);
   const peak = Math.max(...months.flatMap((row) => [row.income, row.expenses]), 1);
   const height = (value: number) => `${(value / peak) * 100}%`;
 
@@ -26,7 +29,7 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
         <span className={styles.gridTop}>{formatCompactMoney(peak)}</span>
         <span className={styles.gridMiddle}>{formatCompactMoney(peak / 2)}</span>
         {months.map((row) => (
-          <div className={styles.month} key={row.month}>
+          <div className={styles.month} key={row.month} onClick={() => setChosen(row.month)}>
             <div className={styles.bars}>
               <span className={styles.barIncome} style={{ height: height(row.income) }} />
               {row.pending ? null : (
@@ -42,6 +45,11 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
           </div>
         ))}
       </div>
+      <p aria-hidden="true" className={ui.chartDetail}>
+        {detail
+          ? `${formatMonth(detail.month)} · Income ${formatMoney(detail.income)} · Expenses ${detail.pending ? 'Pending' : formatMoney(detail.expenses)}`
+          : null}
+      </p>
       <div className={ui.visuallyHidden}>
         <table>
           <caption>Income and expenses by month</caption>

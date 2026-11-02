@@ -6,6 +6,7 @@ import type { VaultAccess, VaultGate } from './data/vault';
 import { previewAccount, previewGate, previewWaiting } from './data/previewAccount';
 import { previewData } from './data/previewData';
 import { SignIn } from './features/auth/SignIn';
+import { LoadingScreen } from './ui/Skeleton';
 import { VaultScreen, WaitingForApproval } from './features/vault/VaultScreen';
 import { Shell, type Account } from './Shell';
 
@@ -117,7 +118,7 @@ function SignedInApp() {
   const session = useFirebaseSession();
   const passkey = session.status === 'ready' ? session.account.security?.passkey : undefined;
   useRelockOnReturn(useCallback(() => passkey?.enabled() ?? false, [passkey]));
-  if (session.status === 'loading') return null;
+  if (session.status === 'loading') return <LoadingScreen />;
   if (session.status === 'signed-out') {
     return <SignIn error={session.error} onSignIn={session.signIn} />;
   }

@@ -38,6 +38,8 @@ import { PageHeader } from '../../ui/PageHeader';
 import { Metric, Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
+import { EmptyState } from '../../ui/EmptyState';
+import { useCountUp } from '../../ui/useCountUp';
 import { GettingStarted } from './GettingStarted';
 import { QuickAdd } from './QuickAdd';
 import { TrendChart } from './TrendChart';
@@ -90,6 +92,7 @@ export function Dashboard() {
   const [snapshotMonth, setSnapshotMonth] = useState(previousMonth(month));
 
   const worth = netWorth(data, today);
+  const shownWorth = useCountUp(worth.netWorth);
   const overview = monthlyOverview(data, month, today);
   const snapshot = closeMonth(data, snapshotMonth);
   const pmsChange = pmsGainChange(data, month);
@@ -169,7 +172,7 @@ export function Dashboard() {
           <div className={ui.subtleLine}>Assets after outstanding debts</div>
         </div>
       </div>
-      <div className={ui.value}>{formatMoney(worth.netWorth)}</div>
+      <div className={ui.value}>{formatMoney(Math.round(shownWorth))}</div>
       <div className={ui.split}>
         <div>
           <div className={ui.label}>Total assets</div>
@@ -450,7 +453,16 @@ export function Dashboard() {
           </div>
         </div>
         {shown.length === 0 ? (
-          <p className={ui.empty}>No investments recorded yet.</p>
+          <EmptyState
+            action={
+              <Link className={ui.quiet} state={{ add: 'investment' }} to="/investments">
+                Add your first investment
+              </Link>
+            }
+            icon={TrendingUp}
+            text="See their value and returns here."
+            title="No investments recorded yet."
+          />
         ) : (
           <div className={ui.barList}>
             {shown.map((row, index) => (
@@ -475,7 +487,16 @@ export function Dashboard() {
           </div>
         </div>
         {loans.length === 0 ? (
-          <p className={ui.empty}>No loans recorded yet.</p>
+          <EmptyState
+            action={
+              <Link className={ui.quiet} state={{ add: true }} to="/debts">
+                Add your first loan
+              </Link>
+            }
+            icon={CreditCard}
+            text="Track what's left and how much you've paid."
+            title="No loans recorded yet."
+          />
         ) : (
           <div className={ui.twoColumn}>
             {loans.map(({ id, type, ledger, error }, index) => (

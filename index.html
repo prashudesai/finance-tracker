@@ -7,9 +7,27 @@
     <meta name="theme-color" content="#102826" />
     <link rel="icon" type="image/png" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Finance Tracker" />
+    <style>
+      html {
+        background: #102826;
+      }
+
+      @media (prefers-color-scheme: light) {
+        html {
+          background: #eef5f2;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="display: grid; place-items: center; min-height: 100dvh">
+        <img alt="" height="84" src="/icons/icon-192.png" style="border-radius: 22px" width="84" />
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

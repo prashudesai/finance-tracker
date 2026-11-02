@@ -1,4 +1,4 @@
-import { ChevronRight, PiggyBank, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, PiggyBank, Plus, Trash2, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { optionLists } from '../../domain/options';
@@ -23,6 +23,7 @@ import { Donut } from '../../ui/charts';
 import { Field } from '../../ui/Field';
 import { MemberField, useDefaultMember } from '../../ui/MemberField';
 import { formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
+import { EmptyState } from '../../ui/EmptyState';
 import { Modal } from '../../ui/Modal';
 import { AddValueDialog } from '../../ui/Select';
 import { PageHeader } from '../../ui/PageHeader';
@@ -447,7 +448,16 @@ export function InvestmentsPage() {
             />
           </div>
           {general.length === 0 ? (
-            <p className={ui.empty}>No investments recorded yet.</p>
+            <EmptyState
+              action={
+                <button className={ui.quiet} onClick={() => setAdding('investment')} type="button">
+                  Add your first investment
+                </button>
+              }
+              icon={TrendingUp}
+              text="Add a fund, deposit or bond to track its value and returns."
+              title="No investments recorded yet."
+            />
           ) : (
             <div className={ui.threeColumn}>
               {general.map((category) => (

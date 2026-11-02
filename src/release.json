@@ -1,11 +1,11 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "released": "2026-11-01",
   "notes": [
-    "Unlock with Face ID or your fingerprint, on devices that support it",
-    "Your records are encrypted on your device, so only your family can read them",
-    "Everyone has a passphrase and a recovery code",
-    "The owner approves family members by comparing a code",
-    "Backups are encrypted with a passphrase of your choice"
+    "Smoother loading, with placeholders instead of a blank screen",
+    "Save confirmations with a quick Undo",
+    "Pop-ups slide up on phones and swipe away",
+    "Clearer empty pages, list icons and gentle chart animation",
+    "Owners get an alert to approve or deny family requests"
   ]
 }

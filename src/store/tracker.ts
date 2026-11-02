@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { buildChange, pruneWrites } from '../domain/changes';
+import { buildChange, pruneWrites, undoWrites } from '../domain/changes';
 import { dueContributions } from '../domain/holdings';
 import {
   COLLECTION_NAMES,
@@ -9,7 +9,12 @@ import {
   type TrackerData,
   type TrackerRepository,
 } from '../data/repository';
-import { defaultSettings, TRACKER_SETTINGS_ID, type TrackerSettings } from '../schema/records';
+import {
+  defaultSettings,
+  TRACKER_SETTINGS_ID,
+  type ChangeRecord,
+  type TrackerSettings,
+} from '../schema/records';
 import type { AccessRequest } from '../data/vault';
 
 interface TrackerState {
@@ -25,6 +30,8 @@ interface TrackerState {
   tourOpen: boolean;
   /** People waiting for the owner's approval. */
   accessRequests: AccessRequest[];
+  /** The latest saved change, for a short confirmation. */
+  toast: { message: string; change?: ChangeRecord } | null;
   /** Saves not yet confirmed by the server. They wait here while offline. */
   pendingSaves: number;
   syncedAt: Date | null;
@@ -34,6 +41,9 @@ interface TrackerState {
   commit(writes: RecordWrite[], options?: { log?: boolean }): void;
   setTourOpen(open: boolean): void;
   setAccessRequests(requests: AccessRequest[]): void;
+  dismissToast(): void;
+  /** Takes back the change the current toast confirmed. */
+  undoLast(): void;
   report(message: string): void;
   setProfile(profile: string | null): void;
   /** Posts scheduled contributions that are due. Safe to run from every device. */
@@ -50,6 +60,7 @@ export const useTracker = create<TrackerState>((set, get) => ({
   actor: '',
   tourOpen: false,
   accessRequests: [],
+  toast: null,
   pendingSaves: 0,
   syncedAt: null,
   repository: null,
@@ -117,18 +128,49 @@ export const useTracker = create<TrackerState>((set, get) => ({
         ]
       : writes;
     if (!repository) return;
+    if (change) set({ toast: { message: change.summary, change } });
     set((state) => ({ pendingSaves: state.pendingSaves + 1 }));
     repository
       .commit(logged)
       .then(() => set({ syncedAt: new Date() }))
       .catch((error: unknown) => {
-        set({ error: error instanceof Error ? error.message : 'The change could not be saved.' });
+        set({
+          toast: null,
+          error: error instanceof Error ? error.message : 'The change could not be saved.',
+        });
       })
       .finally(() => set((state) => ({ pendingSaves: state.pendingSaves - 1 })));
   },
 
   setAccessRequests(accessRequests) {
     set({ accessRequests });
+  },
+
+  dismissToast() {
+    set({ toast: null });
+  },
+
+  undoLast() {
+    const { toast, data, commit, report } = get();
+    if (!toast?.change) return;
+    try {
+      commit(
+        [
+          ...undoWrites(data, toast.change),
+          {
+            type: 'set',
+            collection: 'changes',
+            id: toast.change.id,
+            value: { ...toast.change, undone: true },
+          },
+        ],
+        { log: false },
+      );
+      set({ toast: { message: 'Undone' } });
+    } catch (error) {
+      set({ toast: null });
+      report(error instanceof Error ? error.message : 'This change could not be undone.');
+    }
   },
 
   setTourOpen(open) {
