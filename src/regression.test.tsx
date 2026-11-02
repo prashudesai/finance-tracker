@@ -370,10 +370,11 @@ test('deleting a holding also removes its interest credits and EPS corrections',
 test('a cleared rate keeps its saved value, and a typed zero is still saved', () => {
   const save = vi.fn();
   render(<RateInput label="Rate" onChange={save} value={7} />);
-  const rate = screen.getByLabelText('Rate');
+  const rate = screen.getByLabelText<HTMLInputElement>('Rate');
   fireEvent.change(rate, { target: { value: '' } });
   fireEvent.blur(rate);
   expect(save).not.toHaveBeenCalled();
+  expect(rate.value).toBe('7');
   fireEvent.change(rate, { target: { value: '0' } });
   fireEvent.blur(rate);
   expect(save).toHaveBeenCalledWith(0);
