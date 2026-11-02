@@ -122,6 +122,12 @@ body {
   background: radial-gradient(900px 420px at 12% -8%, var(--bg-glow), transparent 70%), var(--bg);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
+  /* A long unbroken name wraps, rather than pushing the page sideways. */
+  overflow-wrap: anywhere;
+}
+
+table {
+  overflow-wrap: normal;
 }
 
 :root {
