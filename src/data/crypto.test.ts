@@ -126,3 +126,14 @@ test('encrypted backups hide their contents and need the passphrase', async () =
   expect(await decryptBackup(file, PASS)).toBe(text);
   await expect(decryptBackup(file, 'wrong passphrase')).rejects.toThrow(/passphrase/);
 });
+
+test('a backup of any size opens again, and large records can be saved', async () => {
+  const text = 'x'.repeat(2_000_000);
+  expect(await decryptBackup(await encryptBackup(text, PASS), PASS)).toBe(text);
+
+  const secret = createHouseholdSecret();
+  const codec = createCodec('home', secret, () => Promise.resolve(secret));
+  const record = { id: 'tracker', photos: { a: 'y'.repeat(300_000) } };
+  const sealed = await codec.seal('settings', 'doc', record);
+  expect(await codec.open('settings', 'doc', sealed)).toEqual(record);
+});

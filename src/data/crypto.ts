@@ -10,6 +10,7 @@
 /** OWASP's minimum for PBKDF2-SHA256. */
 const KDF_ITERATIONS = 600_000;
 const RECOVERY_BYTES = 20;
+const BASE64_CHUNK = 0x8000;
 const BASE32 = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 export const MIN_PASSPHRASE_LENGTH = 12;
@@ -20,7 +21,14 @@ const decoder = new TextDecoder();
 const toBytes = (text: string) => encoder.encode(text);
 const buffer = (bytes: Uint8Array) => bytes.slice().buffer;
 
-export const toBase64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
+/** Converted in pieces, because too many arguments at once overflow the call stack. */
+export function toBase64(bytes: Uint8Array) {
+  let text = '';
+  for (let start = 0; start < bytes.length; start += BASE64_CHUNK) {
+    text += String.fromCharCode(...bytes.subarray(start, start + BASE64_CHUNK));
+  }
+  return btoa(text);
+}
 
 export function fromBase64(text: string) {
   return Uint8Array.from(atob(text), (char) => char.charCodeAt(0));
