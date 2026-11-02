@@ -948,6 +948,11 @@
   display: none;
 }
 
+.iconActions {
+  display: flex;
+  gap: 8px;
+}
+
 .valueRow {
   display: flex;
   align-items: center;
@@ -1619,16 +1624,26 @@ details.fold[open] > summary {
 
 /* On phones a pop-up is a sheet that rises from the bottom. */
 @media (max-width: 700px) {
+  /* No hover on phones, so every action shows its name, all the same size. */
+  .iconActions {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    flex-basis: 100%;
+    width: 100%;
+    gap: 6px;
+  }
+
   .labelledIcon {
     flex-direction: column;
-    gap: 1px;
-    width: 46px;
-    height: 42px;
+    gap: 2px;
+    width: 100%;
+    height: 46px;
   }
 
   .labelledIcon span {
     display: block;
-    font-size: 0.62rem;
+    font-size: 0.66rem;
     font-weight: 600;
     line-height: 1;
   }

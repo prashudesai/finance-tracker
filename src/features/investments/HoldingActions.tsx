@@ -107,7 +107,7 @@ function HoldingCard({ row }: { row: PositionRow }) {
               : ''}
           </div>
         </div>
-        <div className={ui.actions}>
+        <div className={ui.iconActions}>
           <button
             aria-label={`Update value of ${holding.name}`}
             className={ui.labelledIcon}
@@ -130,30 +130,33 @@ function HoldingCard({ row }: { row: PositionRow }) {
           </button>
           <button
             aria-label={`Contribution history of ${holding.name}`}
-            className={ui.smallIcon}
+            className={ui.labelledIcon}
             onClick={() => setAction('history')}
             type="button"
             data-tip="View history"
           >
             <History size={14} />
+            <span>History</span>
           </button>
           <button
             aria-label={`Edit ${holding.name}`}
-            className={ui.smallIcon}
+            className={ui.labelledIcon}
             onClick={() => setAction('edit')}
             type="button"
             data-tip="Edit"
           >
             <Pencil size={14} />
+            <span>Edit</span>
           </button>
           <button
             aria-label={`Delete ${holding.name}`}
-            className={ui.smallIcon}
+            className={ui.labelledIcon}
             onClick={remove}
             type="button"
             data-tip="Delete"
           >
             <Trash2 size={14} />
+            <span>Delete</span>
           </button>
         </div>
       </div>
