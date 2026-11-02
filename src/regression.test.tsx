@@ -247,6 +247,19 @@ test('notes that are too long say so in plain language', () => {
   expect(result.error?.issues[0]?.message).toBe('Use 500 characters or fewer.');
 });
 
+test('an empty projection draws its chart without key errors', async () => {
+  const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  connect({});
+  render(
+    <MemoryRouter>
+      <ProjectionPage />
+    </MemoryRouter>,
+  );
+  await screen.findAllByText(/Projection/);
+  expect(errors.mock.calls.filter(([text]) => String(text).includes('same key'))).toEqual([]);
+  errors.mockRestore();
+});
+
 const VIEWER: Account = { name: 'V', email: 'v@example.test', role: 'viewer' };
 
 async function openData(account: Account, seed: Partial<TrackerData> = {}) {
