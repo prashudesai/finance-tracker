@@ -6,6 +6,7 @@ import type { TrackerData } from './data/repository';
 import { Commitments } from './features/cashflow/Commitments';
 import { ExpenseForm, IncomeForm } from './features/cashflow/EntryForms';
 import { HoldingForm } from './features/investments/HoldingForm';
+import { RateInput } from './features/analytics/ProjectionParts';
 import { ProjectionPage } from './features/analytics/ProjectionPage';
 import {
   defaultSettings,
@@ -356,4 +357,16 @@ test('deleting a holding also removes its interest credits and EPS corrections',
   await waitFor(() => expect(state().holdings).toEqual([]));
   expect(state().interestCredits).toEqual([]);
   expect(state().epsUpdates).toEqual([]);
+});
+
+test('a cleared rate keeps its saved value, and a typed zero is still saved', () => {
+  const save = vi.fn();
+  render(<RateInput label="Rate" onChange={save} value={7} />);
+  const rate = screen.getByLabelText('Rate');
+  fireEvent.change(rate, { target: { value: '' } });
+  fireEvent.blur(rate);
+  expect(save).not.toHaveBeenCalled();
+  fireEvent.change(rate, { target: { value: '0' } });
+  fireEvent.blur(rate);
+  expect(save).toHaveBeenCalledWith(0);
 });
