@@ -328,3 +328,32 @@ test('a tracker with no debts does not say debts are 100%', async () => {
   const worth = within(await screen.findByRole('region', { name: 'Net worth' }));
   expect(worth.queryByText(/Debts 100/)).toBeNull();
 });
+
+test('deleting a holding also removes its interest credits and EPS corrections', async () => {
+  const pf = { ...fund, autoContribute: false, autoStart: undefined };
+  render(
+    <MemoryRouter initialEntries={['/investments']}>
+      <Shell
+        repository={createMemoryRepository({
+          settings: [settings],
+          holdings: [pf] as Holding[],
+          interestCredits: [
+            {
+              id: 'interest_h_2024',
+              holdingId: 'h',
+              financialYearStartYear: 2024,
+              creditedDate: '2025-03-31',
+              amount: 10,
+            },
+          ],
+          epsUpdates: [{ id: 'eps1', holdingId: 'h', date: '2025-01-01', amount: 5 }],
+        })}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /^PF Accounts/ }));
+  fireEvent.click(await screen.findByLabelText('Delete UAN 1'));
+  await waitFor(() => expect(state().holdings).toEqual([]));
+  expect(state().interestCredits).toEqual([]);
+  expect(state().epsUpdates).toEqual([]);
+});

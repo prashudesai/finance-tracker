@@ -77,6 +77,16 @@ function HoldingCard({ row }: { row: PositionRow }) {
       ...data.valuations
         .filter((item) => item.holdingId === holding.id)
         .map((item): RecordWrite => ({ type: 'delete', collection: 'valuations', id: item.id })),
+      ...data.interestCredits
+        .filter((item) => item.holdingId === holding.id)
+        .map((item): RecordWrite => ({
+          type: 'delete',
+          collection: 'interestCredits',
+          id: item.id,
+        })),
+      ...data.epsUpdates
+        .filter((item) => item.holdingId === holding.id)
+        .map((item): RecordWrite => ({ type: 'delete', collection: 'epsUpdates', id: item.id })),
     ];
     commit(writes);
   };
