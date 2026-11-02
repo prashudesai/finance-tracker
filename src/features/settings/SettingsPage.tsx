@@ -15,6 +15,7 @@ import release from '../../release.json';
 import { syncedRecently } from '../../domain/analytics';
 import { createBackup, parseBackup, restoreWrites } from '../../domain/backup';
 import { undoWrites } from '../../domain/changes';
+import { plainError } from '../../data/errors';
 import { TRACKER_SETTINGS_ID, type ChangeRecord, type TrackerSettings } from '../../schema/records';
 import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
 import type { Account, AccountSecurity, FamilyMember, FamilyRequest } from '../../Shell';
@@ -161,7 +162,7 @@ function DataBackup() {
       commit(restoreWrites(data, backup));
       setStatus(`Restored ${count} records.`);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'This backup could not be read.');
+      setStatus(plainError(error, 'This backup could not be read.'));
     }
   };
 
@@ -438,8 +439,7 @@ const withoutPhoto = (settings: TrackerSettings, email: string) =>
 
 const DELETE_PHRASE = 'DELETE MY ACCOUNT';
 
-const failureText = (error: unknown) =>
-  error instanceof Error ? error.message : 'That did not work. Please try again.';
+const failureText = (error: unknown) => plainError(error, 'That did not work. Please try again.');
 
 function DeleteAccount({ account }: { account: Account }) {
   const repository = useTracker((state) => state.repository);
@@ -502,6 +502,21 @@ function DeleteAccount({ account }: { account: Account }) {
         </p>
       ) : null}
     </div>
+  );
+}
+
+function GuideButton() {
+  const report = useTracker((state) => state.report);
+  return (
+    <button
+      className={ui.quiet}
+      onClick={() => {
+        saveGuide().catch(() => report('The PDF could not be created. Please try again.'));
+      }}
+      type="button"
+    >
+      Save PDF guide
+    </button>
   );
 }
 
@@ -1004,9 +1019,7 @@ export function SettingsPage({ account }: { account: Account }) {
               >
                 Start app tour
               </button>
-              <button className={ui.quiet} onClick={() => void saveGuide()} type="button">
-                Save PDF guide
-              </button>
+              <GuideButton />
             </div>
           ) : null}
           {panel === 'account' ? (

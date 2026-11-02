@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { buildChange, pruneWrites } from '../domain/changes';
 import { dueContributions } from '../domain/holdings';
+import { plainError } from '../data/errors';
 import {
   COLLECTIONS,
   COLLECTION_NAMES,
@@ -62,7 +63,8 @@ export const useTracker = create<TrackerState>((set, get) => ({
     });
     const ready = new Set<CollectionName>();
     const invalid = new Map<CollectionName, number>();
-    const fail = (error: Error) => set({ error: error.message });
+    const fail = (error: Error) =>
+      set({ error: plainError(error, 'Your records could not be loaded. Please try again.') });
 
     function watch<Name extends CollectionName>(name: Name) {
       return repository.subscribe(
@@ -127,7 +129,7 @@ export const useTracker = create<TrackerState>((set, get) => ({
       .commit(logged)
       .then(() => set({ syncedAt: new Date() }))
       .catch((error: unknown) => {
-        set({ error: error instanceof Error ? error.message : 'The change could not be saved.' });
+        set({ error: plainError(error, 'The change could not be saved. Please try again.') });
       })
       .finally(() => set((state) => ({ pendingSaves: state.pendingSaves - 1 })));
   },

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
+import { plainError } from './data/errors';
 import { createMemoryRepository } from './data/memoryRepository';
 import type { TrackerRepository } from './data/repository';
 import type { VaultAccess, VaultGate } from './data/vault';
@@ -38,7 +39,8 @@ function useFirebaseSession(): Session {
       if (!active) return;
       const signIn = () => {
         firebase.signIn().catch((error: unknown) => {
-          setSession({ status: 'signed-out', signIn, error: String(error) });
+          const message = plainError(error, 'Sign-in did not finish. Please try again.');
+          setSession({ status: 'signed-out', signIn, error: message });
         });
       };
       stop = firebase.watchUser((user) => {
@@ -82,7 +84,7 @@ function useFirebaseSession(): Session {
           }
         };
         start().catch((error: unknown) => {
-          const message = error instanceof Error ? error.message : String(error);
+          const message = plainError(error, 'Your tracker could not be opened. Please try again.');
           setSession({ status: 'signed-out', signIn, error: message });
         });
       });
