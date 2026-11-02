@@ -1,11 +1,11 @@
 {
-  "version": "1.6.1",
+  "version": "1.7.0",
   "released": "2026-11-01",
   "notes": [
-    "Stallion PMS gain is now correct for each past month",
-    "A monthly reminder to update your PMS current value",
-    "Fixes a rare problem that could lose records when removing a family member",
-    "Encrypted backups now work at any size",
-    "Search opens the exact record, and deleting asks first"
+    "See your net worth over time at the top of Analytics",
+    "A small trend line beside Net Worth on the Dashboard",
+    "Stallion PMS gain is now correct for each past month, with a monthly reminder to update its value",
+    "Icon buttons show what they do when you point at them",
+    "Update and Add are now labelled on phones"
   ]
 }

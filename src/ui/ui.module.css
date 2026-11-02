@@ -948,6 +948,18 @@
   display: none;
 }
 
+.valueRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.trendLine {
+  display: block;
+  flex: none;
+}
+
 .settingGrid {
   display: grid;
   gap: 16px;

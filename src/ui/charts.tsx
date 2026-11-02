@@ -141,6 +141,8 @@ export interface LineSeries {
   name: string;
   /** A fixed colour, for series with a meaning of their own. */
   color?: string;
+  /** A dash pattern, so series differ by more than colour. */
+  dash?: string;
   points: { label: string; value: number }[];
 }
 
@@ -149,10 +151,18 @@ export function LineChart({
   series,
   narrow = false,
   height: chosenHeight,
+  plain = false,
+  picked,
+  onPick,
 }: {
   title: string;
   series: LineSeries[];
   height?: number | undefined;
+  /** Lines only, for many points. */
+  plain?: boolean;
+  picked?: number;
+  /** Makes each point selectable, for showing its details elsewhere. */
+  onPick?: (index: number) => void;
   /** Draws for a phone's width, so the labels stay readable. */
   narrow?: boolean;
 }) {
@@ -179,7 +189,18 @@ export function LineChart({
         <figcaption className={styles.lineLegend}>
           {series.map((line, index) => (
             <span key={line.name}>
-              <i style={{ background: line.color ?? chartColor(index) }} /> {line.name}
+              <i
+                style={
+                  line.dash
+                    ? {
+                        height: 0,
+                        background: 'none',
+                        borderTop: `2px ${line.dash.startsWith('2') ? 'dotted' : 'dashed'} ${line.color ?? chartColor(index)}`,
+                      }
+                    : { background: line.color ?? chartColor(index) }
+                }
+              />{' '}
+              {line.name}
             </span>
           ))}
         </figcaption>
@@ -210,27 +231,53 @@ export function LineChart({
         {series.map((line, seriesIndex) => (
           <g key={line.name}>
             <polyline
-              className={styles.drawnLine}
+              className={line.dash ? undefined : styles.drawnLine}
               fill="none"
-              pathLength={1}
+              {...(line.dash ? {} : { pathLength: 1 })}
               points={line.points.map((point, index) => `${x(index)},${y(point.value)}`).join(' ')}
               stroke={line.color ?? chartColor(seriesIndex)}
+              strokeDasharray={line.dash}
               strokeLinejoin="round"
               strokeWidth="2"
             />
-            {line.points.map((point, index) => (
-              <circle
-                cx={x(index)}
-                cy={y(point.value)}
-                fill={line.color ?? chartColor(seriesIndex)}
-                key={point.label}
-                r="4"
-              >
-                <title>{`${line.name}, ${point.label}: ${formatMoney(point.value)}`}</title>
-              </circle>
-            ))}
+            {plain
+              ? null
+              : line.points.map((point, index) => (
+                  <circle
+                    cx={x(index)}
+                    cy={y(point.value)}
+                    fill={line.color ?? chartColor(seriesIndex)}
+                    key={point.label}
+                    r="4"
+                  >
+                    <title>{`${line.name}, ${point.label}: ${formatMoney(point.value)}`}</title>
+                  </circle>
+                ))}
           </g>
         ))}
+        {picked === undefined ? null : (
+          <line
+            stroke="var(--border-strong)"
+            x1={x(picked)}
+            x2={x(picked)}
+            y1={top}
+            y2={height - bottom}
+          />
+        )}
+        {onPick
+          ? labels.map((label, index) => (
+              <rect
+                fill="transparent"
+                height={height}
+                key={label}
+                onClick={() => onPick(index)}
+                style={{ cursor: 'pointer' }}
+                width={(width - left - 16) / Math.max(1, labels.length - 1)}
+                x={x(index) - (width - left - 16) / Math.max(1, labels.length - 1) / 2}
+                y={0}
+              />
+            ))
+          : null}
       </svg>
       <div className={ui.visuallyHidden}>
         <table>

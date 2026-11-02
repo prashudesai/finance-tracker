@@ -75,6 +75,21 @@ export interface HoldingPosition {
   xirr: number | null;
 }
 
+/** A holding's value on a date, without the slower return figures. */
+export function holdingValue(holding: Holding, data: HoldingData, asOf: string) {
+  const valuation = latestValuation(holding.id, data.valuations, asOf);
+  const since = valuation?.date ?? '';
+  const interest = (data.interestCredits ?? [])
+    .filter(
+      (row) => row.holdingId === holding.id && row.creditedDate <= asOf && row.creditedDate > since,
+    )
+    .reduce((sum, row) => sum + row.amount, 0);
+  const added = holdingContributions(holding.id, data.contributions)
+    .filter((row) => row.date <= asOf && row.date > since)
+    .reduce((sum, row) => sum + row.amount, 0);
+  return (valuation?.value ?? holding.openingValue) + interest + added;
+}
+
 /**
  * Invested is the opening amount plus contributions. Current is the latest valuation,
  * or the opening value, plus contributions and interest credited after it.
@@ -87,19 +102,9 @@ export function holdingPosition(
   const rows = holdingContributions(holding.id, data.contributions).filter(
     (row) => row.date <= asOf,
   );
-  const valuation = latestValuation(holding.id, data.valuations, asOf);
   const contributed = rows.reduce((sum, row) => sum + row.amount, 0);
   const invested = holding.openingInvested + contributed;
-  const since = valuation?.date ?? '';
-  const interest = (data.interestCredits ?? [])
-    .filter(
-      (row) => row.holdingId === holding.id && row.creditedDate <= asOf && row.creditedDate > since,
-    )
-    .reduce((sum, row) => sum + row.amount, 0);
-  const current =
-    (valuation?.value ?? holding.openingValue) +
-    interest +
-    rows.filter((row) => row.date > since).reduce((sum, row) => sum + row.amount, 0);
+  const current = holdingValue(holding, data, asOf);
   const corrections = (data.epsUpdates ?? [])
     .filter((row) => row.holdingId === holding.id && row.date <= asOf)
     .reduce((sum, row) => sum + row.amount, 0);

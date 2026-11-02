@@ -23,6 +23,7 @@ import {
 } from '../../ui/format';
 import { Metric } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
+import { NetWorthHistory } from './NetWorthHistory';
 
 type Allocation = 'all' | 'retirement';
 type ReturnsView = 'holdings' | 'family';
@@ -116,6 +117,7 @@ export function AnalyticsPage() {
 
   return (
     <div className={ui.page}>
+      <NetWorthHistory />
       <div className={ui.split}>
         <span />
         <label className={ui.caption}>

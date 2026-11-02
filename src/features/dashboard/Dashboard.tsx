@@ -7,7 +7,7 @@ import {
   RefreshCw,
   TrendingUp,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
   attentionItems,
@@ -16,6 +16,7 @@ import {
   holdingRows,
   monthlyOverview,
   netWorth,
+  netWorthHistory,
   pmsGainChange,
   portfolioCategories,
   type CategoryRow,
@@ -39,12 +40,15 @@ import { Metric, Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
 import { EmptyState } from '../../ui/EmptyState';
+import { TrendLine } from '../../ui/TrendLine';
 import { useCountUp } from '../../ui/useCountUp';
 import { GettingStarted } from './GettingStarted';
 import { QuickAdd } from './QuickAdd';
 import { TrendChart } from './TrendChart';
 
 const DASHBOARD_CATEGORIES = 5;
+const TREND_MONTHS = 12;
+const MIN_TREND_MONTHS = 3;
 const PHONE_TREND_MONTHS = 5;
 type SortKey = 'size' | 'gain';
 
@@ -93,6 +97,11 @@ export function Dashboard() {
 
   const worth = netWorth(data, today);
   const shownWorth = useCountUp(worth.netWorth);
+  const trendValues = useMemo(
+    () => netWorthHistory(data, today, TREND_MONTHS).map((row) => row.netWorth),
+    [data, today],
+  );
+  const trendUp = (trendValues.at(-1) ?? 0) >= (trendValues[0] ?? 0);
   const overview = monthlyOverview(data, month, today);
   const snapshot = closeMonth(data, snapshotMonth);
   const pmsChange = pmsGainChange(data, month);
@@ -172,7 +181,17 @@ export function Dashboard() {
           <div className={ui.subtleLine}>Assets after outstanding debts</div>
         </div>
       </div>
-      <div className={ui.value}>{formatMoney(Math.round(shownWorth))}</div>
+      <div className={ui.valueRow}>
+        <div className={ui.value}>{formatMoney(Math.round(shownWorth))}</div>
+        {trendValues.length >= MIN_TREND_MONTHS ? (
+          <Link
+            aria-label={`Net worth ${trendUp ? 'up' : 'down'} over the last ${trendValues.length} months. Open history`}
+            to="/analytics"
+          >
+            <TrendLine values={trendValues} />
+          </Link>
+        ) : null}
+      </div>
       <div className={ui.split}>
         <div>
           <div className={ui.label}>Total assets</div>

@@ -17,6 +17,7 @@ import {
   monthReviewStatus,
   monthSignature,
   monthsToReview,
+  netWorthHistory,
   pmsGainChange,
   netWorth,
   portfolioCategories,
@@ -435,6 +436,102 @@ describe('the monthly PMS value reminder', () => {
   test('a new account, or no PMS, asks nothing', () => {
     expect(labels(data({ holdings: [pms] }), '2026-01-20')).not.toContain(label);
     expect(labels(data({ holdings: [holding({})] }), '2026-04-01')).not.toContain(label);
+  });
+});
+
+describe('net worth history', () => {
+  const fund = holding({
+    id: 'f',
+    date: '2026-01-10',
+    openingInvested: 100,
+    openingValue: 100,
+  });
+  const loanRow = {
+    id: 'l',
+    type: 'Car',
+    member: 'A',
+    date: '2026-02-15',
+    principal: 50,
+    openingRate: 0,
+    openingEmi: 10,
+    changes: [],
+  };
+  const state = data({
+    holdings: [fund],
+    loans: [loanRow],
+    valuations: [
+      { id: 'v1', holdingId: 'f', date: '2026-01-31', value: 110 },
+      { id: 'v2', holdingId: 'f', date: '2026-03-31', value: 150 },
+    ],
+  });
+
+  test('each month end uses what was true then', () => {
+    expect(netWorthHistory(state, '2026-04-15')).toEqual([
+      { month: '2026-01', assets: 110, debts: 0, netWorth: 110, estimated: false },
+      { month: '2026-02', assets: 110, debts: 50, netWorth: 60, estimated: true },
+      { month: '2026-03', assets: 150, debts: 50, netWorth: 100, estimated: false },
+      { month: '2026-04', assets: 150, debts: 50, netWorth: 100, estimated: true },
+    ]);
+  });
+
+  test('debts fall month by month as EMIs are paid, not all at once', () => {
+    const emi = (id: string, date: string) => ({
+      id,
+      date,
+      category: 'EMI Payment',
+      subcategory: '',
+      isAnnual: false,
+      amount: 10,
+      loanId: 'l',
+      repaymentType: 'emi' as const,
+    });
+    const paying = {
+      ...state,
+      expenses: [emi('p1', '2026-03-01'), emi('p2', '2026-04-01')],
+    };
+    const debts = netWorthHistory(paying, '2026-04-15').map((row) => row.debts);
+    expect(debts).toEqual([0, 50, 40, 30]);
+  });
+
+  test('a later top-up does not count before its date', () => {
+    const topped = {
+      ...state,
+      loans: [
+        {
+          ...loanRow,
+          changes: [
+            {
+              id: 't',
+              date: '2026-04-01',
+              type: 'topup' as const,
+              amount: 20,
+              repaymentChoice: 'emi' as const,
+            },
+          ],
+        },
+      ],
+    };
+    const debts = netWorthHistory(topped as never, '2026-04-15').map((row) => row.debts);
+    expect(debts).toEqual([0, 50, 50, 70]);
+  });
+
+  test('accounts only count once they started', () => {
+    const [january] = netWorthHistory(state, '2026-04-15');
+    expect(january?.debts).toBe(0);
+  });
+
+  test('history stops at the limit, newest kept', () => {
+    const rows = netWorthHistory(state, '2026-04-15', 2);
+    expect(rows.map((row) => row.month)).toEqual(['2026-03', '2026-04']);
+  });
+
+  test('fixed-return accounts are not estimates', () => {
+    const fixed = data({ holdings: [{ ...fund, type: 'Bonds' }] });
+    expect(netWorthHistory(fixed, '2026-02-15').every((row) => !row.estimated)).toBe(true);
+  });
+
+  test('a tracker with no accounts has no history', () => {
+    expect(netWorthHistory(data(), '2026-04-15')).toEqual([]);
   });
 });
 

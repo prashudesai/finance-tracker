@@ -1,5 +1,11 @@
 import type { TrackerData } from '../data/repository';
-import { EMI_CATEGORY, PMS_TYPE, type Holding, type TrackerSettings } from '../schema/records';
+import {
+  defaultSettings,
+  EMI_CATEGORY,
+  PMS_TYPE,
+  type Holding,
+  type TrackerSettings,
+} from '../schema/records';
 import {
   financialYearRange,
   financialYearStart,
@@ -10,6 +16,8 @@ import {
 } from './calendar';
 import { balancesByMonth, closeFrom, monthClose, monthTotals, type MonthClose } from './cashflow';
 import {
+  holdingValue,
+  growthType,
   holdingContributions,
   holdingPosition,
   latestValuation,
@@ -22,6 +30,11 @@ import { emiReminders } from './reminders';
 import { loanPayments } from './recurring';
 
 export const isPms = (holding: Holding) => holding.type === PMS_TYPE;
+
+const isMarket = (holding: Holding, settings: TrackerSettings | undefined) =>
+  holding.kind === 'nps' ||
+  (holding.kind === 'investment' &&
+    growthType(holding.type, settings ?? defaultSettings()) === 'market');
 
 export interface PositionRow {
   holding: Holding;
@@ -87,6 +100,51 @@ export function netWorth(data: TrackerData, today: string) {
     netWorth: assets - debts,
     assetShare: total > 0 ? assets / total : 0,
   };
+}
+
+export interface NetWorthPoint {
+  month: string;
+  assets: number;
+  debts: number;
+  netWorth: number;
+  /** A market holding had no value update this month, so its figure is carried forward. */
+  estimated: boolean;
+}
+
+const HISTORY_MONTHS = 60;
+
+/** Worked out from records each time, so correcting the past corrects the whole chart. */
+export function netWorthHistory(
+  data: TrackerData,
+  today: string,
+  limit = HISTORY_MONTHS,
+): NetWorthPoint[] {
+  const starts = [...data.holdings, ...data.loans].map((row) => row.date.slice(0, 7)).sort();
+  const current = today.slice(0, 7);
+  const first = starts[0];
+  if (!first || first > current) return [];
+  const months = [current];
+  while (months.length < limit && (months[0] ?? current) > first) {
+    months.unshift(previousMonth(months[0] ?? current));
+  }
+  // Only loan payments matter here, so every month needn't scan all spending.
+  const payments = data.expenses.filter((row) => row.loanId);
+  return months.map((month) => {
+    const date = month === current ? today : lastDayOfMonth(month);
+    // Accounts count from their start date, and only what had happened by then applies.
+    const holdings = data.holdings.filter((row) => row.date <= date);
+    const loans = data.loans
+      .filter((row) => row.date <= date)
+      .map((row) => ({ ...row, changes: row.changes.filter((item) => item.date <= date) }));
+    const expenses = payments.filter((row) => row.date <= date);
+    const assets = holdings.reduce((sum, row) => sum + holdingValue(row, data, date), 0);
+    const debts = totalOutstanding(summarizeLoans({ loans, expenses }, date));
+    const value = assets - debts;
+    const estimated = holdings
+      .filter((row) => isMarket(row, data.settings[0]))
+      .some((row) => latestValuation(row.id, data.valuations, date)?.date.slice(0, 7) !== month);
+    return { month, assets, debts, netWorth: value, estimated };
+  });
 }
 
 const inMonth = (date: string, month: string) => date.startsWith(month);
