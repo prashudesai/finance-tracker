@@ -36,6 +36,7 @@ import {
   deleteMemberKeys,
   forgetOnDevice,
   startVault,
+  watchMembership,
   type OwnerTools,
   type VaultMembership,
 } from './vault';
@@ -71,6 +72,9 @@ export const signOutUser = async () => {
 /** Errors only, sanitized on the device. Records and names never pass through here. */
 export const sendErrorReport = (report: ErrorReport) =>
   addDoc(collection(db, 'errorReports'), report);
+
+export const onMembershipRemoved = (user: User, onRemoved: () => void) =>
+  watchMembership(db, user.email?.toLowerCase() ?? '', onRemoved);
 
 export const openVault = (user: User, membership: VaultMembership) =>
   startVault(db, { uid: user.uid, email: user.email?.toLowerCase() ?? '' }, membership);

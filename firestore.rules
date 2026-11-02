@@ -93,6 +93,22 @@ service cloud.firestore {
       allow read, write: if signedIn() && request.auth.uid == uid;
     }
 
+    // A new device asking this person's saved devices for their key. The key is locked to
+    // the new device before it is written here.
+    match /keyrings/{uid}/deviceRequests/{requestId} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['publicKey', 'device', 'at'])
+        && request.resource.data.keys().hasAll(['publicKey', 'device', 'at'])
+        && request.resource.data.device is string
+        && request.resource.data.device.size() <= 40
+        && request.resource.data.at == request.time;
+      allow update: if signedIn() && request.auth.uid == uid
+        && !('status' in resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'locked'])
+        && request.resource.data.status in ['approved', 'denied'];
+    }
+
     // The household's keys, locked to each member. Only the owner shares them.
     match /households/{household}/keys/{member} {
       allow read: if isOwner(household)

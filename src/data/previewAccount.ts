@@ -1,4 +1,4 @@
-import type { Account, FamilyMember, FamilyRequest } from '../Shell';
+import type { Account, DeviceApproval, FamilyMember, FamilyRequest } from '../Shell';
 import type { VaultAccess, VaultGate } from './vault';
 
 /**
@@ -18,6 +18,18 @@ let requests: FamilyRequest[] = [
 let faceId = false;
 let requestListener: (rows: FamilyRequest[]) => void = () => undefined;
 
+// Add ?new-device to the address to see what a saved device is asked.
+let devices: DeviceApproval[] = window.location.search.includes('new-device')
+  ? [{ id: 'preview-device', device: 'iPhone · Safari', code: '7310 2268 9145' }]
+  : [];
+let deviceListener: (rows: DeviceApproval[]) => void = () => undefined;
+
+function closeDevice(id: string) {
+  devices = devices.filter((row) => row.id !== id);
+  deviceListener(devices);
+  return Promise.resolve();
+}
+
 function closeRequest(uid: string) {
   requests = requests.filter((row) => row.uid !== uid);
   requestListener(requests);
@@ -32,6 +44,15 @@ export const previewAccount: Account = {
   security: {
     changePassphrase: () => Promise.resolve(),
     newRecoveryCode: () => Promise.resolve(DEMO_CODE),
+    watchDevices(onChange) {
+      deviceListener = onChange;
+      onChange(devices);
+      return () => {
+        deviceListener = () => undefined;
+      };
+    },
+    approveDevice: ({ id }) => closeDevice(id),
+    denyDevice: ({ id }) => closeDevice(id),
     passkey: {
       available: () => Promise.resolve(true),
       enabled: () => faceId,
@@ -84,6 +105,11 @@ export const previewGate = (hasKeyring: boolean): VaultGate => ({
   hasKeyring,
   canUsePasskey: hasKeyring,
   autoPasskey: false,
+  newDevice: hasKeyring,
+  askSavedDevice(onChange) {
+    onChange({ status: 'waiting', code: '7310 2268 9145' });
+    return () => undefined;
+  },
   unlockWithPasskey: openApp,
   create: () =>
     Promise.resolve({

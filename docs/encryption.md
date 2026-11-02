@@ -24,9 +24,13 @@ Each stored record is tied to its household, collection and document ID as authe
 
 Reminders stay on the device for the same reason: a server can't send a reminder for a date it can't read. The app shows them in Needs attention, and a calendar file lets the phone remind people while the app is closed.
 
-**Family.** An invited member accepts, creates a keyring and writes their public key to `requests`. The owner sees an alert in Needs attention, and can approve or deny. Both people see a safety code derived from that key. Comparing it is optional but recommended, because it's what stops someone with database access swapping in their own key. An owner who skips it is trusting the database for that one approval. Approval re-reads the key and refuses if the code no longer matches. Denying removes the request and the invite.
+**New device.** A device that has never unlocked makes a throwaway key pair, kept only in the page, and writes its public key and a rough device name to `keyrings/{uid}/deviceRequests`. Saved devices show a pop-up with a safety code. Approving needs Face ID or the passphrase, because a saved device's key can't be exported, and that also stops someone with an unlocked phone approving. The saved device locks the private key to the new device's public key and writes it to the request, and the new device opens it, then deletes the request. Requests end after 10 minutes. Approval is an alternative to the passphrase, not a second lock. The rules can't tell devices apart, and a lost device must never lock someone out, so the passphrase and recovery code still work.
+
+**Family.** An invited member accepts, creates a keyring and writes their public key to `requests`. The owner sees a pop-up on any screen and an alert in Needs attention, and can approve or deny. Both people see a safety code derived from that key. Comparing it is optional but recommended, because it's what stops someone with database access swapping in their own key. An owner who skips it is trusting the database for that one approval. Approval re-reads the key and refuses if the code no longer matches. Denying removes the request and the invite.
 
 **Removal.** The owner's device adds a new data key, shares it with everyone else, re-encrypts every record and then removes the membership. If that fails partway, removing them again finishes the job. A damaged record can't be re-encrypted, so it's skipped and doesn't block the removal. Other members pick up the new key the first time they meet a record that needs it.
+
+A removed member's open app watches their membership and signs them out when it goes. If the app was closed, a note on the device catches it on the next visit, and signing in again starts their own tracker.
 
 **Lost secrets.** A passphrase can be replaced with the recovery code. Without either, the records can't be opened, and the only way forward is to delete them and start again.
 
@@ -36,7 +40,7 @@ Encryption can't make a viewer read-only, because all members hold the same keys
 
 ## What stays visible
 
-Anyone with admin access can still see email addresses, who belongs to which household, the number of records in each collection, and when documents changed.
+Anyone with admin access can still see email addresses, the rough device name in a pending device request, who belongs to which household, the number of records in each collection, and when documents changed.
 
 ## The limit of this design
 

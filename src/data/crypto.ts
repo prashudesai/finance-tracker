@@ -247,23 +247,27 @@ async function sharedKey(privateKey: CryptoKey, publicKey: JsonWebKey, context: 
 }
 
 const memberContext = (householdId: string, uid: string) => `household/${householdId}/${uid}`;
+const deviceContext = (uid: string) => `device/${uid}`;
 
-/** Locks a household's keys so only the holder of `publicKey` can open them. */
-export async function lockForMember(
-  secret: HouseholdSecret,
-  publicKey: JsonWebKey,
-  householdId: string,
-  uid: string,
-): Promise<LockedHouseholdSecret> {
-  const context = memberContext(householdId, uid);
+async function lockTo(bytes: Uint8Array, publicKey: JsonWebKey, context: string) {
   const ephemeral = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, [
     'deriveBits',
   ]);
   const key = await sharedKey(ephemeral.privateKey, publicKey, context);
   return {
-    ...(await seal(key, toBytes(JSON.stringify(secret)), context)),
+    ...(await seal(key, bytes, context)),
     ephemeralKey: await crypto.subtle.exportKey('jwk', ephemeral.publicKey),
   };
+}
+
+/** Locks a household's keys so only the holder of `publicKey` can open them. */
+export function lockForMember(
+  secret: HouseholdSecret,
+  publicKey: JsonWebKey,
+  householdId: string,
+  uid: string,
+): Promise<LockedHouseholdSecret> {
+  return lockTo(toBytes(JSON.stringify(secret)), publicKey, memberContext(householdId, uid));
 }
 
 export async function openForMember(
@@ -275,6 +279,31 @@ export async function openForMember(
   const context = memberContext(householdId, uid);
   const key = await sharedKey(privateKey, locked.ephemeralKey, context);
   return JSON.parse(decoder.decode(await unseal(key, locked, context))) as HouseholdSecret;
+}
+
+/** A throwaway key pair, so a new device can be sent a personal key. Lost with the page. */
+export async function createDevicePair() {
+  const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, false, [
+    'deriveBits',
+  ]);
+  return {
+    privateKey: pair.privateKey,
+    publicKey: await crypto.subtle.exportKey('jwk', pair.publicKey),
+  };
+}
+
+/** Locks a personal key so only the new device holding `publicKey` can open it. */
+export const lockForDevice = (pkcs8: Uint8Array, publicKey: JsonWebKey, uid: string) =>
+  lockTo(pkcs8, publicKey, deviceContext(uid));
+
+export async function openForDevice(
+  locked: LockedHouseholdSecret,
+  privateKey: CryptoKey,
+  uid: string,
+) {
+  const context = deviceContext(uid);
+  const key = await sharedKey(privateKey, locked.ephemeralKey, context);
+  return new Uint8Array(await unseal(key, locked, context));
 }
 
 /**

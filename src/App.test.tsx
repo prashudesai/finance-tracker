@@ -951,6 +951,9 @@ test('Face ID is turned on with the passphrase, and says when a device lacks it'
   const security = {
     changePassphrase: vi.fn(async () => undefined),
     newRecoveryCode: vi.fn(async () => 'CODE'),
+    watchDevices: () => () => undefined,
+    approveDevice: vi.fn(async () => undefined),
+    denyDevice: vi.fn(async () => undefined),
     passkey,
   };
   const account = { name: 'O', email: 'o@example.test', role: 'owner' as const, security };
@@ -992,6 +995,9 @@ test('passphrase settings stay compact until one is chosen', async () => {
   const security = {
     changePassphrase: vi.fn(async () => undefined),
     newRecoveryCode: vi.fn(async () => 'NEW-CODE'),
+    watchDevices: () => () => undefined,
+    approveDevice: vi.fn(async () => undefined),
+    denyDevice: vi.fn(async () => undefined),
     passkey: {
       available: vi.fn(async () => false),
       enabled: vi.fn(() => false),
@@ -1056,8 +1062,35 @@ describe('a family member asking for access', () => {
     return family;
   };
 
+  test('a pop-up asks on any screen, and Later leaves the alert', async () => {
+    const family = setUp('/debts');
+    expect(
+      await screen.findByRole('dialog', { name: 'Family access request', hidden: true }),
+    ).toBeDefined();
+    expect(screen.getByText('1234 5678 9012')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Later', hidden: true }));
+    await waitFor(() => expect(screen.queryByText('1234 5678 9012')).toBeNull());
+    expect(family.approve).not.toHaveBeenCalled();
+    expect(useTracker.getState().accessRequests).toEqual([request]);
+  });
+
+  test('the pop-up can approve', async () => {
+    const family = setUp('/');
+    fireEvent.click(await screen.findByRole('button', { name: 'Approve', hidden: true }));
+    await waitFor(() => expect(family.approve).toHaveBeenCalledWith(request));
+  });
+
+  test('the pop-up can deny, after confirming', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const family = setUp('/');
+    fireEvent.click(await screen.findByRole('button', { name: 'Deny', hidden: true }));
+    await waitFor(() => expect(family.deny).toHaveBeenCalledWith(request));
+    confirm.mockRestore();
+  });
+
   test('the owner is alerted, and the alert opens the approval', async () => {
     setUp('/');
+    fireEvent.click(await screen.findByRole('button', { name: 'Later', hidden: true }));
     const link = await screen.findByRole('link', {
       name: 'Review: new@example.test wants access',
       hidden: true,
@@ -1068,7 +1101,8 @@ describe('a family member asking for access', () => {
 
   test('the owner can approve', async () => {
     const family = setUp('/settings');
-    fireEvent.click(await screen.findByRole('button', { name: /Family access/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Later', hidden: true }));
+    fireEvent.click(await screen.findByRole('button', { name: /Family access/, hidden: true }));
     fireEvent.click(
       await screen.findByRole('button', { name: 'Approve new@example.test', hidden: true }),
     );
@@ -1078,7 +1112,8 @@ describe('a family member asking for access', () => {
   test('the owner can deny, after confirming', async () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     const family = setUp('/settings');
-    fireEvent.click(await screen.findByRole('button', { name: /Family access/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Later', hidden: true }));
+    fireEvent.click(await screen.findByRole('button', { name: /Family access/, hidden: true }));
     fireEvent.click(
       await screen.findByRole('button', { name: 'Deny new@example.test', hidden: true }),
     );
@@ -1334,4 +1369,61 @@ test('data & backup has no clear data option', async () => {
   fireEvent.click(await screen.findByRole('button', { name: /Data & backup/ }));
   await screen.findByRole('button', { name: 'Export backup', hidden: true });
   expect(screen.queryByRole('button', { name: 'Clear all data', hidden: true })).toBeNull();
+});
+
+describe('a saved device asked about a new one', () => {
+  const request = { id: 'r1', device: 'iPhone · Safari', code: '1111 2222 3333' };
+  const setUp = (faceId: boolean) => {
+    const security = {
+      changePassphrase: vi.fn(async () => undefined),
+      newRecoveryCode: vi.fn(async () => 'CODE'),
+      watchDevices: (onChange: (rows: (typeof request)[]) => void) => {
+        onChange([request]);
+        return () => undefined;
+      },
+      approveDevice: vi.fn(async () => undefined),
+      denyDevice: vi.fn(async () => undefined),
+      passkey: {
+        available: vi.fn(async () => true),
+        enabled: () => faceId,
+        enable: vi.fn(async () => undefined),
+        disable: vi.fn(async () => undefined),
+      },
+    };
+    render(
+      <MemoryRouter initialEntries={['/debts']}>
+        <Shell
+          account={{ name: 'O', email: 'o@example.test', role: 'owner', security }}
+          repository={createMemoryRepository()}
+        />
+      </MemoryRouter>,
+    );
+    return security;
+  };
+
+  test('asks on any screen, and approving needs the passphrase', async () => {
+    const security = setUp(false);
+    expect(await screen.findByText('iPhone · Safari')).toBeDefined();
+    const approve = screen.getByRole('button', { name: 'Approve', hidden: true });
+    expect((approve as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Your passphrase'), { target: { value: 'my words' } });
+    fireEvent.click(approve);
+    await waitFor(() => expect(security.approveDevice).toHaveBeenCalledWith(request, 'my words'));
+  });
+
+  test('uses Face ID when it is on, and offers the passphrase if that fails', async () => {
+    const security = setUp(true);
+    security.approveDevice.mockRejectedValueOnce(new Error('Face ID was cancelled.'));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Approve with Face ID', hidden: true }),
+    );
+    await waitFor(() => expect(security.approveDevice).toHaveBeenCalledWith(request, undefined));
+    expect(await screen.findByLabelText('Your passphrase')).toBeDefined();
+  });
+
+  test('can deny', async () => {
+    const security = setUp(false);
+    fireEvent.click(await screen.findByRole('button', { name: 'Deny', hidden: true }));
+    await waitFor(() => expect(security.denyDevice).toHaveBeenCalledWith(request));
+  });
 });

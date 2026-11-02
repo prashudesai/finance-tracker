@@ -15,7 +15,9 @@ import type { TrackerRepository } from './data/repository';
 import { useSettings, useTracker } from './store/tracker';
 import styles from './Shell.module.css';
 import { localDate } from './ui/format';
+import { ApprovalPrompt } from './ui/ApprovalPrompt';
 import { Avatar } from './ui/Avatar';
+import { DeviceApprovalPrompt } from './ui/DeviceApprovalPrompt';
 import { GuidedTour } from './ui/GuidedTour';
 import { PullToRefresh } from './ui/PullToRefresh';
 import { PageSkeleton } from './ui/Skeleton';
@@ -69,9 +71,18 @@ export interface Account {
   security?: AccountSecurity;
 }
 
+export interface DeviceApproval {
+  id: string;
+  device: string;
+  code: string;
+}
+
 export interface AccountSecurity {
   changePassphrase(current: string, next: string): Promise<void>;
   newRecoveryCode(passphrase: string): Promise<string>;
+  watchDevices(onChange: (requests: DeviceApproval[]) => void): () => void;
+  approveDevice(request: DeviceApproval, passphrase?: string): Promise<void>;
+  denyDevice(request: DeviceApproval): Promise<void>;
   passkey: {
     available(): Promise<boolean>;
     enabled(): boolean;
@@ -259,6 +270,8 @@ export function Shell({
       </main>
       {loaded ? <PageEndTools /> : null}
       <Toast />
+      {family ? <ApprovalPrompt family={family} /> : null}
+      {account.security ? <DeviceApprovalPrompt security={account.security} /> : null}
       <Tooltip />
       <PullToRefresh />
       {tourOpen ? <GuidedTour /> : null}

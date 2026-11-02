@@ -2,7 +2,7 @@ import { Check, Fingerprint, KeyRound, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { MIN_PASSPHRASE_LENGTH } from '../../data/crypto';
 import { plainError } from '../../data/errors';
-import type { VaultAccess, VaultGate } from '../../data/vault';
+import type { DeviceAsk, VaultAccess, VaultGate } from '../../data/vault';
 import { Field } from '../../ui/Field';
 import ui from '../../ui/ui.module.css';
 
@@ -276,6 +276,15 @@ function Unlock({
   const [phrase, setPhrase] = useState('');
   const { working, error, run } = useTask();
   const prompted = useRef(false);
+  const [ask, setAsk] = useState<Exclude<DeviceAsk, { status: 'approved' }> | null>(null);
+
+  useEffect(() => {
+    if (!gate.newDevice) return;
+    return gate.askSavedDevice((next) => {
+      if (next.status === 'approved') onAccess(next.access);
+      else setAsk(next);
+    });
+  }, [gate, onAccess]);
 
   // Some browsers refuse this without a tap, and people can cancel. Either way the button stays.
   useEffect(() => {
@@ -294,6 +303,21 @@ function Unlock({
       }
       title="Unlock your tracker"
     >
+      {ask?.status === 'waiting' ? (
+        <div className={ui.notice} role="status">
+          <div className={ui.label}>Waiting for your saved device</div>
+          <p className={ui.caption}>
+            If you're signed in on another device, approve this there and check it shows this code.
+            Or unlock below.
+          </p>
+          <p className={ui.recoveryCode}>{ask.code}</p>
+        </div>
+      ) : null}
+      {ask?.status === 'denied' ? (
+        <p className={ui.fieldError} role="alert">
+          Your saved device did not approve this. You can still unlock below.
+        </p>
+      ) : null}
       {gate.canUsePasskey ? (
         <button
           className={ui.button}

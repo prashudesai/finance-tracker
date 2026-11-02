@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { VaultAccess, VaultGate } from '../../data/vault';
+import type { DeviceAsk, VaultAccess, VaultGate } from '../../data/vault';
 import { VaultScreen, WaitingForApproval } from './VaultScreen';
 
 const open = { status: 'open' } as VaultAccess;
@@ -9,6 +9,8 @@ function gate(overrides: Partial<VaultGate>): VaultGate {
     hasKeyring: true,
     canUsePasskey: false,
     autoPasskey: false,
+    newDevice: false,
+    askSavedDevice: vi.fn(() => () => undefined),
     unlockWithPasskey: vi.fn(),
     create: vi.fn(),
     unlock: vi.fn(),
@@ -213,5 +215,40 @@ describe('copying the recovery code', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
     expect((await screen.findByRole('alert')).textContent).toContain('blocked copying');
     clipboard();
+  });
+});
+
+describe('a new device', () => {
+  const asking = (answer: DeviceAsk) =>
+    gate({
+      newDevice: true,
+      askSavedDevice: vi.fn((onChange) => {
+        onChange(answer);
+        return () => undefined;
+      }),
+    });
+
+  test('shows the code to check on the saved device, and the passphrase stays', async () => {
+    show(asking({ status: 'waiting', code: '1111 2222 3333' }));
+    expect(await screen.findByText('1111 2222 3333')).toBeDefined();
+    expect(screen.getByLabelText('Passphrase')).toBeDefined();
+  });
+
+  test('says so when the saved device denies it', async () => {
+    show(asking({ status: 'denied' }));
+    expect((await screen.findByRole('alert')).textContent).toContain('did not approve');
+    expect(screen.getByLabelText('Passphrase')).toBeDefined();
+  });
+
+  test('opens when the saved device approves', async () => {
+    const onAccess = vi.fn();
+    show(asking({ status: 'approved', access: open }), onAccess);
+    await waitFor(() => expect(onAccess).toHaveBeenCalledWith(open));
+  });
+
+  test('a device that has unlocked before asks nobody', () => {
+    const value = gate({ newDevice: false });
+    show(value);
+    expect(value.askSavedDevice).not.toHaveBeenCalled();
   });
 });

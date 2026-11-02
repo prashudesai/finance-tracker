@@ -9,18 +9,24 @@ import {
   limit,
   onSnapshot,
   query,
+  serverTimestamp,
   setDoc,
+  updateDoc,
   where,
   writeBatch,
   type Firestore,
   type QueryDocumentSnapshot,
+  type Timestamp,
 } from 'firebase/firestore';
 import {
   createCodec,
+  createDevicePair,
   createHouseholdSecret,
   createKeyring,
   importPrivateKey,
+  lockForDevice,
   lockForMember,
+  openForDevice,
   openForMember,
   safetyCode,
   unlockWithPassphrase,
@@ -36,12 +42,14 @@ import {
   lockWithPasskey,
   unlockWithPasskey,
 } from './crypto';
+import { deviceName } from './deviceName';
 import { createPasskey, passkeysAvailable, usePasskey } from './passkey';
 import { COLLECTION_NAMES } from './repository';
 
 const BATCH_SIZE = 400;
 const DEVICE_DATABASE = 'finance-vault';
 const DEVICE_STORE = 'keys';
+const DEVICE_REQUEST_LIFE_MS = 10 * 60 * 1000;
 
 export interface VaultUser {
   uid: string;
@@ -60,6 +68,27 @@ export interface AccessRequest {
   code: string;
 }
 
+/** A new device asking one of this person's saved devices for their key. */
+export interface DeviceRequest {
+  id: string;
+  device: string;
+  code: string;
+}
+
+/** Where a new device's request has got to. */
+export type DeviceAsk =
+  | { status: 'waiting'; code: string }
+  | { status: 'denied' }
+  | { status: 'approved'; access: VaultAccess };
+
+interface StoredDeviceRequest {
+  publicKey: JsonWebKey;
+  device: string;
+  at: Timestamp | null;
+  status?: 'approved' | 'denied';
+  locked?: LockedHouseholdSecret;
+}
+
 interface MemberKey {
   email: string;
   publicKey: JsonWebKey;
@@ -71,6 +100,11 @@ export interface VaultTools {
   newRecoveryCode(passphrase: string): Promise<string>;
   /** Forgets this device's key, so the next visit asks for the passphrase. */
   forgetDevice(): Promise<void>;
+  /** Calls `onChange` now and whenever a new device asks. Returns how to stop. */
+  watchDevices(onChange: (requests: DeviceRequest[]) => void): () => void;
+  /** Without a passphrase, this uses Face ID or a fingerprint. */
+  approveDevice(request: DeviceRequest, passphrase?: string): Promise<void>;
+  denyDevice(request: DeviceRequest): Promise<void>;
   passkey: {
     available(): Promise<boolean>;
     /** True when opening the app on this device needs Face ID or a fingerprint. */
@@ -100,6 +134,10 @@ export interface VaultGate {
   canUsePasskey: boolean;
   /** This device has Face ID on, so the check starts without a tap where browsers allow it. */
   autoPasskey: boolean;
+  /** This device has never unlocked, so a saved device can approve it. */
+  newDevice: boolean;
+  /** Asks saved devices for approval. Returns how to stop and withdraw the request. */
+  askSavedDevice(onChange: (ask: DeviceAsk) => void): () => void;
   unlockWithPasskey(): Promise<VaultAccess>;
   create(passphrase: string): Promise<{
     recoveryCode: string;
@@ -113,6 +151,9 @@ export interface VaultGate {
   /** For someone who lost both. Deletes what can no longer be read. */
   startOver(): Promise<void>;
 }
+
+const requestExpired = ({ at }: StoredDeviceRequest) =>
+  at !== null && at.toMillis() < Date.now() - DEVICE_REQUEST_LIFE_MS;
 
 const passkeyFlag = (uid: string) => `finance-vault-passkey:${uid}`;
 
@@ -183,6 +224,17 @@ export async function forgetOnDevice(uid: string) {
   }
 }
 
+/** Calls `onRemoved` once the server confirms this person's membership has gone. */
+export function watchMembership(db: Firestore, email: string, onRemoved: () => void) {
+  return onSnapshot(
+    doc(db, 'memberships', email),
+    (snapshot) => {
+      if (!snapshot.exists() && !snapshot.metadata.fromCache) onRemoved();
+    },
+    () => undefined,
+  );
+}
+
 /** Sets up one person's encrypted access to one household. */
 export async function startVault(
   db: Firestore,
@@ -193,6 +245,7 @@ export async function startVault(
   const keyringDoc = doc(db, 'keyrings', user.uid);
   const memberDoc = (uid: string) => doc(db, 'households', householdId, 'keys', uid);
   const requestDoc = (uid: string) => doc(db, 'households', householdId, 'requests', uid);
+  const deviceArea = collection(keyringDoc, 'deviceRequests');
 
   const readKeyring = async () => (await getDoc(keyringDoc)).data() as Keyring | undefined;
 
@@ -305,6 +358,14 @@ export async function startVault(
     };
   };
 
+  const unlockWithSavedPasskey = async (keyring: Keyring) => {
+    const entries = keyring.passkeys ?? [];
+    const { id, secret } = await usePasskey(entries);
+    const entry = entries.find((row) => row.id === id);
+    if (!entry) throw new Error('This device could not unlock the tracker.');
+    return { entry, pkcs8: await unlockWithPasskey(entry, secret) };
+  };
+
   const addPasskey = async (keyring: Keyring, pkcs8: Uint8Array) => {
     const locked = await lockWithPasskey(pkcs8, await createPasskey(user));
     await setDoc(keyringDoc, { ...keyring, passkeys: [...(keyring.passkeys ?? []), locked] });
@@ -339,6 +400,59 @@ export async function startVault(
         return renewed.recoveryCode;
       },
       forgetDevice: () => forgetOnDevice(user.uid),
+      watchDevices(onChange) {
+        let newest = 0;
+        return onSnapshot(
+          deviceArea,
+          (snapshot) => {
+            newest += 1;
+            const version = newest;
+            const rows = snapshot.docs.map((row) => ({
+              row,
+              stored: row.data() as StoredDeviceRequest,
+            }));
+            // A device that closed mid-request can't withdraw it, so saved devices tidy up.
+            for (const { row, stored } of rows) {
+              if (requestExpired(stored)) void deleteDoc(row.ref).catch(() => undefined);
+            }
+            const open = rows.filter(
+              ({ stored }) => stored.at && !stored.status && !requestExpired(stored),
+            );
+            void Promise.all(
+              open.map(async ({ row, stored }) => ({
+                id: row.id,
+                device: stored.device,
+                code: await safetyCode(user.uid, stored.publicKey),
+              })),
+            ).then((requests) => {
+              if (version === newest) onChange(requests);
+            });
+          },
+          () => undefined,
+        );
+      },
+      async approveDevice({ id, code }, passphrase) {
+        const stored = (await getDocFromServer(doc(deviceArea, id))).data() as
+          StoredDeviceRequest | undefined;
+        if (
+          !stored ||
+          stored.status ||
+          requestExpired(stored) ||
+          (await safetyCode(user.uid, stored.publicKey)) !== code
+        ) {
+          throw new Error('This request has ended. Try again on the new device.');
+        }
+        const keyring = await currentKeyring();
+        const pkcs8 =
+          passphrase === undefined
+            ? (await unlockWithSavedPasskey(keyring)).pkcs8
+            : await unlockCurrent(keyring, passphrase);
+        await updateDoc(doc(deviceArea, id), {
+          status: 'approved',
+          locked: await lockForDevice(pkcs8, stored.publicKey, user.uid),
+        });
+      },
+      denyDevice: ({ id }) => updateDoc(doc(deviceArea, id), { status: 'denied' }),
       passkey: {
         available: passkeysAvailable,
         enabled: () => devicePasskey(user.uid) !== null,
@@ -418,14 +532,57 @@ export async function startVault(
       hasKeyring: keyring !== undefined,
       canUsePasskey,
       autoPasskey: canUsePasskey && devicePasskey(user.uid) !== null,
+      newDevice: keyring !== undefined && devicePasskey(user.uid) === null,
+      askSavedDevice(onChange) {
+        const request = doc(deviceArea);
+        let stopped = false;
+        let stopWatching: (() => void) | undefined;
+        const withdraw = () => {
+          stopped = true;
+          stopWatching?.();
+          void deleteDoc(request).catch(() => undefined);
+        };
+        const ask = async () => {
+          const pair = await createDevicePair();
+          await setDoc(request, {
+            publicKey: pair.publicKey,
+            device: deviceName(navigator.userAgent),
+            at: serverTimestamp(),
+          });
+          if (stopped) {
+            withdraw();
+            return;
+          }
+          onChange({ status: 'waiting', code: await safetyCode(user.uid, pair.publicKey) });
+          stopWatching = onSnapshot(
+            request,
+            (snapshot) => {
+              const answer = snapshot.data() as StoredDeviceRequest | undefined;
+              if (answer?.status === 'denied') {
+                onChange({ status: 'denied' });
+                withdraw();
+              }
+              if (answer?.status !== 'approved' || !answer.locked) return;
+              void openForDevice(answer.locked, pair.privateKey, user.uid)
+                .then(async (pkcs8) => {
+                  const stored = await readKeyring();
+                  if (!stored) throw new Error('Your key could not be found.');
+                  onChange({ status: 'approved', access: await enterWith(pkcs8, stored) });
+                })
+                .catch(() => onChange({ status: 'denied' }))
+                .finally(withdraw);
+            },
+            () => undefined,
+          );
+        };
+        // The passphrase still works if this can't be sent.
+        void ask().catch(() => undefined);
+        return withdraw;
+      },
       async unlockWithPasskey() {
         const stored = await readKeyring();
-        const entries = stored?.passkeys ?? [];
-        if (!stored || entries.length === 0) throw new Error('Your key could not be found.');
-        const { id, secret } = await usePasskey(entries);
-        const entry = entries.find((row) => row.id === id);
-        if (!entry) throw new Error('This device could not unlock the tracker.');
-        const pkcs8 = await unlockWithPasskey(entry, secret);
+        if (!stored || !stored.passkeys?.length) throw new Error('Your key could not be found.');
+        const { entry, pkcs8 } = await unlockWithSavedPasskey(stored);
         devicePasskey(user.uid, entry.id);
         return enterWith(pkcs8, stored);
       },
@@ -470,7 +627,7 @@ export async function startVault(
           await deleteDoc(memberDoc(user.uid));
           await deleteDoc(requestDoc(user.uid));
         }
-        await deleteDoc(keyringDoc);
+        await deleteKeyring(db, user.uid);
       },
     },
   };
@@ -498,6 +655,8 @@ export async function deleteMemberKeys(db: Firestore, uid: string, householdId: 
 }
 
 export async function deleteKeyring(db: Firestore, uid: string) {
+  const requests = await getDocsFromServer(collection(db, 'keyrings', uid, 'deviceRequests'));
+  await Promise.all(requests.docs.map((row) => deleteDoc(row.ref)));
   await deleteDoc(doc(db, 'keyrings', uid));
   await forgetOnDevice(uid);
 }

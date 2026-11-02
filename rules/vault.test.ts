@@ -1,11 +1,24 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
+import {
+  assertFails,
+  initializeTestEnvironment,
+  type RulesTestEnvironment,
+} from '@firebase/rules-unit-testing';
 import { collection, doc, getDoc, getDocs, setDoc, type Firestore } from 'firebase/firestore';
 import { firestoreRepository } from '../src/data/firestoreRepository';
 import { COLLECTION_NAMES } from '../src/data/repository';
 import type { RecordCodec } from '../src/data/crypto';
-import { deleteHousehold, startVault, type OwnerTools, type VaultGate } from '../src/data/vault';
+import {
+  deleteHousehold,
+  startVault,
+  watchMembership,
+  type DeviceAsk,
+  type DeviceRequest,
+  type OwnerTools,
+  type VaultAccess,
+  type VaultGate,
+} from '../src/data/vault';
 
 const PASS = 'correct horse battery';
 const income = {
@@ -262,6 +275,99 @@ test('the owner hears about a request live, and a denied member is shut out', as
   expect(
     await raw(async (db) => (await getDoc(doc(db, 'households/owner/keys/member'))).exists()),
   ).toBe(false);
+});
+
+async function savedDevice() {
+  const started = await start(owner(), 'owner', 'owner@example.com', 'owner');
+  const access = await gateOf(started).unlock(PASS);
+  if (access.status !== 'open') throw new Error('Saved device did not open');
+  return access;
+}
+
+async function askFromNewDevice() {
+  const gate = gateOf(await start(owner(), 'owner', 'owner@example.com', 'owner'));
+  const answers: DeviceAsk[] = [];
+  const stop = gate.askSavedDevice((ask) => answers.push(ask));
+  await vi.waitFor(() => expect(answers[0]?.status).toBe('waiting'));
+  return { answers, stop };
+}
+
+const seeRequests = (saved: Extract<VaultAccess, { status: 'open' }>) =>
+  new Promise<DeviceRequest>((resolve) => {
+    const stop = saved.tools.watchDevices(([request]) => {
+      if (!request) return;
+      setTimeout(() => stop());
+      resolve(request);
+    });
+  });
+
+test('a saved device can approve a new one, which then reads the records', async () => {
+  const { codec } = await setUpOwner();
+  await firestoreRepository(owner(), 'owner', codec).commit([
+    { type: 'set', collection: 'income', id: income.id, value: income },
+  ]);
+  const saved = await savedDevice();
+  const { answers, stop } = await askFromNewDevice();
+  const request = await seeRequests(saved);
+  expect(request.code).toBe((answers[0] as { code: string }).code);
+  await saved.tools.approveDevice(request, PASS);
+  await vi.waitFor(() => expect(answers.at(-1)?.status).toBe('approved'));
+  const opened = answers.at(-1) as Extract<DeviceAsk, { status: 'approved' }>;
+  if (opened.access.status !== 'open') throw new Error('New device did not open');
+  expect(await firstRow(owner(), opened.access.codec)).toEqual([income]);
+  stop();
+  await vi.waitFor(async () => {
+    const left = await raw((db) => getDocs(collection(db, 'keyrings/owner/deviceRequests')));
+    expect(left.empty).toBe(true);
+  });
+});
+
+test('a new device learns it was denied, and gets no key', async () => {
+  await setUpOwner();
+  const saved = await savedDevice();
+  const { answers, stop } = await askFromNewDevice();
+  const request = await seeRequests(saved);
+  await saved.tools.denyDevice(request);
+  await vi.waitFor(() => expect(answers.at(-1)?.status).toBe('denied'));
+  stop();
+});
+
+test('approving needs the passphrase, and a swapped request is refused', async () => {
+  await setUpOwner();
+  const saved = await savedDevice();
+  const { stop } = await askFromNewDevice();
+  const request = await seeRequests(saved);
+  await expect(saved.tools.approveDevice(request, 'not the passphrase')).rejects.toThrow(
+    'That passphrase is not correct.',
+  );
+  await expect(
+    saved.tools.approveDevice({ ...request, code: '0000 0000 0000' }, PASS),
+  ).rejects.toThrow('This request has ended');
+  stop();
+});
+
+test('another person cannot see or answer a device request', async () => {
+  await setUpOwner();
+  const { stop } = await askFromNewDevice();
+  const stranger = login('stranger', 'stranger@example.com');
+  await assertFails(getDocs(collection(stranger, 'keyrings/owner/deviceRequests')));
+  await assertFails(setDoc(doc(stranger, 'keyrings/owner/deviceRequests/x'), { device: 'x' }));
+  stop();
+});
+
+test('a member hears as soon as their membership is removed', async () => {
+  const { owner: tools } = await setUpOwner();
+  await addMember(tools);
+  const removed = vi.fn();
+  const stop = watchMembership(member(), 'member@example.com', removed);
+  await new Promise((done) => setTimeout(done, 200));
+  expect(removed).not.toHaveBeenCalled();
+  await raw(async (db) => {
+    const { deleteDoc } = await import('firebase/firestore');
+    await deleteDoc(doc(db, 'memberships/member@example.com'));
+  });
+  await vi.waitFor(() => expect(removed).toHaveBeenCalled());
+  stop();
 });
 
 test('approval is refused if the key changed after the code was shown', async () => {

@@ -36,6 +36,7 @@ Checked by hand on https://finance-trackerp.web.app, with real accounts: Google 
 
 ## Not verified
 
+- Saved device approval between two real devices, including with Face ID.
 - Removing a family member, changing a member's access, and deleting an account, on real Firebase.
 - There are no Playwright tests in the repo yet. Main flows and PWA behaviour were checked with throwaway browser scripts.
 - Styled dropdown menus need a recent Chromium browser. Others show the native list.

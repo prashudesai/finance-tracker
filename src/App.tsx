@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router';
 import { plainError } from './data/errors';
 import type { TrackerRepository } from './data/repository';
+import { rememberMembership } from './data/membershipMemory';
 import type { VaultAccess, VaultGate } from './data/vault';
 import { SignIn } from './features/auth/SignIn';
 import { installErrorReporting } from './ui/errorSink';
@@ -27,6 +28,9 @@ type Session =
     }
   | { status: 'ready'; repository: TrackerRepository; account: Account };
 
+const REMOVED_MESSAGE =
+  'Your access to this family tracker was removed. Sign in again to start your own tracker.';
+
 /** Firebase loads on demand, so the preview and tests never touch it. */
 function useFirebaseSession(): Session {
   const [session, setSession] = useState<Session>({ status: 'loading' });
@@ -34,6 +38,8 @@ function useFirebaseSession(): Session {
   useEffect(() => {
     let stop: (() => void) | undefined;
     let stopReports: (() => void) | undefined;
+    let stopMembership: (() => void) | undefined;
+    let farewell = '';
     let active = true;
     void import('./data/firebase').then((firebase) => {
       if (!active) return;
@@ -46,14 +52,34 @@ function useFirebaseSession(): Session {
       stopReports = installErrorReporting(firebase.sendErrorReport);
       stop = firebase.watchUser((user) => {
         if (!user) {
-          setSession({ status: 'signed-out', signIn });
+          stopMembership?.();
+          stopMembership = undefined;
+          setSession({
+            status: 'signed-out',
+            signIn,
+            ...(farewell ? { error: farewell } : {}),
+          });
+          farewell = '';
           return;
         }
         setSession({ status: 'loading' });
         const onSignOut = () => void firebase.signOutUser();
+        const removed = () => {
+          farewell = REMOVED_MESSAGE;
+          onSignOut();
+        };
         const start = async () => {
           const membership = await firebase.resolveMembership(user);
           const { householdId, role } = membership;
+          const wasMember = rememberMembership(user.uid, role !== 'owner');
+          // Removed while the app was closed. Signing in again starts their own tracker.
+          if (wasMember && role === 'owner') {
+            removed();
+            return;
+          }
+          stopMembership?.();
+          stopMembership =
+            role === 'owner' ? undefined : firebase.onMembershipRemoved(user, removed);
           const onAccess = (access: VaultAccess) => {
             if (!active) return;
             if (access.status === 'waiting') {
@@ -94,6 +120,7 @@ function useFirebaseSession(): Session {
       active = false;
       stop?.();
       stopReports?.();
+      stopMembership?.();
     };
   }, []);
 

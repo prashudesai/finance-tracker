@@ -8,6 +8,7 @@ Record types are defined in `src/schema/records.ts`. That file is the source of 
 memberships/{email}                   Invite: householdId, role, accepted
 errorReports/{id}                     Sanitized failures. Can only be added, and hold no records or names
 keyrings/{uid}                        Public key, plus the private key locked by a passphrase and a recovery code
+keyrings/{uid}/deviceRequests/{id}    A new device asking a saved device for its key, for 10 minutes at most
 households/{ownerUid}/
   keys/{uid}                          The household's keys, locked to one member
   requests/{uid}                      A member's public key, waiting for the owner's approval
