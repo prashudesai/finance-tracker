@@ -173,6 +173,33 @@ test('Post explains itself when recurring history is inconsistent', () => {
   expect(useTracker.getState().error).toMatch(/recurring/i);
 });
 
+test('editing a recurring item saves its category, and its source and member', async () => {
+  connect({ recurringRules: [gym] });
+  render(<Commitments open />);
+  fireEvent.click(screen.getByLabelText('Edit Gym'));
+  change('Category', 'Education');
+  submit('Save recurring item');
+  await waitFor(() =>
+    expect(state().recurringRules[0]).toMatchObject({ category: 'Education', amount: 500 }),
+  );
+  cleanup();
+
+  const pay: RecurringRule = {
+    ...gym,
+    id: 'pay',
+    kind: 'income',
+    name: 'Pay',
+    member: 'Alex',
+    source: 'Salary',
+  } as RecurringRule;
+  connect({ recurringRules: [pay] });
+  render(<Commitments open />);
+  fireEvent.click(screen.getByLabelText('Edit Pay'));
+  change('Family Member', 'Jamie');
+  submit('Save recurring item');
+  await waitFor(() => expect(state().recurringRules[0]).toMatchObject({ member: 'Jamie' }));
+});
+
 const fund: Holding = {
   id: 'h',
   kind: 'pf',
