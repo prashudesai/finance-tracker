@@ -138,6 +138,7 @@ function DataBackup() {
   const save = useSaveSettings();
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
+  const canEdit = useTracker((state) => state.canEdit);
   const syncedAt = useTracker((state) => state.syncedAt);
   const synced = syncedRecently(syncedAt ? localDate(syncedAt) : null, localDate());
   const [status, setStatus] = useState('');
@@ -156,6 +157,10 @@ function DataBackup() {
         isEncryptedBackup(text) ? await decryptBackup(text, passphrase) : text,
       );
       const count = Object.values(backup).reduce((sum, rows) => sum + rows.length, 0);
+      if (!canEdit) {
+        setStatus('Viewer access can look at records but not change them.');
+        return;
+      }
       if (!window.confirm(`Replace all current records with ${count} records from this backup?`)) {
         return;
       }
@@ -196,7 +201,7 @@ function DataBackup() {
             encryptBackup(createBackup(data, new Date().toISOString()), passphrase).then(
               (file) => {
                 downloadText(`finance-backup-${localDate()}.json`, file, 'application/json');
-                save({ lastBackupOn: localDate() });
+                if (canEdit) save({ lastBackupOn: localDate() });
               },
               (error: unknown) => setStatus(failureText(error)),
             );

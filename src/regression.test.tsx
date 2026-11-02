@@ -271,3 +271,25 @@ async function openData(account: Account, seed: Partial<TrackerData> = {}) {
   fireEvent.click(await screen.findByRole('button', { name: /^Data & backup/ }));
   return within(await screen.findByRole('dialog', { name: 'Data & backup' }));
 }
+
+test('a viewer can export a backup with no error', async () => {
+  const box = await openData(VIEWER);
+  fireEvent.change(box.getByLabelText('Backup passphrase'), {
+    target: { value: 'correct horse battery' },
+  });
+  fireEvent.click(box.getByRole('button', { name: 'Export backup' }));
+  await waitFor(() => expect(downloadText).toHaveBeenCalled());
+  expect(useTracker.getState().error).toBeNull();
+});
+
+test('a viewer is told a restore is not available, not that it worked', async () => {
+  const box = await openData(VIEWER);
+  const file = new File(['{"format":"finance-tracker","version":2,"data":{}}'], 'b.json');
+  Object.defineProperty(file, 'text', { value: () => Promise.resolve(
+    '{"format":"finance-tracker","version":2,"data":{}}',
+  ) });
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  fireEvent.change(box.getByLabelText('Backup file'), { target: { files: [file] } });
+  await box.findByText(/Viewer access/);
+  expect(box.queryByText(/^Restored/)).toBeNull();
+});
