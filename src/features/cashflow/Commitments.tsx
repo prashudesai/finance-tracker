@@ -237,7 +237,15 @@ export function Commitments({ open = false }: { open?: boolean }) {
   const active = data.recurringRules.filter((rule) => !rule.paused);
 
   const run = (request: OccurrenceRequest) => {
-    const result = applyOccurrences(recurring, [request], today);
+    let result: ReturnType<typeof applyOccurrences>;
+    try {
+      result = applyOccurrences(recurring, [request], today);
+    } catch {
+      report(
+        'This could not be saved, because a recurring entry no longer matches its schedule. If one was moved to another month, move it back and try again.',
+      );
+      return;
+    }
     const writes = newRecordWrites(data, result.data);
     if (writes.length > 0) commit(writes);
     if (result.errors.length > 0) report(result.errors.join(' '));

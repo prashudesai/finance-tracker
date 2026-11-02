@@ -129,6 +129,50 @@ const occurrence = {
   recordId: posted.id,
 };
 
+test('a posted recurring record stays in its month, with a reason', async () => {
+  connect({ expenses: [posted], recurringRules: [gym], recurringOccurrences: [occurrence] });
+  render(<ExpenseForm initial={posted} />);
+  change('Date', '2026-09-20');
+  submit('Save expense');
+  await screen.findByText(/stays in October 2026/);
+  expect(state().expenses[0]?.date).toBe(posted.date);
+  change('Date', '2026-10-20');
+  submit('Save expense');
+  await waitFor(() => expect(state().expenses[0]?.date).toBe('2026-10-20'));
+});
+
+test('recurring income stays in its month too', async () => {
+  const income = {
+    id: 'rec_pay_202610',
+    date: '2026-10-05',
+    member: 'Alex',
+    source: 'Salary',
+    amount: 100,
+    recurringRuleId: 'pay',
+    recurringMonth: '2026-10',
+  };
+  connect({ income: [income] });
+  render(<IncomeForm initial={income} />);
+  change('Date', '2026-09-20');
+  submit('Save income');
+  await screen.findByText(/stays in October 2026/);
+  expect(state().income[0]?.date).toBe(income.date);
+});
+
+test('Post explains itself when recurring history is inconsistent', () => {
+  // Saved by an earlier version, which let a posted record move to another month.
+  const moved = { ...posted, date: '2026-09-20' };
+  const due = { ...gym, id: 'rent', name: 'Rent', category: 'Rent' };
+  connect({
+    expenses: [moved],
+    recurringRules: [gym, due],
+    recurringOccurrences: [occurrence],
+  });
+  render(<Commitments open />);
+  fireEvent.click(screen.getAllByRole('button', { name: 'Post' })[0] as HTMLElement);
+  expect(useTracker.getState().error).toMatch(/recurring/i);
+});
+
 const fund: Holding = {
   id: 'h',
   kind: 'pf',
