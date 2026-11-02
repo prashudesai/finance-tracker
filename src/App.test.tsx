@@ -1430,6 +1430,14 @@ describe('a saved device asked about a new one', () => {
   });
 });
 
+test('the features page opens without signing in', async () => {
+  window.history.pushState({}, '', '/features');
+  render(<App />);
+  expect(await screen.findByRole('heading', { name: 'Personal Finance Tracker' })).toBeDefined();
+  expect(screen.getByRole('link', { name: 'Open the app' }).getAttribute('href')).toBe('/');
+  window.history.pushState({}, '', '/');
+});
+
 describe('privacy page', () => {
   afterEach(() => window.history.pushState({}, '', '/'));
 

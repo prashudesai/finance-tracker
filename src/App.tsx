@@ -4,6 +4,7 @@ import { plainError } from './data/errors';
 import type { TrackerRepository } from './data/repository';
 import { rememberMembership } from './data/membershipMemory';
 import type { VaultAccess, VaultGate } from './data/vault';
+import { FeaturesPage } from './features/about/FeaturesPage';
 import { SignIn } from './features/auth/SignIn';
 import { PrivacyPage } from './features/privacy/PrivacyPage';
 import { installErrorReporting } from './ui/errorSink';
@@ -185,6 +186,7 @@ export function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route element={<FeaturesPage />} path="/features" />
         <Route element={<PrivacyPage />} path="/privacy" />
         <Route
           element={

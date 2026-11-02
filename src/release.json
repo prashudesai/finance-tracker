@@ -1,12 +1,12 @@
 {
-  "version": "1.8.5",
+  "version": "1.8.6",
   "released": "2026-11-02",
   "notes": [
+    "Added a public features page to share with friends",
     "Family members open the app by themselves once approved",
     "One form to add a family member, with or without an invite",
     "Family names now appear in records and the profile menu after an invite",
     "New users agree to the privacy page during setup",
-    "Added a privacy page, linked from sign-in and Settings",
-    "Approve a new device from one you already use"
+    "Added a privacy page, linked from sign-in and Settings"
   ]
 }
