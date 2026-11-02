@@ -323,9 +323,11 @@ test('a failed invite keeps the typed address', async () => {
   );
   fireEvent.click(await screen.findByRole('button', { name: /^Family access/ }));
   const box = within(await screen.findByRole('dialog', { name: 'Family access' }));
+  fireEvent.change(box.getByLabelText('Their name'), { target: { value: 'Priya' } });
   fireEvent.change(box.getByLabelText('Google email'), { target: { value: 'new@example.test' } });
   fireEvent.click(box.getByRole('button', { name: 'Send invite' }));
   await box.findByText('That invite did not work.');
+  expect(screen.queryByRole('option', { name: 'Priya', hidden: true })).toBeNull();
   expect((box.getByLabelText('Google email') as HTMLInputElement).value).toBe('new@example.test');
 });
 
@@ -379,4 +381,35 @@ test('a cleared rate keeps its saved value, and a typed zero is still saved', ()
   fireEvent.change(rate, { target: { value: '0' } });
   fireEvent.blur(rate);
   expect(save).toHaveBeenCalledWith(0);
+});
+
+test('inviting someone puts their name in the profile list and record forms', async () => {
+  const family = {
+    list: async () => [],
+    invite: vi.fn(async () => undefined),
+    setRole: async () => undefined,
+    remove: async () => undefined,
+    watchRequests: () => () => undefined,
+    approve: async () => undefined,
+    deny: async () => undefined,
+  };
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell
+        account={{ name: 'Asha Rao', email: 'o@example.test', role: 'owner', family }}
+        repository={createMemoryRepository({
+          settings: [{ ...settings, onboardingDone: true, familyMembers: [] }],
+        })}
+      />
+    </MemoryRouter>,
+  );
+  expect(screen.queryByLabelText('Family profile')).toBeNull();
+  fireEvent.click(await screen.findByRole('button', { name: /^Family access/ }));
+  const box = within(await screen.findByRole('dialog', { name: 'Family access' }));
+  fireEvent.change(box.getByLabelText('Their name'), { target: { value: 'Priya' } });
+  fireEvent.change(box.getByLabelText('Google email'), { target: { value: 'new@example.test' } });
+  fireEvent.click(box.getByRole('button', { name: 'Send invite' }));
+  const profile = await screen.findByLabelText('Family profile', { selector: 'select' });
+  expect(within(profile).getByRole('option', { name: 'Asha', hidden: true })).toBeDefined();
+  expect(within(profile).getByRole('option', { name: 'Priya', hidden: true })).toBeDefined();
 });

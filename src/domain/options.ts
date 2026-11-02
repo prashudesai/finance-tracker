@@ -48,3 +48,16 @@ export const optionLists = (settings: TrackerSettings) => ({
   investmentTypes: merged(INVESTMENT_TYPES, settings.investmentTypes),
   familyMembers: settings.familyMembers,
 });
+
+/**
+ * Adds a name to the family list. A list of one offers no choice, so the first name added
+ * brings the account holder's first name with it.
+ */
+export function addFamilyName(names: string[], name: string, accountName: string) {
+  const value = name.trim();
+  const same = (other: string) => other.toLowerCase() === value.toLowerCase();
+  if (!value || names.some(same)) return names;
+  const own = accountName.trim().split(/\s+/)[0] ?? '';
+  const addOwn = names.length === 0 && own !== '' && !own.includes('@') && !same(own);
+  return [...(addOwn ? [own] : []), ...names, value];
+}

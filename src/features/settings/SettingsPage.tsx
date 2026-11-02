@@ -9,6 +9,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
+import { addFamilyName } from '../../domain/options';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import release from '../../release.json';
@@ -80,7 +81,7 @@ const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] =
   },
 ];
 
-function FamilyNames() {
+function FamilyNames({ accountName }: { accountName: string }) {
   const settings = useSettings();
   const save = useSaveSettings();
   const canEdit = useTracker((state) => state.canEdit);
@@ -91,7 +92,12 @@ function FamilyNames() {
 
   return (
     <div>
-      <p className={ui.caption}>Names used in your records.</p>
+      <p className={ui.caption}>
+        Names used in your records.
+        {members.length === 1
+          ? ' Add one more to choose a person on each record and switch profiles.'
+          : ''}
+      </p>
       {members.length === 0 ? null : (
         <ul className={ui.list}>
           {members.map((item) => (
@@ -117,7 +123,7 @@ function FamilyNames() {
           onSubmit={(event) => {
             event.preventDefault();
             if (!value || exists) return;
-            save({ familyMembers: [...members, value] });
+            save({ familyMembers: addFamilyName(members, value, accountName) });
             setName('');
           }}
         >
@@ -269,7 +275,10 @@ function DataBackup() {
 
 function FamilyMembers({ account }: { account: Account }) {
   const { family } = account;
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const settings = useSettings();
+  const save = useSaveSettings();
   const [role, setRole] = useState<FamilyMember['role']>('viewer');
   const [status, setStatus] = useState('');
   const [members, setMembers] = useState<FamilyMember[]>([]);
@@ -347,10 +356,21 @@ function FamilyMembers({ account }: { account: Account }) {
                 family.invite(email, role),
                 `Invited ${email}. They accept when they next sign in.`,
               ).then((sent) => {
-                if (sent) setEmail('');
+                if (!sent) return;
+                save({ familyMembers: addFamilyName(settings.familyMembers, name, account.name) });
+                setEmail('');
+                setName('');
               });
             }}
           >
+            <Field label="Their name">
+              <input
+                maxLength={60}
+                onChange={(event) => setName(event.target.value)}
+                required
+                value={name}
+              />
+            </Field>
             <Field label="Google email">
               <input
                 onChange={(event) => setEmail(event.target.value)}
@@ -729,7 +749,7 @@ function FamilyAccessPanel({ account }: { account: Account }) {
     <div className={ui.page}>
       <section className={ui.metric}>
         <h3 className={ui.panelTitle}>Family members</h3>
-        <FamilyNames />
+        <FamilyNames accountName={account.name} />
       </section>
       <section className={ui.metric}>
         <h3 className={ui.panelTitle}>Access</h3>

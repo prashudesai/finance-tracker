@@ -1,12 +1,12 @@
 {
-  "version": "1.8.2",
+  "version": "1.8.3",
   "released": "2026-11-02",
   "notes": [
+    "Family names now appear in records and the profile menu after an invite",
     "New users agree to the privacy page during setup",
     "Added a privacy page, linked from sign-in and Settings",
     "Approve a new device from one you already use",
     "Family requests now pop up on any screen",
-    "Removed family members are signed out straight away",
-    "See your net worth over time at the top of Analytics"
+    "Removed family members are signed out straight away"
   ]
 }
