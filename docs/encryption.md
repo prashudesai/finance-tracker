@@ -16,7 +16,7 @@ Each stored record is tied to its household, collection and document ID as authe
 
 ## Flows
 
-**First use.** A person creates a passphrase and saves a recovery code. An owner's first entry creates the household secret, unless encrypted records already exist. In that case it stops rather than orphan them.
+**First use.** A person agrees to the privacy page, then creates a passphrase and saves a recovery code. An owner's first entry creates the household secret, unless encrypted records already exist. In that case it stops rather than orphan them.
 
 **This device.** The private key is imported as non-extractable and kept in IndexedDB until sign-out, so the passphrase isn't needed each visit and offline use keeps working. Firestore's local cache holds only encrypted data.
 

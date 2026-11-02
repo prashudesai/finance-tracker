@@ -113,6 +113,8 @@ export interface Keyring {
   passphrase: LockedSecret;
   recovery: LockedSecret;
   passkeys?: LockedWithPasskey[];
+  /** The version of the privacy page agreed to at setup. */
+  agreedToPrivacy?: string;
 }
 
 /** The private key, locked by a secret only a device's passkey can produce. */

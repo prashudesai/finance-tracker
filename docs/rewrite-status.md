@@ -30,7 +30,7 @@ All pages from the older app exist and follow its layouts.
 | Phone layouts       | Title-only headers, full-screen entry forms, and Investments and Retirement tabs                                        |
 | PWA                 | Installable, app shell works offline, check for updates, updates wait for acceptance, security policy applied           |
 
-- Privacy page at `/privacy`, open without signing in and linked from sign-in and Settings. Its statements must stay true, so update it when what's stored or visible changes.
+- Privacy page at `/privacy`, open without signing in and linked from sign-in and Settings. New accounts agree to it once at setup, and existing accounts aren't asked. Its statements must stay true, so update it when what's stored or visible changes.
 
 ## Verified on the test project
 

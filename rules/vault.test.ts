@@ -6,6 +6,7 @@ import {
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import { collection, doc, getDoc, getDocs, setDoc, type Firestore } from 'firebase/firestore';
+import { PRIVACY_VERSION } from '../src/domain/privacy';
 import { firestoreRepository } from '../src/data/firestoreRepository';
 import { COLLECTION_NAMES } from '../src/data/repository';
 import type { RecordCodec } from '../src/data/crypto';
@@ -353,6 +354,12 @@ test('another person cannot see or answer a device request', async () => {
   await assertFails(getDocs(collection(stranger, 'keyrings/owner/deviceRequests')));
   await assertFails(setDoc(doc(stranger, 'keyrings/owner/deviceRequests/x'), { device: 'x' }));
   stop();
+});
+
+test('setup records which privacy page was agreed to', async () => {
+  await setUpOwner();
+  const keyring = await raw((db) => getDoc(doc(db, 'keyrings/owner')));
+  expect(keyring.data()?.agreedToPrivacy).toBe(PRIVACY_VERSION);
 });
 
 test('a member hears as soon as their membership is removed', async () => {

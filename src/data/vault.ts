@@ -42,6 +42,7 @@ import {
   lockWithPasskey,
   unlockWithPasskey,
 } from './crypto';
+import { PRIVACY_VERSION } from '../domain/privacy';
 import { deviceName } from './deviceName';
 import { createPasskey, passkeysAvailable, usePasskey } from './passkey';
 import { COLLECTION_NAMES } from './repository';
@@ -588,12 +589,13 @@ export async function startVault(
       },
       async create(passphrase) {
         const created = await createKeyring(passphrase);
-        await setDoc(keyringDoc, created.keyring);
+        const keyring = { ...created.keyring, agreedToPrivacy: PRIVACY_VERSION };
+        await setDoc(keyringDoc, keyring);
         return {
           recoveryCode: created.recoveryCode,
           passkeyAvailable: await passkeysAvailable(),
-          enablePasskey: () => addPasskey(created.keyring, created.pkcs8),
-          enter: async () => enterWith(created.pkcs8, (await readKeyring()) ?? created.keyring),
+          enablePasskey: () => addPasskey(keyring, created.pkcs8),
+          enter: async () => enterWith(created.pkcs8, (await readKeyring()) ?? keyring),
         };
       },
       async unlock(passphrase) {

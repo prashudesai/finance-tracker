@@ -1,9 +1,8 @@
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router';
+import { PRIVACY_UPDATED } from '../../domain/privacy';
 import styles from './PrivacyPage.module.css';
-
-const UPDATED = '2 November 2026';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -26,7 +25,7 @@ export function PrivacyPage() {
         <ArrowLeft size={16} /> Back to the app
       </Link>
       <h1>Your privacy</h1>
-      <p className={styles.updated}>Last updated {UPDATED}</p>
+      <p className={styles.updated}>Last updated {PRIVACY_UPDATED}</p>
       <p className={styles.lead}>
         Your financial records are encrypted on your device before they are saved. Nobody else can
         read them, including the person who runs this app.
@@ -42,7 +41,7 @@ export function PrivacyPage() {
       <Section title="What the app's admin can still see">
         <ul>
           <li>Email addresses and names from sign-in</li>
-          <li>When you last signed in</li>
+          <li>When you last signed in, and when you agreed to this page</li>
           <li>Who belongs to which household, and each person's role</li>
           <li>How many records are in each category, and when they changed</li>
           <li>A rough device name, such as "iPhone · Safari", while a new device is waiting</li>

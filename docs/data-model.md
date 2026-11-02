@@ -7,7 +7,7 @@ Record types are defined in `src/schema/records.ts`. That file is the source of 
 ```text
 memberships/{email}                   Invite: householdId, role, accepted
 errorReports/{id}                     Sanitized failures. Can only be added, and hold no records or names
-keyrings/{uid}                        Public key, plus the private key locked by a passphrase and a recovery code
+keyrings/{uid}                        Public key, the private key locked by a passphrase and a recovery code, and the privacy page version agreed to
 keyrings/{uid}/deviceRequests/{id}    A new device asking a saved device for its key, for 10 minutes at most
 households/{ownerUid}/
   keys/{uid}                          The household's keys, locked to one member
@@ -36,24 +36,24 @@ Every record below is stored encrypted, as `{ k, iv, c }`, under a scrambled doc
 
 ## Records
 
-| Collection | Holds | Notes |
-|---|---|---|
-| `income` | Date, member, source, amount | |
-| `expenses` | Date, category, amount | EMI and part payments are expenses with a `loanId` |
-| `loans` | Opening terms and dated changes | Current figures are never stored |
-| `recurringRules` | Monthly income, expense or EMI schedules | A rule's `kind` decides its fields |
-| `recurringOccurrences` | What happened to a rule in a month | `posted`, `matched` or `skipped` |
-| `monthlyBalances` | Opening household balance for a month | Next month's opening is this month's closing |
-| `holdings` | Opening position of an investment, PF, PPF or NPS account | Current figures are never stored |
-| `contributions` | Dated money added to a holding | Scheduled ones use `auto_<holdingId>_<yyyymm>` IDs |
-| `valuations` | Dated value of a holding | The latest sets its current value |
-| `gratuityAccounts` | Joining date and basic salary | The estimate is calculated |
-| `projectionAdjustments` | Planned additions and withdrawals | |
-| `settings` | Custom values, projection assumptions and uploaded profile photos | One document, `tracker` |
-| `monthReviews` | Months someone has reviewed | Holds a signature, so later changes ask for review again |
-| `interestCredits` | Annual PF and PPF interest | One per account per financial year |
-| `epsUpdates` | EPS balance corrections | Signed amounts |
-| `changes` | The change log | Newest 200, with earlier values for undo |
+| Collection              | Holds                                                             | Notes                                                    |
+| ----------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
+| `income`                | Date, member, source, amount                                      |                                                          |
+| `expenses`              | Date, category, amount                                            | EMI and part payments are expenses with a `loanId`       |
+| `loans`                 | Opening terms and dated changes                                   | Current figures are never stored                         |
+| `recurringRules`        | Monthly income, expense or EMI schedules                          | A rule's `kind` decides its fields                       |
+| `recurringOccurrences`  | What happened to a rule in a month                                | `posted`, `matched` or `skipped`                         |
+| `monthlyBalances`       | Opening household balance for a month                             | Next month's opening is this month's closing             |
+| `holdings`              | Opening position of an investment, PF, PPF or NPS account         | Current figures are never stored                         |
+| `contributions`         | Dated money added to a holding                                    | Scheduled ones use `auto_<holdingId>_<yyyymm>` IDs       |
+| `valuations`            | Dated value of a holding                                          | The latest sets its current value                        |
+| `gratuityAccounts`      | Joining date and basic salary                                     | The estimate is calculated                               |
+| `projectionAdjustments` | Planned additions and withdrawals                                 |                                                          |
+| `settings`              | Custom values, projection assumptions and uploaded profile photos | One document, `tracker`                                  |
+| `monthReviews`          | Months someone has reviewed                                       | Holds a signature, so later changes ask for review again |
+| `interestCredits`       | Annual PF and PPF interest                                        | One per account per financial year                       |
+| `epsUpdates`            | EPS balance corrections                                           | Signed amounts                                           |
+| `changes`               | The change log                                                    | Newest 200, with earlier values for undo                 |
 
 ## Loans
 

@@ -1,12 +1,12 @@
 {
-  "version": "1.8.1",
+  "version": "1.8.2",
   "released": "2026-11-02",
   "notes": [
+    "New users agree to the privacy page during setup",
     "Added a privacy page, linked from sign-in and Settings",
     "Approve a new device from one you already use",
     "Family requests now pop up on any screen",
     "Removed family members are signed out straight away",
-    "See your net worth over time at the top of Analytics",
-    "A small trend line beside Net Worth on the Dashboard"
+    "See your net worth over time at the top of Analytics"
   ]
 }

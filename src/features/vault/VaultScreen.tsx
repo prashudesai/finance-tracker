@@ -1,5 +1,6 @@
 import { Check, Fingerprint, KeyRound, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { MIN_PASSPHRASE_LENGTH } from '../../data/crypto';
 import { plainError } from '../../data/errors';
 import type { DeviceAsk, VaultAccess, VaultGate } from '../../data/vault';
@@ -152,6 +153,40 @@ export function RecoveryCode({ code }: { code: string }) {
   );
 }
 
+function PrivacyAgreement({ onAgree, onSignOut }: { onAgree: () => void; onSignOut: () => void }) {
+  const [ticked, setTicked] = useState(false);
+  return (
+    <Screen
+      onSignOut={onSignOut}
+      text="Please read how your data is handled before you start."
+      title="Before you start"
+    >
+      <ul className={ui.agreeList}>
+        <li>Your records are encrypted, and nobody else can read them.</li>
+        <li>The app's admin can still see your email and who is in your household.</li>
+        <li>
+          Your passphrase can't be reset. If you lose it and your recovery code, your records are
+          gone for good.
+        </li>
+      </ul>
+      <Link className={ui.agreeLink} to="/privacy">
+        Read the full privacy page
+      </Link>
+      <label className={ui.check}>
+        <input
+          checked={ticked}
+          onChange={(event) => setTicked(event.target.checked)}
+          type="checkbox"
+        />
+        I have read and agree to the privacy page
+      </label>
+      <button className={ui.button} disabled={!ticked} onClick={onAgree} type="button">
+        Agree and continue
+      </button>
+    </Screen>
+  );
+}
+
 function CreatePassphrase({
   gate,
   onAccess,
@@ -165,6 +200,7 @@ function CreatePassphrase({
   const [created, setCreated] = useState<Awaited<ReturnType<VaultGate['create']>> | null>(null);
   const [saved, setSaved] = useState(false);
   const [offering, setOffering] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const { working, error, run } = useTask();
 
   if (created && offering) {
@@ -231,6 +267,8 @@ function CreatePassphrase({
       </Screen>
     );
   }
+
+  if (!agreed) return <PrivacyAgreement onAgree={() => setAgreed(true)} onSignOut={onSignOut} />;
 
   return (
     <Screen

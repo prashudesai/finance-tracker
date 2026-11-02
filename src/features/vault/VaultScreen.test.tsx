@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import type { DeviceAsk, VaultAccess, VaultGate } from '../../data/vault';
 import { VaultScreen, WaitingForApproval } from './VaultScreen';
 
@@ -20,9 +21,16 @@ function gate(overrides: Partial<VaultGate>): VaultGate {
   };
 }
 
+const agree = () => {
+  fireEvent.click(screen.getByRole('checkbox', { name: /agree to the privacy page/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Agree and continue' }));
+};
+
 const show = (value: VaultGate, onAccess = vi.fn(), onStartOver = vi.fn()) => {
   render(
-    <VaultScreen gate={value} onAccess={onAccess} onSignOut={vi.fn()} onStartOver={onStartOver} />,
+    <MemoryRouter>
+      <VaultScreen gate={value} onAccess={onAccess} onSignOut={vi.fn()} onStartOver={onStartOver} />
+    </MemoryRouter>,
   );
   return { onAccess, onStartOver };
 };
@@ -38,6 +46,7 @@ test('a first-time user must save their recovery code before continuing', async 
     enter,
   }));
   const { onAccess } = show(gate({ hasKeyring: false, create }));
+  agree();
   const submit = screen.getByRole('button', { name: 'Create passphrase' });
   fireEvent.change(screen.getByLabelText('Passphrase'), { target: { value: 'short' } });
   expect(screen.getByText('Use at least 12 characters.')).toBeDefined();
@@ -137,6 +146,7 @@ describe('setup offers Face ID after the recovery code', () => {
       enter,
     }));
     const { onAccess } = show(gate({ hasKeyring: false, create }));
+    agree();
     const value = { target: { value: 'a long passphrase' } };
     fireEvent.change(screen.getByLabelText('Passphrase'), value);
     fireEvent.change(screen.getByLabelText('Repeat passphrase'), value);
@@ -188,6 +198,7 @@ describe('copying the recovery code', () => {
       enter,
     }));
     show(gate({ hasKeyring: false, create }));
+    agree();
     const value = { target: { value: 'a long passphrase' } };
     fireEvent.change(screen.getByLabelText('Passphrase'), value);
     fireEvent.change(screen.getByLabelText('Repeat passphrase'), value);
@@ -250,5 +261,22 @@ describe('a new device', () => {
     const value = gate({ newDevice: false });
     show(value);
     expect(value.askSavedDevice).not.toHaveBeenCalled();
+  });
+});
+
+describe('first-time setup', () => {
+  test('asks for agreement first, and needs the box ticked', () => {
+    show(gate({ hasKeyring: false }));
+    expect(screen.queryByRole('button', { name: 'Create passphrase' })).toBeNull();
+    const next = screen.getByRole('button', { name: 'Agree and continue' });
+    expect((next as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole('link', { name: 'Read the full privacy page' })).toBeDefined();
+    agree();
+    expect(screen.getByRole('button', { name: 'Create passphrase' })).toBeDefined();
+  });
+
+  test('someone who already has a passphrase is not asked', () => {
+    show(gate({ hasKeyring: true }));
+    expect(screen.queryByRole('button', { name: 'Agree and continue' })).toBeNull();
   });
 });
