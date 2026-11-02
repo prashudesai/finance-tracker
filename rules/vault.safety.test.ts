@@ -93,7 +93,11 @@ async function addMember(
   return opened;
 }
 
-function rowsOf(db: Firestore, codec: RecordCodec, ready = (_rows: unknown[]) => true) {
+function rowsOf(
+  db: Firestore,
+  codec: RecordCodec,
+  ready: (rows: unknown[]) => boolean = () => true,
+) {
   return new Promise<{ rows: { id: string }[]; invalid: number }>((done, fail) => {
     const stop = firestoreRepository(db, 'owner', codec).subscribe(
       'income',

@@ -17,9 +17,9 @@ test('a record the app could not read back is refused, with a reason', () => {
   const repository = createMemoryRepository();
   const commit = vi.spyOn(repository, 'commit');
   useTracker.getState().connect(repository, true);
-  useTracker.getState().commit([
-    { type: 'set', collection: 'contributions', id: 'c', value: contribution(2e13) },
-  ]);
+  useTracker
+    .getState()
+    .commit([{ type: 'set', collection: 'contributions', id: 'c', value: contribution(2e13) }]);
   expect(commit).not.toHaveBeenCalled();
   expect(useTracker.getState().error).toMatch(/wasn't saved/);
   expect(useTracker.getState().data.contributions).toEqual([]);
@@ -28,9 +28,9 @@ test('a record the app could not read back is refused, with a reason', () => {
 test('valid records still save', async () => {
   const repository = createMemoryRepository();
   useTracker.getState().connect(repository, true);
-  useTracker.getState().commit([
-    { type: 'set', collection: 'contributions', id: 'c', value: contribution(5000) },
-  ]);
+  useTracker
+    .getState()
+    .commit([{ type: 'set', collection: 'contributions', id: 'c', value: contribution(5000) }]);
   await vi.waitFor(() => expect(useTracker.getState().data.contributions).toHaveLength(1));
   expect(useTracker.getState().error).toBeNull();
 });
@@ -43,9 +43,9 @@ test('a failed save and a failed load show plain language, not the library error
     commit: () => Promise.reject(failure),
   };
   useTracker.getState().connect(repository, true);
-  useTracker.getState().commit([
-    { type: 'set', collection: 'contributions', id: 'c', value: contribution(5000) },
-  ]);
+  useTracker
+    .getState()
+    .commit([{ type: 'set', collection: 'contributions', id: 'c', value: contribution(5000) }]);
   await vi.waitFor(() => expect(useTracker.getState().error).toBeTruthy());
   expect(useTracker.getState().error).not.toContain('insufficient permissions');
 

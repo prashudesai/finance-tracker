@@ -72,7 +72,12 @@ test('clearing an expense family member saves it as household', async () => {
 });
 
 test('moving an EMI expense to another category drops its loan link', async () => {
-  const payment = { ...expense, category: 'EMI Payment', loanId: 'l', repaymentType: 'emi' as const };
+  const payment = {
+    ...expense,
+    category: 'EMI Payment',
+    loanId: 'l',
+    repaymentType: 'emi' as const,
+  };
   const loan = {
     id: 'l',
     type: 'Car',
@@ -266,7 +271,10 @@ const VIEWER: Account = { name: 'V', email: 'v@example.test', role: 'viewer' };
 async function openData(account: Account, seed: Partial<TrackerData> = {}) {
   render(
     <MemoryRouter initialEntries={['/settings']}>
-      <Shell account={account} repository={createMemoryRepository({ settings: [settings], ...seed })} />
+      <Shell
+        account={account}
+        repository={createMemoryRepository({ settings: [settings], ...seed })}
+      />
     </MemoryRouter>,
   );
   fireEvent.click(await screen.findByRole('button', { name: /^Data & backup/ }));
@@ -286,9 +294,9 @@ test('a viewer can export a backup with no error', async () => {
 test('a viewer is told a restore is not available, not that it worked', async () => {
   const box = await openData(VIEWER);
   const file = new File(['{"format":"finance-tracker","version":2,"data":{}}'], 'b.json');
-  Object.defineProperty(file, 'text', { value: () => Promise.resolve(
-    '{"format":"finance-tracker","version":2,"data":{}}',
-  ) });
+  Object.defineProperty(file, 'text', {
+    value: () => Promise.resolve('{"format":"finance-tracker","version":2,"data":{}}'),
+  });
   vi.spyOn(window, 'confirm').mockReturnValue(true);
   fireEvent.change(box.getByLabelText('Backup file'), { target: { files: [file] } });
   await box.findByText(/Viewer access/);

@@ -358,7 +358,7 @@ test('member positions total each person', () => {
 });
 
 describe('one pass over the records gives the same figures', () => {
-  const sample = previewData();
+  const sample = { ...emptyTrackerData(), ...previewData() };
   const months = sample.monthlyBalances.map((row) => row.month);
 
   test('every month closes as it does on its own', () => {
