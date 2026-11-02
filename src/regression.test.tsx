@@ -318,3 +318,13 @@ test('a failed invite keeps the typed address', async () => {
   await box.findByText('That invite did not work.');
   expect((box.getByLabelText('Google email') as HTMLInputElement).value).toBe('new@example.test');
 });
+
+test('a tracker with no debts does not say debts are 100%', async () => {
+  render(
+    <MemoryRouter>
+      <Shell repository={createMemoryRepository({ settings: [settings] })} />
+    </MemoryRouter>,
+  );
+  const worth = within(await screen.findByRole('region', { name: 'Net worth' }));
+  expect(worth.queryByText(/Debts 100/)).toBeNull();
+});
