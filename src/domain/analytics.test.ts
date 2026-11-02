@@ -1,5 +1,6 @@
 import { previewData } from '../data/previewData';
 import { emptyTrackerData, type TrackerData } from '../data/repository';
+import { holdingPosition } from './holdings';
 import { defaultSettings, type Holding } from '../schema/records';
 import {
   attentionItems,
@@ -16,6 +17,7 @@ import {
   monthReviewStatus,
   monthSignature,
   monthsToReview,
+  pmsGainChange,
   netWorth,
   portfolioCategories,
   uncheckedContributions,
@@ -344,6 +346,96 @@ test('a running month asks for review only on its last day', () => {
   expect(monthsToReview(state, '2026-03-15')).toEqual([]);
   expect(monthsToReview(state, '2026-03-31')).toEqual(['2026-03']);
   expect(monthsToReview(state, '2026-04-02')).toEqual(['2026-03']);
+});
+
+describe('past dates use the valuation from that date', () => {
+  const valuation = (id: string, date: string, value: number) => ({
+    id,
+    holdingId: 'pms',
+    date,
+    value,
+  });
+  const state = data({
+    holdings: [
+      holding({
+        id: 'pms',
+        type: 'Stallion PMS',
+        date: '2026-01-01',
+        openingInvested: 100,
+        openingValue: 100,
+      }),
+    ],
+    valuations: [
+      valuation('a', '2026-01-31', 100),
+      valuation('b', '2026-02-28', 120),
+      valuation('c', '2026-03-31', 150),
+    ],
+  });
+  const position = (date: string) => holdingPosition(state.holdings[0] as Holding, state, date);
+
+  test('each month keeps its own gain', () => {
+    expect(position('2026-01-31').gain).toBe(0);
+    expect(position('2026-02-28').gain).toBe(20);
+    expect(position('2026-03-31').gain).toBe(50);
+  });
+
+  test('the monthly gain change compares those months', () => {
+    expect(pmsGainChange(state, '2026-03')).toBe(30);
+    expect(pmsGainChange(state, '2026-02')).toBe(20);
+  });
+
+  test('a month with no update carries the last gain forward', () => {
+    expect(position('2026-04-30').gain).toBe(50);
+    expect(pmsGainChange(state, '2026-04')).toBeNull();
+  });
+
+  test('a valuation dated later does not count yet', () => {
+    expect(position('2026-01-15').current).toBe(100);
+  });
+
+  test('today still uses the newest value', () => {
+    expect(position('2026-11-02').current).toBe(150);
+  });
+
+  test('a contribution after a valuation adds to value without changing gain', () => {
+    const paid = {
+      ...state,
+      contributions: [
+        { id: 'x', holdingId: 'pms', date: '2026-03-10', amount: 40, automatic: false },
+      ],
+    };
+    const at = holdingPosition(paid.holdings[0] as Holding, paid, '2026-03-15');
+    expect(at.invested).toBe(140);
+    expect(at.current).toBe(160);
+    expect(at.gain).toBe(20);
+  });
+});
+
+describe('the monthly PMS value reminder', () => {
+  const label = 'Update Stallion PMS current value';
+  const pms = holding({ id: 'pms', type: 'Stallion PMS', date: '2026-01-10' });
+  const labels = (state: TrackerData, today: string) =>
+    attentionItems(state, state, today, 0).map((row) => row.label);
+  const valued = (date: string) =>
+    data({ holdings: [pms], valuations: [{ id: 'v', holdingId: 'pms', date, value: 1 }] });
+
+  test('appears on the 1st, and links to PMS', () => {
+    const state = valued('2026-03-31');
+    expect(labels(state, '2026-03-31')).not.toContain(label);
+    expect(labels(state, '2026-04-01')).toContain(label);
+    const item = attentionItems(state, state, '2026-04-01', 0).find((row) => row.label === label);
+    expect(item).toMatchObject({ path: '/investments', state: { open: 'Stallion PMS' } });
+  });
+
+  test('stays until this month has a value', () => {
+    expect(labels(valued('2026-03-31'), '2026-04-20')).toContain(label);
+    expect(labels(valued('2026-04-03'), '2026-04-20')).not.toContain(label);
+  });
+
+  test('a new account, or no PMS, asks nothing', () => {
+    expect(labels(data({ holdings: [pms] }), '2026-01-20')).not.toContain(label);
+    expect(labels(data({ holdings: [holding({})] }), '2026-04-01')).not.toContain(label);
+  });
 });
 
 test('member positions total each person', () => {

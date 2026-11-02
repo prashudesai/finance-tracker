@@ -56,11 +56,12 @@ export function holdingContributions(holdingId: string, contributions: Contribut
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function latestValuation(holdingId: string, valuations: Valuation[]) {
-  return rowsOfHolding(holdingId, valuations).reduce<Valuation | null>(
-    (latest, row) => (latest && latest.date > row.date ? latest : row),
-    null,
-  );
+/** The newest valuation, or with `asOf`, the newest one known on that date. */
+export function latestValuation(holdingId: string, valuations: Valuation[], asOf?: string) {
+  return rowsOfHolding(holdingId, valuations).reduce<Valuation | null>((latest, row) => {
+    if (asOf !== undefined && row.date > asOf) return latest;
+    return latest && latest.date > row.date ? latest : row;
+  }, null);
 }
 
 export interface HoldingPosition {
@@ -86,7 +87,7 @@ export function holdingPosition(
   const rows = holdingContributions(holding.id, data.contributions).filter(
     (row) => row.date <= asOf,
   );
-  const valuation = latestValuation(holding.id, data.valuations);
+  const valuation = latestValuation(holding.id, data.valuations, asOf);
   const contributed = rows.reduce((sum, row) => sum + row.amount, 0);
   const invested = holding.openingInvested + contributed;
   const since = valuation?.date ?? '';

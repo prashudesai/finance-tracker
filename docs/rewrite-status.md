@@ -68,6 +68,7 @@ A scripted comparison of the visible text on every old page, at phone and deskto
 - Record EMI on the Loans screen always uses the ledger's quote, so the last instalment can't overpay.
 - Loan and recurring validation is split between Zod schemas (one record) and domain validators (links between records).
 - Holdings derive invested and current values from contributions and valuations, instead of keeping running totals.
+- A holding's value on a past date uses the newest valuation on or before that date. The first version of the rewrite always used the newest valuation, which made PMS gain change and the PMS trend wrong. This matches the older app's snapshots. A future-dated valuation doesn't count until its date.
 - A contribution dated the same day as a valuation, or earlier, is treated as already included in that valuation.
 - Dated restore points are replaced by the change log, which undoes single changes. A whole-tracker rollback uses a backup.
 - Archiving was removed, so deleting is the only way to retire an account.

@@ -1,11 +1,11 @@
 {
-  "version": "1.6.0",
+  "version": "1.6.1",
   "released": "2026-11-01",
   "notes": [
+    "Stallion PMS gain is now correct for each past month",
+    "A monthly reminder to update your PMS current value",
     "Fixes a rare problem that could lose records when removing a family member",
     "Encrypted backups now work at any size",
-    "Loads and saves about twice as fast on large trackers",
-    "Many smaller fixes to editing, recurring items and messages",
     "Search opens the exact record, and deleting asks first"
   ]
 }

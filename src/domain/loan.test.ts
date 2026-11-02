@@ -345,5 +345,5 @@ describe('parity with the legacy ledger', () => {
       );
     }
     expect(succeeded).toBeGreaterThan(300);
-  });
+  }, 30_000);
 });

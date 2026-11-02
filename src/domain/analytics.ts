@@ -401,7 +401,11 @@ export function backupStatus(data: TrackerData, today: string, syncedOn: string 
 
 /** Tells the destination page which review to open. */
 export type AttentionTarget =
-  { review: string } | { panel: 'data' | 'family' } | { confirm: true } | { commitments: true };
+  | { review: string }
+  | { panel: 'data' | 'family' }
+  | { confirm: true }
+  | { commitments: true }
+  | { open: string };
 
 export interface AttentionItem {
   label: string;
@@ -470,6 +474,19 @@ export function attentionItems(
       label: 'Month-end review is tomorrow',
       path: '/cash-flow',
       state: { commitments: true },
+    });
+  }
+  // Asked for from the 1st, and stays until this month's value is in.
+  const pmsOutOfDate = view.holdings.filter(isPms).some((holding) => {
+    if (holding.date.slice(0, 7) >= current) return false;
+    const valuation = latestValuation(holding.id, view.valuations, today);
+    return valuation?.date.slice(0, 7) !== current;
+  });
+  if (pmsOutOfDate) {
+    items.push({
+      label: `Update ${PMS_TYPE} current value`,
+      path: '/investments',
+      state: { open: PMS_TYPE },
     });
   }
   const backup = backupStatus(household, today, syncedOn);
