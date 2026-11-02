@@ -6,29 +6,31 @@ Last updated 2026-11-01. The app is live at https://finance-trackerp.web.app. Th
 
 All pages from the older app exist and follow its layouts.
 
-| Area | State |
-|---|---|
-| Dashboard | Net worth, expense snapshot, monthly overview, income vs expenses, what changed, portfolio, debt summary, attention bar |
-| Income & Expense | Month picker, totals, recurring commitments, add forms, history with edit and delete, monthly balances |
-| Investment | Portfolio value, allocation, PMS, category cards, retirement accounts, gratuity, valuations, contributions |
-| Debts | Loan table, add and edit, payments, part payments, rate changes, top-ups, revised EMIs, daily statements |
-| Analytics & Reports | Analytics, Growth Projection and Date range reports tabs |
-| Settings | App info, account, family access, appearance, custom values, data and backup, app and updates |
-| Calculations | Loans, recurring, XIRR, gratuity and projections match legacy in seeded parity tests |
-| Search | All records, following the selected family profile |
-| Reviews | Month review, statement checks, record freshness and the attention list |
-| Planning | Goal planner and planned changes |
-| Data layer | Firestore repository tested on the emulator with the real rules |
-| Security rules | Written for all collections and tested on the emulator |
-| Change log | Saved changes with who made them, and undo that refuses to overwrite later edits |
-| Family | Invite, change access and remove members. Names live in Family access, and dropdowns hide with one member |
-| Forms | Old fields, lists and + Add new… options, including tenure-based EMI |
-| Exports | CSV, print, and generated PDFs for reports and loan history |
-| Onboarding | Guided setup and an app tour |
-| Themes | All eight colour themes from the older app, in light and dark, contrast-tested |
-| Retirement detail | Interest credits and EPS history |
-| Phone layouts | Title-only headers, full-screen entry forms, and Investments and Retirement tabs |
-| PWA | Installable, app shell works offline, check for updates, updates wait for acceptance, security policy applied |
+| Area                | State                                                                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Dashboard           | Net worth, expense snapshot, monthly overview, income vs expenses, what changed, portfolio, debt summary, attention bar |
+| Income & Expense    | Month picker, totals, recurring commitments, add forms, history with edit and delete, monthly balances                  |
+| Investment          | Portfolio value, allocation, PMS, category cards, retirement accounts, gratuity, valuations, contributions              |
+| Debts               | Loan table, add and edit, payments, part payments, rate changes, top-ups, revised EMIs, daily statements                |
+| Analytics & Reports | Analytics, Growth Projection and Date range reports tabs                                                                |
+| Settings            | App info, account, family access, appearance, custom values, data and backup, app and updates                           |
+| Calculations        | Loans, recurring, XIRR, gratuity and projections match legacy in seeded parity tests                                    |
+| Search              | All records, following the selected family profile                                                                      |
+| Reviews             | Month review, statement checks, record freshness and the attention list                                                 |
+| Planning            | Goal planner and planned changes                                                                                        |
+| Data layer          | Firestore repository tested on the emulator with the real rules                                                         |
+| Security rules      | Written for all collections and tested on the emulator                                                                  |
+| Change log          | Saved changes with who made them, and undo that refuses to overwrite later edits                                        |
+| Family              | Invite, change access and remove members. Names live in Family access, and dropdowns hide with one member               |
+| Forms               | Old fields, lists and + Add new… options, including tenure-based EMI                                                    |
+| Exports             | CSV, print, and generated PDFs for reports and loan history                                                             |
+| Onboarding          | Guided setup and an app tour                                                                                            |
+| Themes              | All eight colour themes from the older app, in light and dark, contrast-tested                                          |
+| Retirement detail   | Interest credits and EPS history                                                                                        |
+| Phone layouts       | Title-only headers, full-screen entry forms, and Investments and Retirement tabs                                        |
+| PWA                 | Installable, app shell works offline, check for updates, updates wait for acceptance, security policy applied           |
+
+- Privacy page at `/privacy`, open without signing in and linked from sign-in and Settings. Its statements must stay true, so update it when what's stored or visible changes.
 
 ## Verified on the test project
 

@@ -10,7 +10,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import release from '../../release.json';
 import { syncedRecently } from '../../domain/analytics';
 import { createBackup, parseBackup, restoreWrites } from '../../domain/backup';
@@ -906,6 +906,15 @@ function AppUpdates() {
       </div>
       <Reminders />
       <ErrorReports />
+      <div className={ui.metric}>
+        <strong>Privacy</strong>
+        <p className={ui.caption}>What is stored, and what nobody else can read.</p>
+        <div className={ui.actions}>
+          <Link className={ui.quiet} to="/privacy">
+            Read privacy page
+          </Link>
+        </div>
+      </div>
       <details className={ui.fold}>
         <summary>In this version</summary>
         <ReleaseNotes notes={release.notes} title={`Version ${VERSION}, ${release.released}`} />

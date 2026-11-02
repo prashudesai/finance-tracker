@@ -4,6 +4,8 @@ import { createMemoryRepository } from './data/memoryRepository';
 import { previewData } from './data/previewData';
 import { defaultSettings, TRACKER_SETTINGS_ID, type Holding, type Loan } from './schema/records';
 import { TrendChart } from './features/dashboard/TrendChart';
+import { App } from './App';
+import { SignIn } from './features/auth/SignIn';
 import { Shell, type Account } from './Shell';
 import { useTracker } from './store/tracker';
 import { formatMonth, localDate } from './ui/format';
@@ -1425,5 +1427,26 @@ describe('a saved device asked about a new one', () => {
     const security = setUp(false);
     fireEvent.click(await screen.findByRole('button', { name: 'Deny', hidden: true }));
     await waitFor(() => expect(security.denyDevice).toHaveBeenCalledWith(request));
+  });
+});
+
+describe('privacy page', () => {
+  afterEach(() => window.history.pushState({}, '', '/'));
+
+  test('opens without signing in', async () => {
+    window.history.pushState({}, '', '/privacy');
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: 'Your privacy' })).toBeDefined();
+    expect(screen.getByText(/cannot be reset for you/)).toBeDefined();
+  });
+
+  test('is linked from the sign-in screen', () => {
+    render(
+      <MemoryRouter>
+        <SignIn onSignIn={() => undefined} />
+      </MemoryRouter>,
+    );
+    const link = screen.getByRole('link', { name: 'Read how your data is handled.' });
+    expect(link.getAttribute('href')).toBe('/privacy');
   });
 });

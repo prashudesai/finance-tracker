@@ -1,10 +1,11 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { BrowserRouter } from 'react-router';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { plainError } from './data/errors';
 import type { TrackerRepository } from './data/repository';
 import { rememberMembership } from './data/membershipMemory';
 import type { VaultAccess, VaultGate } from './data/vault';
 import { SignIn } from './features/auth/SignIn';
+import { PrivacyPage } from './features/privacy/PrivacyPage';
 import { installErrorReporting } from './ui/errorSink';
 import { LoadingScreen } from './ui/Skeleton';
 import { VaultScreen, WaitingForApproval } from './features/vault/VaultScreen';
@@ -183,13 +184,21 @@ const PreviewApp =
 export function App() {
   return (
     <BrowserRouter>
-      {PreviewApp ? (
-        <Suspense fallback={<LoadingScreen />}>
-          <PreviewApp />
-        </Suspense>
-      ) : (
-        <SignedInApp />
-      )}
+      <Routes>
+        <Route element={<PrivacyPage />} path="/privacy" />
+        <Route
+          element={
+            PreviewApp ? (
+              <Suspense fallback={<LoadingScreen />}>
+                <PreviewApp />
+              </Suspense>
+            ) : (
+              <SignedInApp />
+            )
+          }
+          path="*"
+        />
+      </Routes>
     </BrowserRouter>
   );
 }

@@ -89,6 +89,14 @@
   font-size: 0.85rem;
 }
 
+.private svg {
+  flex: none;
+}
+
+.private a {
+  color: #d4f5ea;
+}
+
 .error {
   margin: 0 0 12px;
   color: #ffb4ab;

@@ -1,4 +1,5 @@
 import { Lock, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router';
 import logo from '../../assets/logo.png';
 import styles from './SignIn.module.css';
 
@@ -46,7 +47,11 @@ export function SignIn({ onSignIn, error }: { onSignIn: () => void; error?: stri
             <GoogleMark /> Continue with Google
           </button>
           <p className={styles.private}>
-            <ShieldCheck size={16} /> Your tracker is private to your family
+            <ShieldCheck size={16} />
+            <span>
+              Your records are encrypted on your device.{' '}
+              <Link to="/privacy">Read how your data is handled.</Link>
+            </span>
           </p>
         </div>
       </div>
