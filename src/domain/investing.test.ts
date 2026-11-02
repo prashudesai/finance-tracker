@@ -1,7 +1,13 @@
 import { defaultSettings, type GratuityAccount, type Holding } from '../schema/records';
 import { addMonths, isValidDate } from './calendar';
 import { estimateGratuity } from './gratuity';
-import { dueContributions, epsLedger, holdingPosition } from './holdings';
+import {
+  dueContributions,
+  epsLedger,
+  holdingContributions,
+  holdingPosition,
+  latestValuation,
+} from './holdings';
 import { loadLegacyFunctions } from './legacy.testutil';
 import { gratuityAsset, projectionAssets, runProjection, type ProjectionAsset } from './projection';
 import { calculateXirr } from './returns';
@@ -312,5 +318,46 @@ describe('parity with the legacy formulas', () => {
     expect(funds?.returns.base).toBe(13);
     expect(funds?.stepUpPercent).toBe(5);
     expect(assets.find((row) => row.name === 'Fixed Deposits')?.returns.stress).toBe(7);
+  });
+});
+
+describe('rows by holding', () => {
+  const row = (id: string, holdingId: string, date: string, skipped = false) => ({
+    id,
+    holdingId,
+    date,
+    amount: 100,
+    automatic: false,
+    skipped,
+  });
+
+  test('each holding sees only its own active rows, oldest first', () => {
+    const rows = [
+      row('a', 'one', '2026-03-01'),
+      row('b', 'two', '2026-01-01'),
+      row('c', 'one', '2026-02-01'),
+      row('d', 'one', '2026-01-01', true),
+    ];
+    expect(holdingContributions('one', rows).map((item) => item.id)).toEqual(['c', 'a']);
+    expect(holdingContributions('two', rows).map((item) => item.id)).toEqual(['b']);
+    expect(holdingContributions('three', rows)).toEqual([]);
+  });
+
+  test('a caller reversing its result changes nothing, and a new list is read afresh', () => {
+    const rows = [row('a', 'one', '2026-01-01'), row('b', 'one', '2026-02-01')];
+    holdingContributions('one', rows).reverse();
+    expect(holdingContributions('one', rows).map((item) => item.id)).toEqual(['a', 'b']);
+    const next = [...rows, row('c', 'one', '2026-03-01')];
+    expect(holdingContributions('one', next)).toHaveLength(3);
+  });
+
+  test('the latest valuation ignores other holdings', () => {
+    const valuations = [
+      { id: 'a', holdingId: 'one', date: '2026-01-01', value: 1 },
+      { id: 'b', holdingId: 'two', date: '2026-05-01', value: 2 },
+      { id: 'c', holdingId: 'one', date: '2026-03-01', value: 3 },
+    ];
+    expect(latestValuation('one', valuations)?.value).toBe(3);
+    expect(latestValuation('three', valuations)).toBeNull();
   });
 });
