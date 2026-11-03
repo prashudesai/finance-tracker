@@ -239,7 +239,7 @@ export function ExpenseForm({ initial, onDone }: { initial?: Expense; onDone?: (
     <form className={ui.form} onSubmit={(event) => void handleSubmit(save)(event)}>
       <MemberField
         label="Family Member (Optional)"
-        placeholder="-- Household / unspecified --"
+        placeholder="-- Household --"
         {...register('member')}
       />
       <Field label="Category" error={errors.category?.message}>

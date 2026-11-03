@@ -1171,10 +1171,16 @@ details.fold[open] > summary {
   border-color: #e09a6a;
 }
 
+/* Shown only on phones, where a table drops its secondary columns. */
+.showOnPhone {
+  display: none;
+}
+
 .themeGrid {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  /* Two across on a phone, so the list stays short. */
+  grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
 }
 
 .themeChoice {
@@ -1485,6 +1491,10 @@ details.fold[open] > summary {
 
   .hideOnPhone {
     display: none;
+  }
+
+  .showOnPhone {
+    display: block;
   }
 
   /* Every figure stays readable on a phone, each with its own label. */

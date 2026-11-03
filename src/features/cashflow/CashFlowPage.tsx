@@ -27,7 +27,12 @@ const INCOME_COLUMNS: Column<Income>[] = [
   { header: 'Member', secondary: true, cell: (row) => row.member, sortValue: (row) => row.member },
   {
     header: 'Source',
-    cell: (row) => <CategoryLabel income name={row.source} />,
+    cell: (row) => (
+      <>
+        <CategoryLabel income name={row.source} />
+        <span className={`${ui.rowDetail} ${ui.showOnPhone}`}>{row.member}</span>
+      </>
+    ),
     sortValue: (row) => row.source,
   },
   {

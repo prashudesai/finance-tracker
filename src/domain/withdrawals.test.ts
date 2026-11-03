@@ -141,6 +141,33 @@ describe('withdrawals', () => {
     expect(groupXirr([fund], taken, '2026-01-15')).toBeCloseTo(withIt, 6);
   });
 
+  test('a PF withdrawal counts the interest credited before it', () => {
+    const pf: Holding = {
+      ...fund,
+      kind: 'pf',
+      type: 'PF',
+      openingInvested: 100_000,
+      openingValue: 100_000,
+    };
+    const book: HoldingData = {
+      contributions: [],
+      valuations: [valuation('2025-06-01', 54_000)],
+      withdrawals: [withdrawal('2025-06-01', 54_000)],
+      interestCredits: [
+        {
+          id: 'i',
+          holdingId: 'h',
+          financialYearStartYear: 2024,
+          creditedDate: '2025-03-31',
+          amount: 8_000,
+        },
+      ],
+    };
+    // Worth 1,08,000 before, so half the cost goes out: 50,000, and 4,000 of interest.
+    const position = holdingPosition(pf, book, '2025-07-01');
+    expect(position).toMatchObject({ current: 54_000, invested: 50_000, booked: 4_000 });
+  });
+
   test('booked profit adds up by financial year', () => {
     const book = data({
       valuations: [

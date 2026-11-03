@@ -37,11 +37,16 @@ npm run test:rules
 ```
 
 ```bash
+npm run test:e2e
+```
+
+```bash
 npm run build
 ```
 
 - `dev:preview` runs the app on sample in-memory data with no Firebase or sign-in, on port 5173. The sign-in screen is at `/signin`, and the encryption screens at `/setup`, `/unlock` and `/waiting`.
 - `test:rules` covers the security rules and Firestore repository on the emulator, and needs Java 17 or later.
+- `test:e2e` runs the Playwright tests in `e2e/` on the sample-data preview, at phone and desktop widths. It starts `dev:preview` if it isn't running, and needs Chromium from `npx playwright install chromium`.
 
 Before calling work done, run typecheck, lint, tests and build. Run `test:rules` too if `firestore.rules` or the data layer changed. For UI changes, also check the running app at phone and desktop widths.
 

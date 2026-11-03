@@ -68,7 +68,6 @@ function HoldingCard({ row }: { row: PositionRow }) {
   const [action, setAction] = useState<Action | null>(null);
   const { holding, position } = row;
   const close = () => setAction(null);
-  const canWithdraw = holding.kind === 'investment';
   const hasWithdrawals = data.withdrawals.some((item) => item.holdingId === holding.id);
   const closed = hasWithdrawals && position.current === 0;
 
@@ -136,18 +135,16 @@ function HoldingCard({ row }: { row: PositionRow }) {
             <Plus size={14} />
             <span>Add</span>
           </button>
-          {canWithdraw ? (
-            <button
-              aria-label={`Withdraw from ${holding.name}`}
-              className={ui.labelledIcon}
-              onClick={() => setAction('withdraw')}
-              type="button"
-              data-tip="Withdraw or book profit"
-            >
-              <ArrowDownToLine size={14} />
-              <span>Withdraw</span>
-            </button>
-          ) : null}
+          <button
+            aria-label={`Withdraw from ${holding.name}`}
+            className={ui.labelledIcon}
+            onClick={() => setAction('withdraw')}
+            type="button"
+            data-tip="Withdraw or book profit"
+          >
+            <ArrowDownToLine size={14} />
+            <span>Withdraw</span>
+          </button>
           <button
             aria-label={`Contribution history of ${holding.name}`}
             className={ui.labelledIcon}

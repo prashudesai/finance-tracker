@@ -21,6 +21,13 @@ import { DeviceApprovalPrompt } from './ui/DeviceApprovalPrompt';
 import { GuidedTour } from './ui/GuidedTour';
 import { PullToRefresh } from './ui/PullToRefresh';
 import { PageSkeleton } from './ui/Skeleton';
+import {
+  CLOUD_STUCK_LOADING,
+  CLOUD_STUCK_SAVING,
+  LOAD_WAIT_MS,
+  SAVE_WAIT_MS,
+  useCloudStuck,
+} from './ui/useCloudStuck';
 import { Toast } from './ui/Toast';
 import { Tooltip } from './ui/Tooltip';
 import { PageEndTools } from './ui/SearchDialog';
@@ -133,6 +140,9 @@ export function Shell({
   const connect = useTracker((state) => state.connect);
   const loaded = useTracker((state) => state.loaded);
   const error = useTracker((state) => state.error);
+  const pendingSaves = useTracker((state) => state.pendingSaves);
+  const savesStuck = useCloudStuck(pendingSaves > 0, SAVE_WAIT_MS);
+  const loadStuck = useCloudStuck(!loaded, LOAD_WAIT_MS);
   const invalidRecords = useTracker((state) => state.invalidRecords);
   const runSchedules = useTracker((state) => state.runSchedules);
   const setAccessRequests = useTracker((state) => state.setAccessRequests);
@@ -246,6 +256,11 @@ export function Shell({
         {error ? (
           <p className={ui.notice} role="alert">
             {error}
+          </p>
+        ) : null}
+        {savesStuck || loadStuck ? (
+          <p className={ui.notice} role="status">
+            {loadStuck ? CLOUD_STUCK_LOADING : CLOUD_STUCK_SAVING}
           </p>
         ) : null}
         {invalidRecords > 0 ? (

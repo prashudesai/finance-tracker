@@ -42,7 +42,7 @@ Checked by hand on https://finance-trackerp.web.app, with real accounts: Google 
 
 - Saved device approval between two real devices, including with Face ID.
 - Removing a family member, changing a member's access, and deleting an account, on real Firebase.
-- There are no Playwright tests in the repo yet. Main flows and PWA behaviour were checked with throwaway browser scripts.
+- Playwright tests in `e2e/` cover every page fitting the screen, adding income, a withdrawal, quick setup and the privacy animation, at phone and desktop widths, on sample data. PWA behaviour was checked with throwaway browser scripts.
 - Styled dropdown menus need a recent Chromium browser. Others show the native list.
 - Screen readers need checking on real devices.
 
@@ -55,7 +55,7 @@ A scripted comparison of the visible text on every old page, at phone and deskto
 ### Platform
 
 - [ ] Bundle budgets, and more code splitting (the Firebase chunk is about 187 KB gzipped)
-- [ ] Playwright tests at phone and desktop widths
+- [x] Playwright tests at phone and desktop widths
 
 ## Decisions
 
@@ -75,7 +75,7 @@ A scripted comparison of the visible text on every old page, at phone and deskto
 - Holdings derive invested and current values from contributions and valuations, instead of keeping running totals.
 - A holding's value on a past date uses the newest valuation on or before that date. The first version of the rewrite always used the newest valuation, which made PMS gain change and the PMS trend wrong. This matches the older app's snapshots. A future-dated valuation doesn't count until its date.
 - A contribution dated the same day as a valuation, or earlier, is treated as already included in that valuation.
-- Investments can record withdrawals, which the older app didn't have. Each is saved with a valuation of what's left on the same date. The invested amount goes down by average cost, the same share as the value taken out, and the rest of what was received is booked profit, shown on the holding and by financial year. Returns count the money received. PF, PPF and NPS have no withdrawals yet.
+- Investments can record withdrawals, which the older app didn't have. Each is saved with a valuation of what's left on the same date. The invested amount goes down by average cost, the same share as the value taken out, and the rest of what was received is booked profit, shown on the holding and by financial year. Returns count the money received. PF, PPF and NPS work the same way, and a PF withdrawal leaves the EPS balance as it is.
 - Dated restore points are replaced by the change log, which undoes single changes. A whole-tracker rollback uses a backup.
 - Archiving was removed, so deleting is the only way to retire an account.
 - Records are end-to-end encrypted, as a new design. See [encryption.md](encryption.md).

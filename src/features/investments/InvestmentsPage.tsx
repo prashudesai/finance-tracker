@@ -437,12 +437,12 @@ export function InvestmentsPage() {
         </section>
       ) : null}
 
-      {showInvestments && booked.length > 0 ? (
+      {booked.length > 0 ? (
         <section aria-label="Booked profit" className={ui.card}>
           <div>
             <h2 style={{ fontSize: '1.2rem' }}>Booked profit</h2>
             <div className={ui.caption}>
-              Profit taken out by withdrawals, by financial year, at average cost
+              Profit taken out by withdrawals from any account, by financial year, at average cost
             </div>
           </div>
           <ul className={ui.list}>

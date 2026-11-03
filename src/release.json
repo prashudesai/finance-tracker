@@ -1,12 +1,12 @@
 {
-  "version": "1.9.0",
+  "version": "1.9.1",
   "released": "2026-11-03",
   "notes": [
+    "Withdraw from PF, PPF and NPS too",
+    "A clear message when the app reaches its free daily limit",
+    "Income history on phones shows who each income belongs to",
+    "Tidier family access and colour themes on phones",
     "The privacy page shows how your data is handled in a short animation",
-    "Quick setup opens each form in place, and lets you choose how the app looks",
-    "Withdraw from an investment and see the profit you booked, by year",
-    "Send feedback or report a problem from App info in Settings",
-    "Older loans fill in what was repaid since the first EMI, with the working shown",
-    "Added a public features page to share with friends"
+    "Quick setup opens each form in place, and lets you choose how the app looks"
   ]
 }

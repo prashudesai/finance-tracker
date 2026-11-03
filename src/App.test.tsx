@@ -1255,7 +1255,8 @@ test('a single family member needs no dropdown, and records use them', async () 
     target: { value: '5000' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Add income' }));
-  expect(await screen.findByText('Sam')).toBeDefined();
+  // In the Member column, and again under the source for phones.
+  expect((await screen.findAllByText('Sam')).length).toBe(2);
 });
 
 test('two family members bring the dropdowns back', async () => {

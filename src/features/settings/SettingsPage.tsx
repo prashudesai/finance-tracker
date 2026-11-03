@@ -420,40 +420,45 @@ function FamilyMembers({ account, invites }: { account: Account; invites: number
             ) : (
               <ul className={ui.list}>
                 {members.map((member) => (
-                  <li className={ui.row} key={member.email}>
-                    <div className={ui.rowMain}>
+                  <li className={ui.row} key={member.email} style={{ flexWrap: 'wrap' }}>
+                    <div className={ui.rowMain} style={{ flexBasis: '100%' }}>
                       <div className={ui.rowTitle}>{member.email}</div>
                       <div className={ui.rowDetail}>
                         {member.accepted ? 'Active' : 'Invite pending'}
                       </div>
                     </div>
-                    <select
-                      aria-label={`Access for ${member.email}`}
-                      className={ui.fieldSelect}
-                      onChange={(event) =>
-                        void run(
-                          family.setRole(member.email, event.target.value as FamilyMember['role']),
-                          `Updated ${member.email}.`,
-                        )
-                      }
-                      value={member.role}
-                    >
-                      <option value="viewer">Viewer</option>
-                      <option value="editor">Editor</option>
-                    </select>
-                    <button
-                      aria-label={`Remove ${member.email}`}
-                      className={ui.quiet}
-                      onClick={() => {
-                        if (window.confirm(`Remove access for ${member.email}?`)) {
-                          setStatus('Removing access and re-encrypting your records…');
-                          void run(family.remove(member.email), `Removed ${member.email}.`);
+                    <div className={ui.actions}>
+                      <select
+                        aria-label={`Access for ${member.email}`}
+                        className={ui.fieldSelect}
+                        onChange={(event) =>
+                          void run(
+                            family.setRole(
+                              member.email,
+                              event.target.value as FamilyMember['role'],
+                            ),
+                            `Updated ${member.email}.`,
+                          )
                         }
-                      }}
-                      type="button"
-                    >
-                      Remove
-                    </button>
+                        value={member.role}
+                      >
+                        <option value="viewer">Viewer</option>
+                        <option value="editor">Editor</option>
+                      </select>
+                      <button
+                        aria-label={`Remove ${member.email}`}
+                        className={ui.quiet}
+                        onClick={() => {
+                          if (window.confirm(`Remove access for ${member.email}?`)) {
+                            setStatus('Removing access and re-encrypting your records…');
+                            void run(family.remove(member.email), `Removed ${member.email}.`);
+                          }
+                        }}
+                        type="button"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
