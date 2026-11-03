@@ -51,17 +51,18 @@ export function TryEncryption() {
         </span>
         <strong>On your phone</strong>
       </div>
-      <p className={styles.plain}>{text || ' '}</p>
+      <div className={styles.plain}>{text || ' '}</div>
       <div className={styles.row}>
         <span className={styles.badge}>
           <Lock aria-hidden="true" size={16} />
         </span>
         <strong>What Google and the app&apos;s owner see</strong>
       </div>
-      <p className={styles.locked} key={shown.locked}>
+      {/* Blocks, not paragraphs, so a page's paragraph styles can't dim them. */}
+      <div className={styles.locked} key={shown.locked}>
         <span className={ui.visuallyHidden}>Scrambled: </span>
         <span aria-hidden="true">{shown.locked || '…'}</span>
-      </p>
+      </div>
       <p className={styles.note}>
         Real encryption, done just now on this device. Change one letter and it all changes.
       </p>
@@ -71,7 +72,7 @@ export function TryEncryption() {
         </span>
         <strong>What your approved family sees</strong>
       </div>
-      <p className={styles.plain}>{shown.opened || text || ' '}</p>
+      <div className={styles.plain}>{shown.opened || text || ' '}</div>
     </div>
   );
 }
