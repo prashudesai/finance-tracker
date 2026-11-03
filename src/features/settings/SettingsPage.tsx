@@ -1036,6 +1036,10 @@ function AppUpdates() {
         {result?.next ? (
           <ReleaseNotes notes={result.next.notes} title={`What's new in ${result.next.version}`} />
         ) : null}
+        <details className={ui.fold}>
+          <summary>In this version</summary>
+          <ReleaseNotes notes={release.notes} title={`Version ${VERSION}, ${release.released}`} />
+        </details>
       </div>
       <Reminders />
       <ErrorReports />
@@ -1048,10 +1052,6 @@ function AppUpdates() {
           </Link>
         </div>
       </div>
-      <details className={ui.fold}>
-        <summary>In this version</summary>
-        <ReleaseNotes notes={release.notes} title={`Version ${VERSION}, ${release.released}`} />
-      </details>
       <div className={ui.metric}>
         <strong>Install app</strong>
         <p className={ui.caption}>
