@@ -32,7 +32,7 @@ export function SignIn({ onSignIn, error }: { onSignIn: () => void; error?: stri
       <div className={styles.layout}>
         <div className={styles.brand}>
           <img alt="" className={styles.logo} height="96" src={logo} width="96" />
-          <h1>Personal Finance Tracker</h1>
+          <h1>Finance Tracker</h1>
           <p>A clearer view of your family’s financial future.</p>
         </div>
         <div className={styles.card}>

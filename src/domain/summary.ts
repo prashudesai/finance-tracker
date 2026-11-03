@@ -37,3 +37,32 @@ export function paidShare({ remaining, totalPrincipal }: LoanLedger) {
 
 export const remainingEmis = ({ remaining, emi, rate }: LoanLedger) =>
   estimateSchedule(remaining, emi, rate).count;
+
+/** Loan ids by state: still owing, or fully paid. A loan that can't be replayed is neither. */
+export function loanStates(data: Pick<TrackerData, 'loans' | 'expenses'>, today: string) {
+  const owing = new Set<string>();
+  const paid = new Set<string>();
+  for (const { id, ledger } of summarizeLoans(data, today)) {
+    if (!ledger) continue;
+    (ledger.remaining > 0 ? owing : paid).add(id);
+  }
+  return { owing, paid };
+}
+
+/** Loans that were owing before and are paid now: the ones just paid off. */
+export const newlyPaidOff = (owingBefore: Set<string>, paidNow: Set<string>) =>
+  [...owingBefore].filter((id) => paidNow.has(id));
+
+/** "Good morning, Sam", from the hour and the first word of a display name. */
+export function greeting(hour: number, name: string) {
+  const part =
+    hour < 5
+      ? 'Good evening'
+      : hour < 12
+        ? 'Good morning'
+        : hour < 17
+          ? 'Good afternoon'
+          : 'Good evening';
+  const first = name.trim().split(/\s+/)[0] ?? '';
+  return first && !first.includes('@') && first !== 'You' ? `${part}, ${first}` : part;
+}

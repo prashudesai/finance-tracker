@@ -478,6 +478,7 @@ test('an email shows the access choice and invites a name already listed', async
   });
   fireEvent.change(box.getByLabelText('Access'), { target: { value: 'editor' } });
   fireEvent.click(box.getByRole('button', { name: 'Add and invite' }));
-  await box.findByText(/Invited p@example.test/);
+  await box.findByText('Priya is invited.');
+  expect(box.getByRole('button', { name: /Share invite/ })).toBeDefined();
   expect(family.invite).toHaveBeenCalledWith('p@example.test', 'editor');
 });

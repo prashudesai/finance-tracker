@@ -4,12 +4,21 @@ import {
   Info,
   Palette,
   RefreshCw,
+  Share2,
   Smartphone,
   User,
   Users,
   type LucideIcon,
 } from 'lucide-react';
 import { addFamilyName } from '../../domain/options';
+import {
+  APP_URL,
+  appInvite,
+  familyInvite,
+  shareMessage,
+  shareStatus,
+  type ShareMessage,
+} from '../../ui/share';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import release from '../../release.json';
@@ -91,6 +100,7 @@ function FamilyNames({ account, onInvited }: { account: Account; onInvited: () =
   const [role, setRole] = useState<FamilyMember['role']>('viewer');
   const [status, setStatus] = useState('');
   const [sending, setSending] = useState(false);
+  const [invited, setInvited] = useState<{ name: string; email: string } | null>(null);
   const value = name.trim();
   const address = email.trim();
   const members = settings.familyMembers;
@@ -110,7 +120,8 @@ function FamilyNames({ account, onInvited }: { account: Account; onInvited: () =
         () => {
           addName();
           clear();
-          setStatus(`Invited ${address}. They accept when they next sign in.`);
+          setStatus('');
+          setInvited({ name: value, email: address });
           onInvited();
         },
         (error: unknown) => setStatus(failureText(error)),
@@ -202,11 +213,76 @@ function FamilyNames({ account, onInvited }: { account: Account; onInvited: () =
           </div>
         </form>
       ) : null}
+      {invited ? (
+        <div className={ui.notice} role="status">
+          <p style={{ margin: 0 }}>
+            <strong>{invited.name} is invited.</strong> Send them the link. They sign in with{' '}
+            {invited.email}, and you approve them from your phone.
+          </p>
+          <ShareButtons
+            message={familyInvite(invited.name, invited.email)}
+            onStatus={setStatus}
+            primary
+          />
+        </div>
+      ) : null}
       {status ? (
         <p className={ui.notice} role="status">
           {status}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/** For friends who'd like their own tracker, not a place in this family. */
+function ShareApp() {
+  const [status, setStatus] = useState('');
+  return (
+    <div>
+      <ShareButtons label="Share the app" message={appInvite} onStatus={setStatus} />
+      {status ? (
+        <p className={ui.caption} role="status">
+          {status}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Share through the phone's menu, or copy, with any outcome said plainly. */
+function ShareButtons({
+  message,
+  onStatus,
+  primary = false,
+  label = 'Share invite',
+}: {
+  message: ShareMessage;
+  onStatus: (status: string) => void;
+  primary?: boolean;
+  label?: string;
+}) {
+  return (
+    <div className={ui.actions} style={{ marginTop: 10 }}>
+      <button
+        className={primary ? ui.button : ui.quiet}
+        onClick={() => void shareMessage(message).then((result) => onStatus(shareStatus(result)))}
+        type="button"
+      >
+        <Share2 aria-hidden="true" size={16} /> {label}
+      </button>
+      <button
+        className={ui.quiet}
+        onClick={() =>
+          void navigator.clipboard.writeText(APP_URL).then(
+            () => onStatus('Link copied.'),
+            () => onStatus(`Copy this link: ${APP_URL}`),
+          )
+        }
+        type="button"
+      >
+        Copy link
+      </button>
     </div>
   );
 }
@@ -459,6 +535,20 @@ function FamilyMembers({ account, invites }: { account: Account; invites: number
                       >
                         Remove
                       </button>
+                      {member.accepted ? null : (
+                        <button
+                          aria-label={`Share invite with ${member.email}`}
+                          className={ui.quiet}
+                          onClick={() =>
+                            void shareMessage(familyInvite(null, member.email)).then((result) =>
+                              setStatus(shareStatus(result)),
+                            )
+                          }
+                          type="button"
+                        >
+                          <Share2 aria-hidden="true" size={16} /> Share invite
+                        </button>
+                      )}
                     </div>
                   </li>
                 ))}
@@ -494,7 +584,7 @@ const GUIDE = [
 
 const saveGuide = () =>
   downloadTablePdf({
-    title: 'Personal Finance Tracker guide',
+    title: 'Finance Tracker guide',
     subtitle: 'Features and calculations',
     columns: [
       { label: 'Topic', width: 55 },
@@ -1188,6 +1278,7 @@ export function SettingsPage({ account }: { account: Account }) {
               <Link className={ui.quiet} to="/features">
                 See all features
               </Link>
+              <ShareApp />
               {account.sendFeedback ? <SendFeedback send={account.sendFeedback} /> : null}
               <button
                 className={ui.quiet}

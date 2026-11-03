@@ -140,7 +140,12 @@ export const useTracker = create<TrackerState>((set, get) => ({
         ]
       : writes;
     if (!repository) return;
-    if (change) set({ toast: { message: change.summary, change } });
+    if (change) {
+      set({ toast: { message: change.summary, change } });
+      // Android phones buzz lightly on a save, twice on a delete. Others ignore it.
+      const removed = writes.some((write) => write.type === 'delete');
+      navigator.vibrate?.(removed ? [14, 50, 14] : 12);
+    }
     set((state) => ({ pendingSaves: state.pendingSaves + 1 }));
     repository
       .commit(logged)

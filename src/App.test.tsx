@@ -457,7 +457,7 @@ test('every page sets its own title, and offers a skip link', async () => {
   await screen.findByRole('heading', { level: 1 });
   expect(screen.getByRole('link', { name: 'Skip to content' })).toBeDefined();
   await waitFor(() => expect(document.title).toContain('Finance Tracker'));
-  await waitFor(() => expect(document.title).not.toBe('Personal Finance Tracker'));
+  await waitFor(() => expect(document.title).not.toBe('Finance Tracker'));
 });
 
 test('a save confirms itself, and Undo takes it back', async () => {
@@ -905,6 +905,29 @@ test('the install card shows after setup, and Not now sets it aside', async () =
   fireEvent.click(within(card).getByRole('button', { name: 'Not now', hidden: true }));
   await waitFor(() => expect(screen.queryByRole('region', { name: 'Install the app' })).toBeNull());
   localStorage.removeItem('installDismissed');
+});
+
+test('the eye button hides every amount, and shows them again', async () => {
+  localStorage.removeItem('hideAmounts');
+  renderApp('/', { holdings: [fund], settings: [{ ...defaultSettings(), onboardingDone: true }] });
+  expect((await screen.findAllByText('₹1,50,000')).length).toBeGreaterThan(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Hide amounts' }));
+  await waitFor(() => expect(screen.queryAllByText('₹1,50,000')).toHaveLength(0));
+  expect(screen.getAllByText('₹ ••••').length).toBeGreaterThan(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Show amounts' }));
+  expect((await screen.findAllByText('₹1,50,000')).length).toBeGreaterThan(0);
+  localStorage.removeItem('hideAmounts');
+});
+
+test('the Add expense shortcut opens the expense form', async () => {
+  renderApp('/cash-flow?add=expense');
+  expect(await screen.findByRole('dialog', { name: 'Add Expense', hidden: true })).toBeDefined();
+});
+
+test('App info offers Share the app', async () => {
+  renderApp('/settings');
+  fireEvent.click(await screen.findByRole('button', { name: /App info/ }));
+  expect(await screen.findByRole('button', { name: /Share the app/, hidden: true })).toBeDefined();
 });
 
 test('a dashboard portfolio row opens that category', async () => {
@@ -1532,7 +1555,7 @@ describe('a saved device asked about a new one', () => {
 test('the features page opens without signing in', async () => {
   window.history.pushState({}, '', '/features');
   render(<App />);
-  expect(await screen.findByRole('heading', { name: 'Personal Finance Tracker' })).toBeDefined();
+  expect(await screen.findByRole('heading', { name: 'Finance Tracker' })).toBeDefined();
   expect(screen.getByRole('link', { name: 'Open the app' }).getAttribute('href')).toBe('/');
   window.history.pushState({}, '', '/');
 });

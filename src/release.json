@@ -1,12 +1,12 @@
 {
-  "version": "1.9.7",
+  "version": "1.10.0",
   "released": "2026-11-04",
   "notes": [
-    "Your phone's top and bottom bars now match the theme you choose",
-    "A step-by-step animated guide to install the app on iPhone, Android and computers",
-    "Phones get a gentle reminder to install, and Settings has How to install",
-    "The privacy page has a contact email for questions",
-    "In this version now sits with the version number in Settings",
-    "The privacy page's Try it yourself box is easier to read"
+    "Hide every amount with the eye in the header",
+    "Share a family invite or the app on WhatsApp in one tap",
+    "Shared links show a preview, and Android installs show screenshots",
+    "Long-press the app icon on Android for quick shortcuts",
+    "A greeting, smooth page changes, and a celebration when a loan is paid off",
+    "A launch screen on iPhone, and a themed icon on Android"
   ]
 }

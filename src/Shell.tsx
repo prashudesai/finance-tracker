@@ -6,10 +6,12 @@ import {
   Moon,
   SlidersHorizontal,
   Sun,
+  Eye,
+  EyeOff,
   Wallet,
 } from 'lucide-react';
-import { lazy, Suspense, useEffect } from 'react';
-import { NavLink, Route, Routes, useLocation } from 'react-router';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router';
 import { Dashboard } from './features/dashboard/Dashboard';
 import type { TrackerRepository } from './data/repository';
 import { useSettings, useTracker } from './store/tracker';
@@ -21,6 +23,9 @@ import { DeviceApprovalPrompt } from './ui/DeviceApprovalPrompt';
 import { GuidedTour } from './ui/GuidedTour';
 import { PullToRefresh } from './ui/PullToRefresh';
 import { InstallReminder } from './features/install/InstallPrompts';
+import { useAmounts } from './ui/amounts';
+import { Celebration } from './ui/Celebration';
+import { loanStates, newlyPaidOff } from './domain/summary';
 import { PageSkeleton } from './ui/Skeleton';
 import {
   CLOUD_STUCK_LOADING,
@@ -142,6 +147,25 @@ export function Shell({
   const loaded = useTracker((state) => state.loaded);
   const error = useTracker((state) => state.error);
   const pendingSaves = useTracker((state) => state.pendingSaves);
+  const amountsHidden = useAmounts((state) => state.hidden);
+  const loans = useTracker((state) => state.data.loans);
+  const expenses = useTracker((state) => state.data.expenses);
+  const states = useMemo(
+    () => (loaded ? loanStates({ loans, expenses }, localDate()) : null),
+    [expenses, loaded, loans],
+  );
+  const owingBefore = useRef<Set<string> | null>(null);
+  const [celebration, setCelebration] = useState<string | null>(null);
+  // Only a loan seen owing in this visit counts, so opening the app never celebrates old news.
+  useEffect(() => {
+    if (!states) return;
+    const done = owingBefore.current ? newlyPaidOff(owingBefore.current, states.paid) : [];
+    const loan = loans.find((row) => row.id === done[0]);
+    if (loan) setCelebration(`${loan.type} is paid off!`);
+    owingBefore.current = states.owing;
+  }, [loans, states]);
+  const endCelebration = useCallback(() => setCelebration(null), []);
+  const toggleAmounts = useAmounts((state) => state.toggle);
   const savesStuck = useCloudStuck(pendingSaves > 0, SAVE_WAIT_MS);
   const loadStuck = useCloudStuck(!loaded, LOAD_WAIT_MS);
   const invalidRecords = useTracker((state) => state.invalidRecords);
@@ -166,14 +190,23 @@ export function Shell({
   }, [loaded, runSchedules]);
 
   // A new title is how screen readers know the page changed.
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const navigate = useNavigate();
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       const heading = document.querySelector('main h1')?.textContent;
-      document.title = heading ? `${heading} · Finance Tracker` : 'Personal Finance Tracker';
+      document.title = heading ? `${heading} · Finance Tracker` : 'Finance Tracker';
     });
     return () => cancelAnimationFrame(frame);
   }, [pathname, loaded]);
+
+  // The app icon's long-press shortcuts open a form, the same way the dashboard's + does.
+  useEffect(() => {
+    const add = new URLSearchParams(search).get('add');
+    if (loaded && (add === 'income' || add === 'expense')) {
+      void navigate(pathname, { replace: true, state: { add } });
+    }
+  }, [loaded, navigate, pathname, search]);
 
   const family = account?.family;
   useEffect(() => {
@@ -219,6 +252,7 @@ export function Shell({
               end={to === '/'}
               key={to}
               to={to}
+              viewTransition
             >
               <Icon aria-hidden="true" size={20} />
               <span className={styles.fullLabel}>{label}</span>
@@ -227,6 +261,16 @@ export function Shell({
           ))}
         </nav>
         <div className={styles.tools}>
+          <button
+            aria-label={amountsHidden ? 'Show amounts' : 'Hide amounts'}
+            aria-pressed={amountsHidden}
+            className={ui.iconButton}
+            onClick={toggleAmounts}
+            type="button"
+            data-tip={amountsHidden ? 'Show amounts' : 'Hide amounts'}
+          >
+            {amountsHidden ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
           <button
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             className={ui.iconButton}
@@ -240,6 +284,7 @@ export function Shell({
             aria-label="Settings"
             className={`${ui.iconButton} ${styles.mobileOnly}`}
             to="/settings"
+            viewTransition
           >
             <SlidersHorizontal size={18} />
           </NavLink>
@@ -271,9 +316,13 @@ export function Shell({
           </p>
         ) : null}
         {loaded ? (
-          <Suspense fallback={<PageSkeleton label="Loading…" />}>
+          // Redrawn whole when amounts are hidden or shown, so no figure keeps its old text.
+          <Suspense
+            fallback={<PageSkeleton label="Loading…" />}
+            key={amountsHidden ? 'hidden' : 'shown'}
+          >
             <Routes>
-              <Route element={<Dashboard />} path="/" />
+              <Route element={<Dashboard name={account.name} />} path="/" />
               <Route element={<CashFlowPage />} path="/cash-flow" />
               <Route element={<InvestmentsPage />} path="/investments" />
               <Route element={<DebtsPage />} path="/debts" />
@@ -291,6 +340,7 @@ export function Shell({
       </main>
       {loaded ? <PageEndTools /> : null}
       <Toast />
+      {celebration ? <Celebration message={celebration} onDone={endCelebration} /> : null}
       {family ? <ApprovalPrompt family={family} /> : null}
       {account.security ? <DeviceApprovalPrompt security={account.security} /> : null}
       <Tooltip />

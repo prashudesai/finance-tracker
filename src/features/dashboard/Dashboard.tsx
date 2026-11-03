@@ -24,7 +24,7 @@ import {
 import { financialYearRange, financialYearStart, previousMonth } from '../../domain/calendar';
 import { monthlyTrend } from '../../domain/cashflow';
 import { pendingOccurrences } from '../../domain/recurring';
-import { paidShare, summarizeLoans, totalOutstanding } from '../../domain/summary';
+import { paidShare, summarizeLoans, totalOutstanding, greeting } from '../../domain/summary';
 import { useTracker, useView } from '../../store/tracker';
 import { chartColor } from '../../ui/charts';
 import {
@@ -84,7 +84,7 @@ function PortfolioRow({ row, peak, index }: { row: CategoryRow; peak: number; in
   );
 }
 
-export function Dashboard() {
+export function Dashboard({ name = '' }: { name?: string }) {
   const data = useView();
   const household = useTracker((state) => state.data);
   const syncedAt = useTracker((state) => state.syncedAt);
@@ -370,6 +370,7 @@ export function Dashboard() {
         subtitle="Your wealth, spending and progress — all in one place."
         title="Dashboard"
       />
+      <p className={ui.greeting}>{greeting(new Date().getHours(), name)}</p>
 
       <GettingStarted />
       <InstallCard />

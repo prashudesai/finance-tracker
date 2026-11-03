@@ -34,6 +34,10 @@ All pages from the older app exist and follow its layouts.
 - Send feedback, in Settings › App info, as a feature suggestion or a problem report. Feedback can only be added, holds no name or email, and is read in the Firebase console under `feedback`.
 - First login opens with "We know what you're thinking.": people type something private and see it locked for real with a throwaway key (`createDemoLock`), then opened again as family would. Nothing typed is saved. The same box is on the privacy page.
 - Installing: an animated guide for iPhone, Android and computers. A dashboard card offers it once after setup until the app is installed or set aside, phones get a reminder bar a week after Not now, and Settings › App & updates always has How to install. What was set aside is kept on each device.
+- Sharing and install: link previews (`og-image.png`, and per-page HTML for `/features` and `/privacy` written at build), an install pop-up with a description and screenshots, long-press shortcuts (`?add=` opens a form), a one-colour icon for Android themed icons, and iPhone launch screens. Screenshots and previews use the sample family.
+- Hide amounts: the eye in the header masks every figure the screen formats, kept per device. Exports format their own figures, so they're never hidden.
+- Dashboard greeting, a celebration when a loan seen owing this visit is paid off, page transitions where the browser supports them, and a light buzz on Android when saving.
+- Share invite for invited or pending family, and Share the app for friends, through the phone's share menu or by copying.
 - Privacy page at `/privacy`, open without signing in and linked from sign-in and Settings. New accounts agree to it once at setup, and existing accounts aren't asked. Its statements must stay true, so update it when what's stored or visible changes.
 
 ## Verified on the test project

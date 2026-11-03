@@ -31,6 +31,11 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* The header and tab bar stay put while pages change; only the page fades. */
+.header {
+  view-transition-name: app-header;
+}
+
 /* On a layer of its own: a filter on the header would contain the fixed phone nav. */
 .header::before {
   content: '';
@@ -73,6 +78,7 @@
 }
 
 .nav {
+  view-transition-name: app-nav;
   position: fixed;
   right: 0;
   bottom: 0;

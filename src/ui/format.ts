@@ -11,13 +11,29 @@ const compactRupees = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 1,
 });
 
-export const formatMoney = (value: number) => rupees.format(value);
+/** What a hidden amount looks like. Its length never hints at the real figure. */
+export const HIDDEN_AMOUNT = '₹ ••••';
 
-export const formatCompactMoney = (value: number) => compactRupees.format(value);
+let hidden = false;
+
+/**
+ * Hides every amount the screen shows. Screens redraw when this changes (see the Shell).
+ * PDF and CSV exports format their own figures, so they're never hidden.
+ */
+export function setAmountsHidden(value: boolean) {
+  hidden = value;
+}
+
+export const formatMoney = (value: number) => (hidden ? HIDDEN_AMOUNT : rupees.format(value));
+
+export const formatCompactMoney = (value: number) =>
+  hidden ? HIDDEN_AMOUNT : compactRupees.format(value);
 
 /** Always in lakhs, so a column of large values stays comparable. */
 export const formatLakhs = (value: number, digits = 2) =>
-  `${value < 0 ? '−' : ''}₹${(Math.abs(value) / 100_000).toFixed(digits)}L`;
+  hidden
+    ? HIDDEN_AMOUNT
+    : `${value < 0 ? '−' : ''}₹${(Math.abs(value) / 100_000).toFixed(digits)}L`;
 
 export function localDate(now = new Date()) {
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -46,7 +62,8 @@ export const formatDay = (date: string) =>
 export const formatPercent = (value: number | null, digits = 1) =>
   value === null ? '—' : `${(value * 100).toFixed(digits)}%`;
 
+// A hidden amount keeps no sign either, which would give away a gain or a loss.
 export const signedMoney = (value: number) =>
-  `${value < 0 ? '−' : '+'}${formatMoney(Math.abs(value))}`;
+  hidden ? HIDDEN_AMOUNT : `${value < 0 ? '−' : '+'}${formatMoney(Math.abs(value))}`;
 
 export const gainClass = (value: number | null) => (value !== null && value < 0 ? 'loss' : 'gain');

@@ -51,7 +51,7 @@ const GROUPS: { title: string; icon: LucideIcon; items: string[] }[] = [
     title: 'Share with family',
     icon: Users,
     items: [
-      'Invite family with their Google account',
+      'Invite family with their Google account, and share the invite on WhatsApp',
       'Choose who can edit and who can only view',
       "See everyone's finances together, or one person at a time",
       "Add people by name only, like kids or parents who don't need a login",
@@ -66,6 +66,7 @@ const GROUPS: { title: string; icon: LucideIcon; items: string[] }[] = [
       'A 30-second animation on the privacy page shows how your data is handled',
       'Unlock with Face ID, fingerprint or a passphrase',
       'New devices need your approval or your passphrase',
+      'Hide every amount with one tap, for using it around others',
       'No ads, no tracking, and your data is never sold',
       'Delete your account and data anytime',
     ],
@@ -79,6 +80,7 @@ const GROUPS: { title: string; icon: LucideIcon; items: string[] }[] = [
       'Opens without internet once installed',
       "Stays unlocked on your saved devices, so there's no passphrase each visit",
       'Search across all your records',
+      'Long-press the app icon for quick shortcuts on Android',
       'Add your own income sources and expense categories',
       'Quick setup that opens each form in place, then an app tour',
       'Encrypted backup and restore',
@@ -98,7 +100,7 @@ export function FeaturesPage() {
     <main className={styles.page}>
       <header className={styles.hero}>
         <img alt="" className={styles.logo} height="80" src={logo} width="80" />
-        <h1>Personal Finance Tracker</h1>
+        <h1>Finance Tracker</h1>
         <p>All your family's money in one private app.</p>
         <Link className={styles.open} to="/">
           Open the app
