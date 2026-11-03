@@ -5,6 +5,7 @@ import { MIN_PASSPHRASE_LENGTH } from '../../data/crypto';
 import { plainError } from '../../data/errors';
 import type { DeviceAsk, VaultAccess, VaultGate } from '../../data/vault';
 import { Field } from '../../ui/Field';
+import { TryEncryption } from '../privacy/TryEncryption';
 import ui from '../../ui/ui.module.css';
 
 const START_OVER_PHRASE = 'DELETE MY DATA';
@@ -153,6 +154,26 @@ export function RecoveryCode({ code }: { code: string }) {
   );
 }
 
+/** Shown once at first login: the question everyone has, answered with their own words. */
+function TrustCheck({ onContinue, onSignOut }: { onContinue: () => void; onSignOut: () => void }) {
+  return (
+    <Screen
+      onSignOut={onSignOut}
+      text="Who else can see my money? Type something private and see for yourself."
+      title="We know what you're thinking."
+    >
+      <TryEncryption />
+      <p className={ui.caption}>
+        Nothing you type here is saved. Your passphrase, which you'll create in a moment, is the
+        key.
+      </p>
+      <button className={ui.button} onClick={onContinue} type="button">
+        Continue
+      </button>
+    </Screen>
+  );
+}
+
 function PrivacyAgreement({ onAgree, onSignOut }: { onAgree: () => void; onSignOut: () => void }) {
   const [ticked, setTicked] = useState(false);
   return (
@@ -201,6 +222,7 @@ function CreatePassphrase({
   const [saved, setSaved] = useState(false);
   const [offering, setOffering] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [tried, setTried] = useState(false);
   const { working, error, run } = useTask();
 
   if (created && offering) {
@@ -268,6 +290,7 @@ function CreatePassphrase({
     );
   }
 
+  if (!tried) return <TrustCheck onContinue={() => setTried(true)} onSignOut={onSignOut} />;
   if (!agreed) return <PrivacyAgreement onAgree={() => setAgreed(true)} onSignOut={onSignOut} />;
 
   return (

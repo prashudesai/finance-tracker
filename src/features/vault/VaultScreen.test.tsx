@@ -22,6 +22,7 @@ function gate(overrides: Partial<VaultGate>): VaultGate {
 }
 
 const agree = () => {
+  fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
   fireEvent.click(screen.getByRole('checkbox', { name: /agree to the privacy page/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Agree and continue' }));
 };
@@ -276,18 +277,30 @@ describe('a new device', () => {
 });
 
 describe('first-time setup', () => {
-  test('asks for agreement first, and needs the box ticked', () => {
+  test('answers who can see the records, then asks for agreement', async () => {
     show(gate({ hasKeyring: false }));
+    expect(screen.getByRole('heading', { name: "We know what you're thinking." })).toBeDefined();
+    fireEvent.change(screen.getByLabelText('Type something private'), {
+      target: { value: 'My secret' },
+    });
+    // Locked for real, then opened again for the family line.
+    expect((await screen.findAllByText('My secret')).length).toBe(2);
+    await waitFor(() =>
+      expect(screen.getByText(/^Scrambled:/).parentElement?.textContent).not.toMatch(/…|My secret/),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.queryByRole('button', { name: 'Create passphrase' })).toBeNull();
     const next = screen.getByRole('button', { name: 'Agree and continue' });
     expect((next as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByRole('link', { name: 'Read the full privacy page' })).toBeDefined();
-    agree();
+    fireEvent.click(screen.getByRole('checkbox', { name: /agree to the privacy page/ }));
+    fireEvent.click(next);
     expect(screen.getByRole('button', { name: 'Create passphrase' })).toBeDefined();
   });
 
   test('someone who already has a passphrase is not asked', () => {
     show(gate({ hasKeyring: true }));
+    expect(screen.queryByText("We know what you're thinking.")).toBeNull();
     expect(screen.queryByRole('button', { name: 'Agree and continue' })).toBeNull();
   });
 });

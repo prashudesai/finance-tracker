@@ -79,3 +79,17 @@ test('the privacy animation plays through to the family step', async ({ page }) 
   await expect(current).toHaveText('You type it');
   await expect(current).toHaveText('Only family can open it', { timeout: 12_000 });
 });
+
+test('first login answers who can read the records, with real encryption', async ({ page }) => {
+  await page.goto('/setup');
+  await expect(page.getByRole('heading', { name: "We know what you're thinking." })).toBeVisible();
+  const scrambled = page.getByText(/^Scrambled:/).locator('..');
+  await page.getByLabel('Type something private').fill('Rent 18000');
+  await expect(scrambled).not.toContainText('Rent');
+  const before = await scrambled.textContent();
+  await page.getByLabel('Type something private').fill('Rent 18001');
+  await expect(scrambled).not.toHaveText(before ?? '');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('button', { name: 'Agree and continue' })).toBeVisible();
+  expect(await fitsTheScreen(page)).toBe(true);
+});

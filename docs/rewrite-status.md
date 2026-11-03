@@ -32,6 +32,7 @@ All pages from the older app exist and follow its layouts.
 
 - Features page at `/features`, public, for sharing the app. Keep it in step with what the app does.
 - Send feedback, in Settings › App info, as a feature suggestion or a problem report. Feedback can only be added, holds no name or email, and is read in the Firebase console under `feedback`.
+- First login opens with "We know what you're thinking.": people type something private and see it locked for real with a throwaway key (`createDemoLock`), then opened again as family would. Nothing typed is saved. The same box is on the privacy page.
 - Privacy page at `/privacy`, open without signing in and linked from sign-in and Settings. New accounts agree to it once at setup, and existing accounts aren't asked. Its statements must stay true, so update it when what's stored or visible changes.
 
 ## Verified on the test project

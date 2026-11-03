@@ -1,12 +1,12 @@
 {
-  "version": "1.9.1",
+  "version": "1.9.2",
   "released": "2026-11-03",
   "notes": [
+    "First login shows who can read your records, with something you type locked for real",
+    "Try the same thing on the privacy page",
     "Withdraw from PF, PPF and NPS too",
     "A clear message when the app reaches its free daily limit",
     "Income history on phones shows who each income belongs to",
-    "Tidier family access and colour themes on phones",
-    "The privacy page shows how your data is handled in a short animation",
-    "Quick setup opens each form in place, and lets you choose how the app looks"
+    "Tidier family access and colour themes on phones"
   ]
 }

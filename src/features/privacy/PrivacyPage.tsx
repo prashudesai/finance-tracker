@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { PRIVACY_UPDATED } from '../../domain/privacy';
 import { DataJourney } from './DataJourney';
+import { TryEncryption } from './TryEncryption';
 import styles from './PrivacyPage.module.css';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -33,6 +34,11 @@ export function PrivacyPage() {
       </p>
 
       <DataJourney />
+
+      <Section title="Try it yourself">
+        <p>Type anything private, and see what your phone sends and what your family sees.</p>
+        <TryEncryption />
+      </Section>
 
       <Section title="What is stored, in unreadable form">
         <p>

@@ -64,6 +64,23 @@ async function unseal(key: CryptoKey, { iv, c }: Sealed, context: string) {
   return new Uint8Array(plain);
 }
 
+const DEMO_CONTEXT = 'demo';
+
+/**
+ * A throwaway key for showing people what their words look like once locked, using the
+ * same encryption as records. Nothing it locks is saved, and the key never leaves memory.
+ */
+export async function createDemoLock() {
+  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
+    'encrypt',
+    'decrypt',
+  ]);
+  return {
+    lock: (text: string) => seal(key, toBytes(text), DEMO_CONTEXT),
+    open: async (sealed: Sealed) => decoder.decode(await unseal(key, sealed, DEMO_CONTEXT)),
+  };
+}
+
 const importAesKey = (raw: Uint8Array) =>
   crypto.subtle.importKey('raw', buffer(raw), 'AES-GCM', false, ['encrypt', 'decrypt']);
 

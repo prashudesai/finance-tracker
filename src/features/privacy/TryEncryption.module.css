@@ -1,0 +1,68 @@
+.try {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+.badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 50%;
+}
+
+.plain,
+.locked {
+  margin: 0;
+  padding: 10px 12px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-small);
+}
+
+.plain {
+  min-height: 1.45em;
+  color: var(--text);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+}
+
+/* A new key on each change restarts this, so every edit visibly re-locks. */
+.locked {
+  color: var(--accent-text);
+  background: var(--accent);
+  animation: relock 0.45s ease;
+}
+
+@keyframes relock {
+  40% {
+    transform: scale(1.015);
+  }
+}
+
+.note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .locked {
+    animation: none;
+  }
+}
