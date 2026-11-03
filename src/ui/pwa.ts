@@ -16,6 +16,31 @@ window.addEventListener('beforeinstallprompt', (event) => {
   listeners.forEach((listener) => listener());
 });
 
+/** True when this is the installed app, not a browser tab. */
+export const isInstalledApp = () =>
+  (window.matchMedia?.('(display-mode: standalone)').matches ?? false) ||
+  (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+let installedHere = false;
+window.addEventListener('appinstalled', () => {
+  installedHere = true;
+  installPrompt = null;
+  listeners.forEach((listener) => listener());
+});
+
+/** Installed, or just installed from this tab. */
+export function useInstalled() {
+  const [installed, setInstalled] = useState(() => installedHere || isInstalledApp());
+  useEffect(() => {
+    const update = () => setInstalled(installedHere || isInstalledApp());
+    listeners.add(update);
+    return () => {
+      listeners.delete(update);
+    };
+  }, []);
+  return installed;
+}
+
 export function useInstallApp() {
   const [canInstall, setCanInstall] = useState(installPrompt !== null);
 

@@ -74,7 +74,7 @@ const GROUPS: { title: string; icon: LucideIcon; items: string[] }[] = [
     title: 'Easy to use',
     icon: Sparkles,
     items: [
-      'Free, and installs on your phone or computer like an app',
+      'Free, and installs on your phone or computer like an app, with a step-by-step guide',
       'Works on phone and desktop',
       'Opens without internet once installed',
       "Stays unlocked on your saved devices, so there's no passphrase each visit",

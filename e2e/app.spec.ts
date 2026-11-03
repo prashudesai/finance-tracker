@@ -93,3 +93,15 @@ test('first login answers who can read the records, with real encryption', async
   await expect(page.getByRole('button', { name: 'Agree and continue' })).toBeVisible();
   expect(await fitsTheScreen(page)).toBe(true);
 });
+
+test('Settings shows how to install, and the guide plays', async ({ page }) => {
+  await open(page, '/settings');
+  await page.getByRole('button', { name: /App & updates/ }).click();
+  await page.getByRole('button', { name: 'How to install' }).click();
+  const guide = page.getByRole('dialog', { name: 'How to install' });
+  const current = guide.locator('[aria-current="step"] strong');
+  await expect(current).not.toHaveText(/^$/);
+  const first = await current.textContent();
+  await expect(current).not.toHaveText(first ?? '', { timeout: 5000 });
+  expect(await fitsTheScreen(page)).toBe(true);
+});

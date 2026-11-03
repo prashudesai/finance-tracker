@@ -42,6 +42,7 @@ import { useIsPhone } from '../../ui/useIsPhone';
 import { EmptyState } from '../../ui/EmptyState';
 import { TrendLine } from '../../ui/TrendLine';
 import { useCountUp } from '../../ui/useCountUp';
+import { InstallCard } from '../install/InstallPrompts';
 import { GettingStarted } from './GettingStarted';
 import { QuickAdd } from './QuickAdd';
 import { TrendChart } from './TrendChart';
@@ -371,6 +372,7 @@ export function Dashboard() {
       />
 
       <GettingStarted />
+      <InstallCard />
 
       {phone ? (
         netWorthCard

@@ -23,6 +23,7 @@ import type { Account, AccountSecurity, FamilyMember, FeedbackKind } from '../..
 import { downloadText } from '../../ui/download';
 import { downloadTablePdf } from '../../ui/pdf';
 import { AppearanceChoice } from '../../ui/AppearanceChoice';
+import { InstallHelp } from '../install/InstallPrompts';
 import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
@@ -38,7 +39,7 @@ import { reminderCalendar } from '../../domain/reminders';
 import { errorReportsAllowed, setErrorReportsAllowed } from '../../ui/errorSink';
 import { Avatar } from '../../ui/Avatar';
 import { resizePhoto } from '../../ui/photo';
-import { checkForUpdates, useAppUpdate, useInstallApp, type UpdateCheck } from '../../ui/pwa';
+import { checkForUpdates, useAppUpdate, type UpdateCheck } from '../../ui/pwa';
 import ui from '../../ui/ui.module.css';
 
 type Panel =
@@ -1001,7 +1002,6 @@ function ErrorReports() {
 }
 
 function AppUpdates() {
-  const { canInstall, install } = useInstallApp();
   const { updateReady, applyUpdate } = useAppUpdate();
   const [result, setResult] = useState<UpdateCheck | null>(null);
   const [checking, setChecking] = useState(false);
@@ -1052,17 +1052,7 @@ function AppUpdates() {
           </Link>
         </div>
       </div>
-      <div className={ui.metric}>
-        <strong>Install app</strong>
-        <p className={ui.caption}>
-          {canInstall
-            ? 'Add Finance Tracker to your Home Screen or desktop.'
-            : 'Already installed, or use your browser menu to add it to your Home Screen.'}
-        </p>
-        <button className={ui.quiet} disabled={!canInstall} onClick={install} type="button">
-          Install app
-        </button>
-      </div>
+      <InstallHelp />
     </div>
   );
 }

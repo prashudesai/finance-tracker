@@ -20,6 +20,7 @@ import { Avatar } from './ui/Avatar';
 import { DeviceApprovalPrompt } from './ui/DeviceApprovalPrompt';
 import { GuidedTour } from './ui/GuidedTour';
 import { PullToRefresh } from './ui/PullToRefresh';
+import { InstallReminder } from './features/install/InstallPrompts';
 import { PageSkeleton } from './ui/Skeleton';
 import {
   CLOUD_STUCK_LOADING,
@@ -253,6 +254,7 @@ export function Shell({
             </button>
           </div>
         ) : null}
+        {loaded ? <InstallReminder /> : null}
         {error ? (
           <p className={ui.notice} role="alert">
             {error}

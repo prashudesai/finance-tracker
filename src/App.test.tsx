@@ -896,6 +896,17 @@ test('a statement corrects one EMI split and balances follow', async () => {
   expect((await screen.findAllByText('₹92,000')).length).toBeGreaterThan(0);
 });
 
+test('the install card shows after setup, and Not now sets it aside', async () => {
+  localStorage.removeItem('installDismissed');
+  renderApp('/', { settings: [{ ...defaultSettings(), onboardingDone: true }] });
+  const card = await screen.findByRole('region', { name: 'Install the app' });
+  fireEvent.click(within(card).getByRole('button', { name: 'Show me how' }));
+  expect(await screen.findByRole('dialog', { name: 'How to install', hidden: true })).toBeDefined();
+  fireEvent.click(within(card).getByRole('button', { name: 'Not now', hidden: true }));
+  await waitFor(() => expect(screen.queryByRole('region', { name: 'Install the app' })).toBeNull());
+  localStorage.removeItem('installDismissed');
+});
+
 test('a dashboard portfolio row opens that category', async () => {
   renderApp('/', { holdings: [fund], settings: [{ ...defaultSettings(), onboardingDone: true }] });
   fireEvent.click(await screen.findByRole('link', { name: /Mutual Funds/ }));
