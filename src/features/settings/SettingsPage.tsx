@@ -22,6 +22,7 @@ import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
 import type { Account, AccountSecurity, FamilyMember, FeedbackKind } from '../../Shell';
 import { downloadText } from '../../ui/download';
 import { downloadTablePdf } from '../../ui/pdf';
+import { AppearanceChoice } from '../../ui/AppearanceChoice';
 import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
@@ -38,8 +39,6 @@ import { errorReportsAllowed, setErrorReportsAllowed } from '../../ui/errorSink'
 import { Avatar } from '../../ui/Avatar';
 import { resizePhoto } from '../../ui/photo';
 import { checkForUpdates, useAppUpdate, useInstallApp, type UpdateCheck } from '../../ui/pwa';
-import { useTheme } from '../../ui/theme';
-import { THEME_CHOICES } from '../../ui/themes';
 import ui from '../../ui/ui.module.css';
 
 type Panel =
@@ -1119,41 +1118,6 @@ function ProfilePhoto({ account }: { account: Account }) {
   );
 }
 
-function Appearance() {
-  const { theme, toggle, palette, setPalette } = useTheme();
-  return (
-    <div className={ui.page}>
-      <div className={ui.split}>
-        <span>
-          Mode: <strong>{theme === 'dark' ? 'Dark' : 'Light'}</strong>
-        </span>
-        <button className={ui.quiet} onClick={toggle} type="button">
-          Switch to {theme === 'dark' ? 'light' : 'dark'} mode
-        </button>
-      </div>
-      <div className={ui.themeGrid} role="group" aria-label="Color themes">
-        {THEME_CHOICES.map(({ key, label, swatches }) => (
-          <button
-            aria-pressed={palette === key}
-            className={ui.themeChoice}
-            key={key}
-            onClick={() => setPalette(key)}
-            type="button"
-          >
-            <span aria-hidden="true" className={ui.themeSwatches}>
-              {swatches.map((color) => (
-                <i key={color} style={{ background: color }} />
-              ))}
-            </span>
-            {label}
-          </button>
-        ))}
-      </div>
-      <p className={ui.caption}>Your choice is saved on this device.</p>
-    </div>
-  );
-}
-
 export function SettingsPage({ account }: { account: Account }) {
   const { state: target } = useLocation() as { state: { panel?: Panel } | null };
   const [panel, setPanel] = useState<Panel | null>(target?.panel ?? null);
@@ -1260,7 +1224,7 @@ export function SettingsPage({ account }: { account: Account }) {
             </div>
           ) : null}
           {panel === 'family' ? <FamilyAccessPanel account={account} /> : null}
-          {panel === 'appearance' ? <Appearance /> : null}
+          {panel === 'appearance' ? <AppearanceChoice /> : null}
           {panel === 'data' ? <DataBackup /> : null}
           {panel === 'updates' ? <AppUpdates /> : null}
         </Modal>

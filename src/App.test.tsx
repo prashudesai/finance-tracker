@@ -270,10 +270,10 @@ test('a new account is walked through setup, and can skip it', async () => {
   renderApp('/');
   fireEvent.change(await screen.findByLabelText('First name'), { target: { value: 'Sam' } });
   fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-  expect(await screen.findByText('Step 2 of 6')).toBeDefined();
+  expect(await screen.findByText('Step 2 of 7')).toBeDefined();
   fireEvent.click(screen.getByRole('button', { name: 'Skip setup' }));
   expect(await screen.findByRole('region', { name: 'Net worth' })).toBeDefined();
-  expect(screen.queryByText('Step 2 of 6')).toBeNull();
+  expect(screen.queryByText('Step 2 of 7')).toBeNull();
 });
 
 test('editing a recurring amount keeps earlier months', async () => {
@@ -368,14 +368,31 @@ describe('the tour follows quick setup', () => {
     renderApp('/', { settings: [{ ...defaultSettings(), familyMembers: ['A'] }] });
     const setup = await screen.findByRole('region', { name: 'Set up your finances' });
     expect(screen.queryByRole('region', { name: 'App tour' })).toBeNull();
+    fireEvent.click(within(setup).getByRole('button', { name: 'Continue' }));
     for (let step = 0; step < 4; step += 1) {
-      fireEvent.click(within(setup).getByRole('button', { name: 'Continue' }));
+      fireEvent.click(within(setup).getByRole('button', { name: 'Skip step' }));
     }
     fireEvent.click(await within(setup).findByRole('button', { name: 'Finish' }));
     expect(await screen.findByRole('region', { name: 'App tour' })).toBeDefined();
     await waitFor(() =>
       expect(screen.queryByRole('region', { name: 'Set up your finances' })).toBeNull(),
     );
+  });
+
+  test('a step opens its form, and saving moves on to the next step', async () => {
+    renderApp('/', { settings: [{ ...defaultSettings(), familyMembers: ['A'] }] });
+    const setup = await screen.findByRole('region', { name: 'Set up your finances' });
+    expect(within(setup).getByRole('group', { name: 'Color themes' })).toBeDefined();
+    fireEvent.click(within(setup).getByRole('button', { name: 'Continue' }));
+    fireEvent.click(within(setup).getByRole('button', { name: 'Skip step' }));
+    expect(await within(setup).findByText('Add your income')).toBeDefined();
+    fireEvent.click(within(setup).getByRole('button', { name: 'Add income' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add income', hidden: true });
+    fireEvent.change(within(dialog).getByLabelText('Amount (₹)'), { target: { value: '5000' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add income', hidden: true }));
+    expect(await within(setup).findByText('Add an expense')).toBeDefined();
+    expect(screen.queryByRole('dialog', { name: 'Add income', hidden: true })).toBeNull();
+    expect(screen.getByText('Step 5 of 7')).toBeDefined();
   });
 
   test('after skipping setup', async () => {

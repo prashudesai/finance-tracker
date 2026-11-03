@@ -24,7 +24,7 @@ All pages from the older app exist and follow its layouts.
 | Family              | One form adds a name, with an optional invite. Change access and remove members. Dropdowns hide with one member         |
 | Forms               | Old fields, lists and + Add new… options, including tenure-based EMI                                                    |
 | Exports             | CSV, print, and generated PDFs for reports and loan history                                                             |
-| Onboarding          | Guided setup and an app tour                                                                                            |
+| Onboarding          | Quick setup opens each form in place, including appearance, then an app tour                                            |
 | Themes              | All eight colour themes from the older app, in light and dark, contrast-tested                                          |
 | Retirement detail   | Interest credits and EPS history                                                                                        |
 | Phone layouts       | Title-only headers, full-screen entry forms, and Investments and Retirement tabs                                        |

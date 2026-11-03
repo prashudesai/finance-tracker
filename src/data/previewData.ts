@@ -241,7 +241,8 @@ export function previewData(): Partial<TrackerData> {
       {
         ...defaultSettings(),
         familyMembers: MEMBERS,
-        onboardingDone: true,
+        // Add ?setup to the address to see quick setup.
+        onboardingDone: !window.location.search.includes('setup'),
         investmentTypes: ['Index ETFs', 'Cash Reserve'],
         expenseCategories: ['Groceries', 'Utilities', 'Dining out', 'Transport'],
         growthTypes: { 'Index ETFs': 'market', 'Cash Reserve': 'no-return' },

@@ -1,12 +1,12 @@
 {
-  "version": "1.8.8",
+  "version": "1.8.9",
   "released": "2026-11-03",
   "notes": [
+    "Quick setup opens each form in place, and lets you choose how the app looks",
     "Withdraw from an investment and see the profit you booked, by year",
     "Send feedback or report a problem from App info in Settings",
     "Older loans fill in what was repaid since the first EMI, with the working shown",
     "Added a public features page to share with friends",
-    "Family members open the app by themselves once approved",
-    "One form to add a family member, with or without an invite"
+    "Family members open the app by themselves once approved"
   ]
 }
