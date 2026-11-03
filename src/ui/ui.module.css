@@ -162,6 +162,12 @@
   grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
 }
 
+.formWide {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+}
+
 .formActions {
   grid-column: 1 / -1;
   display: flex;

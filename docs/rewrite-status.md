@@ -91,3 +91,4 @@ A scripted comparison of the visible text on every old page, at phone and deskto
 - The expenses series is amber, not rose, because rose fails the colour-blindness check against mint.
 - A record posted by a recurring schedule stays in its month. Its day and amount can still be edited.
 - Saving refuses a record that wouldn't pass its schema when read back, instead of storing it hidden.
+- The loan form fills in principal and interest paid before tracking from the EMIs due since the first EMI date, as if each was paid on time, and shows the working. It counts up to today or the first payment recorded here, updates when the terms change, and stops once someone types their own figures. Daily-interest loans aren't estimated. Both boxes only show once an EMI is due, or when a saved loan already has figures. The older app always showed them, for people to fill in.

@@ -34,6 +34,12 @@ export const formatMonth = (month: string) =>
 export const formatShortMonth = (month: string) =>
   new Date(`${month}-01T00:00:00`).toLocaleDateString('en-IN', { month: 'short' });
 
+export const formatShortMonthYear = (month: string) =>
+  new Date(`${month}-01T00:00:00`).toLocaleDateString('en-IN', {
+    month: 'short',
+    year: 'numeric',
+  });
+
 export const formatDay = (date: string) =>
   new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
