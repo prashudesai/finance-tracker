@@ -19,7 +19,7 @@ import { undoWrites } from '../../domain/changes';
 import { plainError } from '../../data/errors';
 import { TRACKER_SETTINGS_ID, type ChangeRecord, type TrackerSettings } from '../../schema/records';
 import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
-import type { Account, AccountSecurity, FamilyMember } from '../../Shell';
+import type { Account, AccountSecurity, FamilyMember, FeedbackKind } from '../../Shell';
 import { downloadText } from '../../ui/download';
 import { downloadTablePdf } from '../../ui/pdf';
 import { Field } from '../../ui/Field';
@@ -883,6 +883,94 @@ function Reminders() {
   );
 }
 
+const FEEDBACK_LIMIT = 1000;
+
+const FEEDBACK_KINDS: Record<FeedbackKind, { label: string; prompt: string; thanks: string }> = {
+  feature: {
+    label: 'Suggest a feature',
+    prompt: 'What would you like the app to do?',
+    thanks: 'Thanks, your suggestion was sent.',
+  },
+  problem: {
+    label: 'Report a problem',
+    prompt: 'What went wrong, and on which screen?',
+    thanks: 'Thanks, your report was sent.',
+  },
+};
+
+function SendFeedback({ send }: { send: (kind: FeedbackKind, text: string) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState<FeedbackKind>('feature');
+  const [text, setText] = useState('');
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  const chosen = FEEDBACK_KINDS[kind];
+
+  if (state === 'sent') {
+    return (
+      <p className={ui.caption} role="status">
+        {chosen.thanks}
+      </p>
+    );
+  }
+  if (!open) {
+    return (
+      <button className={ui.quiet} onClick={() => setOpen(true)} type="button">
+        Send feedback
+      </button>
+    );
+  }
+  const trimmed = text.trim();
+  return (
+    <form
+      className={ui.page}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!trimmed || state === 'sending') return;
+        setState('sending');
+        send(kind, trimmed).then(
+          () => setState('sent'),
+          () => setState('failed'),
+        );
+      }}
+    >
+      <div aria-label="Feedback type" className={ui.segmented} role="group">
+        {(['feature', 'problem'] as const).map((key) => (
+          <button
+            aria-pressed={kind === key}
+            className={kind === key ? ui.segmentActive : ui.segment}
+            key={key}
+            onClick={() => setKind(key)}
+            type="button"
+          >
+            {FEEDBACK_KINDS[key].label}
+          </button>
+        ))}
+      </div>
+      <Field label={chosen.prompt}>
+        <textarea
+          maxLength={FEEDBACK_LIMIT}
+          onChange={(event) => setText(event.target.value)}
+          value={text}
+        />
+      </Field>
+      <p className={ui.caption}>Your name and email aren’t sent. Add them if you’d like a reply.</p>
+      {state === 'failed' ? (
+        <p className={ui.fieldError} role="alert">
+          This couldn’t be sent. Check your connection and try again.
+        </p>
+      ) : null}
+      <div className={ui.actions}>
+        <button className={ui.button} disabled={!trimmed || state === 'sending'} type="submit">
+          {state === 'sending' ? 'Sending…' : 'Send'}
+        </button>
+        <button className={ui.quiet} onClick={() => setOpen(false)} type="button">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function ErrorReports() {
   const [allowed, setAllowed] = useState(errorReportsAllowed());
   return (
@@ -1138,6 +1226,10 @@ export function SettingsPage({ account }: { account: Account }) {
                 Balances are always calculated from your records, so totals stay consistent across
                 devices.
               </p>
+              <Link className={ui.quiet} to="/features">
+                See all features
+              </Link>
+              {account.sendFeedback ? <SendFeedback send={account.sendFeedback} /> : null}
               <button
                 className={ui.quiet}
                 onClick={() => {

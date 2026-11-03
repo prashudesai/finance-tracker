@@ -194,6 +194,20 @@ export const valuationSchema = z.object({
 });
 export type Valuation = z.infer<typeof valuationSchema>;
 
+/**
+ * Money taken out of an investment. Its value afterwards is saved as a valuation on the
+ * same date, so the invested amount and booked profit can be worked out by average cost.
+ */
+export const withdrawalSchema = z.object({
+  id,
+  holdingId: id,
+  date,
+  amount: positiveMoney,
+  /** The valuation saved with it, removed along with it. */
+  valuationId: id.optional(),
+});
+export type Withdrawal = z.infer<typeof withdrawalSchema>;
+
 /** Annual PF or PPF interest. Each account has at most one per financial year. */
 export const interestCreditSchema = z.object({
   id,

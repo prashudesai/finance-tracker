@@ -31,6 +31,7 @@ All pages from the older app exist and follow its layouts.
 | PWA                 | Installable, app shell works offline, check for updates, updates wait for acceptance, security policy applied           |
 
 - Features page at `/features`, public, for sharing the app. Keep it in step with what the app does.
+- Send feedback, in Settings › App info, as a feature suggestion or a problem report. Feedback can only be added, holds no name or email, and is read in the Firebase console under `feedback`.
 - Privacy page at `/privacy`, open without signing in and linked from sign-in and Settings. New accounts agree to it once at setup, and existing accounts aren't asked. Its statements must stay true, so update it when what's stored or visible changes.
 
 ## Verified on the test project
@@ -74,6 +75,7 @@ A scripted comparison of the visible text on every old page, at phone and deskto
 - Holdings derive invested and current values from contributions and valuations, instead of keeping running totals.
 - A holding's value on a past date uses the newest valuation on or before that date. The first version of the rewrite always used the newest valuation, which made PMS gain change and the PMS trend wrong. This matches the older app's snapshots. A future-dated valuation doesn't count until its date.
 - A contribution dated the same day as a valuation, or earlier, is treated as already included in that valuation.
+- Investments can record withdrawals, which the older app didn't have. Each is saved with a valuation of what's left on the same date. The invested amount goes down by average cost, the same share as the value taken out, and the rest of what was received is booked profit, shown on the holding and by financial year. Returns count the money received. PF, PPF and NPS have no withdrawals yet.
 - Dated restore points are replaced by the change log, which undoes single changes. A whole-tracker rollback uses a backup.
 - Archiving was removed, so deleting is the only way to retire an account.
 - Records are end-to-end encrypted, as a new design. See [encryption.md](encryption.md).

@@ -7,10 +7,12 @@ import type { VaultAccess, VaultGate } from './data/vault';
 import { FeaturesPage } from './features/about/FeaturesPage';
 import { SignIn } from './features/auth/SignIn';
 import { PrivacyPage } from './features/privacy/PrivacyPage';
+import release from './release.json';
 import { installErrorReporting } from './ui/errorSink';
+import { localDate } from './ui/format';
 import { LoadingScreen } from './ui/Skeleton';
 import { VaultScreen, WaitingForApproval } from './features/vault/VaultScreen';
-import { Shell, type Account } from './Shell';
+import { Shell, type Account, type FeedbackKind } from './Shell';
 
 type Session =
   | { status: 'loading' }
@@ -99,6 +101,8 @@ function useFirebaseSession(): Session {
                 signOut: onSignOut,
                 deleteAccount: (clearMemberData: () => Promise<void>) =>
                   firebase.deleteAccount(user, membership, clearMemberData),
+                sendFeedback: (kind: FeedbackKind, text: string) =>
+                  firebase.sendFeedback({ kind, text, version: release.version, day: localDate() }),
                 security: access.tools,
                 ...(access.owner ? { family: firebase.familyAccess(user.uid, access.owner) } : {}),
               },

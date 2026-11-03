@@ -7,6 +7,7 @@ Record types are defined in `src/schema/records.ts`. That file is the source of 
 ```text
 memberships/{email}                   Invite: householdId, role, accepted
 errorReports/{id}                     Sanitized failures. Can only be added, and hold no records or names
+feedback/{id}                         Feature suggestions and problem reports from App info: kind, text, version and day. Can only be added, and hold no name or email
 keyrings/{uid}                        Public key, the private key locked by a passphrase and a recovery code, and the privacy page version agreed to
 keyrings/{uid}/deviceRequests/{id}    A new device asking a saved device for its key, for 10 minutes at most
 households/{ownerUid}/
@@ -21,6 +22,7 @@ households/{ownerUid}/
   holdings/{id}
   contributions/{id}
   valuations/{id}
+  withdrawals/{id}
   gratuityAccounts/{id}
   projectionAdjustments/{id}
   settings/tracker
@@ -47,6 +49,7 @@ Every record below is stored encrypted, as `{ k, iv, c }`, under a scrambled doc
 | `holdings`              | Opening position of an investment, PF, PPF or NPS account         | Current figures are never stored                         |
 | `contributions`         | Dated money added to a holding                                    | Scheduled ones use `auto_<holdingId>_<yyyymm>` IDs       |
 | `valuations`            | Dated value of a holding                                          | The latest sets its current value                        |
+| `withdrawals`           | Dated money taken out of an investment                            | Saved with a valuation of what's left, on the same date  |
 | `gratuityAccounts`      | Joining date and basic salary                                     | The estimate is calculated                               |
 | `projectionAdjustments` | Planned additions and withdrawals                                 |                                                          |
 | `settings`              | Custom values, projection assumptions and uploaded profile photos | One document, `tracker`                                  |

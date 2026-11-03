@@ -242,6 +242,7 @@ export function selectView(data: TrackerData, profile: string | null): TrackerDa
     gratuityAccounts: mine(data.gratuityAccounts),
     contributions: data.contributions.filter((row) => ids.has(row.holdingId)),
     valuations: data.valuations.filter((row) => ids.has(row.holdingId)),
+    withdrawals: data.withdrawals.filter((row) => ids.has(row.holdingId)),
   };
 }
 

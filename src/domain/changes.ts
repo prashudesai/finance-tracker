@@ -20,6 +20,7 @@ const LABELS: Partial<Record<CollectionName, string>> = {
   holdings: 'holding',
   contributions: 'contribution',
   valuations: 'valuation',
+  withdrawals: 'withdrawal',
   gratuityAccounts: 'gratuity account',
   projectionAdjustments: 'planned change',
   interestCredits: 'interest credit',

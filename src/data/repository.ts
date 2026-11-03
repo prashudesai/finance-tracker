@@ -16,6 +16,7 @@ import {
   recurringRuleSchema,
   trackerSettingsSchema,
   valuationSchema,
+  withdrawalSchema,
   type ChangeRecord,
   type Contribution,
   type EpsUpdate,
@@ -32,6 +33,7 @@ import {
   type RecurringRule,
   type TrackerSettings,
   type Valuation,
+  type Withdrawal,
 } from '../schema/records';
 
 export interface TrackerData {
@@ -44,6 +46,7 @@ export interface TrackerData {
   holdings: Holding[];
   contributions: Contribution[];
   valuations: Valuation[];
+  withdrawals: Withdrawal[];
   gratuityAccounts: GratuityAccount[];
   projectionAdjustments: ProjectionAdjustment[];
   settings: TrackerSettings[];
@@ -65,6 +68,7 @@ export const COLLECTIONS: { [Name in CollectionName]: z.ZodType<TrackerData[Name
   holdings: holdingSchema,
   contributions: contributionSchema,
   valuations: valuationSchema,
+  withdrawals: withdrawalSchema,
   gratuityAccounts: gratuityAccountSchema,
   projectionAdjustments: projectionAdjustmentSchema,
   settings: trackerSettingsSchema,
@@ -86,6 +90,7 @@ export const emptyTrackerData = (): TrackerData => ({
   holdings: [],
   contributions: [],
   valuations: [],
+  withdrawals: [],
   gratuityAccounts: [],
   projectionAdjustments: [],
   settings: [],

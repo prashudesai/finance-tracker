@@ -534,6 +534,43 @@ test('the app tour walks the pages and changes nothing', async () => {
   expect(screen.queryByRole('region', { name: 'App tour' })).toBeNull();
 });
 
+test('feedback is sent from App info as a feature or a problem, and a failure says so', async () => {
+  const sent: [string, string][] = [];
+  let fail = true;
+  const sendFeedback = (kind: string, text: string) => {
+    if (fail) return Promise.reject(new Error('offline'));
+    sent.push([kind, text]);
+    return Promise.resolve();
+  };
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Shell
+        account={{ name: 'O', email: 'o@example.test', role: 'owner', sendFeedback }}
+        repository={createMemoryRepository()}
+      />
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: /App info/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Send feedback', hidden: true }));
+  expect(screen.getByLabelText('What would you like the app to do?')).toBeDefined();
+  fireEvent.click(screen.getByRole('button', { name: 'Report a problem', hidden: true }));
+  const send = screen.getByRole('button', { name: 'Send', hidden: true });
+  expect(send).toHaveProperty('disabled', true);
+  fireEvent.change(screen.getByLabelText('What went wrong, and on which screen?'), {
+    target: { value: '  Loan tenure did not change  ' },
+  });
+  fireEvent.click(send);
+  expect((await screen.findByRole('alert', { hidden: true })).textContent).toMatch(
+    /couldn’t be sent/,
+  );
+  fail = false;
+  fireEvent.click(screen.getByRole('button', { name: 'Send', hidden: true }));
+  expect(
+    await screen.findByText('Thanks, your report was sent.', undefined, { timeout: 2000 }),
+  ).toBeDefined();
+  expect(sent).toEqual([['problem', 'Loan tenure did not change']]);
+});
+
 test('a colour theme applies from Settings and the header agrees on mode', async () => {
   renderApp('/settings');
   fireEvent.click(await screen.findByRole('button', { name: /Appearance/ }));
@@ -846,6 +883,39 @@ test('a dashboard portfolio row opens that category', async () => {
   renderApp('/', { holdings: [fund], settings: [{ ...defaultSettings(), onboardingDone: true }] });
   fireEvent.click(await screen.findByRole('link', { name: /Mutual Funds/ }));
   expect(await screen.findByRole('dialog', { name: 'Mutual Funds', hidden: true })).toBeDefined();
+});
+
+test('a withdrawal books profit, and deleting it puts the holding back', async () => {
+  // Worth 1,50,000 with 1,00,000 invested.
+  renderApp('/', { holdings: [fund], settings: [{ ...defaultSettings(), onboardingDone: true }] });
+  fireEvent.click(await screen.findByRole('link', { name: /Mutual Funds/ }));
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Withdraw from Index fund', hidden: true }),
+  );
+  fireEvent.change(await screen.findByLabelText('Amount withdrawn (₹)'), {
+    target: { value: '50000' },
+  });
+  expect(
+    (screen.getByLabelText('Value left after (₹, from your statement)') as HTMLInputElement).value,
+  ).toBe('100000');
+  // A third of the value, so a third of the cost: 33,333 out and 16,667 booked.
+  expect(await screen.findByText('₹33,333')).toBeDefined();
+  fireEvent.click(screen.getByRole('button', { name: 'Save withdrawal', hidden: true }));
+  expect((await screen.findAllByText('+₹16,667')).length).toBeGreaterThan(0);
+  expect(screen.getAllByText('₹66,667').length).toBeGreaterThan(0);
+
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Contribution history of Index fund', hidden: true }),
+  );
+  fireEvent.change(await screen.findByLabelText('History type'), {
+    target: { value: 'withdrawals' },
+  });
+  fireEvent.click(
+    await screen.findByRole('button', { name: /^Remove withdrawal of/, hidden: true }),
+  );
+  expect(await screen.findByText('No withdrawals recorded yet.')).toBeDefined();
+  expect(screen.queryAllByText('+₹16,667')).toHaveLength(0);
+  expect(screen.getAllByText('₹1,50,000').length).toBeGreaterThan(0);
 });
 
 test('analytics offers the family split and details', async () => {

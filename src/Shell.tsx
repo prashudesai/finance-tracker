@@ -59,6 +59,8 @@ const LINKS = [
   { to: '/settings', label: 'Settings', short: 'Settings', icon: SlidersHorizontal },
 ];
 
+export type FeedbackKind = 'feature' | 'problem';
+
 export interface Account {
   name: string;
   email: string;
@@ -67,6 +69,8 @@ export interface Account {
   signOut?: () => void;
   /** `clearMemberData` runs for a member, while they can still write. */
   deleteAccount?: (clearMemberData: () => Promise<void>) => Promise<void>;
+  /** Sends a feature suggestion or problem report, without the sender's name or email. */
+  sendFeedback?: (kind: FeedbackKind, text: string) => Promise<void>;
   family?: FamilyAccess;
   security?: AccountSecurity;
 }

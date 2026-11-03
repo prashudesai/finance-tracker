@@ -1,4 +1,4 @@
-import { History, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowDownToLine, History, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { CategoryRow, PositionRow } from '../../domain/analytics';
 import type { RecordWrite } from '../../data/repository';
@@ -10,8 +10,9 @@ import { Metric } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import { HoldingForm } from './HoldingForm';
 import { HoldingHistory } from './HoldingHistory';
+import { WithdrawForm } from './WithdrawForm';
 
-type Action = 'value' | 'contribution' | 'history' | 'edit';
+type Action = 'value' | 'contribution' | 'withdraw' | 'history' | 'edit';
 
 function AmountForm({
   label,
@@ -67,6 +68,9 @@ function HoldingCard({ row }: { row: PositionRow }) {
   const [action, setAction] = useState<Action | null>(null);
   const { holding, position } = row;
   const close = () => setAction(null);
+  const canWithdraw = holding.kind === 'investment';
+  const hasWithdrawals = data.withdrawals.some((item) => item.holdingId === holding.id);
+  const closed = hasWithdrawals && position.current === 0;
 
   const remove = () => {
     if (!window.confirm(`Delete ${holding.name} and all its history?`)) return;
@@ -78,6 +82,9 @@ function HoldingCard({ row }: { row: PositionRow }) {
       ...data.valuations
         .filter((item) => item.holdingId === holding.id)
         .map((item): RecordWrite => ({ type: 'delete', collection: 'valuations', id: item.id })),
+      ...data.withdrawals
+        .filter((item) => item.holdingId === holding.id)
+        .map((item): RecordWrite => ({ type: 'delete', collection: 'withdrawals', id: item.id })),
       ...data.interestCredits
         .filter((item) => item.holdingId === holding.id)
         .map((item): RecordWrite => ({
@@ -99,6 +106,7 @@ function HoldingCard({ row }: { row: PositionRow }) {
           <div className={ui.rowTitle}>{holding.name}</div>
           <div className={ui.rowDetail}>
             {holding.member}
+            {closed ? ' · Closed' : ''}
             {holding.rate === undefined ? '' : ` · ${holding.rate}% a year`}
             {holding.uan ? ` · UAN ${holding.uan}` : ''}
             {holding.scheme ? ` · ${holding.scheme}` : ''}
@@ -128,6 +136,18 @@ function HoldingCard({ row }: { row: PositionRow }) {
             <Plus size={14} />
             <span>Add</span>
           </button>
+          {canWithdraw ? (
+            <button
+              aria-label={`Withdraw from ${holding.name}`}
+              className={ui.labelledIcon}
+              onClick={() => setAction('withdraw')}
+              type="button"
+              data-tip="Withdraw or book profit"
+            >
+              <ArrowDownToLine size={14} />
+              <span>Withdraw</span>
+            </button>
+          ) : null}
           <button
             aria-label={`Contribution history of ${holding.name}`}
             className={ui.labelledIcon}
@@ -169,6 +189,13 @@ function HoldingCard({ row }: { row: PositionRow }) {
           value={signedMoney(position.gain)}
         />
         <Metric label="XIRR" value={formatPercent(position.xirr, 2)} />
+        {hasWithdrawals ? (
+          <Metric
+            label="Booked profit"
+            tone={position.booked < 0 ? ui.loss : ui.gain}
+            value={signedMoney(position.booked)}
+          />
+        ) : null}
       </div>
       {action === 'value' ? (
         <Modal onClose={close} title={`Update ${holding.name}`}>
@@ -209,6 +236,11 @@ function HoldingCard({ row }: { row: PositionRow }) {
               close();
             }}
           />
+        </Modal>
+      ) : null}
+      {action === 'withdraw' ? (
+        <Modal onClose={close} title={`Withdraw from ${holding.name}`}>
+          <WithdrawForm holding={holding} onDone={close} />
         </Modal>
       ) : null}
       {action === 'history' ? (

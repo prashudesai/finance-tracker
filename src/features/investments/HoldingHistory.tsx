@@ -6,14 +6,16 @@ import {
   holdingContributions,
   holdingPosition,
   interestCreditId,
+  withdrawalLedger,
 } from '../../domain/holdings';
+import type { RecordWrite } from '../../data/repository';
 import type { Holding } from '../../schema/records';
 import { useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
 import { formatDay, formatMoney, localDate, signedMoney } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 
-type View = 'contributions' | 'interest' | 'eps';
+type View = 'contributions' | 'withdrawals' | 'interest' | 'eps';
 
 function ContributionHistory({ holdingId }: { holdingId: string }) {
   const contributions = useTracker((state) => state.data.contributions);
@@ -48,6 +50,50 @@ function ContributionHistory({ holdingId }: { holdingId: string }) {
               ])
             }
             type="button"
+          >
+            <Trash2 size={14} />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function WithdrawalHistory({ holding }: { holding: Holding }) {
+  const data = useTracker((state) => state.data);
+  const commit = useTracker((state) => state.commit);
+  const rows = withdrawalLedger(holding, data, localDate()).entries.reverse();
+  if (rows.length === 0) return <p className={ui.empty}>No withdrawals recorded yet.</p>;
+  return (
+    <ul className={ui.list}>
+      {rows.map((row) => (
+        <li className={ui.row} key={row.id}>
+          <div className={ui.rowMain}>
+            <div className={ui.rowTitle}>{formatMoney(row.amount)}</div>
+            <div className={ui.rowDetail}>
+              {formatDay(row.date)} {row.date.slice(0, 4)} · Cost {formatMoney(row.cost)} · Booked{' '}
+              {signedMoney(row.profit)}
+            </div>
+          </div>
+          <button
+            aria-label={`Remove withdrawal of ${formatDay(row.date)}`}
+            className={ui.smallIcon}
+            onClick={() => {
+              const saved = data.withdrawals.find((item) => item.id === row.id);
+              const writes: RecordWrite[] = [
+                { type: 'delete', collection: 'withdrawals', id: row.id },
+              ];
+              // The value saved with it goes too, so the holding is as it was before.
+              if (
+                saved?.valuationId &&
+                data.valuations.some((item) => item.id === saved.valuationId)
+              ) {
+                writes.push({ type: 'delete', collection: 'valuations', id: saved.valuationId });
+              }
+              commit(writes);
+            }}
+            type="button"
+            data-tip="Delete"
           >
             <Trash2 size={14} />
           </button>
@@ -234,9 +280,12 @@ export function HoldingHistory({ holding }: { holding: Holding }) {
   const [view, setView] = useState<View>('contributions');
   const hasInterest = holding.kind === 'pf' || holding.kind === 'ppf';
   const hasEps = holding.kind === 'pf';
+  const hasWithdrawals = useTracker((state) =>
+    state.data.withdrawals.some((row) => row.holdingId === holding.id),
+  );
   return (
     <div className={ui.page}>
-      {hasInterest ? (
+      {hasInterest || hasWithdrawals ? (
         <select
           aria-label="History type"
           className={ui.fieldSelect}
@@ -244,11 +293,13 @@ export function HoldingHistory({ holding }: { holding: Holding }) {
           value={view}
         >
           <option value="contributions">Contributions</option>
-          <option value="interest">Interest credits</option>
+          {hasWithdrawals ? <option value="withdrawals">Withdrawals</option> : null}
+          {hasInterest ? <option value="interest">Interest credits</option> : null}
           {hasEps ? <option value="eps">EPS balance</option> : null}
         </select>
       ) : null}
       {view === 'contributions' ? <ContributionHistory holdingId={holding.id} /> : null}
+      {view === 'withdrawals' ? <WithdrawalHistory holding={holding} /> : null}
       {view === 'interest' ? <InterestCredits holding={holding} /> : null}
       {view === 'eps' ? <EpsHistory holding={holding} /> : null}
     </div>

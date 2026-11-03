@@ -41,6 +41,7 @@ export const previewAccount: Account = {
   role: 'owner',
   signOut: () => window.location.assign('/signin'),
   deleteAccount: () => Promise.reject(new Error('Deleting is turned off in this preview.')),
+  sendFeedback: () => Promise.resolve(),
   security: {
     changePassphrase: () => Promise.resolve(),
     newRecoveryCode: () => Promise.resolve(DEMO_CODE),

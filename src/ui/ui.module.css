@@ -190,7 +190,8 @@
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
@@ -206,6 +207,11 @@
 
 .field select {
   min-height: 46px;
+}
+
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
 }
 
 /* iPhone Safari gives date boxes a fixed inner width, which pushes them off the screen. */
@@ -1464,7 +1470,8 @@ details.fold[open] > summary {
 
   /* iPhones zoom the page when a form field under 16px is tapped. */
   .field input,
-  .field select {
+  .field select,
+  .field textarea {
     font-size: 16px;
   }
 
@@ -1670,7 +1677,7 @@ details.fold[open] > summary {
     grid-auto-flow: column;
     flex-basis: 100%;
     width: 100%;
-    gap: 6px;
+    gap: 4px;
   }
 
   .labelledIcon {
@@ -1678,13 +1685,16 @@ details.fold[open] > summary {
     gap: 2px;
     width: 100%;
     height: 46px;
+    padding-inline: 0;
   }
 
+  /* Labels stay on one line, even with six buttons in a row. */
   .labelledIcon span {
     display: block;
     font-size: 0.66rem;
     font-weight: 600;
     line-height: 1;
+    white-space: nowrap;
   }
 
   .dialog {

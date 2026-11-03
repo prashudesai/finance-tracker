@@ -85,6 +85,15 @@ export function PrivacyPage() {
         </p>
       </Section>
 
+      <Section title="Feedback">
+        <p>
+          If you send feedback from App info in Settings, the app stores your message, whether it’s
+          a feature suggestion or a problem, the date and the app version. It doesn’t add your name
+          or email, so include them in the message if you’d like a reply. Feedback isn’t encrypted,
+          so the person who runs the app can read it. Don’t include financial details.
+        </p>
+      </Section>
+
       <Section title="Where your data lives">
         <p>
           The app runs on Google Firebase, and the database is in Mumbai, India. Google handles

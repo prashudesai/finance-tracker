@@ -1,12 +1,12 @@
 {
-  "version": "1.8.7",
+  "version": "1.8.8",
   "released": "2026-11-03",
   "notes": [
+    "Withdraw from an investment and see the profit you booked, by year",
+    "Send feedback or report a problem from App info in Settings",
     "Older loans fill in what was repaid since the first EMI, with the working shown",
     "Added a public features page to share with friends",
     "Family members open the app by themselves once approved",
-    "One form to add a family member, with or without an invite",
-    "Family names now appear in records and the profile menu after an invite",
-    "New users agree to the privacy page during setup"
+    "One form to add a family member, with or without an invite"
   ]
 }

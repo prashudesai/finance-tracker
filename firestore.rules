@@ -42,7 +42,7 @@ service cloud.firestore {
                             'recurringOccurrences', 'monthlyBalances', 'holdings',
                             'contributions', 'valuations', 'gratuityAccounts',
                             'projectionAdjustments', 'settings', 'monthReviews',
-                            'changes', 'interestCredits', 'epsUpdates'];
+                            'changes', 'interestCredits', 'epsUpdates', 'withdrawals'];
     }
 
     // Records are encrypted on the device, so anything readable is refused.
@@ -85,6 +85,22 @@ service cloud.firestore {
           ['name', 'message', 'source', 'route', 'version', 'day', 'device'])
         && request.resource.data.message is string
         && request.resource.data.message.size() <= 160;
+      allow read, update, delete: if false;
+    }
+
+    // Feature suggestions and problem reports, without a name or email. Added only, and
+    // read in the console.
+    match /feedback/{message} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['kind', 'text', 'version', 'day'])
+        && request.resource.data.kind in ['feature', 'problem']
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000
+        && request.resource.data.version is string
+        && request.resource.data.version.size() <= 20
+        && request.resource.data.day is string
+        && request.resource.data.day.size() == 10;
       allow read, update, delete: if false;
     }
 

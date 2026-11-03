@@ -94,6 +94,7 @@ describe('household records', () => {
       'changes',
       'interestCredits',
       'epsUpdates',
+      'withdrawals',
     ]) {
       await assertSucceeds(setDoc(doc(db, `households/owner/${name}/a`), sealed));
     }
@@ -223,5 +224,33 @@ describe('error reports', () => {
     await assertFails(
       setDoc(doc(owner(), 'errorReports/c'), { ...report, message: 'x'.repeat(200) }),
     );
+  });
+});
+
+describe('feedback', () => {
+  const message = {
+    kind: 'feature',
+    text: 'A budget for each category',
+    version: '1.8.8',
+    day: '2026-11-03',
+  };
+
+  test('anyone signed in can add one, but nobody can read or change it', async () => {
+    await assertSucceeds(setDoc(doc(stranger(), 'feedback/a'), message));
+    await assertSucceeds(setDoc(doc(stranger(), 'feedback/b'), { ...message, kind: 'problem' }));
+    await assertFails(getDoc(doc(stranger(), 'feedback/a')));
+    await assertFails(setDoc(doc(stranger(), 'feedback/a'), message));
+    await assertFails(deleteDoc(doc(stranger(), 'feedback/a')));
+  });
+
+  test('a name, an email, another kind, an empty or long message, or signing out is refused', async () => {
+    await assertFails(setDoc(doc(owner(), 'feedback/c'), { ...message, name: 'Sam' }));
+    await assertFails(
+      setDoc(doc(owner(), 'feedback/d'), { ...message, email: 'sam@example.test' }),
+    );
+    await assertFails(setDoc(doc(owner(), 'feedback/e'), { ...message, kind: 'praise' }));
+    await assertFails(setDoc(doc(owner(), 'feedback/f'), { ...message, text: '' }));
+    await assertFails(setDoc(doc(owner(), 'feedback/g'), { ...message, text: 'x'.repeat(1001) }));
+    await assertFails(setDoc(doc(env.unauthenticatedContext().firestore(), 'feedback/h'), message));
   });
 });

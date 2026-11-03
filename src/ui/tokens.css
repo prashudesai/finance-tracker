@@ -179,7 +179,8 @@ select:hover:not(:disabled) {
 }
 
 select:focus-visible,
-input:focus-visible {
+input:focus-visible,
+textarea:focus-visible {
   border-color: var(--accent);
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-soft);

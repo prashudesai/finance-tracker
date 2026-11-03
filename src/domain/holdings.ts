@@ -6,8 +6,9 @@ import {
   type InterestCredit,
   type TrackerSettings,
   type Valuation,
+  type Withdrawal,
 } from '../schema/records';
-import { addMonths } from './calendar';
+import { addMonths, financialYearStart, roundMoney } from './calendar';
 import { absoluteReturn, cagr, calculateXirr, type Cashflow } from './returns';
 
 export type GrowthType = 'market' | 'fixed' | 'no-return';
@@ -30,6 +31,7 @@ export interface HoldingData {
   valuations: Valuation[];
   interestCredits?: InterestCredit[];
   epsUpdates?: EpsUpdate[];
+  withdrawals?: Withdrawal[];
 }
 
 const indexes = new WeakMap<object, Map<string, unknown[]>>();
@@ -56,6 +58,12 @@ export function holdingContributions(holdingId: string, contributions: Contribut
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/** Withdrawals for one holding, oldest first. */
+export const holdingWithdrawals = (holdingId: string, withdrawals: Withdrawal[] = []) =>
+  [...rowsOfHolding(holdingId, withdrawals)].sort(
+    (a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id),
+  );
+
 /** The newest valuation, or with `asOf`, the newest one known on that date. */
 export function latestValuation(holdingId: string, valuations: Valuation[], asOf?: string) {
   return rowsOfHolding(holdingId, valuations).reduce<Valuation | null>((latest, row) => {
@@ -65,8 +73,11 @@ export function latestValuation(holdingId: string, valuations: Valuation[], asOf
 }
 
 export interface HoldingPosition {
+  /** Still invested, after the cost of anything withdrawn. */
   invested: number;
   current: number;
+  /** Profit taken out by withdrawals: what was received less its average cost. */
+  booked: number;
   /** Pension balance held alongside PF. */
   eps: number;
   gain: number;
@@ -87,12 +98,75 @@ export function holdingValue(holding: Holding, data: HoldingData, asOf: string) 
   const added = holdingContributions(holding.id, data.contributions)
     .filter((row) => row.date <= asOf && row.date > since)
     .reduce((sum, row) => sum + row.amount, 0);
-  return (valuation?.value ?? holding.openingValue) + interest + added;
+  const taken = holdingWithdrawals(holding.id, data.withdrawals)
+    .filter((row) => row.date <= asOf && row.date > since)
+    .reduce((sum, row) => sum + row.amount, 0);
+  return (valuation?.value ?? holding.openingValue) + interest + added - taken;
+}
+
+export interface WithdrawalEntry {
+  id: string;
+  date: string;
+  amount: number;
+  /** The share of the invested amount it took out. */
+  cost: number;
+  profit: number;
 }
 
 /**
- * Invested is the opening amount plus contributions. Current is the latest valuation,
- * or the opening value, plus contributions and interest credited after it.
+ * The invested amount after withdrawals, by average cost. Each withdrawal takes the same
+ * share of the invested amount as it took of the value: the value that day after it,
+ * plus what was taken. Contributions on the same day count first.
+ */
+export function withdrawalLedger(holding: Holding, data: HoldingData, asOf: string) {
+  const contributions = holdingContributions(holding.id, data.contributions).filter(
+    (row) => row.date <= asOf,
+  );
+  const withdrawals = holdingWithdrawals(holding.id, data.withdrawals).filter(
+    (row) => row.date <= asOf,
+  );
+  let invested = holding.openingInvested;
+  let next = 0;
+  const entries: WithdrawalEntry[] = [];
+  withdrawals.forEach((row, index) => {
+    for (
+      let item = contributions[next];
+      item && item.date <= row.date;
+      item = contributions[++next]
+    ) {
+      invested += item.amount;
+    }
+    const laterSameDay = withdrawals
+      .slice(index + 1)
+      .filter((item) => item.date === row.date)
+      .reduce((sum, item) => sum + item.amount, 0);
+    const before = holdingValue(holding, data, row.date) + laterSameDay + row.amount;
+    const share = before > 0 ? Math.min(1, row.amount / before) : 1;
+    const cost = roundMoney(invested * share);
+    invested -= cost;
+    const { id, date, amount } = row;
+    entries.push({ id, date, amount, cost, profit: roundMoney(amount - cost) });
+  });
+  for (; next < contributions.length; next++) invested += contributions[next]?.amount ?? 0;
+  return { invested: roundMoney(invested), entries };
+}
+
+/** Booked profit by financial year, newest first. Years with no withdrawals are left out. */
+export function bookedProfitByYear(holdings: Holding[], data: HoldingData, asOf: string) {
+  const years = new Map<number, number>();
+  for (const holding of holdings) {
+    for (const row of withdrawalLedger(holding, data, asOf).entries) {
+      const year = financialYearStart(row.date);
+      years.set(year, roundMoney((years.get(year) ?? 0) + row.profit));
+    }
+  }
+  return [...years].sort(([a], [b]) => b - a).map(([year, profit]) => ({ year, profit }));
+}
+
+/**
+ * Invested is the opening amount plus contributions, less the average cost of anything
+ * withdrawn. Current is the latest valuation, or the opening value, plus contributions
+ * and interest credited after it, less withdrawals after it.
  */
 export function holdingPosition(
   holding: Holding,
@@ -102,8 +176,7 @@ export function holdingPosition(
   const rows = holdingContributions(holding.id, data.contributions).filter(
     (row) => row.date <= asOf,
   );
-  const contributed = rows.reduce((sum, row) => sum + row.amount, 0);
-  const invested = holding.openingInvested + contributed;
+  const { invested, entries } = withdrawalLedger(holding, data, asOf);
   const current = holdingValue(holding, data, asOf);
   const corrections = (data.epsUpdates ?? [])
     .filter((row) => row.holdingId === holding.id && row.date <= asOf)
@@ -118,11 +191,13 @@ export function holdingPosition(
     flows.push({ date: holding.date, amount: -holding.openingInvested });
   }
   for (const row of rows) if (row.amount > 0) flows.push({ date: row.date, amount: -row.amount });
+  for (const row of entries) flows.push({ date: row.date, amount: row.amount });
   flows.push({ date: asOf, amount: current });
 
   return {
     invested,
     current,
+    booked: roundMoney(entries.reduce((sum, row) => sum + row.profit, 0)),
     eps,
     gain: current - invested,
     absolute: absoluteReturn(invested, current),
@@ -183,6 +258,9 @@ export function groupXirr(holdings: Holding[], data: HoldingData, asOf: string) 
     }
     for (const row of holdingContributions(holding.id, data.contributions)) {
       if (row.date <= asOf && row.amount > 0) flows.push({ date: row.date, amount: -row.amount });
+    }
+    for (const row of holdingWithdrawals(holding.id, data.withdrawals)) {
+      if (row.date <= asOf) flows.push({ date: row.date, amount: row.amount });
     }
     const { current } = holdingPosition(holding, data, asOf);
     if (current > 0) flows.push({ date: asOf, amount: current });

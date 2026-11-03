@@ -10,7 +10,13 @@ import {
   type CategoryRow,
 } from '../../domain/analytics';
 import { estimateGratuity, totalGratuity } from '../../domain/gratuity';
-import { groupXirr, growthType, monthlyContribution } from '../../domain/holdings';
+import { financialYearLabel } from '../../domain/calendar';
+import {
+  bookedProfitByYear,
+  groupXirr,
+  growthType,
+  monthlyContribution,
+} from '../../domain/holdings';
 import { cagr } from '../../domain/returns';
 import {
   gratuityAccountSchema,
@@ -316,6 +322,11 @@ export function InvestmentsPage() {
   const retirement = categories.filter((row) => row.rows[0]?.holding.kind !== 'investment');
   const open = categories.find((row) => row.name === openName) ?? null;
   const gratuity = totalGratuity(data.gratuityAccounts, today);
+  const booked = bookedProfitByYear(
+    rows.map((row) => row.holding),
+    data,
+    today,
+  );
 
   const primaryFor = (category: CategoryRow) => {
     const growth = growthType(category.name, settings);
@@ -423,6 +434,29 @@ export function InvestmentsPage() {
               </div>
             </div>
           ))}
+        </section>
+      ) : null}
+
+      {showInvestments && booked.length > 0 ? (
+        <section aria-label="Booked profit" className={ui.card}>
+          <div>
+            <h2 style={{ fontSize: '1.2rem' }}>Booked profit</h2>
+            <div className={ui.caption}>
+              Profit taken out by withdrawals, by financial year, at average cost
+            </div>
+          </div>
+          <ul className={ui.list}>
+            {booked.map((row) => (
+              <li className={ui.row} key={row.year}>
+                <div className={ui.rowMain}>
+                  <div className={ui.rowTitle}>{financialYearLabel(row.year)}</div>
+                </div>
+                <span className={`${ui.amount} ${row.profit < 0 ? ui.loss : ui.gain}`}>
+                  {signedMoney(row.profit)}
+                </span>
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
 

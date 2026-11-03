@@ -27,7 +27,7 @@ import {
   persistentMultipleTabManager,
 } from 'firebase/firestore';
 import type { ErrorReport } from '../domain/errorReport';
-import type { FamilyAccess } from '../Shell';
+import type { FamilyAccess, FeedbackKind } from '../Shell';
 import type { RecordCodec } from './crypto';
 import { firestoreRepository } from './firestoreRepository';
 import {
@@ -72,6 +72,14 @@ export const signOutUser = async () => {
 /** Errors only, sanitized on the device. Records and names never pass through here. */
 export const sendErrorReport = (report: ErrorReport) =>
   addDoc(collection(db, 'errorReports'), report);
+
+/** A feature suggestion or problem report, without the sender's name or email. */
+export const sendFeedback = (message: {
+  kind: FeedbackKind;
+  text: string;
+  version: string;
+  day: string;
+}) => addDoc(collection(db, 'feedback'), message).then(() => undefined);
 
 export const onMembershipRemoved = (user: User, onRemoved: () => void) =>
   watchMembership(db, user.email?.toLowerCase() ?? '', onRemoved);
