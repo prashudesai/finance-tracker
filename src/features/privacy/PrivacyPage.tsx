@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { PRIVACY_UPDATED } from '../../domain/privacy';
+import { DataJourney } from './DataJourney';
 import styles from './PrivacyPage.module.css';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -30,6 +31,8 @@ export function PrivacyPage() {
         Your financial records are encrypted on your device before they are saved. Nobody else can
         read them, including the person who runs this app.
       </p>
+
+      <DataJourney />
 
       <Section title="What is stored, in unreadable form">
         <p>
