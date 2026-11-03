@@ -1,0 +1,270 @@
+/* Dark is the brand default. Light applies by system preference or the theme toggle. */
+:root {
+  color-scheme: dark;
+  --bg: #102826;
+  --bg-glow: rgb(44 150 122 / 22%);
+  --surface: #183532;
+  --surface-raised: #1f403c;
+  --surface-sunken: #122c29;
+  --text: #edf8f4;
+  --muted: #a5c4ba;
+  --border: rgb(164 226 205 / 16%);
+  --border-strong: rgb(164 226 205 / 32%);
+  --accent: #69d6bb;
+  --accent-soft: rgb(111 220 192 / 15%);
+  --accent-text: #06231c;
+  --series-income: #25a085;
+  --series-expense: #c97f24;
+  --danger: #ff9d94;
+  --danger-soft: rgb(255 157 148 / 14%);
+  --gain: #6fdcc0;
+  --loss: #ff9d94;
+  --debt: #e0a13a;
+  --warning-bg: rgb(229 149 44 / 16%);
+  --warning-text: #ffd089;
+  --shadow: 0 12px 32px rgb(0 0 0 / 22%);
+  --hero: linear-gradient(135deg, #1f4a42, #15322e 62%);
+  --scenario-stress: #d96560;
+  --scenario-base: #3494de;
+  --scenario-optimistic: #1fac79;
+  --radius: 20px;
+  --radius-small: 12px;
+  --space: 16px;
+  font-family:
+    'Inter Variable',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-feature-settings: 'cv11', 'ss03';
+  line-height: 1.45;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #eef5f2;
+  --bg-glow: rgb(14 159 126 / 12%);
+  --scenario-stress: #c8493f;
+  --scenario-base: #1f78c8;
+  --scenario-optimistic: #0e8a5f;
+  --surface: #ffffff;
+  --surface-raised: #f5faf8;
+  --surface-sunken: #e6f0ec;
+  --text: #10291f;
+  --muted: #4d6a5f;
+  --border: #d5e4dd;
+  --border-strong: #b5cdc3;
+  --accent: #07664f;
+  --accent-soft: rgb(10 125 98 / 11%);
+  --accent-text: #ffffff;
+  --series-income: #0e9f7e;
+  --series-expense: #c97a0c;
+  --danger: #b3261e;
+  --danger-soft: rgb(179 38 30 / 9%);
+  --gain: #07664f;
+  --loss: #b3261e;
+  --debt: #a86a00;
+  --warning-bg: #fff1d6;
+  --warning-text: #6b4a00;
+  --shadow: 0 10px 28px rgb(16 41 31 / 8%);
+  --hero: linear-gradient(135deg, #dff2ea, #ffffff 62%);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    color-scheme: light;
+    --bg: #eef5f2;
+    --bg-glow: rgb(14 159 126 / 12%);
+    --scenario-stress: #c8493f;
+    --scenario-base: #1f78c8;
+    --scenario-optimistic: #0e8a5f;
+    --surface: #ffffff;
+    --surface-raised: #f5faf8;
+    --surface-sunken: #e6f0ec;
+    --text: #10291f;
+    --muted: #4d6a5f;
+    --border: #d5e4dd;
+    --border-strong: #b5cdc3;
+    --accent: #07664f;
+    --accent-soft: rgb(10 125 98 / 11%);
+    --accent-text: #ffffff;
+    --series-income: #0e9f7e;
+    --series-expense: #c97a0c;
+    --danger: #b3261e;
+    --danger-soft: rgb(179 38 30 / 9%);
+    --gain: #07664f;
+    --loss: #b3261e;
+    --debt: #a86a00;
+    --warning-bg: #fff1d6;
+    --warning-text: #6b4a00;
+    --shadow: 0 10px 28px rgb(16 41 31 / 8%);
+    --hero: linear-gradient(135deg, #dff2ea, #ffffff 62%);
+  }
+}
+
+/* Sizes are in rem, so this scales phones as a whole, to near the older app's density. */
+@media (max-width: 700px) {
+  html {
+    font-size: 87.5%;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  /* The app's own pull to refresh replaces the browser's. */
+  overscroll-behavior-y: contain;
+  color: var(--text);
+  background: radial-gradient(900px 420px at 12% -8%, var(--bg-glow), transparent 70%), var(--bg);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  /* A long unbroken name wraps, rather than pushing the page sideways. */
+  overflow-wrap: anywhere;
+}
+
+table {
+  overflow-wrap: normal;
+}
+
+:root {
+  --glass: color-mix(in srgb, var(--surface-raised) 72%, transparent);
+  /* Long lists sit over busy pages, so dropdowns stay nearly solid. */
+  --glass-solid: color-mix(in srgb, var(--surface-raised) 95%, transparent);
+  --glass-edge: color-mix(in srgb, var(--text) 14%, transparent);
+  --glass-blur: blur(22px) saturate(150%);
+  --lift: 0 16px 40px rgb(0 0 0 / 24%);
+}
+
+h1,
+h2 {
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Every dropdown shares one look. Phones and older browsers keep their native picker. */
+select {
+  appearance: none;
+  padding-right: 34px !important;
+  background-image: var(--select-arrow);
+  background-position: right 11px center;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+select:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+select:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+option {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+@supports (appearance: base-select) {
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+
+  select::picker-icon {
+    display: none;
+  }
+
+  ::picker(select) {
+    max-height: min(320px, 60dvh);
+    margin-block: 6px;
+    padding: 6px;
+    overflow-y: auto;
+    color: var(--text);
+    background: var(--glass-solid);
+    border: 1px solid var(--glass-edge);
+    border-radius: 14px;
+    box-shadow: var(--lift);
+    backdrop-filter: var(--glass-blur);
+  }
+
+  option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 0.92rem;
+    background: transparent;
+    border-radius: 9px;
+    cursor: pointer;
+  }
+
+  option:hover,
+  option:focus-visible {
+    background: var(--accent-soft);
+    outline: none;
+  }
+
+  option:checked {
+    color: var(--accent);
+    font-weight: 650;
+  }
+
+  option::checkmark {
+    order: 1;
+    margin-left: auto;
+    color: var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  select {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  main > * {
+    animation: rise 220ms ease-out;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

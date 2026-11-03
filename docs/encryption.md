@@ -1,0 +1,51 @@
+# Encryption
+
+Records are encrypted on the device, so Firebase stores only unreadable data. The aim is that nobody can read a family's records without a member's passphrase or recovery code, including anyone with admin access to this Firebase project.
+
+The code is in `src/data/crypto.ts` (Web Crypto only) and `src/data/vault.ts` (keys in Firestore).
+
+## Keys
+
+- **Data keys:** AES-256-GCM keys that lock records. A household's newest key locks new writes, and older ones stay available to read older records.
+- **ID key:** an HMAC-SHA-256 key that scrambles document IDs, so natural keys such as a month aren't visible.
+- **Personal key pair:** ECDH P-256. Each person has one per sign-in.
+- **Keyring:** the private key, locked twice with PBKDF2-SHA-256 at 600,000 iterations, once by the passphrase and once by the recovery code. The public key sits beside it.
+- **Household secret:** the data keys and ID key, locked to each member's public key in `households/{id}/keys/{uid}`.
+
+Each stored record is tied to its household, collection and document ID as authenticated data, so records can't be swapped or moved without failing to open.
+
+## Flows
+
+**First use.** A person agrees to the privacy page, then creates a passphrase and saves a recovery code. An owner's first entry creates the household secret, unless encrypted records already exist. In that case it stops rather than orphan them.
+
+**This device.** The private key is imported as non-extractable and kept in IndexedDB until sign-out, so the passphrase isn't needed each visit and offline use keeps working. Firestore's local cache holds only encrypted data.
+
+**Face ID or fingerprint.** Someone can add a passkey with the WebAuthn PRF extension. The device turns a biometric check into a secret, which locks another copy of the private key in the keyring. A device with this on keeps no key, so each visit needs the check, and returning after 5 minutes away reloads the app. The check starts by itself where the browser allows it, and the unlock button stays as the fallback. Devices without PRF support keep using the passphrase. Turning it off removes only that device's passkey.
+
+Reminders stay on the device for the same reason: a server can't send a reminder for a date it can't read. The app shows them in Needs attention, and a calendar file lets the phone remind people while the app is closed.
+
+**New device.** A device that has never unlocked makes a throwaway key pair, kept only in the page, and writes its public key and a rough device name to `keyrings/{uid}/deviceRequests`. Saved devices show a pop-up with a safety code. Approving needs Face ID or the passphrase, because a saved device's key can't be exported, and that also stops someone with an unlocked phone approving. The saved device locks the private key to the new device's public key and writes it to the request, and the new device opens it, then deletes the request. Requests end after 10 minutes. Approval is an alternative to the passphrase, not a second lock. The rules can't tell devices apart, and a lost device must never lock someone out, so the passphrase and recovery code still work.
+
+**Family.** An invited member accepts, creates a keyring and writes their public key to `requests`. Their waiting screen watches for their keys, and opens by itself once approved. The owner sees a pop-up on any screen and an alert in Needs attention, and can approve or deny. Both people see a safety code derived from that key. Comparing it is optional but recommended, because it's what stops someone with database access swapping in their own key. An owner who skips it is trusting the database for that one approval. Approval re-reads the key and refuses if the code no longer matches. Denying removes the request and the invite.
+
+**Removal.** The owner's device adds a new data key, shares it with everyone else, re-encrypts every record and then removes the membership. If that fails partway, removing them again finishes the job. A damaged record can't be re-encrypted, so it's skipped and doesn't block the removal. Other members pick up the new key the first time they meet a record that needs it.
+
+A removed member's open app watches their membership and signs them out when it goes. If the app was closed, a note on the device catches it on the next visit, and signing in again starts their own tracker.
+
+**Lost secrets.** A passphrase can be replaced with the recovery code. Without either, the records can't be opened, and the only way forward is to delete them and start again.
+
+## Roles
+
+Encryption can't make a viewer read-only, because all members hold the same keys. The security rules still enforce roles. They also refuse any record that isn't in the sealed `{ k, iv, c }` form.
+
+## What stays visible
+
+Anyone with admin access can still see email addresses, the rough device name in a pending device request, who belongs to which household, the number of records in each collection, and when documents changed.
+
+## The limit of this design
+
+This protects stored data. Whoever controls the hosted code could ship a version that captures passphrases, so people still have to trust the app they load.
+
+## Records from before encryption
+
+There's no automatic move. Records saved in readable form are ignored by the app and stay in Firestore until they're deleted. Deleting an account removes them. A backup exported from the earlier version can be imported, which stores its records encrypted.

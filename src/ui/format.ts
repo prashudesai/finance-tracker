@@ -1,0 +1,52 @@
+const rupees = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 0,
+});
+
+const compactRupees = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+export const formatMoney = (value: number) => rupees.format(value);
+
+export const formatCompactMoney = (value: number) => compactRupees.format(value);
+
+/** Always in lakhs, so a column of large values stays comparable. */
+export const formatLakhs = (value: number, digits = 2) =>
+  `${value < 0 ? '−' : ''}₹${(Math.abs(value) / 100_000).toFixed(digits)}L`;
+
+export function localDate(now = new Date()) {
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+export const formatMonth = (month: string) =>
+  new Date(`${month}-01T00:00:00`).toLocaleDateString('en-IN', {
+    month: 'long',
+    year: 'numeric',
+  });
+
+export const formatShortMonth = (month: string) =>
+  new Date(`${month}-01T00:00:00`).toLocaleDateString('en-IN', { month: 'short' });
+
+export const formatShortMonthYear = (month: string) =>
+  new Date(`${month}-01T00:00:00`).toLocaleDateString('en-IN', {
+    month: 'short',
+    year: 'numeric',
+  });
+
+export const formatDay = (date: string) =>
+  new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+export const formatPercent = (value: number | null, digits = 1) =>
+  value === null ? '—' : `${(value * 100).toFixed(digits)}%`;
+
+export const signedMoney = (value: number) =>
+  `${value < 0 ? '−' : '+'}${formatMoney(Math.abs(value))}`;
+
+export const gainClass = (value: number | null) => (value !== null && value < 0 ? 'loss' : 'gain');

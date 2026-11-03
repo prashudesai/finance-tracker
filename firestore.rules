@@ -1,0 +1,152 @@
+rules_version = '2';
+
+// A household's ID is its owner's UID. Other people join through a membership
+// document, which the owner creates and only the invited person can accept.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function email() {
+      return request.auth.token.email.lower();
+    }
+
+    function membershipPath() {
+      return /databases/$(database)/documents/memberships/$(email());
+    }
+
+    function acceptedRole(household) {
+      let membership = get(membershipPath()).data;
+      return membership.householdId == household && membership.accepted == true
+        ? membership.role
+        : null;
+    }
+
+    function isOwner(household) {
+      return signedIn() && request.auth.uid == household;
+    }
+
+    function canRead(household) {
+      return isOwner(household)
+        || (signedIn() && exists(membershipPath()) && acceptedRole(household) in ['editor', 'viewer']);
+    }
+
+    function canEdit(household) {
+      return isOwner(household)
+        || (signedIn() && exists(membershipPath()) && acceptedRole(household) == 'editor');
+    }
+
+    function isRecords(collection) {
+      return collection in ['income', 'expenses', 'loans', 'recurringRules',
+                            'recurringOccurrences', 'monthlyBalances', 'holdings',
+                            'contributions', 'valuations', 'gratuityAccounts',
+                            'projectionAdjustments', 'settings', 'monthReviews',
+                            'changes', 'interestCredits', 'epsUpdates', 'withdrawals'];
+    }
+
+    // Records are encrypted on the device, so anything readable is refused.
+    function isSealed() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['k', 'iv', 'c'])
+        && data.keys().hasAll(['k', 'iv', 'c'])
+        && data.k is int && data.iv is string && data.c is string;
+    }
+
+    match /memberships/{address} {
+      allow read: if signedIn()
+        && (address == email() || resource.data.householdId == request.auth.uid);
+
+      allow create: if signedIn()
+        && address != email()
+        && request.resource.data.keys().hasOnly(['householdId', 'role', 'accepted'])
+        && request.resource.data.householdId == request.auth.uid
+        && request.resource.data.role in ['editor', 'viewer']
+        && request.resource.data.accepted == false;
+
+      // Owners may change the role. Invitees may only accept.
+      allow update: if signedIn() && (
+        (resource.data.householdId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
+          && request.resource.data.role in ['editor', 'viewer'])
+        || (address == email()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['accepted'])
+          && request.resource.data.accepted == true)
+      );
+
+      allow delete: if signedIn()
+        && (resource.data.householdId == request.auth.uid || address == email());
+    }
+
+    // Sanitized on the device. Reports can only be added, and are read in the console.
+    match /errorReports/{report} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(
+          ['name', 'message', 'source', 'route', 'version', 'day', 'device'])
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 160;
+      allow read, update, delete: if false;
+    }
+
+    // Feature suggestions and problem reports, without a name or email. Added only, and
+    // read in the console.
+    match /feedback/{message} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['kind', 'text', 'version', 'day'])
+        && request.resource.data.kind in ['feature', 'problem']
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000
+        && request.resource.data.version is string
+        && request.resource.data.version.size() <= 20
+        && request.resource.data.day is string
+        && request.resource.data.day.size() == 10;
+      allow read, update, delete: if false;
+    }
+
+    // A person's private key, locked by their passphrase and recovery code.
+    match /keyrings/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // A new device asking this person's saved devices for their key. The key is locked to
+    // the new device before it is written here.
+    match /keyrings/{uid}/deviceRequests/{requestId} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['publicKey', 'device', 'at'])
+        && request.resource.data.keys().hasAll(['publicKey', 'device', 'at'])
+        && request.resource.data.device is string
+        && request.resource.data.device.size() <= 40
+        && request.resource.data.at == request.time;
+      allow update: if signedIn() && request.auth.uid == uid
+        && !('status' in resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'locked'])
+        && request.resource.data.status in ['approved', 'denied'];
+    }
+
+    // The household's keys, locked to each member. Only the owner shares them.
+    match /households/{household}/keys/{member} {
+      allow read: if isOwner(household)
+        || (signedIn() && request.auth.uid == member && canRead(household));
+      allow create, update: if isOwner(household)
+        && request.resource.data.keys().hasOnly(['email', 'publicKey', 'locked']);
+      allow delete: if isOwner(household) || (signedIn() && request.auth.uid == member);
+    }
+
+    // A member asking the owner for those keys.
+    match /households/{household}/requests/{member} {
+      allow read: if isOwner(household) || (signedIn() && request.auth.uid == member);
+      allow create, update: if signedIn() && request.auth.uid == member && canRead(household)
+        && request.resource.data.keys().hasOnly(['email', 'publicKey'])
+        && request.resource.data.email == email();
+      allow delete: if isOwner(household) || (signedIn() && request.auth.uid == member);
+    }
+
+    match /households/{household}/{collection}/{record} {
+      allow read: if canRead(household) && isRecords(collection);
+      allow create, update: if canEdit(household) && isRecords(collection) && isSealed();
+      allow delete: if canEdit(household) && isRecords(collection);
+    }
+  }
+}

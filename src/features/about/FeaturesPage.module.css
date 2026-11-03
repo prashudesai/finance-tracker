@@ -1,0 +1,111 @@
+.page {
+  display: grid;
+  gap: var(--space);
+  width: min(960px, 100%);
+  min-height: 100dvh;
+  align-content: start;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+  color: var(--text);
+}
+
+.hero {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.logo {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.hero h1 {
+  margin: 8px 0 0;
+  font-size: clamp(1.7rem, 6vw, 2.6rem);
+}
+
+.hero p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin-top: 12px;
+  padding: 0 28px;
+  color: var(--accent-text);
+  font-weight: 650;
+  text-decoration: none;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.grid {
+  display: grid;
+  gap: var(--space);
+}
+
+.card {
+  padding: var(--space);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.card h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-small);
+}
+
+.card ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.note {
+  margin: 0;
+  padding: var(--space);
+  line-height: 1.5;
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+}
+
+.footer {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.footer a {
+  color: var(--text);
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

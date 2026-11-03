@@ -1,0 +1,162 @@
+.journey {
+  display: grid;
+  gap: 12px;
+  padding: var(--space);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.journey h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step,
+.stepOn {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px 10px;
+  text-align: center;
+  background: var(--surface-sunken);
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  opacity: 0.4;
+  transform: translateY(6px);
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease,
+    border-color 0.4s ease;
+}
+
+.stepOn {
+  border-color: var(--accent);
+  opacity: 1;
+  transform: none;
+}
+
+.step strong,
+.stepOn strong {
+  font-size: 0.9rem;
+}
+
+.icon,
+.iconPulse {
+  display: inline-flex;
+  color: var(--accent);
+}
+
+.iconPulse {
+  animation: pulse 0.9s ease-in-out 2;
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+.chip,
+.chipLocked {
+  max-width: 100%;
+  padding: 4px 8px;
+  overflow: hidden;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: var(--radius-small);
+}
+
+.chip {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.chipLocked {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.caption {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.controls button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.count {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.notes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 10px;
+}
+
+.notes > div {
+  padding: 12px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-small);
+}
+
+.notes strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.notes strong svg {
+  color: var(--accent);
+}
+
+.notes p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step,
+  .stepOn {
+    transition: none;
+  }
+
+  .iconPulse {
+    animation: none;
+  }
+}

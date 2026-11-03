@@ -1,0 +1,39 @@
+import type { TrackerData } from '../data/repository';
+import { estimateSchedule, isLoanFailure, rebuildLoan, type LoanLedger } from './loan';
+import { loanPayments } from './recurring';
+
+export interface LoanSummary {
+  id: string;
+  type: string;
+  member: string;
+  ledger: LoanLedger | null;
+  error: string | null;
+}
+
+export function summarizeLoans(data: Pick<TrackerData, 'loans' | 'expenses'>, today: string) {
+  return data.loans.map((loan): LoanSummary => {
+    const { id, type, member } = loan;
+    const result = rebuildLoan(loan, loanPayments(data.expenses, id), { asOf: today });
+    return isLoanFailure(result)
+      ? { id, type, member, ledger: null, error: result.error }
+      : { id, type, member, ledger: result, error: null };
+  });
+}
+
+export const totalOutstanding = (loans: LoanSummary[]) =>
+  loans.reduce((sum, loan) => sum + (loan.ledger?.remaining ?? 0), 0);
+
+export const totalMonthlyEmi = (loans: LoanSummary[]) =>
+  loans.reduce(
+    (sum, loan) => sum + ((loan.ledger?.remaining ?? 0) > 0 ? (loan.ledger?.emi ?? 0) : 0),
+    0,
+  );
+
+/** Share of everything borrowed that has been repaid, from 0 to 1. */
+export function paidShare({ remaining, totalPrincipal }: LoanLedger) {
+  if (totalPrincipal <= 0) return 0;
+  return Math.min(1, Math.max(0, 1 - remaining / totalPrincipal));
+}
+
+export const remainingEmis = ({ remaining, emi, rate }: LoanLedger) =>
+  estimateSchedule(remaining, emi, rate).count;

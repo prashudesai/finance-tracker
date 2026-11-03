@@ -1,0 +1,1750 @@
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space);
+  min-width: 0;
+}
+
+.pageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.card {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-width: 0;
+  padding: 20px;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--surface-raised) 88%, transparent),
+    var(--surface)
+  );
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent),
+    var(--shadow);
+}
+
+.hero {
+  composes: card;
+  background: var(--hero);
+  border-color: var(--border-strong);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.columns {
+  display: grid;
+  gap: var(--space);
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+}
+
+.tiles {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.tile {
+  composes: card;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.tileHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tileHead .tileIcon {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 10px;
+}
+
+.statGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tileIcon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-small);
+}
+
+.statLabel {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.statValue {
+  font-size: 1.3rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.heroValue {
+  margin: 2px 0 0;
+  font-size: clamp(2.2rem, 7vw, 3.2rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.meter {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  overflow: hidden;
+  background: var(--surface-sunken);
+  border-radius: 999px;
+}
+
+.meterFill {
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.meterExpense {
+  composes: meterFill;
+  background: var(--series-expense);
+}
+
+.meterLegend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+}
+
+.formWide {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+}
+
+.formActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.field {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.field label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.field input,
+.field select,
+.field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 11px 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  background-color: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.field select {
+  min-height: 46px;
+}
+
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* iPhone Safari gives date boxes a fixed inner width, which pushes them off the screen. */
+.field input[type='date'],
+.field input[type='month'] {
+  display: block;
+  min-height: 46px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.field input::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+
+.fieldError {
+  color: var(--danger);
+}
+
+.button {
+  overflow-wrap: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  text-decoration: none;
+  padding: 10px 18px;
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 650;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    filter 120ms ease,
+    transform 120ms ease;
+}
+
+.button:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.quiet {
+  composes: button;
+  color: var(--text);
+  background: transparent;
+  border-color: var(--border-strong);
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.row:last-child {
+  padding-bottom: 0;
+}
+
+.rowIcon {
+  composes: tileIcon;
+  flex: none;
+}
+
+.rowIconExpense {
+  composes: tileIcon;
+  flex: none;
+  color: var(--series-expense);
+  background: var(--warning-bg);
+}
+
+.rowMain {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.rowDetail {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.amount {
+  flex: none;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.groupLabel {
+  margin: 6px 0 2px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.notice {
+  margin: 0;
+  padding: 11px 14px;
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  border-radius: var(--radius-small);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  color: var(--warning-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--warning-bg);
+  border-radius: 999px;
+}
+
+.badgeDone {
+  composes: badge;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.loan {
+  display: grid;
+  gap: 10px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+
+.loan:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.loan:last-child {
+  padding-bottom: 0;
+}
+
+.loanTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.loanFacts {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+  margin: 0;
+}
+
+@media (min-width: 620px) {
+  .loanFacts {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.loanFacts dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.loanFacts dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.loanActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dialog {
+  width: min(560px, calc(100vw - 32px));
+  margin: auto;
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+  color: var(--text);
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius);
+  box-shadow: var(--lift);
+  backdrop-filter: var(--glass-blur);
+}
+
+.dialogWide {
+  width: min(1040px, calc(100vw - 32px));
+}
+
+.dialog::backdrop {
+  background: rgb(3 18 15 / 45%);
+  backdrop-filter: blur(4px);
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.titleBar {
+  padding-left: 14px;
+  border-left: 5px solid var(--accent);
+}
+
+.sectionLabel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sectionLabel span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (max-width: 700px) {
+  .sectionLabel {
+    display: grid;
+    justify-content: center;
+    justify-items: center;
+    gap: 2px;
+  }
+}
+
+.attention {
+  padding: 12px 16px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+}
+
+.attention summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.twoColumn {
+  display: grid;
+  gap: var(--space);
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+}
+
+.threeColumn {
+  display: grid;
+  gap: var(--space);
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+}
+
+.value {
+  font-size: 2.3rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.caption {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.split {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 20px;
+}
+
+.alignEnd {
+  text-align: right;
+}
+
+.gain {
+  color: var(--gain);
+}
+
+.loss {
+  color: var(--loss);
+}
+
+.debt {
+  color: var(--debt);
+}
+
+.income {
+  color: var(--gain);
+}
+
+.meterDebt {
+  composes: meterFill;
+  background: var(--debt);
+}
+
+.metric {
+  padding: 12px 14px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.metricValue {
+  margin-top: 4px;
+  font-size: 1.15rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: break-word;
+}
+
+.metricsTwo {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metrics {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+/* Figures inside a tile: plain rows, without a box around each one. */
+.compact {
+  display: grid;
+  gap: 8px 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.compact:has(> :nth-child(4):last-child) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.compact .metric {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+
+.compact .label {
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+}
+
+.compact .metricValue {
+  margin-top: 1px;
+  font-size: 0.95rem;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th {
+  padding: 10px 12px;
+  color: var(--accent);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--surface-sunken);
+}
+
+.table td {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table.stackTable th,
+.table.stackTable td {
+  padding-inline: 8px;
+}
+
+.table.stackTable th {
+  vertical-align: bottom;
+  white-space: normal;
+}
+
+.numeric {
+  text-align: right !important;
+}
+
+.tableActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.smallIcon {
+  composes: iconButton;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.fieldSelect {
+  min-height: 38px;
+  padding: 8px 14px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 550;
+  background-color: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+}
+
+.tabs {
+  display: flex;
+  gap: 22px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab,
+.tabActive {
+  padding: 8px 0 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+
+.tabActive {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.check input {
+  accent-color: var(--accent);
+}
+
+.categoryCard {
+  composes: card;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  border-left: 4px solid var(--accent);
+  cursor: pointer;
+}
+
+.categoryCard:hover {
+  border-color: var(--border-strong);
+}
+
+.vaultScreen {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 16px;
+}
+
+.vaultScreen > section {
+  width: min(460px, 100%);
+}
+
+.vaultScreen .form {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.recoveryCode {
+  user-select: all;
+  margin: 6px 0;
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
+.agreeList {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.agreeLink {
+  justify-self: start;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.textButton {
+  justify-self: center;
+  padding: 6px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.switch {
+  width: 40px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  background: var(--border-strong);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.switch::after {
+  content: '';
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 2px;
+  background: var(--text);
+  border-radius: 50%;
+  transition: transform 140ms ease;
+}
+
+.switch:checked {
+  background: var(--accent);
+}
+
+.switch:checked::after {
+  background: var(--accent-text);
+  transform: translateX(18px);
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.loadingScreen {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+}
+
+.loadingLogo {
+  border-radius: 22px;
+}
+
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--surface) 30%,
+    color-mix(in srgb, var(--surface-raised) 82%, var(--text)) 50%,
+    var(--surface) 70%
+  );
+  background-size: 300% 100%;
+  border-radius: var(--radius);
+}
+
+.skeletonHero {
+  height: 180px;
+}
+
+.skeletonTile {
+  height: 104px;
+}
+
+.toast {
+  position: fixed;
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 0.88rem;
+  background: var(--glass-solid);
+  border: 1px solid var(--glass-edge);
+  border-radius: 14px;
+  box-shadow: var(--lift);
+  transform: translateX(-50%);
+}
+
+.toastUndo {
+  flex: none;
+  padding: 4px 8px;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.emptyState {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 22px 12px;
+  text-align: center;
+}
+
+.categoryCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.categoryCell svg {
+  flex: none;
+  color: var(--accent);
+}
+
+.chartDetail {
+  min-height: 1.3em;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tooltip {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 5px 9px;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: var(--lift);
+}
+
+.labelledIcon {
+  composes: smallIcon;
+}
+
+.labelledIcon span {
+  display: none;
+}
+
+.iconActions {
+  display: flex;
+  gap: 8px;
+}
+
+.valueRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.trendLine {
+  display: block;
+  flex: none;
+}
+
+.settingGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.settingTile {
+  composes: card;
+  grid-template-areas: 'icon text arrow';
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px 14px;
+  align-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 118px;
+  padding: 16px 22px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 140ms ease;
+}
+
+.settingTile:hover {
+  border-color: var(--border-strong);
+}
+
+.settingTile > :first-child {
+  grid-area: icon;
+}
+
+.settingText {
+  grid-area: text;
+  min-width: 0;
+}
+
+.settingArrow {
+  grid-area: arrow;
+  color: var(--accent);
+}
+
+@media (max-width: 1000px) {
+  .settingGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .settingGrid {
+    gap: 8px;
+  }
+
+  .settingTile {
+    grid-template-areas:
+      'icon arrow'
+      'text text';
+    grid-template-columns: 1fr auto;
+    align-content: start;
+    align-items: start;
+    gap: 10px 8px;
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .settingTile .tileIcon {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+.barList {
+  display: grid;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(0, 2.4fr) 86px 170px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 8px;
+  color: inherit;
+  font-size: 0.88rem;
+  text-decoration: none;
+  border-top: 1px solid var(--border);
+  border-radius: 10px;
+  transition: background-color 140ms ease;
+}
+
+.barRow:first-child {
+  border-top: 0;
+}
+
+.barRow:hover {
+  background: var(--accent-soft);
+}
+
+.barValue {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.barGain {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 50%;
+}
+
+.stack {
+  display: flex;
+  gap: 2px;
+  height: 7px;
+  overflow: hidden;
+  background: var(--surface-sunken);
+  border-radius: 999px;
+}
+
+.stackInvested {
+  background: #8fa9b5;
+}
+
+.stackGain {
+  background: var(--series-income);
+}
+
+/* A collapsed card is only its heading, so it stays one line tall. A link can
+   scroll to these, and the margin keeps them clear of the sticky header. */
+.card.fold {
+  gap: 10px;
+  padding: 12px 16px;
+  scroll-margin-top: 76px;
+}
+
+.card.fold:not([open]) {
+  padding-block: 8px;
+}
+
+details.fold > summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+details.fold[open] > summary {
+  margin-bottom: 10px;
+}
+
+.expense {
+  color: #2a1405;
+  background: #e09a6a;
+  border-color: #e09a6a;
+}
+
+/* Shown only on phones, where a table drops its secondary columns. */
+.showOnPhone {
+  display: none;
+}
+
+.themeGrid {
+  display: grid;
+  gap: 10px;
+  /* Two across on a phone, so the list stays short. */
+  grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+}
+
+.themeChoice {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.themeChoice:hover {
+  border-color: var(--border-strong);
+}
+
+.themeChoice[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.themeSwatches {
+  display: flex;
+  gap: 4px;
+}
+
+.themeSwatches i {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+}
+
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.panelTitle {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.notes {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.subtleLine {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+}
+
+.textLink {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.textLinkCenter {
+  composes: textLink;
+  display: block;
+  padding: 6px;
+  text-align: center;
+}
+
+.chip {
+  padding: 2px 8px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--accent-soft);
+  border-radius: 999px;
+}
+
+.linkCard {
+  composes: metric;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.linkCard:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.metricsThree {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.legendRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.legendRow i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  border-radius: 50%;
+}
+
+.clickableRow {
+  cursor: pointer;
+}
+
+.clickableRow:hover {
+  background: var(--accent-soft);
+}
+
+.rowOpen {
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.detailList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.detailList > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detailList dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.detailList dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.primaryWide {
+  composes: button;
+  width: 100%;
+}
+
+.dialogFull {
+  composes: dialog;
+}
+
+.segmented {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.segment,
+.segmentActive {
+  min-height: 40px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.segmentActive {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+/* Phones show the page title alone, as the older app did. */
+@media (max-width: 700px) {
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metricsThree {
+    gap: 8px;
+  }
+
+  .metricsThree .metricValue {
+    font-size: 1rem;
+  }
+
+  .barList {
+    gap: 10px;
+  }
+
+  .barRow {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'name value'
+      'bar bar'
+      'gain gain';
+    gap: 6px 10px;
+    padding: 12px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .barRow:first-child {
+    border-top: 1px solid var(--border);
+  }
+
+  .barName {
+    grid-area: name;
+  }
+
+  .barRow > .stack {
+    grid-area: bar;
+  }
+
+  .barValue {
+    grid-area: value;
+  }
+
+  .barGain {
+    grid-area: gain;
+    text-align: left;
+  }
+
+  /* iPhones zoom the page when a form field under 16px is tapped. */
+  .field input,
+  .field select,
+  .field textarea {
+    font-size: 16px;
+  }
+
+  .cardHeader .button {
+    flex: none;
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .hideOnPhone {
+    display: none;
+  }
+
+  .showOnPhone {
+    display: block;
+  }
+
+  /* Every figure stays readable on a phone, each with its own label. */
+  .stackTable thead {
+    display: none;
+  }
+
+  .stackTable,
+  .stackTable tbody,
+  .stackTable tr,
+  .stackTable td {
+    display: block;
+    width: 100%;
+  }
+
+  .stackTable tr {
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .stackTable tr:first-child {
+    border-top: 0;
+  }
+
+  .table.stackTable td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 12px;
+    text-align: right;
+    border: 0;
+  }
+
+  .stackTable td[data-label]::before {
+    content: attr(data-label);
+    color: var(--muted);
+    text-align: left;
+  }
+
+  .table th,
+  .table td {
+    padding: 10px 8px;
+  }
+
+  .tiles > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .pageHeader .eyebrow,
+  .pageHeader .subtitle {
+    display: none;
+  }
+
+  .pageHeader h1 {
+    font-size: 1.3rem;
+    font-weight: 600;
+  }
+
+  .dialogFull {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 16px;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+@media print {
+  .card,
+  .hero,
+  .metric {
+    box-shadow: none;
+    background: none;
+    color: #000;
+    border-color: #999;
+  }
+
+  .button,
+  .quiet {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  .loadingLogo {
+    animation: breathe 1.4s ease-in-out infinite;
+  }
+
+  .toast {
+    animation: toast-in 180ms ease-out;
+  }
+
+  .dialog[open],
+  .dialogFull[open] {
+    animation: dialog-in 180ms ease-out;
+  }
+
+  .dialog[open]::backdrop {
+    animation: fade-in 180ms ease-out;
+  }
+
+  .button,
+  .quiet,
+  .smallIcon,
+  .categoryCard,
+  .settingTile,
+  .linkCard,
+  .barRow {
+    transition:
+      transform 90ms ease,
+      filter 120ms ease,
+      border-color 140ms ease,
+      background-color 140ms ease;
+  }
+
+  .button:active,
+  .quiet:active,
+  .smallIcon:active,
+  .categoryCard:active,
+  .settingTile:active,
+  .linkCard:active,
+  .barRow:active {
+    transform: scale(0.98);
+  }
+
+  @media (max-width: 700px) {
+    .dialog[open],
+    .dialogFull[open] {
+      animation: sheet-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: 0 0;
+  }
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.65;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* On phones a pop-up is a sheet that rises from the bottom. */
+@media (max-width: 700px) {
+  /* No hover on phones, so every action shows its name, all the same size. */
+  .iconActions {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    flex-basis: 100%;
+    width: 100%;
+    gap: 4px;
+  }
+
+  .labelledIcon {
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    height: 46px;
+    padding-inline: 0;
+  }
+
+  /* Labels stay on one line, even with six buttons in a row. */
+  .labelledIcon span {
+    display: block;
+    font-size: 0.66rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .dialog {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 92dvh;
+    margin: auto 0 0;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    border-width: 1px 0 0;
+    border-radius: 20px 20px 0 0;
+  }
+
+  /* Entry forms keep the whole screen. */
+  .dialogFull {
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 16px;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .dialogHeader {
+    position: relative;
+    touch-action: none;
+  }
+
+  .dialog > .dialogHeader::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    background: var(--border-strong);
+    border-radius: 999px;
+    transform: translateX(-50%);
+  }
+
+  .toast {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
