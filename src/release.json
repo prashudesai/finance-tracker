@@ -1,12 +1,12 @@
 {
-  "version": "1.9.6",
-  "released": "2026-11-03",
+  "version": "1.9.7",
+  "released": "2026-11-04",
   "notes": [
+    "Your phone's top and bottom bars now match the theme you choose",
     "A step-by-step animated guide to install the app on iPhone, Android and computers",
     "Phones get a gentle reminder to install, and Settings has How to install",
     "The privacy page has a contact email for questions",
     "In this version now sits with the version number in Settings",
-    "The privacy page's Try it yourself box is easier to read",
-    "First login shows who can read your records, with something you type locked for real"
+    "The privacy page's Try it yourself box is easier to read"
   ]
 }

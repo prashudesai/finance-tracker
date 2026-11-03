@@ -5,7 +5,7 @@
   min-height: 100dvh;
   align-content: start;
   margin: 0 auto;
-  padding: 32px 16px 48px;
+  padding: calc(32px + env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom));
   color: var(--text);
 }
 

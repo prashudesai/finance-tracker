@@ -26,7 +26,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px var(--space);
+  /* The installed app draws edge to edge, under the phone's status bar. */
+  padding: calc(10px + env(safe-area-inset-top)) var(--space) 10px;
   border-bottom: 1px solid var(--border);
 }
 
