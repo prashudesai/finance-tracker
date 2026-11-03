@@ -1580,3 +1580,18 @@ describe('privacy page', () => {
     expect(link.getAttribute('href')).toBe('/privacy');
   });
 });
+
+test('the sign-in screen says what the app is, for people arriving from a shared link', () => {
+  render(
+    <MemoryRouter>
+      <SignIn onSignIn={() => undefined} />
+    </MemoryRouter>,
+  );
+  expect(screen.getByRole('heading', { name: 'Welcome' })).toBeDefined();
+  expect(screen.getByText('All your money in one place')).toBeDefined();
+  expect(screen.getByText('Made for families')).toBeDefined();
+  expect(screen.getByText('Free and private')).toBeDefined();
+  expect(screen.getByRole('link', { name: /See what it does/ }).getAttribute('href')).toBe(
+    '/features',
+  );
+});

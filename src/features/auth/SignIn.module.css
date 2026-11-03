@@ -79,6 +79,58 @@
   filter: brightness(1.05);
 }
 
+.points {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 2px;
+  padding: 0;
+  text-align: left;
+  list-style: none;
+}
+
+.points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  line-height: 1.4;
+}
+
+.points strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.points div span {
+  color: #9dc5b8;
+  font-size: 0.85rem;
+}
+
+.pointIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: #8cddc6;
+  background: rgb(140 221 198 / 14%);
+  border-radius: 10px;
+}
+
+.see {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 6px;
+  margin-top: 8px;
+  color: #8cddc6;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.see:hover {
+  text-decoration: underline;
+}
+
 .private {
   display: flex;
   align-items: center;

@@ -1,4 +1,4 @@
-import { Lock, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Lock, ShieldCheck, Users, Wallet, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import logo from '../../assets/logo.png';
 import styles from './SignIn.module.css';
@@ -26,6 +26,13 @@ function GoogleMark() {
   );
 }
 
+/** Most people arrive from a shared link, so the screen says what the app is. */
+const POINTS: [LucideIcon, string, string][] = [
+  [Wallet, 'All your money in one place', 'Income, expenses, investments, PF, loans and net worth'],
+  [Users, 'Made for families', 'Invite family, and choose who can edit'],
+  [ShieldCheck, 'Free and private', 'No ads. Encrypted on your phone, so only family can read it'],
+];
+
 export function SignIn({ onSignIn, error }: { onSignIn: () => void; error?: string | undefined }) {
   return (
     <main className={styles.screen}>
@@ -36,8 +43,8 @@ export function SignIn({ onSignIn, error }: { onSignIn: () => void; error?: stri
           <p>A clearer view of your family’s financial future.</p>
         </div>
         <div className={styles.card}>
-          <h2>Welcome back</h2>
-          <p className={styles.subtitle}>Sign in to manage your family finances</p>
+          <h2>Welcome</h2>
+          <p className={styles.subtitle}>Sign in, or start your free tracker. It takes a minute.</p>
           {error ? (
             <p className={styles.error} role="alert">
               {error}
@@ -46,6 +53,22 @@ export function SignIn({ onSignIn, error }: { onSignIn: () => void; error?: stri
           <button className={styles.google} onClick={onSignIn} type="button">
             <GoogleMark /> Continue with Google
           </button>
+          <ul className={styles.points}>
+            {POINTS.map(([Icon, title, text]) => (
+              <li key={title}>
+                <span className={styles.pointIcon}>
+                  <Icon aria-hidden="true" size={18} />
+                </span>
+                <div>
+                  <strong>{title}</strong>
+                  <span>{text}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <Link className={styles.see} to="/features">
+            See what it does <ArrowRight aria-hidden="true" size={16} />
+          </Link>
           <p className={styles.private}>
             <ShieldCheck size={16} />
             <span>
