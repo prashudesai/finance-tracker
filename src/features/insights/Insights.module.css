@@ -1,0 +1,282 @@
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.head p {
+  margin: 2px 0 0;
+}
+
+.sparkle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 12px;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.insight {
+  --tone: var(--accent);
+  --tone-soft: var(--accent-soft);
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--tone);
+  border-radius: 0 var(--radius-small) var(--radius-small) 0;
+}
+
+.insight[data-tone='watch'] {
+  --tone: var(--warning-text);
+  --tone-soft: var(--warning-bg);
+}
+
+.insight[data-tone='good'] {
+  --tone: var(--gain);
+}
+
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: var(--tone);
+  background: var(--tone-soft);
+  border-radius: 10px;
+}
+
+.body {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+}
+
+.body strong {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.detail {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.why {
+  display: grid;
+  gap: 4px;
+  max-width: 520px;
+  margin: 6px 0 0;
+  padding: 10px;
+  background: var(--surface);
+  border-radius: var(--radius-small);
+}
+
+.why div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+
+.why dt {
+  color: var(--muted);
+}
+
+.why dd {
+  margin: 0;
+  font-weight: 650;
+  text-align: right;
+}
+
+.why p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.recapCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-color: var(--accent);
+}
+
+.recap {
+  display: grid;
+  gap: 18px;
+}
+
+.hero {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 18px 12px;
+  text-align: center;
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+}
+
+.hero strong {
+  font-size: clamp(1.8rem, 8vw, 2.4rem);
+  letter-spacing: -0.02em;
+}
+
+.bars {
+  display: grid;
+  gap: 10px;
+}
+
+.bars div {
+  display: grid;
+  grid-template-columns: 76px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.88rem;
+}
+
+.bars i {
+  display: block;
+  height: 12px;
+  min-width: 4px;
+  background: var(--series-income);
+  border-radius: 6px;
+}
+
+.bars div[data-kind='spend'] i {
+  background: var(--series-expense);
+}
+
+.bars b {
+  font-weight: 650;
+  text-align: right;
+}
+
+.sub {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rows {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding-bottom: 8px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.rows li span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rows li:has(> :nth-child(2):last-child) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.rows b {
+  font-weight: 650;
+}
+
+.chip {
+  padding: 2px 8px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  background: var(--surface-sunken);
+  border-radius: 999px;
+}
+
+.chip[data-tone='good'] {
+  color: var(--gain);
+  background: var(--accent-soft);
+}
+
+.chip[data-tone='watch'] {
+  color: var(--warning-text);
+  background: var(--warning-bg);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stats div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-small);
+}
+
+.stats span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.stats b {
+  font-size: 1.05rem;
+}
+
+.monthBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

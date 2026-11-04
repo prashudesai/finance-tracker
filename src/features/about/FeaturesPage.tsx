@@ -40,6 +40,8 @@ const GROUPS: { title: string; icon: LucideIcon; items: string[] }[] = [
     title: 'Plan ahead',
     icon: CalendarRange,
     items: [
+      'Insights on your dashboard, worked out privately on your phone',
+      'A monthly recap of income, spending, savings and net worth',
       'Growth projections and goal planning',
       'Planned changes to see their effect on your future',
       'Date range reports, exported as PDF or CSV',

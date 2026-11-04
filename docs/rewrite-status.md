@@ -38,6 +38,7 @@ All pages from the older app exist and follow its layouts.
 - Hide amounts: the eye in the header masks every figure the screen formats, kept per device. Exports format their own figures, so they're never hidden.
 - Dashboard greeting, a celebration when a loan seen owing this visit is paid off, page transitions where the browser supports them, and a light buzz on Android when saving.
 - Share invite for invited or pending family, and Share the app for friends, through the phone's share menu or by copying.
+- Insights and monthly recap: `domain/insights.ts` finds patterns (a category well above its usual, savings rate, EMI load, a prepayment's saving, net worth change or milestone, allocation shift, recurring total, weekend spending, a quiet week, a payment due soon) and `domain/recap.ts` sums a month. Both run on the device from records only; wording is in `features/insights`, so hidden amounts stay hidden. The dashboard shows the top three, and offers last month's recap for the first ten days of a month. A running month isn't compared with the one before.
 - Privacy page at `/privacy`, open without signing in and linked from sign-in and Settings. New accounts agree to it once at setup, and existing accounts aren't asked. Its statements must stay true, so update it when what's stored or visible changes.
 
 ## Verified on the test project

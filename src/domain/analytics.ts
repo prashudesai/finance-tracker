@@ -31,7 +31,8 @@ import { loanPayments } from './recurring';
 
 export const isPms = (holding: Holding) => holding.type === PMS_TYPE;
 
-const isMarket = (holding: Holding, settings: TrackerSettings | undefined) =>
+/** Market-linked: funds, shares and NPS, as opposed to deposits and PF. */
+export const isMarket = (holding: Holding, settings: TrackerSettings | undefined) =>
   holding.kind === 'nps' ||
   (holding.kind === 'investment' &&
     growthType(holding.type, settings ?? defaultSettings()) === 'market');

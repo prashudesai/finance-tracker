@@ -42,6 +42,8 @@ import { useIsPhone } from '../../ui/useIsPhone';
 import { EmptyState } from '../../ui/EmptyState';
 import { TrendLine } from '../../ui/TrendLine';
 import { useCountUp } from '../../ui/useCountUp';
+import { InsightsCard } from '../insights/InsightsCard';
+import { RecapCard } from '../insights/MonthRecap';
 import { InstallCard } from '../install/InstallPrompts';
 import { GettingStarted } from './GettingStarted';
 import { QuickAdd } from './QuickAdd';
@@ -374,6 +376,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
 
       <GettingStarted />
       <InstallCard />
+      <RecapCard />
 
       {phone ? (
         netWorthCard
@@ -414,6 +417,8 @@ export function Dashboard({ name = '' }: { name?: string }) {
           value={formatMoney(overview.close.available)}
         />
       </section>
+
+      <InsightsCard />
 
       {phone ? (
         <>
