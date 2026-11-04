@@ -1,10 +1,10 @@
 /* Dark is the brand default. Light applies by system preference or the theme toggle. */
 :root {
   /*
-   * Room kept for a phone's home line or gesture bar under the tab bar. Only the part the
-   * line needs: the full iPhone inset (34px) left a band of empty space.
+   * Room kept under the tab bar for the phone's own bar. Android's gesture line (about 24px)
+   * and three buttons (about 48px) need most of their space; see .ios below for iPhones.
    */
-  --home-bar: max(0px, calc(env(safe-area-inset-bottom) - 18px));
+  --home-bar: max(0px, calc(env(safe-area-inset-bottom) - 12px));
   color-scheme: dark;
   --bg: #102826;
   --bg-glow: rgb(44 150 122 / 22%);
@@ -304,4 +304,9 @@ option {
     opacity: 0;
     transform: translateY(10px);
   }
+}
+
+/* An iPhone's home line is thin and low, so 6px of its 34px is enough to keep it clear. */
+:root.ios {
+  --home-bar: max(0px, calc(env(safe-area-inset-bottom) - 28px));
 }

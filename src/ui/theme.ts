@@ -110,5 +110,8 @@ export const useTheme = create<ThemeState>((set, get) => ({
   },
 }));
 
+// iPhones and iPads get a slimmer space under the tab bar (see --home-bar in tokens.css).
+if (/iPhone|iPad|iPod/.test(navigator.userAgent)) document.documentElement.classList.add('ios');
+
 // Applied on load, before anything renders, so a saved theme never flashes.
 paint(useTheme.getState().theme, useTheme.getState().palette);
