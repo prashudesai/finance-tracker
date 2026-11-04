@@ -63,8 +63,8 @@ function paintBars(root: HTMLElement) {
   const style = getComputedStyle(root);
   const bg = style.getPropertyValue('--bg');
   const surface = style.getPropertyValue('--surface');
-  // The tab bar is the surface colour at 72% over the background.
-  const bar = mixColors(surface, bg, 0.72) ?? bg.trim();
+  // The tab bar is solid in the surface colour.
+  const bar = mixColors(surface, bg, 1) ?? bg.trim();
   if (bg.trim()) root.style.backgroundColor = bg.trim();
   let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   if (!meta) {

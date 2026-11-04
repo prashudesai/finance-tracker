@@ -85,8 +85,9 @@
   left: 0;
   z-index: 2;
   display: flex;
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  padding: 6px 8px calc(6px + var(--home-bar));
+  /* Solid: the page scrolls under it, and on phones it reaches under the home bar. */
+  background: var(--surface);
   border-top: 1px solid var(--glass-edge);
   backdrop-filter: var(--glass-blur);
 }
@@ -167,7 +168,7 @@
 .searchVisible {
   position: fixed;
   left: 12px;
-  bottom: calc(72px + env(safe-area-inset-bottom));
+  bottom: calc(72px + var(--home-bar));
   z-index: 2;
   display: grid;
   place-items: center;
@@ -184,7 +185,7 @@
 .syncVisible {
   position: fixed;
   left: 50%;
-  bottom: calc(74px + env(safe-area-inset-bottom));
+  bottom: calc(74px + var(--home-bar));
   z-index: 2;
   max-width: calc(100vw - 170px);
   color: var(--muted);
@@ -210,7 +211,7 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
 .quickAdd {
   position: fixed;
   right: 12px;
-  bottom: calc(72px + env(safe-area-inset-bottom));
+  bottom: calc(72px + var(--home-bar));
   z-index: 2;
   display: grid;
   place-items: center;
@@ -258,7 +259,7 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
 
 .quickMenu {
   position: fixed;
-  inset: auto 12px calc(124px + env(safe-area-inset-bottom)) auto;
+  inset: auto 12px calc(124px + var(--home-bar)) auto;
   width: min(260px, calc(100vw - 24px));
   margin: 0;
   padding: 6px;
@@ -335,7 +336,7 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
 .tour {
   position: fixed;
   right: 12px;
-  bottom: calc(84px + env(safe-area-inset-bottom));
+  bottom: calc(84px + var(--home-bar));
   left: 12px;
   z-index: 3;
   display: grid;

@@ -1,5 +1,10 @@
 /* Dark is the brand default. Light applies by system preference or the theme toggle. */
 :root {
+  /*
+   * Room kept for a phone's home line or gesture bar under the tab bar. Only the part the
+   * line needs: the full iPhone inset (34px) left a band of empty space.
+   */
+  --home-bar: max(0px, calc(env(safe-area-inset-bottom) - 18px));
   color-scheme: dark;
   --bg: #102826;
   --bg-glow: rgb(44 150 122 / 22%);
