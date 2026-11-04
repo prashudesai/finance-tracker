@@ -38,7 +38,7 @@ All pages from the older app exist and follow its layouts.
 - Hide amounts: the eye in the header masks every figure the screen formats, kept per device. Exports format their own figures, so they're never hidden.
 - Dashboard greeting, a celebration when a loan seen owing this visit is paid off, page transitions where the browser supports them, and a light buzz on Android when saving.
 - Share invite for invited or pending family, and Share the app for friends, through the phone's share menu or by copying.
-- Insights and monthly recap: `domain/insights.ts` finds patterns (a category well above its usual, savings rate, EMI load, a prepayment's saving, net worth change or milestone, allocation shift, recurring total, weekend spending, a quiet week, a payment due soon) and `domain/recap.ts` sums a month. Both run on the device from records only; wording is in `features/insights`, so hidden amounts stay hidden. The dashboard shows the top three, and offers last month's recap for the first ten days of a month. A running month isn't compared with the one before.
+- Insights and monthly recap: `domain/insights.ts` finds patterns (a category well above its usual, savings rate, EMI load, a prepayment's saving, net worth change or milestone, allocation shift, recurring total, weekend spending, a quiet week, a payment due soon) and `domain/recap.ts` sums a month. Both run on the device from records only; wording is in `features/insights`, so hidden amounts stay hidden. The dashboard shows them in a tile that opens on a tap, with the top one as a preview, and offers last month's recap for the first ten days of a month. A running month isn't compared with the one before.
 - Privacy page at `/privacy`, open without signing in and linked from sign-in and Settings. New accounts agree to it once at setup, and existing accounts aren't asked. Its statements must stay true, so update it when what's stored or visible changes.
 
 ## Verified on the test project
@@ -91,6 +91,7 @@ A scripted comparison of the visible text on every old page, at phone and deskto
 - The balance history's NPS + PPF column shows contributions recorded that month, not the older app's scheduled amount.
 - The change log is shared across the family, and changes of more than 50 records keep a summary only.
 - History rows open a modal with Edit and Delete, in place of an Actions column. Phones show only the key columns.
+- The dashboard's "What changed" tile was removed. Contributions, principal repaid and PMS gain change this month became insights, and its spending comparison was dropped, because it compared a running month with a whole one.
 - Search and sync status show only at the end of a page, and search sits in a modal, as in the older app.
 - The profile photo comes from the Google account, in place of an upload.
 - The app tour is a short walk through each page, not element-by-element highlights.

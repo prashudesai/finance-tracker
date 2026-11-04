@@ -11,6 +11,24 @@ import { RecapView } from './MonthRecap';
 import styles from './Insights.module.css';
 
 const SHOWN = 3;
+const OPEN_KEY = 'insightsOpen';
+
+/** Whether the tile was left open on this device. Closed until someone opens it. */
+function savedOpen() {
+  try {
+    return localStorage.getItem(OPEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function saveOpen(open: boolean) {
+  try {
+    localStorage.setItem(OPEN_KEY, open ? '1' : '0');
+  } catch {
+    // Remembered for this visit only.
+  }
+}
 
 function InsightRow({ insight, onOpen }: { insight: Insight; onOpen?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -59,19 +77,32 @@ export function InsightsCard() {
   const list = useMemo(() => insights(data, today), [data, today]);
   const [all, setAll] = useState(false);
   const [recap, setRecap] = useState(false);
+  const [open, setOpen] = useState(savedOpen);
   if (list.length === 0) return null;
+  const top = list[0];
+  const preview = top ? describeInsight(top).title : '';
 
   return (
-    <section aria-labelledby="insights-title" className={ui.card}>
-      <div className={styles.head}>
-        <span aria-hidden="true" className={styles.sparkle}>
-          <Sparkles size={18} />
+    <details
+      aria-label="Insights"
+      className={`${ui.card} ${ui.fold}`}
+      onToggle={(event) => {
+        const now = event.currentTarget.open;
+        setOpen(now);
+        saveOpen(now);
+      }}
+      open={open}
+    >
+      <summary className={styles.summary}>
+        <span className={styles.summaryTitle}>
+          <Sparkles aria-hidden="true" size={16} /> Insights · {list.length}
         </span>
-        <div>
-          <h2 id="insights-title">Insights</h2>
-          <p className={ui.caption}>Worked out on your phone, from your records only.</p>
-        </div>
-      </div>
+        {/* The headline, so the tile is useful even closed. Amber when it's a warning. */}
+        <span className={styles.preview} data-tone={top?.tone}>
+          {preview}
+        </span>
+      </summary>
+      <p className={ui.caption}>Worked out on your phone, from your records only.</p>
       <ul className={styles.list}>
         {list.slice(0, SHOWN).map((insight) => (
           <InsightRow insight={insight} key={insight.id} />
@@ -97,6 +128,6 @@ export function InsightsCard() {
         </Modal>
       ) : null}
       {recap ? <RecapView onClose={() => setRecap(false)} /> : null}
-    </section>
+    </details>
   );
 }

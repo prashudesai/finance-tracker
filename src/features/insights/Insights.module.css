@@ -1,17 +1,51 @@
-.head {
-  display: flex;
+/* A grid item, so it needs telling it may be narrower than its one-line preview. */
+.summary {
+  display: list-item;
+  min-width: 0;
+}
+
+.summaryTitle {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
 }
 
-.head h2 {
-  margin: 0;
-  font-size: 1.15rem;
+.summaryTitle svg {
+  color: var(--accent);
 }
 
-.head p {
-  margin: 2px 0 0;
+/* The top insight, one line, while the tile is closed. */
+.preview {
+  position: relative;
+  display: block;
+  margin-top: 6px;
+  padding-left: 16px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview::before {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  content: '';
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.preview[data-tone='watch']::before {
+  background: var(--warning-text);
+}
+
+details[open] > .summary .preview {
+  display: none;
 }
 
 .sparkle {

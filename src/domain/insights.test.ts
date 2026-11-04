@@ -3,6 +3,7 @@ import { emptyTrackerData, type TrackerData } from '../data/repository';
 import {
   defaultSettings,
   EMI_CATEGORY,
+  PMS_TYPE,
   type Expense,
   type Holding,
   type Income,
@@ -256,6 +257,48 @@ describe('insights', () => {
     ];
     const found = find(insights(data({ expenses }), TODAY), 'weekend');
     expect(found?.share).toBeCloseTo(0.8);
+  });
+
+  test('this month so far: money invested and loan principal repaid', () => {
+    const list = insights(
+      data({
+        holdings: [fund()],
+        contributions: [
+          { id: 'c', holdingId: 'fund', date: '2026-11-05', amount: 15_000, automatic: false },
+        ],
+        loans: [homeLoan],
+        expenses: [
+          expense('2026-11-03', 40_000, EMI_CATEGORY, { loanId: 'home', repaymentType: 'emi' }),
+        ],
+      }),
+      TODAY,
+    );
+    expect(find(list, 'invested')).toMatchObject({ month: '2026-11', amount: 15_000 });
+    // The first EMI on 20 lakh at 9%: 15,000 is interest, the rest repays principal.
+    expect(find(list, 'principal')).toMatchObject({ month: '2026-11', amount: 25_000 });
+  });
+
+  test('a PMS gain change shows once both months have a valuation', () => {
+    const pms = fund({ id: 'pms', type: PMS_TYPE, name: 'Long-term PMS' });
+    const valued = (date: string, value: number) => ({
+      id: `v${date}`,
+      holdingId: 'pms',
+      date,
+      value,
+    });
+    const list = insights(
+      data({
+        holdings: [pms],
+        valuations: [valued('2026-10-20', 21_00_000), valued('2026-11-06', 21_40_000)],
+      }),
+      TODAY,
+    );
+    expect(find(list, 'pmsGain')).toMatchObject({ change: 40_000, tone: 'good' });
+    const once = insights(
+      data({ holdings: [pms], valuations: [valued('2026-11-06', 21_40_000)] }),
+      TODAY,
+    );
+    expect(find(once, 'pmsGain')).toBeUndefined();
   });
 
   test('insights come most useful first', () => {

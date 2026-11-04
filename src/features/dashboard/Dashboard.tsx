@@ -17,7 +17,6 @@ import {
   monthlyOverview,
   netWorth,
   netWorthHistory,
-  pmsGainChange,
   portfolioCategories,
   type CategoryRow,
 } from '../../domain/analytics';
@@ -36,7 +35,7 @@ import {
   signedMoney,
 } from '../../ui/format';
 import { PageHeader } from '../../ui/PageHeader';
-import { Metric, Stat } from '../../ui/Stat';
+import { Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
 import { EmptyState } from '../../ui/EmptyState';
@@ -107,7 +106,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const trendUp = (trendValues.at(-1) ?? 0) >= (trendValues[0] ?? 0);
   const overview = monthlyOverview(data, month, today);
   const snapshot = closeMonth(data, snapshotMonth);
-  const pmsChange = pmsGainChange(data, month);
   const loans = summarizeLoans(data, today);
   const outstanding = totalOutstanding(loans);
 
@@ -170,7 +168,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
   });
   const monthName = formatMonth(month).split(' ')[0];
   const snapshotName = formatMonth(snapshotMonth).split(' ')[0];
-  const previousName = formatMonth(overview.previous);
   const firstTrend = trend[0]?.month ?? month;
 
   const netWorthCard = (
@@ -292,53 +289,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
     </section>
   );
 
-  const whatChanged = (
-    <details className={`${ui.card} ${ui.fold}`} key={phone ? 'phone' : 'wide'} open={!phone}>
-      <summary>What changed in {monthName}</summary>
-      <div className={ui.caption}>
-        Key recorded changes · {monthName} compared with {previousName}
-      </div>
-      <div className={ui.metricsTwo}>
-        <Metric
-          detail="Recorded transfers"
-          label="Recorded contributions"
-          value={formatMoney(overview.savings)}
-        />
-        <Metric
-          detail="Principal only"
-          label="Debt principal repaid"
-          value={formatMoney(overview.principalRepaid)}
-        />
-        <Metric
-          detail={`Compared with ${previousName}`}
-          label="Recorded spending"
-          value={
-            overview.spendingChange === null
-              ? 'Comparison unavailable'
-              : signedMoney(overview.spendingChange)
-          }
-        />
-        <Metric
-          detail="Opening and closing valuations"
-          label="PMS gain change"
-          value={pmsChange === null ? 'Dated snapshots needed' : signedMoney(pmsChange)}
-        />
-      </div>
-      <details className={ui.fold}>
-        <summary>How these figures are calculated</summary>
-        <p className={ui.caption}>
-          Contributions and spending are what you recorded in each month. Debt principal counts only
-          the principal part of each repayment. PMS gain change needs a valuation in both months.
-          House expense is opening balance plus income, less recorded expenses, PMS transfers and
-          next month's opening balance.
-        </p>
-      </details>
-      <Link className={ui.quiet} to="/cash-flow">
-        View cash-flow details
-      </Link>
-    </details>
-  );
-
   return (
     <div className={ui.page}>
       {attention.length > 0 ? (
@@ -420,17 +370,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
 
       <InsightsCard />
 
-      {phone ? (
-        <>
-          {whatChanged}
-          {trendCard}
-        </>
-      ) : (
-        <div className={ui.twoColumn}>
-          {trendCard}
-          {whatChanged}
-        </div>
-      )}
+      {trendCard}
 
       <section className={ui.card}>
         <div className={ui.cardHeader}>

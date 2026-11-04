@@ -1,6 +1,6 @@
 import type { TrackerData } from '../data/repository';
 import type { Expense } from '../schema/records';
-import { isEmi, isMarket, netWorthHistory } from './analytics';
+import { isEmi, isMarket, monthlyOverview, netWorthHistory, pmsGainChange } from './analytics';
 import { addDays, financialYearStart, previousMonth, roundMoney, toDayNumber } from './calendar';
 import { monthTotals } from './cashflow';
 import { holdingValue } from './holdings';
@@ -51,6 +51,9 @@ export type Insight = Base &
     | { kind: 'netWorthChange'; month: string; change: number; netWorth: number }
     | { kind: 'allocation'; share: number; earlier: number; since: string }
     | { kind: 'commitments'; total: number; count: number; emis: number }
+    | { kind: 'invested'; month: string; amount: number }
+    | { kind: 'principal'; month: string; amount: number }
+    | { kind: 'pmsGain'; month: string; change: number }
     | { kind: 'weekend'; share: number; spent: number; days: number }
     | {
         kind: 'biggest';
@@ -74,6 +77,7 @@ const WEEKEND_SHARE = 0.4;
 const WEEKEND_WINDOW = 90;
 const WEEKEND_MIN_ROWS = 10;
 const PREPAY = 1_00_000;
+const PMS_MIN_CHANGE = 1_000;
 
 const sum = (rows: { amount: number }[]) => rows.reduce((total, row) => total + row.amount, 0);
 const within = (date: string, month: string) => date.startsWith(month);
@@ -410,6 +414,49 @@ function biggest(data: TrackerData, month: string): Insight | null {
   };
 }
 
+/** This month so far: what went into investments, and loan principal paid off. */
+function monthSoFar(data: TrackerData, today: string): Insight[] {
+  const month = today.slice(0, 7);
+  const overview = monthlyOverview(data, month, today);
+  const found: Insight[] = [];
+  if (overview.savings > 0) {
+    found.push({
+      id: `invested-${month}`,
+      kind: 'invested',
+      tone: 'good',
+      score: 32,
+      month,
+      amount: roundMoney(overview.savings),
+    });
+  }
+  if (overview.principalRepaid > 0) {
+    found.push({
+      id: `principal-${month}`,
+      kind: 'principal',
+      tone: 'good',
+      score: 33,
+      month,
+      amount: roundMoney(overview.principalRepaid),
+    });
+  }
+  return found;
+}
+
+/** PMS gain from last month's end to this month's, once both have a valuation. */
+function pmsGain(data: TrackerData, today: string): Insight | null {
+  const month = today.slice(0, 7);
+  const change = pmsGainChange(data, month);
+  if (change === null || Math.abs(change) < PMS_MIN_CHANGE) return null;
+  return {
+    id: `pms-${month}`,
+    kind: 'pmsGain',
+    tone: change > 0 ? 'good' : 'watch',
+    score: 34,
+    month,
+    change: roundMoney(change),
+  };
+}
+
 /** Every insight that applies today, most useful first. */
 export function insights(data: TrackerData, today: string): Insight[] {
   const lastMonth = previousMonth(today.slice(0, 7));
@@ -426,6 +473,8 @@ export function insights(data: TrackerData, today: string): Insight[] {
     commitments(data, today),
     weekend(data, today),
     biggest(data, lastMonth),
+    pmsGain(data, today),
+    ...monthSoFar(data, today),
   ]
     .filter((insight): insight is Insight => insight !== null)
     .sort((a, b) => b.score - a.score);

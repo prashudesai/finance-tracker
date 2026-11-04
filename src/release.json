@@ -1,12 +1,12 @@
 {
-  "version": "1.11.0",
+  "version": "1.11.1",
   "released": "2026-11-04",
   "notes": [
+    "Insights is now a tidy tile on the dashboard: tap to open, with the top one as a preview",
+    "This month's investing, loan principal repaid and PMS gain now appear as insights",
     "Insights on your dashboard: patterns in your money, worked out privately on your phone",
     "A monthly recap of income, spending, savings and net worth",
     "More of the screen on phones: a slimmer space under the tab bar, set for iPhone and Android",
-    "The bottom tab bar is solid and sits lower on iPhone",
-    "The sign-in screen now says what the app does, for new visitors",
-    "Hide every amount with the eye in the header"
+    "The bottom tab bar is solid and sits lower on iPhone"
   ]
 }

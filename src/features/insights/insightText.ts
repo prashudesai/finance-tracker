@@ -181,6 +181,32 @@ export function describeInsight(insight: Insight): InsightText {
         ],
         path: '/cash-flow',
       };
+    case 'invested':
+      return {
+        icon: PiggyBank,
+        title: `You've invested ${formatMoney(insight.amount)} so far in ${monthName(insight.month)}`,
+        detail: 'Contributions you recorded this month, including scheduled ones.',
+        why: [['Contributions this month', formatMoney(insight.amount)]],
+        path: '/investments',
+      };
+    case 'principal':
+      return {
+        icon: HandCoins,
+        title: `${formatMoney(insight.amount)} of loan principal repaid so far in ${monthName(insight.month)}`,
+        detail: 'The part of your EMIs and part payments that reduced what you owe, not interest.',
+        why: [['Principal repaid this month', formatMoney(insight.amount)]],
+        path: '/debts',
+      };
+    case 'pmsGain': {
+      const up = insight.change > 0;
+      return {
+        icon: up ? TrendingUp : TrendingDown,
+        title: `PMS gain ${up ? 'rose' : 'fell'} ${formatMoney(Math.abs(insight.change))} in ${monthName(insight.month)}`,
+        detail: 'From last month’s closing value to this month’s latest valuation.',
+        why: [['Change in PMS gain', formatMoney(Math.abs(insight.change))]],
+        path: '/investments',
+      };
+    }
     case 'biggest':
       return {
         icon: Receipt,

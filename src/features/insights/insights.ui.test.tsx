@@ -72,8 +72,11 @@ afterEach(() => {
 describe('Insights on the dashboard', () => {
   test('shows the most useful few, with the numbers behind each', async () => {
     show(seed().data);
-    const card = within(await screen.findByRole('region', { name: 'Insights' }));
-    const dining = await card.findByText(/Dining was ₹4,500/);
+    const card = within(await screen.findByRole('group', { name: 'Insights' }));
+    const dining = (await card.findAllByText(/Dining was ₹4,500/)).find((node) =>
+      node.closest('li'),
+    );
+    if (!dining) throw new Error('No dining insight in the list');
     expect(dining.textContent).toMatch(/50% more than usual/);
     expect(card.getAllByRole('listitem').length).toBeLessThanOrEqual(3);
     const row = within(dining.closest('li') as HTMLElement);
@@ -82,17 +85,32 @@ describe('Insights on the dashboard', () => {
     expect(row.getByText('₹1,500')).toBeDefined();
   });
 
+  test('the tile starts closed with the top insight as a preview, and remembers being opened', async () => {
+    localStorage.removeItem('insightsOpen');
+    show(seed().data);
+    const tile = (await screen.findByRole('group', { name: 'Insights' })) as HTMLDetailsElement;
+    expect(tile.open).toBe(false);
+    const summary = tile.querySelector('summary') as HTMLElement;
+    expect(summary.textContent).toMatch(/Insights · \d+/);
+    // The preview is the first insight's headline.
+    expect(summary.textContent).toContain(tile.querySelector('li strong')?.textContent ?? '');
+    tile.open = true;
+    fireEvent(tile, new Event('toggle'));
+    await waitFor(() => expect(localStorage.getItem('insightsOpen')).toBe('1'));
+    localStorage.removeItem('insightsOpen');
+  });
+
   test('hiding amounts hides them in insights too', async () => {
     show(seed().data);
-    await screen.findByText(/Dining was ₹4,500/);
+    await screen.findAllByText(/Dining was ₹4,500/);
     fireEvent.click(screen.getByRole('button', { name: 'Hide amounts' }));
-    expect(await screen.findByText(/Dining was ₹ ••••/)).toBeDefined();
+    expect((await screen.findAllByText(/Dining was ₹ ••••/)).length).toBeGreaterThan(0);
   });
 
   test('the monthly recap opens on the latest month, and steps back', async () => {
     const { last } = seed();
     show(seed().data);
-    const card = within(await screen.findByRole('region', { name: 'Insights' }));
+    const card = within(await screen.findByRole('group', { name: 'Insights' }));
     fireEvent.click(card.getByRole('button', { name: 'Monthly recap' }));
     const recap = within(
       await screen.findByRole('dialog', { name: 'Monthly recap', hidden: true }),
