@@ -6,7 +6,7 @@ import { roundMoney } from './calendar';
  * Pure figures in, figures out, so the screen can redraw it on every change.
  */
 export interface RetirementInputs {
-  /** The fund today. */
+  /** The fund today, which already holds everything put in up to now. */
   fund: number;
   /** What the household spends a month today. */
   monthlyExpense: number;
@@ -22,9 +22,23 @@ export interface RetirementInputs {
   inflation: number;
   growthBefore: number;
   growthAfter: number;
+  /** Months from now to the retirement date. Left out, whole years from age to retireAge. */
+  monthsToRetire?: number;
+  /** Months the plan runs from now. Left out, to the end of untilAge. */
+  months?: number;
+  /**
+   * Months from now to the first stretch boundary, such as the next April for financial
+   * years. Later stretches are twelve months. Left out, twelve.
+   */
+  firstStretch?: number;
 }
 
+/** A stretch of the plan: a year, or less at the start, around retiring, or at the end. */
 export interface RetirementYear {
+  /** Months from now to the start of this stretch. */
+  start: number;
+  months: number;
+  /** Whole years of age at its start. */
   age: number;
   retired: boolean;
   fundStart: number;
@@ -32,7 +46,7 @@ export interface RetirementYear {
   growth: number;
   withdrawn: number;
   fundEnd: number;
-  /** What the household spends that year, whether or not the fund pays it. */
+  /** What the household spends in it, whether or not the fund pays. */
   expenses: number;
   /** Expenses the fund couldn't pay, once it ran out. */
   unpaid: number;
@@ -40,73 +54,97 @@ export interface RetirementYear {
 
 export interface RetirementPlan {
   years: RetirementYear[];
+  /** Months from now to retiring. */
+  monthsToRetire: number;
   fundAtRetirement: number;
   /** The monthly expense at retirement, after inflation. */
   monthlyAtRetirement: number;
   /** The age in which the fund runs out, or null if it lasts the whole plan. */
   runsOutAt: number | null;
+  /** Months from now to the first month the fund can't pay, or null. */
+  runsOutMonth: number | null;
   /** What's left at the end of the plan. */
   leftOver: number;
 }
 
 const monthlyRate = (yearly: number) => Math.pow(1 + yearly / 100, 1 / 12) - 1;
 
-/** Steps month by month and sums each year, so growth, contributions and withdrawals interleave. */
+/**
+ * Steps month by month from today, in stretches cut at each year boundary (financial years,
+ * when `firstStretch` is the months to the next April) and at the retirement month, so
+ * retirement always starts a stretch of its own. Prices and contributions step up once a
+ * year, counted from today.
+ */
 export function planRetirement(inputs: RetirementInputs): RetirementPlan {
-  const { age, retireAge, untilAge, inflation, stepUp } = inputs;
+  const { age, inflation, stepUp } = inputs;
+  const retireAt = Math.max(0, inputs.monthsToRetire ?? (inputs.retireAge - age) * 12);
+  const total = Math.max(retireAt, inputs.months ?? (inputs.untilAge - age + 1) * 12);
   const before = monthlyRate(inputs.growthBefore);
   const after = monthlyRate(inputs.growthAfter);
+  // Cut at each year boundary, at the retirement month, and at the end.
+  const first = inputs.firstStretch ?? 12;
+  const cuts = new Set([0, retireAt, total]);
+  for (let at = first; at < total; at += 12) cuts.add(at);
+  const sorted = [...cuts].filter((at) => at <= total).sort((a, b) => a - b);
+  const stretches: [number, number][] = sorted
+    .slice(0, -1)
+    .map((at, index): [number, number] => [at, sorted[index + 1] ?? total])
+    .filter(([from, to]) => to > from);
   let fund = inputs.fund;
-  let fundAtRetirement = age >= retireAge ? fund : 0;
-  let runsOutAt: number | null = null;
+  let fundAtRetirement = retireAt === 0 ? fund : 0;
+  let runsOutMonth: number | null = null;
   const years: RetirementYear[] = [];
-  for (let year = 0; age + year <= untilAge; year++) {
-    const current = age + year;
-    const retired = current >= retireAge;
-    if (retired && current === retireAge) fundAtRetirement = fund;
-    const monthlyExpense = inputs.monthlyExpense * Math.pow(1 + inflation / 100, year);
-    const contribution = retired
-      ? 0
-      : inputs.monthlyContribution * Math.pow(1 + stepUp / 100, year);
+  for (const [from, to] of stretches) {
+    const retired = from >= retireAt;
+    if (from === retireAt) fundAtRetirement = fund;
     const fundStart = fund;
     let added = 0;
     let growth = 0;
     let withdrawn = 0;
+    let expenses = 0;
     let unpaid = 0;
-    for (let month = 0; month < 12; month++) {
+    for (let month = from; month < to; month++) {
+      const year = Math.floor(month / 12);
+      const expense = inputs.monthlyExpense * Math.pow(1 + inflation / 100, year);
+      expenses += expense;
       const gained = fund * (retired ? after : before);
       growth += gained;
       fund += gained;
       if (retired) {
-        const paid = Math.min(fund, monthlyExpense);
+        const paid = Math.min(fund, expense);
         withdrawn += paid;
-        unpaid += monthlyExpense - paid;
+        unpaid += expense - paid;
         fund -= paid;
+        if (expense - paid > 0 && runsOutMonth === null) runsOutMonth = month;
       } else {
+        const contribution = inputs.monthlyContribution * Math.pow(1 + stepUp / 100, year);
         added += contribution;
         fund += contribution;
       }
     }
-    if (retired && unpaid > 0 && runsOutAt === null) runsOutAt = current;
     years.push({
-      age: current,
+      start: from,
+      months: to - from,
+      age: age + Math.floor(from / 12),
       retired,
       fundStart: roundMoney(fundStart),
       added: roundMoney(added),
       growth: roundMoney(growth),
       withdrawn: roundMoney(withdrawn),
       fundEnd: roundMoney(fund),
-      expenses: roundMoney(monthlyExpense * 12),
+      expenses: roundMoney(expenses),
       unpaid: roundMoney(unpaid),
     });
   }
   return {
     years,
+    monthsToRetire: retireAt,
     fundAtRetirement: roundMoney(fundAtRetirement),
     monthlyAtRetirement: roundMoney(
-      inputs.monthlyExpense * Math.pow(1 + inflation / 100, Math.max(0, retireAge - age)),
+      inputs.monthlyExpense * Math.pow(1 + inflation / 100, retireAt / 12),
     ),
-    runsOutAt,
+    runsOutAt: runsOutMonth === null ? null : age + Math.floor(runsOutMonth / 12),
+    runsOutMonth,
     leftOver: roundMoney(fund),
   };
 }
@@ -127,7 +165,7 @@ function lowest(ok: (value: number) => boolean, low: number, high: number) {
 /** Ways to make the money last the whole plan, when it doesn't. */
 export function retirementFixes(inputs: RetirementInputs) {
   if (lasts(inputs)) return null;
-  const working = inputs.retireAge > inputs.age;
+  const working = (inputs.monthsToRetire ?? (inputs.retireAge - inputs.age) * 12) > 0;
   // Extra each month until retirement, up to ten times today's monthly expense.
   const extra = working
     ? lowest(
@@ -138,7 +176,15 @@ export function retirementFixes(inputs: RetirementInputs) {
     : null;
   let retireAt: number | null = null;
   for (let candidate = inputs.retireAge + 1; candidate < inputs.untilAge; candidate++) {
-    if (lasts({ ...inputs, retireAge: candidate })) {
+    const later = (candidate - inputs.retireAge) * 12;
+    const shifted = {
+      ...inputs,
+      retireAge: candidate,
+      ...(inputs.monthsToRetire === undefined
+        ? {}
+        : { monthsToRetire: inputs.monthsToRetire + later }),
+    };
+    if (lasts(shifted)) {
       retireAt = candidate;
       break;
     }
@@ -171,17 +217,20 @@ export const REALISTIC = { inflation: 6, growthBefore: 10, growthAfter: 10 } as 
 export function retirementNeed(inputs: RetirementInputs) {
   const realistic = { ...inputs, ...REALISTIC };
   const reached = planRetirement(realistic);
+  const totalMonths = inputs.months ?? (inputs.untilAge - inputs.age + 1) * 12;
   const lastsWith = (fund: number) =>
     planRetirement({
       ...realistic,
       fund,
       age: inputs.retireAge,
+      monthsToRetire: 0,
+      months: totalMonths - reached.monthsToRetire,
       monthlyExpense: reached.monthlyAtRetirement,
       monthlyContribution: 0,
     }).runsOutAt === null;
   // Rounded up to the rupee, so the fund named always lasts.
   const needed = Math.ceil(lowest(lastsWith, 0, reached.monthlyAtRetirement * 12 * 200) ?? 0);
-  const working = inputs.retireAge > inputs.age;
+  const working = reached.monthsToRetire > 0;
   const monthly = working
     ? lowest(
         (value) =>

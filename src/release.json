@@ -1,7 +1,8 @@
 {
-  "version": "1.17.0",
+  "version": "1.17.1",
   "released": "2026-11-05",
   "notes": [
+    "Retirement planner runs from this month by financial year, retires in your exact month, and marks the retirement milestone",
     "Income tab: salary against other income, each source and how often it comes",
     "Salary over time with raises found for you, and this year against last year",
     "Who earns what, how steady your income is, where each ₹100 goes, and savings rate by month",

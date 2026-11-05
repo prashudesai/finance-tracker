@@ -1,8 +1,14 @@
 import { Sunset } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { averageContributions, netWorth } from '../../domain/analytics';
-import { addMonths, ageOn } from '../../domain/calendar';
-import { monthlyAverages } from '../../domain/goals';
+import {
+  addMonths,
+  ageOn,
+  financialYearLabel,
+  financialYearStart,
+  lastDayOfMonth,
+} from '../../domain/calendar';
+import { monthlyAverages, monthsUntil } from '../../domain/goals';
 import { holdingValue } from '../../domain/holdings';
 import {
   planRetirement,
@@ -128,8 +134,21 @@ export function RetirementPlanner() {
               : !(number('monthlyExpense') > 0)
                 ? 'Enter what your household spends in a month.'
                 : null;
-  /** The calendar year someone turns an age. */
-  const yearAt = (years: number) => Number(birthDate.slice(0, 4)) + years;
+  /** The first day of the month `months` from now. */
+  const monthFromNow = (months: number) => addMonths(`${today.slice(0, 7)}-01`, months);
+  const monthLabel = (months: number) => formatShortMonthYear(monthFromNow(months).slice(0, 7));
+  /** "Nov 2026 – Oct 2027", the months a stretch of the plan covers. */
+  const span = (row: { start: number; months: number }) =>
+    row.months === 1
+      ? monthLabel(row.start)
+      : `${monthLabel(row.start)} – ${monthLabel(row.start + row.months - 1)}`;
+  // The age reached in a stretch's first month: today for this one, so it agrees with
+  // "You're 40", and that month's end for later ones, so a birthday that month counts.
+  const ageAt = (months: number) =>
+    ageOn(birthDate, months === 0 ? today : lastDayOfMonth(monthFromNow(months).slice(0, 7)));
+  /** "FY 2026-27 · Nov 2026 – Mar 2027", the financial year a stretch falls in. */
+  const fySpan = (row: { start: number; months: number }) =>
+    `${financialYearLabel(financialYearStart(monthFromNow(row.start)))} · ${span(row)}`;
   /** The month someone turns an age, for showing next to it. */
   const turns = (years: number) =>
     birthDate ? formatShortMonthYear(addMonths(birthDate, years * 12).slice(0, 7)) : '';
@@ -151,6 +170,11 @@ export function RetirementPlanner() {
     inflation: number('inflation'),
     growthBefore: number('growthBefore'),
     growthAfter: number('growthAfter'),
+    // Counted from today to the dates, so retiring mid-year retires in that month.
+    monthsToRetire: retireOn ? monthsUntil(today, retireOn) : 0,
+    months: birthDate ? monthsUntil(today, addMonths(birthDate, (untilAge + 1) * 12)) : 0,
+    // Rows follow financial years: the rest of this one, then April to March.
+    firstStretch: (16 - Number(today.slice(5, 7))) % 12 || 12,
   };
   const plan = error ? null : planRetirement(inputs);
   const fixes = error ? null : retirementFixes(inputs);
@@ -208,9 +232,9 @@ export function RetirementPlanner() {
       ) : null}
       {plan ? (
         <p className={styles.fix} data-tone={plan.runsOutAt === null ? 'good' : 'watch'}>
-          {plan.runsOutAt === null
+          {plan.runsOutMonth === null
             ? `Your money lasts past ${untilAge}, with ${formatAmount(plan.leftOver)} left.`
-            : `Your money runs out at ${plan.runsOutAt}, ${untilAge - plan.runsOutAt} year${untilAge - plan.runsOutAt === 1 ? '' : 's'} short of ${untilAge}.`}
+            : `Your money runs out in ${monthLabel(plan.runsOutMonth)}, at ${ageAt(plan.runsOutMonth)}, ${Math.max(0, untilAge - ageAt(plan.runsOutMonth))} year${untilAge - ageAt(plan.runsOutMonth) === 1 ? '' : 's'} short of ${untilAge}.`}
           <small className={styles.sooner}>
             {formatAmount(inputs.monthlyExpense)} a month today, rising {inputs.inflation}% a year,
             is {formatAmount(plan.monthlyAtRetirement)} a month by {retireAge}.
@@ -321,24 +345,39 @@ export function RetirementPlanner() {
             series={[
               {
                 name: 'Fund value',
-                points: plan.years.map((row) => ({ label: String(row.age), value: row.fundEnd })),
+                points: plan.years.map((row) => ({
+                  label: String(ageAt(row.start)),
+                  value: row.fundEnd,
+                })),
               },
               {
                 name: 'Yearly expenses',
                 color: 'var(--series-expense)',
                 dash: '6 4',
-                points: plan.years.map((row) => ({ label: String(row.age), value: row.expenses })),
+                // A short stretch shows a full year's rate, so the line doesn't dip.
+                points: plan.years.map((row) => ({
+                  label: String(ageAt(row.start)),
+                  value: (row.expenses * 12) / Math.max(row.months, 1),
+                })),
               },
             ]}
             title="Fund value and yearly expenses by age"
           />
+          <p className={styles.milestoneNote}>
+            <span aria-hidden="true">┃</span> The line marks retirement in{' '}
+            {monthLabel(plan.monthsToRetire)}, at {ageAt(plan.monthsToRetire)}, with{' '}
+            {formatAmount(plan.fundAtRetirement)}.
+          </p>
           {shown ? (
             <p aria-live="polite" className={ui.caption} style={{ margin: 0 }}>
-              Age {shown.age}
-              {shown.retired ? ', retired' : ''}: fund {formatAmount(shown.fundEnd)}, expenses{' '}
-              {formatAmount(shown.expenses)} a year
+              <strong>
+                {fySpan(shown)}, age {ageAt(shown.start)}
+                {shown.retired ? ', retired' : ''}
+              </strong>
+              : fund {formatAmount(shown.fundEnd)} at the end, expenses{' '}
+              {formatAmount(shown.expenses)}
               {shown.unpaid > 0 ? `, ${formatAmount(shown.unpaid)} not covered` : ''}. Tap the chart
-              to see another age.
+              to see another stretch.
             </p>
           ) : null}
         </div>
@@ -347,24 +386,35 @@ export function RetirementPlanner() {
       {plan ? (
         <details className={ui.fold}>
           <summary>Year by year</summary>
+          <p className={ui.caption}>
+            From this month on. Your fund today already includes everything put in so far.
+          </p>
           {phone ? (
             <ul className={ui.list}>
               {plan.years.map((row) => (
-                <li className={ui.row} key={row.age}>
-                  <div className={ui.rowMain}>
-                    <div className={ui.rowTitle}>
-                      Age {row.age} · {yearAt(row.age)}
-                      {row.retired ? ' · retired' : ''}
+                <Fragment key={row.start}>
+                  {row.start === plan.monthsToRetire && row.retired ? (
+                    <li className={styles.milestone}>
+                      Retire in {monthLabel(row.start)} at {ageAt(row.start)}, with{' '}
+                      {formatAmount(plan.fundAtRetirement)}
+                    </li>
+                  ) : null}
+                  <li className={ui.row}>
+                    <div className={ui.rowMain}>
+                      <div className={ui.rowTitle}>
+                        {fySpan(row)}
+                        <span className={ui.caption}> · age {ageAt(row.start)}</span>
+                      </div>
+                      <div className={ui.rowDetail}>
+                        {row.retired
+                          ? `Takes ${formatAmount(row.withdrawn)} · grows ${formatAmount(row.growth)}`
+                          : `Adds ${formatAmount(row.added)} · grows ${formatAmount(row.growth)}`}
+                        {row.unpaid > 0 ? ` · ${formatAmount(row.unpaid)} not covered` : ''}
+                      </div>
                     </div>
-                    <div className={ui.rowDetail}>
-                      {row.retired
-                        ? `Takes ${formatAmount(row.withdrawn)} · grows ${formatAmount(row.growth)}`
-                        : `Adds ${formatAmount(row.added)} · grows ${formatAmount(row.growth)}`}
-                      {row.unpaid > 0 ? ` · ${formatAmount(row.unpaid)} not covered` : ''}
-                    </div>
-                  </div>
-                  <span className={ui.amount}>{formatAmount(row.fundEnd)}</span>
-                </li>
+                    <span className={ui.amount}>{formatAmount(row.fundEnd)}</span>
+                  </li>
+                </Fragment>
               ))}
             </ul>
           ) : (
@@ -372,7 +422,7 @@ export function RetirementPlanner() {
               <table className={ui.table}>
                 <thead>
                   <tr>
-                    <th>Age · year</th>
+                    <th>Financial year · age</th>
                     <th className={ui.numeric}>Fund at start</th>
                     <th className={ui.numeric}>Added</th>
                     <th className={ui.numeric}>Growth</th>
@@ -383,21 +433,30 @@ export function RetirementPlanner() {
                 </thead>
                 <tbody>
                   {plan.years.map((row) => (
-                    <tr key={row.age}>
-                      <td>
-                        {row.age} · {yearAt(row.age)}
-                        {row.retired ? ' · retired' : ''}
-                      </td>
-                      <td className={ui.numeric}>{formatAmount(row.fundStart)}</td>
-                      <td className={ui.numeric}>{formatAmount(row.added)}</td>
-                      <td className={ui.numeric}>{formatAmount(row.growth)}</td>
-                      <td className={ui.numeric}>{formatAmount(row.withdrawn)}</td>
-                      <td className={ui.numeric}>{formatAmount(row.fundEnd)}</td>
-                      <td className={ui.numeric}>
-                        {formatAmount(row.expenses)}
-                        {row.unpaid > 0 ? ` (${formatAmount(row.unpaid)} not covered)` : ''}
-                      </td>
-                    </tr>
+                    <Fragment key={row.start}>
+                      {row.start === plan.monthsToRetire && row.retired ? (
+                        <tr className={styles.milestoneRow}>
+                          <td colSpan={7}>
+                            Retire in {monthLabel(row.start)} at {ageAt(row.start)}, with{' '}
+                            {formatAmount(plan.fundAtRetirement)}
+                          </td>
+                        </tr>
+                      ) : null}
+                      <tr>
+                        <td>
+                          {fySpan(row)} · age {ageAt(row.start)}
+                        </td>
+                        <td className={ui.numeric}>{formatAmount(row.fundStart)}</td>
+                        <td className={ui.numeric}>{formatAmount(row.added)}</td>
+                        <td className={ui.numeric}>{formatAmount(row.growth)}</td>
+                        <td className={ui.numeric}>{formatAmount(row.withdrawn)}</td>
+                        <td className={ui.numeric}>{formatAmount(row.fundEnd)}</td>
+                        <td className={ui.numeric}>
+                          {formatAmount(row.expenses)}
+                          {row.unpaid > 0 ? ` (${formatAmount(row.unpaid)} not covered)` : ''}
+                        </td>
+                      </tr>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

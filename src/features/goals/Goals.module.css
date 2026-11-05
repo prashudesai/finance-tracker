@@ -386,3 +386,42 @@
   color: var(--muted);
   font-size: 0.8rem;
 }
+
+/* Where saving stops and retirement starts, in the year-by-year list. */
+.milestone {
+  margin: 6px 0;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 650;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-small) var(--radius-small) 0;
+  list-style: none;
+}
+
+.milestone::before {
+  margin-right: 6px;
+  content: '🎯';
+}
+
+.milestoneRow td {
+  font-weight: 650;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+}
+
+.milestoneRow td::before {
+  margin-right: 6px;
+  content: '🎯';
+}
+
+.milestoneNote {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.milestoneNote span {
+  color: var(--border-strong);
+}

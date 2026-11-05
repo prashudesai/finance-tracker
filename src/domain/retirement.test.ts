@@ -83,6 +83,54 @@ describe('retirement plan', () => {
   });
 });
 
+describe('retiring on a date, not a birthday', () => {
+  test('saving stops in the retirement month, which starts a stretch of its own', () => {
+    // Retiring in 7 months, with 18 months planned.
+    const plan = planRetirement({
+      ...base,
+      monthlyContribution: 10_000,
+      monthsToRetire: 7,
+      months: 18,
+    });
+    // Cut at the year boundary too, a year from now.
+    expect(plan.years.map((row) => [row.start, row.months, row.retired])).toEqual([
+      [0, 7, false],
+      [7, 5, true],
+      [12, 6, true],
+    ]);
+    expect(plan.years[0]?.added).toBe(70_000);
+    expect(plan.fundAtRetirement).toBe(10_70_000);
+    // Eleven months of ₹50,000 once retired.
+    expect(plan.years.reduce((sum, row) => sum + row.withdrawn, 0)).toBe(5_50_000);
+  });
+
+  test('financial years: the rest of this one, then April to March, cut at retirement', () => {
+    // November now: five months to April. Retiring in 17 months, the next September.
+    const plan = planRetirement({ ...base, firstStretch: 5, monthsToRetire: 17, months: 30 });
+    expect(plan.years.map((row) => [row.start, row.months, row.retired])).toEqual([
+      [0, 5, false],
+      [5, 12, false],
+      [17, 12, true],
+      [29, 1, true],
+    ]);
+  });
+
+  test('says the month the money runs out', () => {
+    const plan = planRetirement({ ...base, fund: 1_00_000, monthsToRetire: 0, months: 12 });
+    // ₹50,000 a month empties ₹1 lakh in two months.
+    expect(plan.runsOutMonth).toBe(2);
+  });
+
+  test('retiring later moves the date by whole years', () => {
+    const fixes = retirementFixes({
+      ...base,
+      monthlyContribution: 20_000,
+      monthsToRetire: 238,
+    });
+    expect(fixes?.retireAt).not.toBeNull();
+  });
+});
+
 describe('ways to make it last', () => {
   const short = { ...base, monthlyContribution: 20_000 };
 
