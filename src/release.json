@@ -1,7 +1,9 @@
 {
-  "version": "1.19.1",
+  "version": "1.19.2",
   "released": "2026-11-05",
   "notes": [
+    "Opening a wide table, such as investment returns details or the retirement year-by-year, no longer makes the page scroll sideways",
+    "The saved unrecorded house expense is titled by its category, with a note that it came from the month review",
     "Marking a month reviewed saves its unrecorded house expense as an expense entry, and reviewing again updates or removes it",
     "Unrecorded house expense, what your closing balance falls short of, now counts as spending on the dashboard, in Analytics, goals and the retirement planner",
     "The month close takes off everything invested from your bank, so SIPs and PPF are no longer counted as house expense",

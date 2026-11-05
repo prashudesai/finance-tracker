@@ -263,9 +263,10 @@ export function houseExpenseToSave(data: TrackerData, month: string): Expense | 
     id: savedHouseExpenseId(month),
     date: lastDayOfMonth(month),
     category: HOUSE_EXPENSE,
-    subcategory: 'Confirmed at month review',
+    subcategory: '',
     amount: roundMoney(unrecorded),
     isAnnual: false,
+    notes: 'Confirmed at month review, from the bank balances',
   };
 }
 

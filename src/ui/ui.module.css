@@ -29,6 +29,8 @@
 
 .card {
   display: grid;
+  /* One column that can shrink, so a wide table in a fold scrolls inside it instead of widening the card. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   align-content: start;
   min-width: 0;
