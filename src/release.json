@@ -1,7 +1,11 @@
 {
-  "version": "1.17.3",
+  "version": "1.18.0",
   "released": "2026-11-05",
   "notes": [
+    "Retirement planner: set each investment after retiring to grow, pay income, or both",
+    "Income investments such as SCSS or an FD keep their value and pay your spending first, before anything is sold",
+    "At retirement, move a share of an investment into an income investment, and mark what can't be sold, such as an annuity",
+    "The graph and year-by-year table show payouts alongside what is sold",
     "PF, PPF and NPS show as one row each in goal funding and investment returns, instead of account numbers",
     "Retirement table shows months only on part years, such as the year you retire in",
     "Retirement planner runs from this month by financial year, retires in your exact month, and marks the retirement milestone",

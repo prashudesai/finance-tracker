@@ -212,3 +212,101 @@ describe('ages from dates', () => {
     expect(ageOn('1991-11-05', '2026-11-05')).toBe(35);
   });
 });
+
+describe('investments set one by one after retiring', () => {
+  const retired = { ...base, age: 60, monthsToRetire: 0, months: 12 };
+  const part = { share: 0, growth: 0, payout: 0, sellable: true };
+
+  test('an income investment pays expenses first and keeps its value', () => {
+    // ₹50 lakh in SCSS at 8.4% pays ₹35,000 a month; the other ₹15,000 is sold from funds.
+    const plan = planRetirement({
+      ...retired,
+      fund: 1_50_00_000,
+      parts: [
+        { ...part, name: 'SCSS', value: 50_00_000, payout: 8.4 },
+        { ...part, name: 'Funds', value: 1_00_00_000 },
+      ],
+    });
+    expect(plan.payoutAtRetirement).toBe(35_000);
+    expect(plan.years[0]).toMatchObject({ payouts: 4_20_000, withdrawn: 1_80_000 });
+    expect(plan.leftOver).toBe(1_48_20_000);
+  });
+
+  test('growth applies only to what grows, unlike one rate for the whole fund', () => {
+    const parts = [
+      { ...part, name: 'SCSS', value: 50_00_000, payout: 8.2 },
+      { ...part, name: 'Funds', value: 1_00_00_000, growth: 10 },
+    ];
+    const each = planRetirement({ ...retired, fund: 1_50_00_000, months: 300, parts });
+    const simple = planRetirement({ ...retired, fund: 1_50_00_000, months: 300, growthAfter: 10 });
+    expect(each.leftOver).not.toBe(simple.leftOver);
+    expect(each.partsAtRetirement.map((row) => row.name)).toEqual(['SCSS', 'Funds']);
+  });
+
+  test('payouts beyond expenses are reinvested in what grows', () => {
+    const plan = planRetirement({
+      ...retired,
+      monthlyExpense: 10_000,
+      fund: 60_00_000,
+      parts: [
+        { ...part, name: 'Rent', value: 30_00_000, payout: 8 },
+        { ...part, name: 'Funds', value: 30_00_000, growth: 0.0001 },
+      ],
+    });
+    // ₹20,000 rent less ₹10,000 spending leaves ₹1.2 lakh over the year.
+    expect(plan.years[0]?.withdrawn).toBe(0);
+    expect(plan.leftOver).toBeCloseTo(61_20_000, -2);
+  });
+
+  test('what can’t be sold is never drawn on', () => {
+    const plan = planRetirement({
+      ...retired,
+      fund: 1_00_00_000,
+      parts: [{ ...part, name: 'Annuity', value: 1_00_00_000, payout: 3, sellable: false }],
+    });
+    // ₹25,000 a month against ₹50,000 spending: half is never covered.
+    expect(plan.runsOutMonth).toBe(0);
+    expect(plan.years[0]?.unpaid).toBe(3_00_000);
+    expect(plan.leftOver).toBe(1_00_00_000);
+  });
+
+  test('a share moves into income at retirement', () => {
+    const plan = planRetirement({
+      ...base,
+      fund: 1_00_00_000,
+      monthsToRetire: 12,
+      months: 24,
+      parts: [{ ...part, name: 'PF', value: 1_00_00_000, move: { share: 0.3, payout: 8 } }],
+    });
+    expect(plan.partsAtRetirement).toEqual([
+      expect.objectContaining({ name: 'PF', value: 70_00_000 }),
+      expect.objectContaining({ name: 'PF → income', value: 30_00_000, payout: 8 }),
+    ]);
+    expect(plan.payoutAtRetirement).toBe(20_000);
+  });
+
+  test('contributions go into each part by its share', () => {
+    const plan = planRetirement({
+      ...base,
+      fund: 0,
+      monthlyContribution: 10_000,
+      monthsToRetire: 12,
+      months: 13,
+      parts: [
+        { ...part, name: 'A', value: 0, share: 0.75 },
+        { ...part, name: 'B', value: 0, share: 0.25 },
+      ],
+    });
+    expect(plan.partsAtRetirement.map((row) => row.value)).toEqual([90_000, 30_000]);
+  });
+
+  test('what you’ll need keeps the mix at retirement', () => {
+    const parts = [
+      { ...part, name: 'SCSS', value: 50_00_000, payout: 8.2 },
+      { ...part, name: 'Funds', value: 50_00_000, growth: 10 },
+    ];
+    const need = retirementNeed({ ...base, fund: 1_00_00_000, parts });
+    const simple = retirementNeed({ ...base, fund: 1_00_00_000 });
+    expect(need.needed).toBeGreaterThan(simple.needed);
+  });
+});

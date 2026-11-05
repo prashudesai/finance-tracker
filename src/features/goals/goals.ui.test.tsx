@@ -239,6 +239,35 @@ describe('Goals', () => {
     );
   });
 
+  test('each investment can grow, pay income or both after retiring', async () => {
+    show('/analytics/goals');
+    const planner = within(await screen.findByRole('region', { name: 'Retirement planner' }));
+    fireEvent.click(planner.getByText('Your assumptions'));
+    fireEvent.change(planner.getByLabelText(/^Date of birth/), {
+      target: { value: addMonths(today, -480) },
+    });
+    fireEvent.change(planner.getByLabelText('Monthly spending today (₹)'), {
+      target: { value: '50000' },
+    });
+    expect(planner.getByLabelText('Growth after retiring (%)')).toBeDefined();
+    fireEvent.click(planner.getByRole('radio', { name: /Set each investment/ }));
+    expect(planner.queryByLabelText('Growth after retiring (%)')).toBeNull();
+    const rows = within(planner.getByRole('list', { name: 'Each investment after retiring' }));
+    const first = within(rows.getAllByRole('listitem')[0] as HTMLElement);
+    fireEvent.click(first.getByRole('radio', { name: 'Pays income' }));
+    expect(first.getByText(/a month when you retire, on ₹.*, which stays the same/)).toBeDefined();
+    expect(planner.getByText(/Payouts cover ₹/)).toBeDefined();
+    fireEvent.click(planner.getByRole('button', { name: 'Save these assumptions' }));
+    await waitFor(() =>
+      expect(saved().settings[0]?.retirement).toMatchObject({
+        afterMode: 'each',
+        after: expect.objectContaining({}),
+      }),
+    );
+    const after = Object.values(saved().settings[0]?.retirement?.after ?? {});
+    expect(after.some((row) => row.behaviour === 'income' && row.payout === 7)).toBe(true);
+  });
+
   test('the dashboard shows goals at a glance, or offers to set the first', async () => {
     show('/', [college]);
     const tile = within(await screen.findByRole('region', { name: 'Goals' }));

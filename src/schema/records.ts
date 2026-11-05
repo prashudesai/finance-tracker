@@ -386,6 +386,28 @@ export const trackerSettingsSchema = z.object({
       fund: z.enum(['all', 'retirement']),
       /** A monthly spend to plan with, in place of the recorded average. */
       monthlyExpense: z.number().nonnegative().optional(),
+      /** One growth rate after retiring, or each investment set on its own. */
+      afterMode: z.enum(['simple', 'each']).optional(),
+      /**
+       * After retiring, by investment group (PF, PPF, NPS, or one holding's id). Growth and
+       * payout are yearly percentages of the value; an income investment keeps its value.
+       */
+      after: z
+        .record(
+          z.string(),
+          z.object({
+            behaviour: z.enum(['growth', 'income', 'both']),
+            growth: z.number().min(0).max(30),
+            payout: z.number().min(0).max(30),
+            /** Whether it can be drawn on once the rest is spent. */
+            sellable: z.boolean(),
+            /** At retirement, a share moved into an income investment paying `payout` a year. */
+            move: z
+              .object({ share: z.number().gt(0).max(1), payout: z.number().min(0).max(30) })
+              .optional(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
 });
