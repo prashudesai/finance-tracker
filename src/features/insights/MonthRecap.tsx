@@ -1,10 +1,11 @@
-import { CalendarHeart, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { CalendarHeart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { previousMonth } from '../../domain/calendar';
 import { monthRecap, recapMonths, type MonthRecap as Recap } from '../../domain/recap';
 import { useView } from '../../store/tracker';
 import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
+import { Nudge } from '../../ui/Nudge';
 import ui from '../../ui/ui.module.css';
 import styles from './Insights.module.css';
 
@@ -231,36 +232,31 @@ export function RecapCard() {
   };
 
   return (
-    <section
-      aria-label={`Your ${monthName(last)} in numbers`}
-      className={`${ui.card} ${styles.recapCard}`}
+    <Nudge
+      action={
+        <button
+          aria-label="See your recap"
+          className={ui.button}
+          onClick={() => {
+            setOpen(true);
+            markSeen(last);
+          }}
+          type="button"
+        >
+          See
+        </button>
+      }
+      closeLabel="Dismiss recap"
+      detail={
+        recap.saved >= 0
+          ? `You kept ${formatMoney(recap.saved)}${recap.savingsRate === null ? '' : ` · ${percent(recap.savingsRate)}`}`
+          : `You spent ${formatMoney(-recap.saved)} more than you earned`
+      }
+      icon={CalendarHeart}
+      label={`Your ${monthName(last)} in numbers`}
+      onClose={close}
+      title={`Your ${monthName(last)} in numbers`}
     >
-      <span aria-hidden="true" className={styles.sparkle}>
-        <CalendarHeart size={18} />
-      </span>
-      <div className={styles.body}>
-        <strong>Your {monthName(last)} in numbers</strong>
-        <span className={styles.detail}>
-          {recap.saved >= 0
-            ? `You kept ${formatMoney(recap.saved)}${recap.savingsRate === null ? '' : `, ${percent(recap.savingsRate)} of income`}.`
-            : `You spent ${formatMoney(-recap.saved)} more than you earned.`}
-        </span>
-        <span className={ui.actions}>
-          <button
-            className={ui.button}
-            onClick={() => {
-              setOpen(true);
-              markSeen(last);
-            }}
-            type="button"
-          >
-            See your recap
-          </button>
-        </span>
-      </div>
-      <button aria-label="Dismiss recap" className={ui.smallIcon} onClick={close} type="button">
-        <X size={14} />
-      </button>
       {open ? (
         <RecapView
           onClose={() => {
@@ -270,6 +266,6 @@ export function RecapCard() {
           start={last}
         />
       ) : null}
-    </section>
+    </Nudge>
   );
 }

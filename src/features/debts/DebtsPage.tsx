@@ -1,17 +1,10 @@
-import {
-  ChevronRight,
-  Clock,
-  CreditCard,
-  History,
-  ListChecks,
-  Pencil,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { ChevronRight, CreditCard, History, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router';
+import { debtProgress } from '../../domain/analytics';
 import { loanPayments, stopSchedules } from '../../domain/recurring';
 import {
+  debtFreeMonth,
   paidShare,
   remainingEmis,
   summarizeLoans,
@@ -22,11 +15,11 @@ import {
 import type { RecordWrite } from '../../data/repository';
 import type { Loan } from '../../schema/records';
 import { useTracker, useView } from '../../store/tracker';
-import { formatMoney, formatPercent, localDate } from '../../ui/format';
+import { formatMoney, formatPercent, formatShortMonthYear, localDate } from '../../ui/format';
 import { EmptyState } from '../../ui/EmptyState';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
-import { Metric, Stat } from '../../ui/Stat';
+import { Metric } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
 import { SortHeader, useSort } from '../../ui/useSort';
@@ -144,6 +137,9 @@ export function DebtsPage() {
   const [historyId, setHistoryId] = useState<string | null>(phone ? null : chosen);
   const [detailsId, setDetailsId] = useState<string | null>(phone ? chosen : null);
   const summaries = summarizeLoans(data, today);
+  const outstanding = totalOutstanding(summaries);
+  const debts = debtProgress(data, today);
+  const freeBy = debtFreeMonth(summaries, today.slice(0, 7));
   const { sorted, sort, toggle } = useSort(summaries, loanSortValue);
   const editing = data.loans.find((loan) => loan.id === editingId);
   const history = data.loans.find((loan) => loan.id === historyId);
@@ -194,18 +190,34 @@ export function DebtsPage() {
         subtitle="See what remains, monitor monthly commitments, and review repayments."
         title="Debt & EMI Tracker"
       />
-      <section aria-label="Debt totals" className={ui.tiles}>
-        <Stat
-          icon={CreditCard}
-          label="Outstanding balance"
-          value={formatMoney(totalOutstanding(summaries))}
-        />
-        <Stat
-          icon={Clock}
-          label="Active monthly EMI"
-          value={formatMoney(totalMonthlyEmi(summaries))}
-        />
-      </section>
+      {outstanding > 0 ? (
+        <section aria-label="Debt totals" className={ui.hero}>
+          <div className={ui.caption}>Left to repay</div>
+          <div className={ui.heroValue}>{formatMoney(outstanding)}</div>
+          <div className={ui.meter}>
+            <span className={ui.meterFill} style={{ width: `${debts.paidShare * 100}%` }} />
+            <span className={ui.meterDebt} style={{ flex: 1 }} />
+          </div>
+          <div className={ui.meterLegend}>
+            <span>
+              Paid {formatMoney(debts.paid)} · {formatPercent(debts.paidShare)}
+            </span>
+            <span>{freeBy ? `Debt-free by ${formatShortMonthYear(freeBy)}` : ''}</span>
+          </div>
+          <div className={ui.split}>
+            <div>
+              <div className={ui.label}>Monthly EMIs</div>
+              <strong>{formatMoney(totalMonthlyEmi(summaries))}</strong>
+            </div>
+            <div className={ui.alignEnd}>
+              <div className={ui.label}>Active loans</div>
+              <strong>
+                {summaries.filter(({ ledger }) => (ledger?.remaining ?? 0) > 0).length}
+              </strong>
+            </div>
+          </div>
+        </section>
+      ) : null}
       <section className={ui.card}>
         <div className={ui.cardHeader}>
           <div className={ui.cardHeader} style={{ justifyContent: 'flex-start' }}>
@@ -213,7 +225,7 @@ export function DebtsPage() {
               <ListChecks size={20} />
             </span>
             <div>
-              <h2 style={{ fontSize: '1.2rem' }}>Loan Summary</h2>
+              <h2 style={{ fontSize: '1.2rem' }}>Loan summary</h2>
               <div className={ui.caption}>Outstanding balances and recorded EMI history</div>
             </div>
           </div>

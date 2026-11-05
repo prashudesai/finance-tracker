@@ -21,8 +21,10 @@ import { formatDay, formatMoney, localDate } from '../../ui/format';
 import { downloadTablePdf, pdfAmount } from '../../ui/pdf';
 import { Metric } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
+import { useIsPhone } from '../../ui/useIsPhone';
 
 const ROW_LIMIT = 200;
+const PHONE_ROWS = 20;
 
 export function ReportsPage() {
   const data = useView();
@@ -32,6 +34,8 @@ export function ReportsPage() {
   const [start, setStart] = useState(financialYearRange(thisFy).start);
   const [end, setEnd] = useState(today);
   const [type, setType] = useState<ReportType>('all');
+  const phone = useIsPhone();
+  const [phoneRows, setPhoneRows] = useState(PHONE_ROWS);
 
   const presets: [string, () => void][] = [
     [
@@ -192,6 +196,33 @@ export function ReportsPage() {
         </div>
         {rows.length === 0 ? (
           <p className={ui.empty}>No records in this period.</p>
+        ) : phone ? (
+          // A phone has no room for five columns: each record is one row, amount on the right.
+          <>
+            <ul className={ui.list}>
+              {rows.slice(0, phoneRows).map((row, index) => (
+                <li className={ui.row} key={`${row.date}-${row.name}-${index}`}>
+                  <div className={ui.rowMain}>
+                    <div className={ui.rowTitle}>{row.name}</div>
+                    <div className={ui.rowDetail}>
+                      {formatDay(row.date)} {row.date.slice(0, 4)} · {row.group}
+                      {row.detail ? ` · ${row.detail}` : ''}
+                    </div>
+                  </div>
+                  <span className={ui.amount}>{formatMoney(row.amount)}</span>
+                </li>
+              ))}
+            </ul>
+            {rows.length > phoneRows ? (
+              <button
+                className={ui.quiet}
+                onClick={() => setPhoneRows(phoneRows + PHONE_ROWS)}
+                type="button"
+              >
+                Show {Math.min(PHONE_ROWS, rows.length - phoneRows)} more
+              </button>
+            ) : null}
+          </>
         ) : (
           <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
             <table className={ui.table}>
@@ -220,7 +251,7 @@ export function ReportsPage() {
             </table>
           </div>
         )}
-        {rows.length > ROW_LIMIT ? (
+        {!phone && rows.length > ROW_LIMIT ? (
           <div className={ui.caption}>
             Showing the latest {ROW_LIMIT}. The CSV has every record.
           </div>

@@ -323,8 +323,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
       <PageHeader eyebrow="Dashboard" title={greeting(new Date().getHours(), name)} />
 
       <GettingStarted />
-      <InstallCard />
-      <RecapCard />
 
       {phone ? (
         netWorthCard
@@ -372,6 +370,10 @@ export function Dashboard({ name = '' }: { name?: string }) {
         />
       </section>
 
+      {/* Prompts come after your own figures, never before them. */}
+      <RecapCard />
+      <InstallCard />
+
       <InsightsCard />
 
       {trendCard}
@@ -379,7 +381,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
       <section className={ui.card}>
         <div className={ui.cardHeader}>
           <div>
-            <h2 className={ui.cardTitle}>Investment Portfolio</h2>
+            <h2 className={ui.cardTitle}>Investment portfolio</h2>
             <div className={ui.caption}>Value and returns</div>
           </div>
           <label className={ui.caption}>
@@ -451,7 +453,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
 
       <section className={ui.card}>
         <div className={ui.cardHeader}>
-          <h2 className={ui.cardTitle}>Debt Summary</h2>
+          <h2 className={ui.cardTitle}>Debt summary</h2>
           <div className={ui.alignEnd}>
             <div className={ui.label}>Total outstanding</div>
             <strong>{formatMoney(outstanding)}</strong>

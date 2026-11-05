@@ -1,4 +1,5 @@
 import type { TrackerData } from '../data/repository';
+import { addMonths } from './calendar';
 import { estimateSchedule, isLoanFailure, rebuildLoan, type LoanLedger } from './loan';
 import { loanPayments } from './recurring';
 
@@ -37,6 +38,18 @@ export function paidShare({ remaining, totalPrincipal }: LoanLedger) {
 
 export const remainingEmis = ({ remaining, emi, rate }: LoanLedger) =>
   estimateSchedule(remaining, emi, rate).count;
+
+/**
+ * The month by which every loan is repaid at today's EMIs, or null when nothing is owed
+ * or a loan's EMI never clears it.
+ */
+export function debtFreeMonth(loans: LoanSummary[], month: string) {
+  const owing = loans.flatMap(({ ledger }) => (ledger && ledger.remaining > 0 ? [ledger] : []));
+  if (owing.length === 0) return null;
+  const counts = owing.map(remainingEmis);
+  if (counts.some((count) => count === null)) return null;
+  return addMonths(`${month}-01`, Math.max(...(counts as number[]))).slice(0, 7);
+}
 
 /** Loan ids by state: still owing, or fully paid. A loan that can't be replayed is neither. */
 export function loanStates(data: Pick<TrackerData, 'loans' | 'expenses'>, today: string) {

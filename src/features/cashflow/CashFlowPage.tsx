@@ -287,7 +287,7 @@ export function CashFlowPage() {
             onEdit={setEditingIncome}
             rows={newest(data.income)}
             openId={quickAdd?.found?.kind === 'income' ? quickAdd.found.id : null}
-            title="Income History"
+            title="Income history"
             action={
               phone ? (
                 <button className={ui.button} onClick={() => setAdding('income')} type="button">
@@ -311,7 +311,7 @@ export function CashFlowPage() {
             onEdit={setEditingExpense}
             rows={newest(data.expenses)}
             openId={quickAdd?.found?.kind === 'expense' ? quickAdd.found.id : null}
-            title="Expense History"
+            title="Expense history"
             action={
               phone ? (
                 <button className={ui.button} onClick={() => setAdding('expense')} type="button">

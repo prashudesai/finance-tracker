@@ -29,11 +29,17 @@ export const formatMoney = (value: number) => (hidden ? HIDDEN_AMOUNT : rupees.f
 export const formatCompactMoney = (value: number) =>
   hidden ? HIDDEN_AMOUNT : compactRupees.format(value);
 
-/** Always in lakhs, so a column of large values stays comparable. */
-export const formatLakhs = (value: number, digits = 2) =>
-  hidden
-    ? HIDDEN_AMOUNT
-    : `${value < 0 ? '−' : ''}₹${(Math.abs(value) / 100_000).toFixed(digits)}L`;
+const CRORE = 10_000_000;
+
+/** In lakhs, or in crores from ₹1 crore up, as amounts are said in India. */
+export function formatLakhs(value: number, digits = 2) {
+  if (hidden) return HIDDEN_AMOUNT;
+  const sign = value < 0 ? '−' : '';
+  const size = Math.abs(value);
+  return size >= CRORE
+    ? `${sign}₹${(size / CRORE).toFixed(2)} Cr`
+    : `${sign}₹${(size / 100_000).toFixed(digits)}L`;
+}
 
 export function localDate(now = new Date()) {
   const month = String(now.getMonth() + 1).padStart(2, '0');

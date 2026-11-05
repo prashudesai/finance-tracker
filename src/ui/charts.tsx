@@ -59,6 +59,18 @@ export function Donut({
   centerValue: string;
 }) {
   const total = segments.reduce((sum, row) => sum + row.value, 0);
+  // Colours never repeat: past the palette, the smallest slices fold into Other.
+  const kept = CHART_COLORS.length - 1;
+  const shown =
+    segments.length > CHART_COLORS.length
+      ? [
+          ...segments.slice(0, kept),
+          {
+            label: 'Other',
+            value: segments.slice(kept).reduce((sum, row) => sum + row.value, 0),
+          },
+        ]
+      : segments;
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const gap = 1.5;
@@ -67,7 +79,7 @@ export function Donut({
     <div className={styles.donut}>
       <figure className={styles.ring}>
         <svg aria-hidden="true" viewBox="0 0 100 100">
-          {segments.map((row, index) => {
+          {shown.map((row, index) => {
             const length = total > 0 ? (row.value / total) * circumference : 0;
             const dash = `${Math.max(0, length - gap)} ${circumference}`;
             const circle = (
@@ -95,7 +107,7 @@ export function Donut({
         </figcaption>
       </figure>
       <ul className={styles.legend}>
-        {segments.map((row, index) => (
+        {shown.map((row, index) => (
           <li key={row.label}>
             <i style={{ background: chartColor(index) }} />
             <span>{row.label}</span>

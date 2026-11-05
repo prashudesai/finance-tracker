@@ -5,6 +5,7 @@ import { useSettings, useTracker } from '../../store/tracker';
 import { localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { useInstallApp, useInstalled } from '../../ui/pwa';
+import { Nudge } from '../../ui/Nudge';
 import ui from '../../ui/ui.module.css';
 import { detectPlatform, InstallGuide } from './InstallGuide';
 
@@ -83,37 +84,32 @@ export function InstallCard() {
   if (!loaded || !settings.onboardingDone || tourOpen || nudge !== 'card') return null;
 
   return (
-    <section aria-label="Install the app" className={ui.card}>
-      <div className={ui.cardHeader}>
-        <div>
-          <h2 style={{ fontSize: '1.1rem' }}>Install Finance Tracker</h2>
-          <p className={ui.caption}>
-            Open it from your home screen like any app, without the browser. It takes three taps.
-          </p>
-        </div>
-        <span aria-hidden="true" className={ui.tileIcon}>
-          <Download size={20} />
-        </span>
-      </div>
-      <div className={ui.actions}>
-        {canInstall ? (
+    <Nudge
+      action={
+        canInstall ? (
           <button className={ui.button} onClick={install} type="button">
             Install
           </button>
-        ) : null}
-        <button
-          className={canInstall ? ui.quiet : ui.button}
-          onClick={() => setGuide(true)}
-          type="button"
-        >
-          Show me how
-        </button>
-        <button className={ui.quiet} onClick={notNow} type="button">
-          Not now
-        </button>
-      </div>
+        ) : (
+          <button
+            aria-label="Show me how"
+            className={ui.button}
+            onClick={() => setGuide(true)}
+            type="button"
+          >
+            How
+          </button>
+        )
+      }
+      closeLabel="Not now"
+      detail="Opens like any app, in three taps"
+      icon={Download}
+      label="Install the app"
+      onClose={notNow}
+      title="Install the app"
+    >
       {guide ? <GuideDialog onClose={() => setGuide(false)} /> : null}
-    </section>
+    </Nudge>
   );
 }
 

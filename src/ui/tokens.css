@@ -8,6 +8,7 @@
   color-scheme: dark;
   --bg: #102826;
   --bg-glow: rgb(44 150 122 / 22%);
+  --bg-glow-low: rgb(36 118 150 / 16%);
   --surface: #183532;
   --surface-raised: #1f403c;
   --surface-sunken: #122c29;
@@ -54,6 +55,7 @@
   color-scheme: light;
   --bg: #eef5f2;
   --bg-glow: rgb(14 159 126 / 12%);
+  --bg-glow-low: rgb(14 159 126 / 7%);
   --scenario-stress: #c8493f;
   --scenario-base: #1f78c8;
   --scenario-optimistic: #0e8a5f;
@@ -78,7 +80,7 @@
   --warning-text: #6b4a00;
   --shadow: 0 10px 28px rgb(16 41 31 / 8%);
   --hero:
-    radial-gradient(120% 90% at 100% 0%, rgb(7 102 79 / 30%), transparent 62%),
+    radial-gradient(120% 90% at 100% 0%, #c4eadc, transparent 62%),
     linear-gradient(115deg, #ffffff, #eef8f4);
   --hero-edge: #8fd0b9;
 }
@@ -88,6 +90,7 @@
     color-scheme: light;
     --bg: #eef5f2;
     --bg-glow: rgb(14 159 126 / 12%);
+    --bg-glow-low: rgb(14 159 126 / 7%);
     --scenario-stress: #c8493f;
     --scenario-base: #1f78c8;
     --scenario-optimistic: #0e8a5f;
@@ -112,7 +115,7 @@
     --warning-text: #6b4a00;
     --shadow: 0 10px 28px rgb(16 41 31 / 8%);
     --hero:
-      radial-gradient(120% 90% at 100% 0%, rgb(7 102 79 / 30%), transparent 62%),
+      radial-gradient(120% 90% at 100% 0%, #c4eadc, transparent 62%),
       linear-gradient(115deg, #ffffff, #eef8f4);
     --hero-edge: #8fd0b9;
   }
@@ -134,7 +137,11 @@ body {
   /* The app's own pull to refresh replaces the browser's. */
   overscroll-behavior-y: contain;
   color: var(--text);
-  background: radial-gradient(900px 420px at 12% -8%, var(--bg-glow), transparent 70%), var(--bg);
+  /* A faint aurora: mint from the top, a deeper glow rising from the bottom corner. */
+  background:
+    radial-gradient(900px 460px at 78% -12%, var(--bg-glow), transparent 70%),
+    radial-gradient(760px 520px at -8% 108%, var(--bg-glow-low, var(--bg-glow)), transparent 72%),
+    var(--bg);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   /* A long unbroken name wraps, rather than pushing the page sideways. */
@@ -150,6 +157,8 @@ table {
   /* Long lists sit over busy pages, so dropdowns stay nearly solid. */
   --glass-solid: color-mix(in srgb, var(--surface-raised) 95%, transparent);
   --glass-edge: color-mix(in srgb, var(--text) 14%, transparent);
+  /* Every card's mint edge; the hero's is brighter still. */
+  --card-edge: color-mix(in srgb, var(--accent) 38%, transparent);
   --glass-blur: blur(22px) saturate(150%);
   --lift: 0 16px 40px rgb(0 0 0 / 24%);
 }
@@ -174,6 +183,32 @@ h2 {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Fold-outs open with a chevron that turns, not the browser's triangle. */
+summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary:not([class])::before {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 10px 2px 2px;
+  content: '';
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(-45deg);
+  transition: transform 160ms ease;
+}
+
+details[open] > summary:not([class])::before {
+  transform: rotate(45deg);
 }
 
 /* Every dropdown shares one look. Phones and older browsers keep their native picker. */

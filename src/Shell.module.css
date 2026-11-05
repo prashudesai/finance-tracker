@@ -46,6 +46,18 @@
   backdrop-filter: var(--glass-blur);
 }
 
+/* A soft fade under the header, so content slides beneath it rather than meeting a hard edge. */
+.header::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  height: 18px;
+  pointer-events: none;
+  background: linear-gradient(color-mix(in srgb, var(--bg) 55%, transparent), transparent);
+}
+
 .brand {
   display: flex;
   align-items: center;

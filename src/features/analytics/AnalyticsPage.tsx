@@ -23,6 +23,7 @@ import {
 } from '../../ui/format';
 import { Metric } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
+import { useIsPhone } from '../../ui/useIsPhone';
 import { NetWorthHistory } from './NetWorthHistory';
 
 type Allocation = 'all' | 'retirement';
@@ -31,7 +32,7 @@ type ReturnsView = 'holdings' | 'family';
 function ViewDetails({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
     <details className={ui.fold}>
-      <summary>View Details</summary>
+      <summary>View details</summary>
       <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
         <table className={ui.table}>
           <thead>
@@ -69,6 +70,7 @@ const monthsLabel = (count: number, noun: string) =>
 export function AnalyticsPage() {
   const data = useView();
   const today = localDate();
+  const phone = useIsPhone();
   const [year, setYear] = useState(financialYearStart(today));
   const [allocation, setAllocation] = useState<Allocation>('all');
   const [trend, setTrend] = useState<Trend>('surplus');
@@ -111,9 +113,10 @@ export function AnalyticsPage() {
       value: row.value,
     }),
   );
-  const retirementTotal = rows
-    .filter((row) => row.holding.kind !== 'investment')
-    .map((row) => ({ label: row.holding.name, value: row.position.current }));
+  // By type, such as PF or NPS: account names can be long, or account numbers.
+  const retirementTotal = portfolioCategories(
+    rows.filter((row) => row.holding.kind !== 'investment'),
+  ).map((row) => ({ label: row.name, value: row.current }));
 
   return (
     <div className={ui.page}>
@@ -139,7 +142,7 @@ export function AnalyticsPage() {
       <div className={ui.twoColumn}>
         <section className={ui.card}>
           <div className={ui.split}>
-            <h2 style={{ fontSize: '1.2rem' }}>Financial Summary</h2>
+            <h2 style={{ fontSize: '1.2rem' }}>Financial summary</h2>
             <span className={ui.caption}>Assets, debts and returns are current</span>
           </div>
           <div className={ui.metrics}>
@@ -178,7 +181,7 @@ export function AnalyticsPage() {
         </section>
 
         <section className={ui.card}>
-          <h2 style={{ fontSize: '1.2rem' }}>Average Monthly Snapshot</h2>
+          <h2 style={{ fontSize: '1.2rem' }}>Average monthly snapshot</h2>
           <div className={ui.metricsTwo}>
             <Metric
               detail={monthsLabel(summary.incomeMonths, 'income')}
@@ -227,7 +230,7 @@ export function AnalyticsPage() {
 
       <div className={ui.twoColumn}>
         <section className={ui.card}>
-          <h2 style={{ fontSize: '1.2rem' }}>FY Income &amp; Cash Outflows</h2>
+          <h2 style={{ fontSize: '1.2rem' }}>FY income &amp; cash outflows</h2>
           <ColumnChart
             bars={[
               { label: 'Income', value: summary.income },
@@ -256,7 +259,7 @@ export function AnalyticsPage() {
         <section className={ui.card}>
           <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: '1.2rem' }}>
-              {trend === 'surplus' ? 'Monthly Surplus Balance Trend' : 'Stallion PMS Profit Trend'}
+              {trend === 'surplus' ? 'Monthly surplus trend' : 'Stallion PMS profit trend'}
             </h2>
             <select
               aria-label="Trend"
@@ -264,11 +267,12 @@ export function AnalyticsPage() {
               onChange={(event) => setTrend(event.target.value as Trend)}
               value={trend}
             >
-              <option value="surplus">Monthly Surplus</option>
+              <option value="surplus">Monthly surplus</option>
               <option value="pms">Stallion PMS</option>
             </select>
           </div>
           <LineChart
+            narrow={phone}
             series={[{ name: trend === 'surplus' ? 'Balance' : 'Profit', points }]}
             title="Trend by month"
           />
@@ -282,15 +286,15 @@ export function AnalyticsPage() {
       <div className={ui.threeColumn}>
         <section className={ui.card}>
           <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
-            <h2 style={{ fontSize: '1.2rem' }}>Asset Allocation</h2>
+            <h2 style={{ fontSize: '1.2rem' }}>Asset allocation</h2>
             <select
               aria-label="Allocation scope"
               className={ui.fieldSelect}
               onChange={(event) => setAllocation(event.target.value as Allocation)}
               value={allocation}
             >
-              <option value="all">All Assets</option>
-              <option value="retirement">Retirement Only</option>
+              <option value="all">All assets</option>
+              <option value="retirement">Retirement only</option>
             </select>
           </div>
           {categories.length === 0 ? (
@@ -315,15 +319,15 @@ export function AnalyticsPage() {
         </section>
         <section className={ui.card}>
           <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
-            <h2 style={{ fontSize: '1.2rem' }}>Investment Returns</h2>
+            <h2 style={{ fontSize: '1.2rem' }}>Investment returns</h2>
             <select
               aria-label="Returns view"
               className={ui.fieldSelect}
               onChange={(event) => setReturnsView(event.target.value as ReturnsView)}
               value={returnsView}
             >
-              <option value="holdings">Returns vs. Invested</option>
-              <option value="family">Family Split</option>
+              <option value="holdings">Returns vs invested</option>
+              <option value="family">Family split</option>
             </select>
           </div>
           {returnsRows.length === 0 ? (
@@ -355,7 +359,7 @@ export function AnalyticsPage() {
           )}
           {returnsView === 'holdings' && rows.length > RETURN_ROWS ? (
             <div className={ui.caption}>
-              Showing top {RETURN_ROWS} of {rows.length} holdings. View Details shows all.
+              Showing top {RETURN_ROWS} of {rows.length} holdings. View details shows all.
             </div>
           ) : null}
           <ViewDetails
@@ -370,7 +374,7 @@ export function AnalyticsPage() {
           />
         </section>
         <section className={ui.card}>
-          <h2 style={{ fontSize: '1.2rem' }}>Debt Reduction Progress</h2>
+          <h2 style={{ fontSize: '1.2rem' }}>Debt reduction progress</h2>
           <div className={ui.meter} style={{ height: 22, borderRadius: 8 }}>
             <span className={ui.meterFill} style={{ width: `${debts.paidShare * 100}%` }} />
             <span className={ui.meterDebt} style={{ flex: 1 }} />
@@ -392,7 +396,7 @@ export function AnalyticsPage() {
 
       <div className={ui.twoColumn}>
         <section className={ui.card}>
-          <h2 style={{ fontSize: '1.2rem' }}>Retirement Funds Breakdown</h2>
+          <h2 style={{ fontSize: '1.2rem' }}>Retirement funds by type</h2>
           {retirementTotal.length === 0 ? (
             <p className={ui.empty}>No retirement accounts yet.</p>
           ) : (
@@ -400,7 +404,7 @@ export function AnalyticsPage() {
           )}
         </section>
         <section className={ui.card}>
-          <h2 style={{ fontSize: '1.2rem' }}>Family Member Contributions</h2>
+          <h2 style={{ fontSize: '1.2rem' }}>Family member contributions</h2>
           <div className={ui.caption}>{financialYearLabel(year)}</div>
           {members.length === 0 ? (
             <p className={ui.empty}>No contributions in {formatMonth(today.slice(0, 7))}'s year.</p>

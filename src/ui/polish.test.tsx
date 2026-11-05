@@ -1,9 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { greeting, newlyPaidOff } from '../domain/summary';
+import type { LoanLedger } from '../domain/loan';
+import { debtFreeMonth, greeting, newlyPaidOff, type LoanSummary } from '../domain/summary';
 import { Celebration } from './Celebration';
 import {
   formatCompactMoney,
+  formatLakhs,
   formatMoney,
   HIDDEN_AMOUNT,
   setAmountsHidden,
@@ -24,6 +26,33 @@ describe('hidden amounts', () => {
     expect(signedMoney(-500)).toBe(HIDDEN_AMOUNT);
     setAmountsHidden(false);
     expect(formatMoney(25_000)).toBe('₹25,000');
+  });
+});
+
+describe('lakhs and crores', () => {
+  test('switches to crores from ₹1 crore', () => {
+    expect(formatLakhs(98_50_000, 1)).toBe('₹98.5L');
+    expect(formatLakhs(1_02_30_000, 1)).toBe('₹1.02 Cr');
+    expect(formatLakhs(-1_50_00_000)).toBe('−₹1.50 Cr');
+  });
+});
+
+describe('debt-free month', () => {
+  const loan = (remaining: number, emi: number): LoanSummary => ({
+    id: String(remaining),
+    type: 'Loan',
+    member: '',
+    error: null,
+    ledger: { remaining, emi, rate: 0, totalPrincipal: remaining * 2 } as LoanLedger,
+  });
+
+  test('is when the longest loan clears', () => {
+    expect(debtFreeMonth([loan(3_000, 1_000), loan(12_000, 1_000)], '2026-11')).toBe('2027-11');
+  });
+
+  test('is unknown when nothing is owed, or an EMI never clears a loan', () => {
+    expect(debtFreeMonth([loan(0, 1_000)], '2026-11')).toBeNull();
+    expect(debtFreeMonth([loan(3_000, 0)], '2026-11')).toBeNull();
   });
 });
 

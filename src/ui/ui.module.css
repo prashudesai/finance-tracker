@@ -38,8 +38,7 @@
     color-mix(in srgb, var(--surface-raised) 88%, transparent),
     var(--surface)
   );
-  /* A mint edge on every tile; the hero's is brighter still. */
-  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  border: 1px solid var(--card-edge);
   border-radius: var(--radius);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent),
@@ -108,6 +107,62 @@
   background: color-mix(in srgb, var(--hue) 18%, transparent);
 }
 
+.nudge {
+  composes: card;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px 10px 14px;
+  border-radius: 16px;
+}
+
+.nudge .tileIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.nudgeText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.nudgeText strong {
+  font-size: 0.95rem;
+}
+
+.nudge .button {
+  min-height: 36px;
+  padding: 6px 16px;
+}
+
+.nudgeClose {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.nudgeClose:hover {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.heroGain {
+  margin-top: -6px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
 .statEmpty {
   color: var(--muted);
   font-weight: 600;
@@ -121,6 +176,7 @@
 
 .tileIcon {
   display: grid;
+  flex: none;
   place-items: center;
   width: 40px;
   height: 40px;
@@ -558,6 +614,10 @@
   border: 1px solid color-mix(in srgb, var(--warning-text) 35%, transparent);
   border-left: 4px solid var(--warning-text);
   border-radius: 14px;
+}
+
+.attention summary::before {
+  display: none !important;
 }
 
 .attention summary {

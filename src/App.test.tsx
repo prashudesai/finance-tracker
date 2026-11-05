@@ -568,7 +568,8 @@ test('feedback is sent from App info as a feature or a problem, and a failure sa
     </MemoryRouter>,
   );
   fireEvent.click(await screen.findByRole('button', { name: /App info/ }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Send feedback', hidden: true }));
+  const info = within(await screen.findByRole('dialog', { name: 'App info', hidden: true }));
+  fireEvent.click(info.getByRole('button', { name: 'Send feedback', hidden: true }));
   expect(screen.getByLabelText('What would you like the app to do?')).toBeDefined();
   fireEvent.click(screen.getByRole('button', { name: 'Report a problem', hidden: true }));
   const send = screen.getByRole('button', { name: 'Send', hidden: true });
@@ -634,14 +635,14 @@ describe('on a phone', () => {
 
   test('each history tab offers only its own add button', async () => {
     renderApp('/cash-flow');
-    expect(await screen.findByRole('heading', { name: 'Income History' })).toBeDefined();
-    expect(screen.queryByRole('heading', { name: 'Expense History' })).toBeNull();
+    expect(await screen.findByRole('heading', { name: 'Income history' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Expense history' })).toBeNull();
     expect(screen.queryByLabelText('Amount (₹)')).toBeNull();
     expect(screen.getByRole('button', { name: 'Add income' })).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Add expense' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Expenses' }));
-    expect(await screen.findByRole('heading', { name: 'Expense History' })).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'Expense history' })).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Add income' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Add expense' }));
     expect(await screen.findByRole('dialog', { name: 'Add Expense', hidden: true })).toBeDefined();
@@ -649,11 +650,11 @@ describe('on a phone', () => {
 
   test('investments and retirement are separate tabs', async () => {
     renderApp('/investments', { holdings: [fund] });
-    expect(await screen.findByRole('heading', { name: 'Investment Portfolio' })).toBeDefined();
-    expect(screen.queryByRole('heading', { name: 'Retirement Accounts' })).toBeNull();
+    expect(await screen.findByRole('heading', { name: 'Investment portfolio' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Retirement accounts' })).toBeNull();
     fireEvent.click(screen.getByRole('tab', { name: 'Retirement' }));
-    expect(await screen.findByRole('heading', { name: 'Retirement Accounts' })).toBeDefined();
-    expect(screen.queryByRole('heading', { name: 'Investment Portfolio' })).toBeNull();
+    expect(await screen.findByRole('heading', { name: 'Retirement accounts' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Investment portfolio' })).toBeNull();
     fireEvent.click(screen.getByRole('tab', { name: 'Investments' }));
   });
 });
@@ -683,11 +684,11 @@ test('the dashboard + opens the add menu and goes to the right entry', async () 
   expect(await screen.findByRole('dialog', { name: 'Add Income', hidden: true })).toBeDefined();
 });
 
-test('+ Add under Investment Portfolio lists the types and opens the chosen one', async () => {
+test('+ Add under Investment portfolio lists the types and opens the chosen one', async () => {
   renderApp('/investments', {
     settings: [{ ...defaultSettings(), investmentTypes: ['Gold'] }],
   });
-  const heading = await screen.findByRole('heading', { name: 'Investment Portfolio' });
+  const heading = await screen.findByRole('heading', { name: 'Investment portfolio' });
   const section = heading.closest('section');
   if (!section) throw new Error('Portfolio section not found');
   for (const name of ['Mutual Funds', 'Bonds', 'Fixed Deposits', 'Stallion PMS', 'Gold']) {
@@ -703,7 +704,7 @@ test('+ Add under Investment Portfolio lists the types and opens the chosen one'
 
 test('+ Add new in the investment menu saves the type and opens it', async () => {
   renderApp('/investments');
-  const heading = await screen.findByRole('heading', { name: 'Investment Portfolio' });
+  const heading = await screen.findByRole('heading', { name: 'Investment portfolio' });
   const section = heading.closest('section');
   if (!section) throw new Error('Portfolio section not found');
   fireEvent.click(within(section).getByRole('button', { name: '+ Add new…', hidden: true }));
@@ -836,7 +837,7 @@ test('phone projection opens assumptions by group and keeps goals last', async (
   expect(screen.queryByLabelText(/Mutual Funds annual step-up/)).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: /Market linked/ }));
   expect(await screen.findByLabelText(/Mutual Funds annual step-up/)).toBeDefined();
-  const headings = screen.getByText('Current Values and Assumptions');
+  const headings = screen.getByText('Current values and assumptions');
   const planned = screen.getByText('Planned one-time changes');
   const goal = screen.getByText('Goal planning');
   expect(headings.compareDocumentPosition(planned) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -868,7 +869,7 @@ test('history tables sort by a column, with no filter box', async () => {
   expect(sources()).toEqual(['Open Bonus', 'Open Salary']);
   fireEvent.click(within(table as HTMLElement).getByRole('button', { name: 'Amount' }));
   expect(sources()).toEqual(['Open Salary', 'Open Bonus']);
-  expect(screen.queryByLabelText('Filter Income History')).toBeNull();
+  expect(screen.queryByLabelText('Filter Income history')).toBeNull();
 });
 
 test('a statement corrects one EMI split and balances follow', async () => {
@@ -927,7 +928,8 @@ test('the Add expense shortcut opens the expense form', async () => {
 test('App info offers Share the app', async () => {
   renderApp('/settings');
   fireEvent.click(await screen.findByRole('button', { name: /App info/ }));
-  expect(await screen.findByRole('button', { name: /Share the app/, hidden: true })).toBeDefined();
+  const info = within(await screen.findByRole('dialog', { name: 'App info', hidden: true }));
+  expect(info.getByRole('button', { name: /Share the app/, hidden: true })).toBeDefined();
 });
 
 test('a dashboard portfolio row opens that category', async () => {
@@ -973,7 +975,7 @@ test('analytics offers the family split and details', async () => {
   renderApp('/analytics', { holdings: [fund, { ...fund, id: 'b', member: 'B', name: 'Other' }] });
   fireEvent.change(await screen.findByLabelText('Returns view'), { target: { value: 'family' } });
   expect((await screen.findAllByText('B')).length).toBeGreaterThan(0);
-  expect(screen.getAllByText('View Details').length).toBeGreaterThan(2);
+  expect(screen.getAllByText('View details').length).toBeGreaterThan(2);
 });
 
 test('deleting an account needs the exact phrase, then clears records first', async () => {

@@ -1,7 +1,12 @@
 {
-  "version": "1.11.3",
+  "version": "1.12.0",
   "released": "2026-11-05",
   "notes": [
+    "Your net worth leads the dashboard, with the recap and install prompts as slim one-line cards below your figures",
+    "Debts opens with what is left to repay, how much is paid and when you will be debt-free",
+    "Reports list each record with its amount on phones, 20 at a time",
+    "Amounts from ₹1 crore show in crores, and retirement funds chart by type",
+    "A softer aurora background, smoother header and turning chevrons on fold-outs",
     "The dashboard opens with your greeting, and Needs attention stands out with a bell and a count",
     "Monthly figures have colour-coded icons, and nothing recorded yet shows as Not yet",
     "Active loans are marked in mint, and the trend chart bars have a soft fade",

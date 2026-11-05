@@ -217,6 +217,11 @@
   cursor: pointer;
 }
 
+.asset > summary::before,
+.planned > summary::before {
+  display: none;
+}
+
 .asset > summary::-webkit-details-marker {
   display: none;
 }

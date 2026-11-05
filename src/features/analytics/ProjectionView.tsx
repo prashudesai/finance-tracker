@@ -77,7 +77,7 @@ function Settings({
 
   return (
     <section className={`${ui.card} ${styles.settings}`}>
-      <h2 style={{ fontSize: '1.2rem' }}>Projection Settings</h2>
+      <h2 style={{ fontSize: '1.2rem' }}>Projection settings</h2>
       <div className={styles.overline}>Investment horizon</div>
       <div className={styles.horizon}>
         <input
@@ -238,7 +238,7 @@ function Growth({
   const span = `${years}-year`;
   return (
     <section className={ui.card}>
-      <h2 style={{ fontSize: '1.2rem' }}>Projected Portfolio Growth</h2>
+      <h2 style={{ fontSize: '1.2rem' }}>Projected portfolio growth</h2>
       <LineChart
         height={phone ? undefined : 400}
         narrow={phone}
@@ -371,7 +371,7 @@ function Assumptions({ assets }: { assets: ProjectionAsset[] }) {
   return (
     <section className={ui.card}>
       <div>
-        <h2 style={{ fontSize: '1.2rem' }}>Current Values and Assumptions</h2>
+        <h2 style={{ fontSize: '1.2rem' }}>Current values and assumptions</h2>
         <div className={ui.caption}>Choose a group to view or edit assumptions.</div>
       </div>
       {assets.length === 0 ? (
@@ -479,9 +479,35 @@ function Breakdown({ rows, scenario }: { rows: ProjectionYear[]; scenario: Scena
   const heading = (column: BreakdownColumn, label: string) => (
     <SortHeader column={column} label={label} numeric onSort={toggle} sort={sort} />
   );
+  const phone = useIsPhone();
+  if (phone) {
+    // One row per year, closing value on the right, so nothing scrolls sideways.
+    return (
+      <section className={ui.card}>
+        <h2 style={{ fontSize: '1.2rem' }}>Financial year breakdown</h2>
+        <ul className={ui.list}>
+          {rows.map((row) => (
+            <li className={ui.row} key={row.fyStart}>
+              <div className={ui.rowMain}>
+                <div className={ui.rowTitle}>{financialYearLabel(row.fyStart)}</div>
+                <div className={ui.rowDetail}>
+                  Opens {formatLakhs(row.opening)} · adds {formatLakhs(changesIn(row))} · grows{' '}
+                  {formatLakhs(row.growth)} ({formatPercent(growthShare(row))})
+                </div>
+              </div>
+              <span className={ui.amount}>{formatLakhs(row.closing)}</span>
+            </li>
+          ))}
+        </ul>
+        <p className={ui.caption}>
+          {name} scenario. The right-hand figure is each year's closing value.
+        </p>
+      </section>
+    );
+  }
   return (
     <section className={ui.card}>
-      <h2 style={{ fontSize: '1.2rem' }}>Financial Year Breakdown</h2>
+      <h2 style={{ fontSize: '1.2rem' }}>Financial year breakdown</h2>
       <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
         <table className={ui.table}>
           <thead>

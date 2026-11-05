@@ -1,7 +1,24 @@
 /* A grid item, so it needs telling it may be narrower than its one-line preview. */
 .summary {
-  display: list-item;
+  display: block;
   min-width: 0;
+}
+
+/* The same turning chevron as other fold-outs. */
+.summary::before {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 12px 3px 2px;
+  content: '';
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(-45deg);
+  transition: transform 160ms ease;
+}
+
+details[open] > .summary::before {
+  transform: rotate(45deg);
 }
 
 .summaryTitle {
@@ -46,17 +63,6 @@
 
 details[open] > .summary .preview {
   display: none;
-}
-
-.sparkle {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border-radius: 12px;
 }
 
 .list {
@@ -161,13 +167,6 @@ details[open] > .summary .preview {
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 0.78rem;
-}
-
-.recapCard {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  border-color: var(--accent);
 }
 
 .recap {

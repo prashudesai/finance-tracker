@@ -2,6 +2,7 @@ import {
   ChevronRight,
   DatabaseBackup,
   Info,
+  MessageSquare,
   Palette,
   RefreshCw,
   Share2,
@@ -1266,6 +1267,20 @@ export function SettingsPage({ account }: { account: Account }) {
           </button>
         ))}
       </div>
+      <section aria-label="Share and feedback" className={ui.card}>
+        <div>
+          <h2 style={{ fontSize: '1.1rem' }}>Enjoying Finance Tracker?</h2>
+          <div className={ui.caption}>
+            Share it with a family who'd find it useful, or tell us what to improve.
+          </div>
+        </div>
+        <ShareApp />
+        {account.sendFeedback ? (
+          <button className={ui.quiet} onClick={() => setPanel('info')} type="button">
+            <MessageSquare aria-hidden="true" size={16} /> Send feedback
+          </button>
+        ) : null}
+      </section>
       {open ? (
         <Modal onClose={() => setPanel(null)} title={open.title}>
           {panel === 'info' ? (

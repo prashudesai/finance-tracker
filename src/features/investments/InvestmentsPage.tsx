@@ -351,11 +351,11 @@ export function InvestmentsPage() {
         <section aria-label="Portfolio value" className={ui.hero}>
           <div className={ui.split}>
             <span>Current portfolio value</span>
-            <span className={ui.badgeDone}>
-              {signedMoney(gain)} {formatPercent(invested > 0 ? gain / invested : null)} return
-            </span>
           </div>
           <div className={ui.value}>{formatMoney(current)}</div>
+          <div className={`${ui.heroGain} ${gain < 0 ? ui.loss : ui.gain}`}>
+            {signedMoney(gain)} · {formatPercent(invested > 0 ? gain / invested : null)} return
+          </div>
           <div className={ui.caption}>Across investment and retirement accounts</div>
           <div className={ui.metrics}>
             <Metric label="Total invested" value={formatMoney(invested)} />
@@ -464,7 +464,7 @@ export function InvestmentsPage() {
         <section className={ui.card}>
           <div className={ui.cardHeader}>
             <div>
-              <h2 style={{ fontSize: '1.2rem' }}>Investment Portfolio</h2>
+              <h2 style={{ fontSize: '1.2rem' }}>Investment portfolio</h2>
               <div className={ui.caption}>Stocks, mutual funds, ETFs and other holdings</div>
             </div>
             <AddButton
@@ -511,7 +511,7 @@ export function InvestmentsPage() {
         <section className={ui.card}>
           <div className={ui.cardHeader}>
             <div>
-              <h2 style={{ fontSize: '1.2rem' }}>Retirement Accounts</h2>
+              <h2 style={{ fontSize: '1.2rem' }}>Retirement accounts</h2>
               <div className={ui.caption}>PF, PPF, NPS and gratuity</div>
             </div>
             <AddButton
