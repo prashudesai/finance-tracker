@@ -16,7 +16,13 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { Insight } from '../../domain/insights';
-import { formatDay, formatMoney, formatMonth, formatShortMonthYear } from '../../ui/format';
+import {
+  formatAmount,
+  formatDay,
+  formatMoney,
+  formatMonth,
+  formatShortMonthYear,
+} from '../../ui/format';
 
 export interface InsightText {
   icon: LucideIcon;
@@ -221,12 +227,12 @@ export function describeInsight(insight: Insight): InsightText {
     case 'goalBehind':
       return {
         icon: Flag,
-        title: `Add ${formatMoney(insight.extra)} a month to get ${insight.name} back on track`,
-        detail: `At the current pace it reaches ${formatMoney(insight.projected)} of the ${formatMoney(insight.needed)} needed by ${formatShortMonthYear(insight.date.slice(0, 7))}.`,
+        title: `Add ${formatAmount(insight.extra)} a month to get ${insight.name} back on track`,
+        detail: `At the current pace it reaches ${formatAmount(insight.projected)} of the ${formatAmount(insight.needed)} needed by ${formatShortMonthYear(insight.date.slice(0, 7))}.`,
         why: [
-          ['Needed, after inflation', formatMoney(insight.needed)],
-          ['Expected at the current pace', formatMoney(insight.projected)],
-          ['Extra each month', formatMoney(insight.extra)],
+          ['Needed, after inflation', formatAmount(insight.needed)],
+          ['Expected at the current pace', formatAmount(insight.projected)],
+          ['Extra each month', formatAmount(insight.extra)],
         ],
         path: '/analytics/goals',
         note: 'Projections assume steady returns, which markets never give.',
@@ -235,10 +241,10 @@ export function describeInsight(insight: Insight): InsightText {
       return {
         icon: GoalIcon,
         title: `${insight.name} is fully funded`,
-        detail: `You've set aside ${formatMoney(insight.saved)}, enough for the ${formatMoney(insight.needed)} it needs. Well done.`,
+        detail: `You've set aside ${formatAmount(insight.saved)}, enough for the ${formatAmount(insight.needed)} it needs. Well done.`,
         why: [
-          ['Set aside', formatMoney(insight.saved)],
-          ['Needed, after inflation', formatMoney(insight.needed)],
+          ['Set aside', formatAmount(insight.saved)],
+          ['Needed, after inflation', formatAmount(insight.needed)],
         ],
         path: '/analytics/goals',
       };
@@ -247,20 +253,20 @@ export function describeInsight(insight: Insight): InsightText {
       const years = insight.months === null ? '' : timeFrom(insight.months);
       const sooner =
         insight.fasterBy && insight.reachedBy && insight.fasterBy < insight.reachedBy
-          ? ` Investing the ${formatMoney(insight.leftover)} left over each month too would get there by ${formatShortMonthYear(insight.fasterBy)}.`
+          ? ` Investing the ${formatAmount(insight.leftover)} left over each month too would get there by ${formatShortMonthYear(insight.fasterBy)}.`
           : '';
       const why: [string, string][] = [
-        [`${what} today`, formatMoney(insight.current)],
-        ['Target', formatMoney(insight.target)],
+        [`${what} today`, formatAmount(insight.current)],
+        ['Target', formatAmount(insight.target)],
         [
           `Savings contributions a month, this year since ${formatShortMonthYear(insight.since)}`,
-          formatMoney(insight.invested),
+          formatAmount(insight.invested),
         ],
-        [`Average income, last ${insight.basedOn} months`, formatMoney(insight.income)],
-        ['Average spending', formatMoney(insight.expenses)],
-        ['Left over, not invested', formatMoney(insight.leftover)],
+        [`Average income, last ${insight.basedOn} months`, formatAmount(insight.income)],
+        ['Average spending', formatAmount(insight.expenses)],
+        ['Left over, not invested', formatAmount(insight.leftover)],
         ...(insight.principal > 0
-          ? ([['Loan principal repaid each month', formatMoney(insight.principal)]] as [
+          ? ([['Loan principal repaid each month', formatAmount(insight.principal)]] as [
               string,
               string,
             ][])
@@ -270,18 +276,18 @@ export function describeInsight(insight: Insight): InsightText {
       return insight.reachedBy
         ? {
             icon: TrendingUp,
-            title: `${what} reaches ${formatMoney(insight.target)} by ${formatShortMonthYear(insight.reachedBy)}`,
-            detail: `That's ${years}, with savings contributions of about ${formatMoney(insight.invested)} a month as you have been, plus growth on what you have.${sooner}`,
+            title: `${what} reaches ${formatAmount(insight.target)} by ${formatShortMonthYear(insight.reachedBy)}`,
+            detail: `That's ${years}, with savings contributions of about ${formatAmount(insight.invested)} a month as you have been, plus growth on what you have.${sooner}`,
             why,
             path: '/analytics/goals',
             note: 'Assumes your investing and returns stay as they’ve been. Money left in the bank isn’t counted.',
           }
         : {
             icon: TrendingDown,
-            title: `At this pace, ${what.toLowerCase()} won't reach ${formatMoney(insight.target)}`,
+            title: `At this pace, ${what.toLowerCase()} won't reach ${formatAmount(insight.target)}`,
             detail:
               insight.leftover > 0
-                ? `Your savings contributions are about ${formatMoney(insight.invested)} a month. Investing more of the ${formatMoney(insight.leftover)} left over would help.`
+                ? `Your savings contributions are about ${formatAmount(insight.invested)} a month. Investing more of the ${formatAmount(insight.leftover)} left over would help.`
                 : 'There are few savings contributions this year, so there’s little to build it with.',
             why,
             path: '/analytics/goals',

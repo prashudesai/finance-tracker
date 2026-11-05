@@ -4,6 +4,7 @@ import type { LoanLedger } from '../domain/loan';
 import { debtFreeMonth, greeting, newlyPaidOff, type LoanSummary } from '../domain/summary';
 import { Celebration } from './Celebration';
 import {
+  formatAmount,
   formatCompactMoney,
   formatLakhs,
   formatMoney,
@@ -30,6 +31,16 @@ describe('hidden amounts', () => {
 });
 
 describe('lakhs and crores', () => {
+  test('headline amounts read as people say them', () => {
+    expect(formatAmount(38_000)).toBe('₹38,000');
+    expect(formatAmount(15_12_000)).toBe('₹15.12L');
+    expect(formatAmount(50_00_000)).toBe('₹50L');
+    expect(formatAmount(20_50_000)).toBe('₹20.5L');
+    expect(formatAmount(1_50_00_000)).toBe('₹1.5 Cr');
+    expect(formatAmount(4_81_07_032)).toBe('₹4.81 Cr');
+    expect(formatAmount(-2_00_000)).toBe('−₹2L');
+  });
+
   test('switches to crores from ₹1 crore', () => {
     expect(formatLakhs(98_50_000, 1)).toBe('₹98.5L');
     expect(formatLakhs(1_02_30_000, 1)).toBe('₹1.02 Cr');

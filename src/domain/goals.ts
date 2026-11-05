@@ -342,7 +342,7 @@ export function emergencyTarget(data: Pick<TrackerData, 'expenses'>, today: stri
  */
 export function retirementTarget(
   monthlyExpenses: number,
-  { years = 25, growth = 7, inflation = 6 } = {},
+  { years = 25, growth = 10, inflation = 6 } = {},
 ) {
   const real = (1 + growth / 100) / (1 + inflation / 100) - 1;
   const yearly = monthlyExpenses * 12;

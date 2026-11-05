@@ -367,6 +367,25 @@ export const trackerSettingsSchema = z.object({
       target: z.number().nonnegative(),
     })
     .default({ years: 5, inflation: 6, target: 0 }),
+  /** The retirement planner's assumptions. Spending and the fund are read from records. */
+  retirement: z
+    .object({
+      /** Ages follow from these dates, so they never go out of date. */
+      birthDate: date,
+      retireDate: date,
+      untilAge: z.number().int().min(19).max(110),
+      inflation: z.number().min(0).max(30),
+      growthBefore: z.number().min(0).max(30),
+      growthAfter: z.number().min(0).max(30),
+      stepUp: z.number().min(0).max(50),
+      /** Whether savings contributions continue until retirement. */
+      contributions: z.boolean(),
+      /** Retirement accounts only (PF, PPF, NPS), or every investment. */
+      fund: z.enum(['all', 'retirement']),
+      /** A monthly spend to plan with, in place of the recorded average. */
+      monthlyExpense: z.number().nonnegative().optional(),
+    })
+    .optional(),
 });
 export type TrackerSettings = z.infer<typeof trackerSettingsSchema>;
 

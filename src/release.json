@@ -1,7 +1,12 @@
 {
-  "version": "1.15.1",
+  "version": "1.16.0",
   "released": "2026-11-05",
   "notes": [
+    "Retirement planner in Goal planning: your fund at retirement, spending then, and how long the money lasts",
+    "A graph of fund value and yearly expenses by age, with a year-by-year table",
+    "What you will need at realistic rates, the gap, and the monthly investing that closes it",
+    "Date of birth and retirement date, with your age shown at each step",
+    "Goal and planner amounts read in lakhs and crores",
     "Portfolio targets use your savings contributions, the same figure as the dashboard, counted from when you started tracking",
     "Goal planning has its own page in Reports, next to Growth Projection",
     "Portfolio targets count your investing only from when you started tracking",

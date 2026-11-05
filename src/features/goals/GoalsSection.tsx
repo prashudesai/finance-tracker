@@ -26,7 +26,7 @@ import { addMonths } from '../../domain/calendar';
 import type { Goal } from '../../schema/records';
 import { useTracker, useView } from '../../store/tracker';
 import { EmptyState } from '../../ui/EmptyState';
-import { formatMoney, formatShortMonthYear, localDate } from '../../ui/format';
+import { formatAmount, formatShortMonthYear, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
 import { GoalForm } from './GoalForm';
@@ -68,7 +68,7 @@ function nextStep(goal: Goal, plan: GoalPlan, today: string) {
   const later = plan.reachedBy
     ? ` As it stands, it gets there by ${formatShortMonthYear(plan.reachedBy)}.`
     : '';
-  return `${goal.kind === 'portfolio' ? 'Save' : 'Add'} ${formatMoney(plan.extraMonthly)} more a month to reach it on time.${later}`;
+  return `${goal.kind === 'portfolio' ? 'Save' : 'Add'} ${formatAmount(plan.extraMonthly)} more a month to reach it on time.${later}`;
 }
 
 function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
@@ -126,7 +126,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         <div>
           <div className={styles.percent}>{percent(plan.progress)}</div>
           <div className={ui.caption}>
-            of {formatMoney(plan.needed)} {portfolio ? 'reached' : 'set aside'}
+            of {formatAmount(plan.needed)} {portfolio ? 'reached' : 'set aside'}
           </div>
           <StatusChip status={plan.status} />
         </div>
@@ -138,28 +138,28 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
             <Wallet aria-hidden="true" size={18} />
             <span>
               {goal.measure === 'investments' ? 'Investments' : 'Net worth'} today{' '}
-              <strong>{formatMoney(plan.saved)}</strong>, target {formatMoney(goal.target)}
+              <strong>{formatAmount(plan.saved)}</strong>, target {formatAmount(goal.target)}
               <small>
                 {goal.measure === 'investments'
                   ? 'Everything you have invested'
-                  : `Everything you own, ${formatMoney(portfolio.assets)}, less loans of ${formatMoney(portfolio.debts)}`}
+                  : `Everything you own, ${formatAmount(portfolio.assets)}, less loans of ${formatAmount(portfolio.debts)}`}
               </small>
             </span>
           </li>
           <li>
             <PiggyBank aria-hidden="true" size={18} />
             <span>
-              Savings contributions of about <strong>{formatMoney(portfolio.monthly)}</strong> a
+              Savings contributions of about <strong>{formatAmount(portfolio.monthly)}</strong> a
               month
               <small>
                 {portfolio.averages
-                  ? `Everything you invested each month, averaged over this financial year since you started tracking in ${formatShortMonthYear(portfolio.averages.since)}. Over the last ${portfolio.averages.months} month${portfolio.averages.months === 1 ? '' : 's'}, income ${formatMoney(portfolio.averages.income)} less spending ${formatMoney(portfolio.averages.expenses)} leaves ${formatMoney(portfolio.averages.surplus)}`
+                  ? `Everything you invested each month, averaged over this financial year since you started tracking in ${formatShortMonthYear(portfolio.averages.since)}. Over the last ${portfolio.averages.months} month${portfolio.averages.months === 1 ? '' : 's'}, income ${formatAmount(portfolio.averages.income)} less spending ${formatAmount(portfolio.averages.expenses)} leaves ${formatAmount(portfolio.averages.surplus)}`
                   : 'Record income, expenses and contributions to see this'}
                 {portfolio.uninvested > 0
-                  ? `, so about ${formatMoney(portfolio.uninvested)} a month stays in the bank, which isn't counted`
+                  ? `, so about ${formatAmount(portfolio.uninvested)} a month stays in the bank, which isn't counted`
                   : ''}
                 {portfolio.principal > 0
-                  ? `. Loans also shrink by about ${formatMoney(portfolio.principal)} a month`
+                  ? `. Loans also shrink by about ${formatAmount(portfolio.principal)} a month`
                   : ''}
               </small>
             </span>
@@ -181,7 +181,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
           <li>
             <CalendarClock aria-hidden="true" size={18} />
             <span>
-              {formatMoney(goal.target)} today is <strong>{formatMoney(plan.needed)}</strong> by{' '}
+              {formatAmount(goal.target)} today is <strong>{formatAmount(plan.needed)}</strong> by{' '}
               {goal.targetDate ? monthOf(goal.targetDate) : ''}
               <small>Prices rising {goal.inflation}% a year</small>
             </span>
@@ -189,8 +189,8 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
           <li>
             <Wallet aria-hidden="true" size={18} />
             <span>
-              <strong>{formatMoney(plan.saved)}</strong> set aside, plus {formatMoney(plan.monthly)}{' '}
-              a month
+              <strong>{formatAmount(plan.saved)}</strong> set aside, plus{' '}
+              {formatAmount(plan.monthly)} a month
               <small>
                 From {goal.funding.length} investment{goal.funding.length === 1 ? '' : 's'}
               </small>
@@ -199,10 +199,10 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
           <li>
             <TrendingUp aria-hidden="true" size={18} />
             <span>
-              Heading for <strong>{formatMoney(plan.projected)}</strong>
+              Heading for <strong>{formatAmount(plan.projected)}</strong>
               {plan.projected >= plan.needed
-                ? `, ${formatMoney(plan.projected - plan.needed)} to spare`
-                : `, ${formatMoney(plan.needed - plan.projected)} short`}
+                ? `, ${formatAmount(plan.projected - plan.needed)} to spare`
+                : `, ${formatAmount(plan.needed - plan.projected)} short`}
               <small>
                 At {plan.expectedReturn}% a year
                 {goal.expectedReturn === undefined ? ', automatic for the time left' : ''}
@@ -215,7 +215,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         {nextStep(goal, plan, today)}
         {faster ? (
           <small className={styles.sooner}>
-            Investing the {formatMoney(portfolio?.uninvested ?? 0)} left over each month too would
+            Investing the {formatAmount(portfolio?.uninvested ?? 0)} left over each month too would
             get there by {formatShortMonthYear(faster)}.
           </small>
         ) : null}
@@ -241,7 +241,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         <label className={styles.slider}>
           <span>
             {portfolio ? 'Savings contributions a month' : 'Each month'}{' '}
-            <b>{formatMoney(monthly)}</b>
+            <b>{formatAmount(monthly)}</b>
           </span>
           <input
             max={sliderTop}
@@ -285,7 +285,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
             <>
               <StatusChip status={whatIf.status} />{' '}
               {whatIfDate
-                ? `Heading for ${formatMoney(whatIf.projected)} of ${formatMoney(whatIf.needed)}. ${whatIf.extraMonthly ? `Still ${formatMoney(whatIf.extraMonthly)} a month short.` : ''}`
+                ? `Heading for ${formatAmount(whatIf.projected)} of ${formatAmount(whatIf.needed)}. ${whatIf.extraMonthly ? `Still ${formatAmount(whatIf.extraMonthly)} a month short.` : ''}`
                 : whatIf.reachedBy
                   ? `Gets there by ${formatShortMonthYear(whatIf.reachedBy)}, in ${timeFrom(monthsUntil(today, `${whatIf.reachedBy}-01`))}.`
                   : "Doesn't get there within 50 years."}
@@ -309,7 +309,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
                     <div className={ui.rowDetail}>{Math.round(share * 1000) / 10}% of it</div>
                   </div>
                   <span className={ui.amount}>
-                    {holding ? formatMoney(holdingValue(holding, data, today) * share) : '—'}
+                    {holding ? formatAmount(holdingValue(holding, data, today) * share) : '—'}
                   </span>
                 </li>
               );
@@ -407,7 +407,7 @@ export function GoalsSection() {
                     <StatusChip status={plan.status} />
                   </span>
                   <span className={styles.goalLine}>
-                    {formatMoney(plan.saved)} of {formatMoney(plan.needed)} ·{' '}
+                    {formatAmount(plan.saved)} of {formatAmount(plan.needed)} ·{' '}
                     {goal.targetDate
                       ? monthOf(goal.targetDate)
                       : plan.reachedBy
@@ -421,11 +421,11 @@ export function GoalsSection() {
                         : 'Fully funded'
                       : !goal.targetDate
                         ? plan.reachedBy
-                          ? `In ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))}, with ${formatMoney(plan.monthly)} a month in savings contributions`
+                          ? `In ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))}, with ${formatAmount(plan.monthly)} a month in savings contributions`
                           : 'Invest more each month to get there'
                         : plan.extraMonthly
-                          ? `Add ${formatMoney(plan.extraMonthly)} a month`
-                          : `${formatMoney(plan.monthly)} a month keeps it on track`}
+                          ? `Add ${formatAmount(plan.extraMonthly)} a month`
+                          : `${formatAmount(plan.monthly)} a month keeps it on track`}
                     {goal.member ? ` · ${goal.member}` : ''}
                   </span>
                 </span>
@@ -447,7 +447,7 @@ export function GoalsSection() {
       ) : null}
       {goals.length > 0 && free > 0 ? (
         <p className={ui.caption} style={{ margin: 0 }}>
-          {formatMoney(free)} of your investments isn't set aside for any goal yet.
+          {formatAmount(free)} of your investments isn't set aside for any goal yet.
         </p>
       ) : null}
 

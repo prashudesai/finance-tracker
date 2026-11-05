@@ -16,7 +16,7 @@ import { addMonths } from '../../domain/calendar';
 import { GOAL_KINDS, goalSchema, type Goal, type GoalKind } from '../../schema/records';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
-import { formatCompactMoney, formatMoney, formatShortMonthYear, localDate } from '../../ui/format';
+import { formatCompactMoney, formatAmount, formatShortMonthYear, localDate } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 import { GOAL_ICONS, STATUS_LABELS } from './goalText';
 import styles from './Goals.module.css';
@@ -241,10 +241,10 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
           </div>
           <span className={ui.caption}>
             {spending
-              ? `Your recorded spending averages ${formatMoney(spending.average)} a month over the last ${spending.months} month${spending.months === 1 ? '' : 's'}.`
+              ? `Your recorded spending averages ${formatAmount(spending.average)} a month over the last ${spending.months} month${spending.months === 1 ? '' : 's'}.`
               : 'Enter what your household spends in a month.'}
             {kind === 'retirement'
-              ? ' Assumes savings grow 7% a year after you retire, while prices rise 6%.'
+              ? ' Assumes savings grow 10% a year after you retire, a mix of equity and safe debt, while prices rise 6%.'
               : ''}
           </span>
         </div>
@@ -372,7 +372,7 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
             ? plan.reachedBy
               ? `At your current pace you'll reach it by ${formatShortMonthYear(plan.reachedBy)}.`
               : "At your current pace it won't get there."
-            : `Needs ${formatMoney(plan.needed)} by ${formatShortMonthYear(targetDate.slice(0, 7))}${portfolio ? '' : ' after inflation'}. ${STATUS_LABELS[plan.status]}${plan.extraMonthly ? `: add ${formatMoney(plan.extraMonthly)} a month to reach it.` : '.'}`}
+            : `Needs ${formatAmount(plan.needed)} by ${formatShortMonthYear(targetDate.slice(0, 7))}${portfolio ? '' : ' after inflation'}. ${STATUS_LABELS[plan.status]}${plan.extraMonthly ? `: add ${formatAmount(plan.extraMonthly)} a month to reach it.` : '.'}`}
         </p>
       ) : null}
       <div className={`${ui.actions} ${ui.formWide}`}>

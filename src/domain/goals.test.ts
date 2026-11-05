@@ -209,9 +209,10 @@ describe('suggested targets', () => {
   test('retirement covers 25 years of spending in today’s rupees', () => {
     // Growth equal to inflation leaves no real return: 25 years × 12 months × ₹50,000.
     expect(retirementTarget(50_000, { growth: 6, inflation: 6 })).toBe(1_50_00_000);
+    // At 10% growth and 6% inflation, about 17 years of spending.
     const withReturn = retirementTarget(50_000);
-    expect(withReturn).toBeLessThan(1_50_00_000);
-    expect(withReturn).toBeGreaterThan(1_30_00_000);
+    expect(withReturn).toBeLessThan(1_10_00_000);
+    expect(withReturn).toBeGreaterThan(95_00_000);
   });
 });
 

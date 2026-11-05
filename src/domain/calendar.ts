@@ -60,6 +60,12 @@ export function addMonths(date: string, months: number, anchorDay?: number) {
   return `${targetYear}-${pad(targetMonth)}-${pad(clamped)}`;
 }
 
+/** Whole years from a birth date to a date: someone's age on that day. */
+export function ageOn(birthDate: string, date: string) {
+  const years = Number(date.slice(0, 4)) - Number(birthDate.slice(0, 4));
+  return date.slice(5) < birthDate.slice(5) ? years - 1 : years;
+}
+
 export const lastDayOfMonth = (month: string) => dayInMonth(month, 0);
 
 /** The starting year of the April–March financial year containing a date or month. */

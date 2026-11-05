@@ -87,18 +87,18 @@ describe('Goals', () => {
     fireEvent.click(form.getByRole('button', { name: 'Add goal', hidden: true }));
     const card = await section.findByRole('button', { name: /^Car: \d+% saved/ });
     // A quarter of ₹4,00,000.
-    expect(card.textContent).toContain('₹1,00,000 of');
+    expect(card.textContent).toContain('₹1L of');
   });
 
   test('the detail says what to do, and what-if changes nothing saved', async () => {
     show('/analytics/goals', [college]);
     fireEvent.click(await screen.findByRole('button', { name: /^College:/ }));
     const detail = within(await screen.findByRole('dialog', { name: 'College', hidden: true }));
-    expect(detail.getByText(/Add ₹[\d,]+ more a month to reach it on time/)).toBeDefined();
+    expect(detail.getByText(/Add ₹[\d.,]+L? more a month to reach it on time/)).toBeDefined();
     expect(detail.getByText('Behind')).toBeDefined();
     const monthly = detail.getByRole('slider', { name: /Each month/, hidden: true });
     fireEvent.change(monthly, { target: { value: '50000' } });
-    expect(detail.getByText(/Heading for ₹[\d,]+ of ₹[\d,]+\./)).toBeDefined();
+    expect(detail.getByText(/Heading for ₹[\d.,]+(L| Cr)? of ₹[\d.,]+(L| Cr)?\./)).toBeDefined();
     expect(saved().goals).toEqual([college]);
   });
 
@@ -132,6 +132,69 @@ describe('Goals', () => {
     // No income or spending recorded, so growth alone gets there.
     expect(detail.getByText(/At your current pace you'll get there by/)).toBeDefined();
     expect(detail.queryByRole('slider', { name: /Needed by/, hidden: true })).toBeNull();
+  });
+
+  test('a retirement date left at the 60th birthday moves with the birth date', async () => {
+    show('/analytics/goals');
+    const planner = within(await screen.findByRole('region', { name: 'Retirement planner' }));
+    fireEvent.click(planner.getByText('Your assumptions'));
+    fireEvent.change(planner.getByLabelText(/^Date of birth/), {
+      target: { value: addMonths(today, -480) },
+    });
+    expect(planner.getByText("You'll be 60")).toBeDefined();
+    fireEvent.change(planner.getByLabelText(/^Date of birth/), {
+      target: { value: addMonths(today, -600) },
+    });
+    expect(planner.getByText("You're 50")).toBeDefined();
+    expect(planner.getByText("You'll be 60")).toBeDefined();
+  });
+
+  test('the retirement planner follows the fund to retirement and says how long it lasts', async () => {
+    show('/analytics/goals');
+    const planner = within(await screen.findByRole('region', { name: 'Retirement planner' }));
+    fireEvent.click(planner.getByText('Your assumptions'));
+    fireEvent.change(planner.getByLabelText('Monthly spending today (₹)'), {
+      target: { value: '50000' },
+    });
+    expect(planner.getByRole('alert').textContent).toMatch(/Enter your date of birth/);
+    // Forty years ago, so retirement at 60 is twenty years away.
+    fireEvent.change(planner.getByLabelText(/^Date of birth/), {
+      target: { value: addMonths(today, -480) },
+    });
+    expect(planner.getByText("You're 40")).toBeDefined();
+    expect(planner.getByText("You'll be 60")).toBeDefined();
+    // ₹4 lakh today, with no contributions recorded, can't pay ₹50,000 a month for long.
+    expect(planner.getByText(/Your money runs out at \d+/)).toBeDefined();
+    expect(planner.getByText(/more a month until you retire/)).toBeDefined();
+    expect(planner.getByText('To make it last until 85')).toBeDefined();
+    const need = within(planner.getByRole('region', { name: "What you'll need" }));
+    expect(need.getByText('Needed at 60')).toBeDefined();
+    expect(need.getByText(/short$/)).toBeDefined();
+    expect(need.getByText(/Invest about ₹[\d.,]+(L| Cr)? a month from now/)).toBeDefined();
+    fireEvent.change(planner.getByLabelText('Monthly spending today (₹)'), {
+      target: { value: '2000' },
+    });
+    expect(planner.getByText(/Your money lasts past 85, with ₹[\d.,]+(L| Cr)? left/)).toBeDefined();
+    fireEvent.change(planner.getByLabelText(/^Retire on/), {
+      target: { value: addMonths(today, 216) },
+    });
+    expect(planner.getByText("You'll be 58")).toBeDefined();
+    // A chosen date stays put when the birth date changes.
+    fireEvent.change(planner.getByLabelText(/^Date of birth/), {
+      target: { value: addMonths(today, -492) },
+    });
+    expect(planner.getByText("You'll be 59")).toBeDefined();
+    fireEvent.change(planner.getByLabelText(/^Date of birth/), {
+      target: { value: addMonths(today, -480) },
+    });
+    fireEvent.click(planner.getByRole('button', { name: 'Save these assumptions' }));
+    await waitFor(() =>
+      expect(saved().settings[0]?.retirement).toMatchObject({
+        birthDate: addMonths(today, -480),
+        retireDate: addMonths(today, 216),
+        monthlyExpense: 2000,
+      }),
+    );
   });
 
   test('the dashboard shows goals at a glance, or offers to set the first', async () => {

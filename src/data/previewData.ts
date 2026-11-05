@@ -311,6 +311,17 @@ export function previewData(): Partial<TrackerData> {
         investmentTypes: ['Index ETFs', 'Cash Reserve'],
         expenseCategories: ['Groceries', 'Utilities', 'Dining out', 'Transport'],
         growthTypes: { 'Index ETFs': 'market', 'Cash Reserve': 'no-return' },
+        retirement: {
+          birthDate: '1991-06-15',
+          retireDate: '2051-06-15',
+          untilAge: 85,
+          inflation: 6,
+          growthBefore: 10,
+          growthAfter: 10,
+          stepUp: 5,
+          contributions: true,
+          fund: 'all',
+        },
       },
     ],
     recurringRules: [

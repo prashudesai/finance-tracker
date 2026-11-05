@@ -166,9 +166,12 @@ export function LineChart({
   plain = false,
   picked,
   onPick,
+  fromZero = false,
 }: {
   title: string;
   series: LineSeries[];
+  /** Starts the scale at zero, so a fall to nothing looks like one. */
+  fromZero?: boolean;
   height?: number | undefined;
   /** Lines only, for many points. */
   plain?: boolean;
@@ -181,7 +184,7 @@ export function LineChart({
   const values = series.flatMap((line) => line.points.map((point) => point.value));
   const labels = series[0]?.points.map((point) => point.label) ?? [];
   if (values.length === 0) return <p className={ui.empty}>Nothing to chart yet.</p>;
-  const low = Math.min(...values);
+  const low = fromZero ? Math.min(0, ...values) : Math.min(...values);
   const high = Math.max(...values);
   const span = high - low || 1;
   const width = narrow ? 400 : 900;

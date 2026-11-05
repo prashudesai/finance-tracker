@@ -41,6 +41,16 @@ export function formatLakhs(value: number, digits = 2) {
     : `${sign}₹${(size / 100_000).toFixed(digits)}L`;
 }
 
+/**
+ * Rupees as people say them: ₹38,000 under a lakh, then ₹15.12L and ₹4.81 Cr, without
+ * trailing zeros. For headline figures, where a long run of digits is hard to read.
+ */
+export function formatAmount(value: number) {
+  if (hidden) return HIDDEN_AMOUNT;
+  if (Math.abs(value) < 100_000) return formatMoney(Math.round(value));
+  return formatLakhs(value, 2).replace(/\.?0+(?=L| Cr)/, '');
+}
+
 export function localDate(now = new Date()) {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
