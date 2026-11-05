@@ -4,11 +4,13 @@ import {
   defaultReturn,
   emergencyTarget,
   GOAL_DEFAULTS,
+  PORTFOLIO_RETURN,
   goalPlan,
   monthsUntil,
   retirementFunding,
   retirementTarget,
 } from '../../domain/goals';
+import { netWorth } from '../../domain/analytics';
 import { holdingValue } from '../../domain/holdings';
 import { addMonths } from '../../domain/calendar';
 import { GOAL_KINDS, goalSchema, type Goal, type GoalKind } from '../../schema/records';
@@ -35,7 +37,9 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
   const [target, setTarget] = useState(goal ? String(goal.target) : '');
   const [targetEdited, setTargetEdited] = useState(Boolean(goal));
   const yearsAhead = (years: number) => addMonths(today, years * 12);
-  const [targetDate, setTargetDate] = useState(goal?.targetDate ?? yearsAhead(10));
+  const [targetDate, setTargetDate] = useState(goal ? (goal.targetDate ?? '') : yearsAhead(10));
+  const [measure, setMeasure] = useState<'netWorth' | 'investments'>(goal?.measure ?? 'netWorth');
+  const worth = netWorth(data, today);
   const [member, setMember] = useState(goal?.member ?? '');
   const [inflation, setInflation] = useState(String(goal?.inflation ?? 10));
   const [expectedReturn, setExpectedReturn] = useState(
@@ -57,7 +61,8 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
     if (!nameEdited) setName(next === 'custom' ? '' : defaults.label);
     if (!goal) {
       setInflation(String(defaults.inflation));
-      setTargetDate(yearsAhead(defaults.years));
+      // A portfolio target asks when, so it starts without a date.
+      setTargetDate(next === 'portfolio' ? '' : yearsAhead(defaults.years));
       setTargetEdited(false);
       if (next === 'retirement' && Object.keys(shares).length === 0) {
         setShares(
@@ -91,17 +96,19 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
   const funding = Object.entries(shares)
     .filter(([, text]) => text.trim() !== '' && Number(text) > 0)
     .map(([holdingId, text]) => ({ holdingId, share: Number(text) / 100 }));
-  const months = monthsUntil(today, targetDate);
+  const portfolio = kind === 'portfolio';
+  const months = monthsUntil(today, targetDate || today);
   const draft = {
     id: goal?.id ?? 'draft',
     kind,
     name,
     target: Number(shownTarget),
-    targetDate,
+    ...(targetDate ? { targetDate } : {}),
+    ...(portfolio ? { measure } : {}),
     member,
     inflation: Number(inflation),
     ...(expectedReturn.trim() === '' ? {} : { expectedReturn: Number(expectedReturn) }),
-    funding,
+    funding: portfolio ? [] : funding,
     ...(goal?.notes ? { notes: goal.notes } : {}),
   };
   const parsed = goalSchema.safeParse(draft);
@@ -109,16 +116,28 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
     ({ holding, free }) =>
       (funding.find((row) => row.holdingId === holding.id)?.share ?? 0) > free + 1e-9,
   );
-  const error =
+  const targetError =
     shownTarget.trim() === '' || !(Number(shownTarget) > 0)
-      ? 'Enter how much it costs in today’s rupees.'
-      : targetDate <= today
-        ? 'Pick a date in the future.'
-        : tooMuch
-          ? `Only ${percentText(tooMuch.free)}% of ${tooMuch.holding.name} is free. The rest is set aside for other goals.`
-          : parsed.success
-            ? null
-            : (parsed.error.issues[0]?.message ?? 'Check the details.');
+      ? portfolio
+        ? 'Enter the amount you’re aiming for.'
+        : 'Enter how much it costs in today’s rupees.'
+      : null;
+  const dateError = targetDate
+    ? targetDate <= today
+      ? 'Pick a date in the future.'
+      : null
+    : portfolio
+      ? null
+      : 'Pick the date you need it by.';
+  const fundingError =
+    !portfolio && tooMuch
+      ? `Only ${percentText(tooMuch.free)}% of ${tooMuch.holding.name} is free. The rest is set aside for other goals.`
+      : null;
+  const error =
+    targetError ??
+    dateError ??
+    fundingError ??
+    (parsed.success ? null : (parsed.error.issues[0]?.message ?? 'Check the details.'));
   const plan = parsed.success && !error ? goalPlan(parsed.data, data, today) : null;
 
   return (
@@ -231,7 +250,32 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
         </div>
       ) : null}
 
-      <Field label="Cost in today's rupees (₹)">
+      {portfolio ? (
+        <div className={ui.formWide}>
+          <span className={ui.label}>Measure it by</span>
+          <div aria-label="Measure it by" className={styles.kinds} role="radiogroup">
+            {(
+              [
+                ['netWorth', 'Net worth', worth.netWorth],
+                ['investments', 'Investments', worth.assets],
+              ] as const
+            ).map(([key, label, value]) => (
+              <button
+                aria-checked={measure === key}
+                className={styles.kind}
+                key={key}
+                onClick={() => setMeasure(key)}
+                role="radio"
+                type="button"
+              >
+                {label}
+                <span>{formatCompactMoney(value)} today</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      <Field label={portfolio ? 'Target amount (₹)' : "Cost in today's rupees (₹)"}>
         <input
           inputMode="decimal"
           onChange={(event) => {
@@ -242,7 +286,7 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
           value={shownTarget}
         />
       </Field>
-      <Field label="Needed by">
+      <Field label={portfolio ? 'By a date (optional)' : 'Needed by'}>
         <input
           min={today}
           onChange={(event) => setTargetDate(event.target.value)}
@@ -250,60 +294,72 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
           value={targetDate}
         />
       </Field>
-      <Field label="Prices rise each year (%)">
-        <input
-          inputMode="decimal"
-          onChange={(event) => setInflation(event.target.value)}
-          step="0.5"
-          type="number"
-          value={inflation}
-        />
-      </Field>
+      {portfolio ? null : (
+        <Field label="Prices rise each year (%)">
+          <input
+            inputMode="decimal"
+            onChange={(event) => setInflation(event.target.value)}
+            step="0.5"
+            type="number"
+            value={inflation}
+          />
+        </Field>
+      )}
       <Field label="Expected return each year (%)">
         <input
           inputMode="decimal"
           onChange={(event) => setExpectedReturn(event.target.value)}
-          placeholder={`Automatic: ${defaultReturn(kind, months)}%`}
+          placeholder={`Automatic: ${portfolio ? PORTFOLIO_RETURN : defaultReturn(kind, months)}%`}
           step="0.5"
           type="number"
           value={expectedReturn}
         />
       </Field>
 
-      <div className={ui.formWide}>
-        <span className={ui.label}>Fund it from your investments</span>
-        <span className={ui.caption}>
-          Set aside a share of each. Progress follows their value, so it stays up to date.
-        </span>
-        {holdings.length === 0 ? (
-          <p className={ui.empty}>Add an investment first, then set part of it aside here.</p>
-        ) : (
-          <ul className={styles.funding}>
-            {holdings.map(({ holding, value, free }) => (
-              <li key={holding.id}>
-                <span>
-                  <strong>{holding.name}</strong>
-                  <span className={ui.caption} style={{ display: 'block' }}>
-                    {formatCompactMoney(value)} · {percentText(free)}% free
+      {portfolio ? (
+        <p className={`${ui.caption} ${ui.formWide}`}>
+          {targetDate
+            ? 'Leave the date empty to see when you’ll get there instead.'
+            : 'With no date, it works out when you’ll get there.'}{' '}
+          It follows your whole {measure === 'netWorth' ? 'net worth' : 'portfolio'}, adding what
+          you save each month on average, income less spending, with growth on what you have.
+        </p>
+      ) : (
+        <div className={ui.formWide}>
+          <span className={ui.label}>Fund it from your investments</span>
+          <span className={ui.caption}>
+            Set aside a share of each. Progress follows their value, so it stays up to date.
+          </span>
+          {holdings.length === 0 ? (
+            <p className={ui.empty}>Add an investment first, then set part of it aside here.</p>
+          ) : (
+            <ul className={styles.funding}>
+              {holdings.map(({ holding, value, free }) => (
+                <li key={holding.id}>
+                  <span>
+                    <strong>{holding.name}</strong>
+                    <span className={ui.caption} style={{ display: 'block' }}>
+                      {formatCompactMoney(value)} · {percentText(free)}% free
+                    </span>
                   </span>
-                </span>
-                <input
-                  aria-label={`Share of ${holding.name} (%)`}
-                  inputMode="decimal"
-                  max={100}
-                  min={0}
-                  onChange={(event) =>
-                    setShares((current) => ({ ...current, [holding.id]: event.target.value }))
-                  }
-                  placeholder="0%"
-                  type="number"
-                  value={shares[holding.id] ?? ''}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                  <input
+                    aria-label={`Share of ${holding.name} (%)`}
+                    inputMode="decimal"
+                    max={100}
+                    min={0}
+                    onChange={(event) =>
+                      setShares((current) => ({ ...current, [holding.id]: event.target.value }))
+                    }
+                    placeholder="0%"
+                    type="number"
+                    value={shares[holding.id] ?? ''}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {error && (targetEdited || shownTarget !== '' || funding.length > 0) ? (
         <p className={`${ui.fieldError} ${ui.formWide}`} role="alert">
@@ -312,9 +368,11 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
       ) : null}
       {plan ? (
         <p className={`${ui.caption} ${ui.formWide}`}>
-          Needs {formatMoney(plan.needed)} by {formatShortMonthYear(targetDate.slice(0, 7))} after
-          inflation. {STATUS_LABELS[plan.status]}
-          {plan.extraMonthly ? `: add ${formatMoney(plan.extraMonthly)} a month to reach it.` : '.'}
+          {portfolio && !targetDate
+            ? plan.reachedBy
+              ? `At your current pace you'll reach it by ${formatShortMonthYear(plan.reachedBy)}.`
+              : "At your current pace it won't get there."
+            : `Needs ${formatMoney(plan.needed)} by ${formatShortMonthYear(targetDate.slice(0, 7))}${portfolio ? '' : ' after inflation'}. ${STATUS_LABELS[plan.status]}${plan.extraMonthly ? `: add ${formatMoney(plan.extraMonthly)} a month to reach it.` : '.'}`}
         </p>
       ) : null}
       <div className={`${ui.actions} ${ui.formWide}`}>

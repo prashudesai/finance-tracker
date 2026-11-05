@@ -31,6 +31,15 @@ export interface InsightText {
 }
 
 const percent = (share: number) => `${Math.round(share * 100)}%`;
+
+/** "3 years and 4 months", for how long something takes. */
+export function timeFrom(months: number) {
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  const part = (count: number, unit: string) => `${count} ${unit}${count === 1 ? '' : 's'}`;
+  if (years === 0) return part(Math.max(rest, 1), 'month');
+  return rest === 0 ? part(years, 'year') : `${part(years, 'year')} and ${part(rest, 'month')}`;
+}
 const monthName = (month: string) => formatMonth(month).split(' ')[0] ?? month;
 
 /** Plain words for an insight. Amounts go through formatMoney, so hiding amounts hides them. */
@@ -233,6 +242,43 @@ export function describeInsight(insight: Insight): InsightText {
         ],
         path: '/investments?view=goals',
       };
+    case 'goalEta': {
+      const what = insight.measure === 'netWorth' ? 'Net worth' : 'Your investments';
+      const years = insight.months === null ? '' : timeFrom(insight.months);
+      const why: [string, string][] = [
+        [what + ' today', formatMoney(insight.current)],
+        ['Target', formatMoney(insight.target)],
+        [`Average income, last ${insight.basedOn} months`, formatMoney(insight.income)],
+        ['Average spending', formatMoney(insight.expenses)],
+        ['Saved each month', formatMoney(insight.saving)],
+        ...(insight.principal > 0
+          ? ([['Loan principal repaid each month', formatMoney(insight.principal)]] as [
+              string,
+              string,
+            ][])
+          : []),
+        ['Assumed growth', `${insight.expectedReturn}% a year`],
+      ];
+      return insight.reachedBy
+        ? {
+            icon: TrendingUp,
+            title: `${what} reaches ${formatMoney(insight.target)} by ${formatShortMonthYear(insight.reachedBy)}`,
+            detail: `That's ${years} at your current pace: about ${formatMoney(insight.saving)} saved each month, with growth on what you have.`,
+            why,
+            path: '/investments?view=goals',
+            note: 'Assumes your income, spending and returns stay as they’ve been.',
+          }
+        : {
+            icon: TrendingDown,
+            title: `At this pace, ${what.toLowerCase()} won't reach ${formatMoney(insight.target)}`,
+            detail:
+              insight.saving > 0
+                ? `You save about ${formatMoney(insight.saving)} a month, which isn't enough within 50 years.`
+                : 'Recent months spent as much as came in, so nothing is left to build it.',
+            why,
+            path: '/investments?view=goals',
+          };
+    }
     case 'biggest':
       return {
         icon: Receipt,

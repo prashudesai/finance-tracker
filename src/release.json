@@ -1,7 +1,9 @@
 {
-  "version": "1.13.0",
+  "version": "1.14.0",
   "released": "2026-11-05",
   "notes": [
+    "Portfolio target: aim for a net worth or investment amount, and see when you will reach it",
+    "The prediction uses your average income less spending, loan repayments and growth, with each figure shown",
     "Goals: save for education, a house, retirement and more, funded from a share of your investments",
     "Each goal says whether you are on track, and how much more a month gets you there",
     "What-if sliders for each goal, a goals tile on the dashboard, and goal insights and celebrations",

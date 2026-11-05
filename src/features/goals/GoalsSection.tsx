@@ -11,12 +11,13 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import {
-  defaultReturn,
-  goalFunds,
+  goalDate,
+  goalInputs,
   goalPlan,
   monthsUntil,
   overAssigned,
   planGoal,
+  portfolioInputs,
   unassignedValue,
   type GoalPlan,
 } from '../../domain/goals';
@@ -32,6 +33,7 @@ import { GoalForm } from './GoalForm';
 import { GoalRing } from './GoalRing';
 import { STATUS_LABELS, STATUS_TONES } from './goalText';
 import styles from './Goals.module.css';
+import { timeFrom } from '../insights/insightText';
 
 const monthOf = (date: string) => formatShortMonthYear(date.slice(0, 7));
 const percent = (share: number) => `${Math.round(Math.min(share, 9.99) * 100)}%`;
@@ -45,19 +47,28 @@ function StatusChip({ status }: { status: GoalPlan['status'] }) {
 }
 
 /** One line that says what to do, or that nothing needs doing. */
-function nextStep(plan: GoalPlan, date: string) {
-  if (plan.status === 'reached') return 'Fully funded. Keep it where it is until you need it.';
+function nextStep(goal: Goal, plan: GoalPlan, today: string) {
+  if (plan.status === 'reached') {
+    return goal.kind === 'portfolio'
+      ? 'Target reached. Well done.'
+      : 'Fully funded. Keep it where it is until you need it.';
+  }
+  if (!goal.targetDate) {
+    return plan.reachedBy
+      ? `At your current pace you'll get there by ${formatShortMonthYear(plan.reachedBy)}, in ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))}.`
+      : "At your current pace it won't get there. Save more each month, or lower the target.";
+  }
   if (plan.extraMonthly === null)
     return 'The date has passed. Move it, or mark it done by deleting it.';
   if (plan.extraMonthly <= 0) {
-    return plan.reachedBy && plan.reachedBy < date.slice(0, 7)
+    return plan.reachedBy && plan.reachedBy < goal.targetDate.slice(0, 7)
       ? `On track, and could be ready by ${formatShortMonthYear(plan.reachedBy)}.`
       : 'On track at your current pace.';
   }
   const later = plan.reachedBy
     ? ` As it stands, it gets there by ${formatShortMonthYear(plan.reachedBy)}.`
     : '';
-  return `Add ${formatMoney(plan.extraMonthly)} a month to reach it on time.${later}`;
+  return `${goal.kind === 'portfolio' ? 'Save' : 'Add'} ${formatMoney(plan.extraMonthly)} more a month to reach it on time.${later}`;
 }
 
 function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
@@ -65,24 +76,24 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
   const commit = useTracker((state) => state.commit);
   const today = localDate();
   const plan = goalPlan(goal, data, today);
-  const funds = goalFunds(goal, data, today);
-  const months = monthsUntil(today, goal.targetDate);
-  const baseReturn = goal.expectedReturn ?? defaultReturn(goal.kind, months);
+  const inputs = goalInputs(goal, data, today);
+  const portfolio = goal.kind === 'portfolio' ? portfolioInputs(goal, data, today) : null;
+  const months = inputs.months ?? 0;
+  const baseReturn = inputs.expectedReturn;
+  const baseMonthly = Math.round(inputs.monthly);
 
   // What-if: change the monthly amount, the date or the return, without saving anything.
-  const [monthly, setMonthly] = useState(Math.round(funds.monthly));
+  const [monthly, setMonthly] = useState(baseMonthly);
   const [shift, setShift] = useState(0);
   const [rate, setRate] = useState(baseReturn);
-  const changed = monthly !== Math.round(funds.monthly) || shift !== 0 || rate !== baseReturn;
-  const whatIfDate = addMonths(goal.targetDate, shift * 12);
+  const changed = monthly !== baseMonthly || shift !== 0 || rate !== baseReturn;
+  const whatIfDate = goal.targetDate ? addMonths(goal.targetDate, shift * 12) : null;
   const whatIf = planGoal(
     {
-      saved: funds.saved,
+      ...inputs,
       monthly,
       expectedReturn: rate,
-      target: goal.target,
-      inflation: goal.inflation,
-      months: monthsUntil(today, whatIfDate),
+      months: whatIfDate ? monthsUntil(today, whatIfDate) : null,
     },
     today,
   );
@@ -103,46 +114,91 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         <GoalRing kind={goal.kind} progress={plan.progress} tone={tone} />
         <div>
           <div className={styles.percent}>{percent(plan.progress)}</div>
-          <div className={ui.caption}>of {formatMoney(plan.needed)} set aside</div>
+          <div className={ui.caption}>
+            of {formatMoney(plan.needed)} {portfolio ? 'reached' : 'set aside'}
+          </div>
           <StatusChip status={plan.status} />
         </div>
       </div>
 
-      <ul className={styles.story}>
-        <li>
-          <CalendarClock aria-hidden="true" size={18} />
-          <span>
-            {formatMoney(goal.target)} today is <strong>{formatMoney(plan.needed)}</strong> by{' '}
-            {monthOf(goal.targetDate)}
-            <small>Prices rising {goal.inflation}% a year</small>
-          </span>
-        </li>
-        <li>
-          <Wallet aria-hidden="true" size={18} />
-          <span>
-            <strong>{formatMoney(plan.saved)}</strong> set aside, plus {formatMoney(plan.monthly)} a
-            month
-            <small>
-              From {goal.funding.length} investment{goal.funding.length === 1 ? '' : 's'}
-            </small>
-          </span>
-        </li>
-        <li>
-          <TrendingUp aria-hidden="true" size={18} />
-          <span>
-            Heading for <strong>{formatMoney(plan.projected)}</strong>
-            {plan.projected >= plan.needed
-              ? `, ${formatMoney(plan.projected - plan.needed)} to spare`
-              : `, ${formatMoney(plan.needed - plan.projected)} short`}
-            <small>
-              At {plan.expectedReturn}% a year
-              {goal.expectedReturn === undefined ? ', automatic for the time left' : ''}
-            </small>
-          </span>
-        </li>
-      </ul>
+      {portfolio ? (
+        <ul className={styles.story}>
+          <li>
+            <Wallet aria-hidden="true" size={18} />
+            <span>
+              {goal.measure === 'investments' ? 'Investments' : 'Net worth'} today{' '}
+              <strong>{formatMoney(plan.saved)}</strong>, target {formatMoney(goal.target)}
+              <small>
+                {goal.measure === 'investments'
+                  ? 'Everything you have invested'
+                  : `Everything you own, ${formatMoney(portfolio.assets)}, less loans of ${formatMoney(portfolio.debts)}`}
+              </small>
+            </span>
+          </li>
+          <li>
+            <PiggyBank aria-hidden="true" size={18} />
+            <span>
+              You save about <strong>{formatMoney(portfolio.averages?.surplus ?? 0)}</strong> a
+              month
+              <small>
+                {portfolio.averages
+                  ? `Income ${formatMoney(portfolio.averages.income)} less spending ${formatMoney(portfolio.averages.expenses)}, averaged over the last ${portfolio.averages.months} month${portfolio.averages.months === 1 ? '' : 's'}`
+                  : 'Record income and expenses to see this'}
+                {portfolio.principal > 0
+                  ? `. Loans also shrink by about ${formatMoney(portfolio.principal)} a month`
+                  : ''}
+              </small>
+            </span>
+          </li>
+          <li>
+            <TrendingUp aria-hidden="true" size={18} />
+            <span>
+              Growing at <strong>{plan.expectedReturn}%</strong> a year
+              <small>
+                {goal.expectedReturn === undefined
+                  ? 'A mix of market and fixed returns. Change it in Edit.'
+                  : 'The return you chose'}
+              </small>
+            </span>
+          </li>
+        </ul>
+      ) : (
+        <ul className={styles.story}>
+          <li>
+            <CalendarClock aria-hidden="true" size={18} />
+            <span>
+              {formatMoney(goal.target)} today is <strong>{formatMoney(plan.needed)}</strong> by{' '}
+              {goal.targetDate ? monthOf(goal.targetDate) : ''}
+              <small>Prices rising {goal.inflation}% a year</small>
+            </span>
+          </li>
+          <li>
+            <Wallet aria-hidden="true" size={18} />
+            <span>
+              <strong>{formatMoney(plan.saved)}</strong> set aside, plus {formatMoney(plan.monthly)}{' '}
+              a month
+              <small>
+                From {goal.funding.length} investment{goal.funding.length === 1 ? '' : 's'}
+              </small>
+            </span>
+          </li>
+          <li>
+            <TrendingUp aria-hidden="true" size={18} />
+            <span>
+              Heading for <strong>{formatMoney(plan.projected)}</strong>
+              {plan.projected >= plan.needed
+                ? `, ${formatMoney(plan.projected - plan.needed)} to spare`
+                : `, ${formatMoney(plan.needed - plan.projected)} short`}
+              <small>
+                At {plan.expectedReturn}% a year
+                {goal.expectedReturn === undefined ? ', automatic for the time left' : ''}
+              </small>
+            </span>
+          </li>
+        </ul>
+      )}
       <p className={styles.fix} data-tone={tone}>
-        {nextStep(plan, goal.targetDate)}
+        {nextStep(goal, plan, today)}
       </p>
 
       <section aria-label="What if" className={styles.whatIf}>
@@ -152,7 +208,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
             <button
               className={styles.reset}
               onClick={() => {
-                setMonthly(Math.round(funds.monthly));
+                setMonthly(baseMonthly);
                 setShift(0);
                 setRate(baseReturn);
               }}
@@ -164,7 +220,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         </div>
         <label className={styles.slider}>
           <span>
-            Each month <b>{formatMoney(monthly)}</b>
+            {portfolio ? 'Saved each month' : 'Each month'} <b>{formatMoney(monthly)}</b>
           </span>
           <input
             max={sliderTop}
@@ -175,19 +231,21 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
             value={Math.min(monthly, sliderTop)}
           />
         </label>
-        <label className={styles.slider}>
-          <span>
-            Needed by <b>{monthOf(whatIfDate)}</b>
-          </span>
-          <input
-            max={10}
-            min={-Math.min(5, Math.floor(months / 12))}
-            onChange={(event) => setShift(Number(event.target.value))}
-            step={1}
-            type="range"
-            value={shift}
-          />
-        </label>
+        {whatIfDate ? (
+          <label className={styles.slider}>
+            <span>
+              Needed by <b>{monthOf(whatIfDate)}</b>
+            </span>
+            <input
+              max={10}
+              min={-Math.min(5, Math.floor(months / 12))}
+              onChange={(event) => setShift(Number(event.target.value))}
+              step={1}
+              type="range"
+              value={shift}
+            />
+          </label>
+        ) : null}
         <label className={styles.slider}>
           <span>
             Return each year <b>{rate}%</b>
@@ -204,11 +262,12 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         <p aria-live="polite" className={ui.caption} style={{ margin: 0 }}>
           {changed ? (
             <>
-              <StatusChip status={whatIf.status} /> Heading for {formatMoney(whatIf.projected)} of{' '}
-              {formatMoney(whatIf.needed)}.{' '}
-              {whatIf.extraMonthly
-                ? `Still ${formatMoney(whatIf.extraMonthly)} a month short.`
-                : ''}
+              <StatusChip status={whatIf.status} />{' '}
+              {whatIfDate
+                ? `Heading for ${formatMoney(whatIf.projected)} of ${formatMoney(whatIf.needed)}. ${whatIf.extraMonthly ? `Still ${formatMoney(whatIf.extraMonthly)} a month short.` : ''}`
+                : whatIf.reachedBy
+                  ? `Gets there by ${formatShortMonthYear(whatIf.reachedBy)}, in ${timeFrom(monthsUntil(today, `${whatIf.reachedBy}-01`))}.`
+                  : "Doesn't get there within 50 years."}
             </>
           ) : (
             'Move a slider to see how the plan changes. Nothing is saved.'
@@ -264,7 +323,9 @@ export function GoalsSection() {
   const [editing, setEditing] = useState<Goal | null>(null);
   const goals = data.goals
     .map((goal) => ({ goal, plan: goalPlan(goal, household, today) }))
-    .sort((a, b) => a.goal.targetDate.localeCompare(b.goal.targetDate));
+    .sort((a, b) =>
+      (goalDate(a.goal, a.plan) ?? '9999').localeCompare(goalDate(b.goal, b.plan) ?? '9999'),
+    );
   const open = household.goals.find((goal) => goal.id === openId);
   const onTrack = goals.filter(
     ({ plan }) => plan.status === 'onTrack' || plan.status === 'reached',
@@ -326,14 +387,24 @@ export function GoalsSection() {
                   </span>
                   <span className={styles.goalLine}>
                     {formatMoney(plan.saved)} of {formatMoney(plan.needed)} ·{' '}
-                    {monthOf(goal.targetDate)}
+                    {goal.targetDate
+                      ? monthOf(goal.targetDate)
+                      : plan.reachedBy
+                        ? `by ${formatShortMonthYear(plan.reachedBy)}`
+                        : 'not within 50 years'}
                   </span>
                   <span className={styles.goalLine}>
-                    {plan.extraMonthly
-                      ? `Add ${formatMoney(plan.extraMonthly)} a month`
-                      : plan.status === 'reached'
-                        ? 'Fully funded'
-                        : `${formatMoney(plan.monthly)} a month keeps it on track`}
+                    {plan.status === 'reached'
+                      ? goal.kind === 'portfolio'
+                        ? 'Target reached'
+                        : 'Fully funded'
+                      : !goal.targetDate
+                        ? plan.reachedBy
+                          ? `In ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))}, saving ${formatMoney(plan.monthly)} a month`
+                          : 'Save more each month to get there'
+                        : plan.extraMonthly
+                          ? `Add ${formatMoney(plan.extraMonthly)} a month`
+                          : `${formatMoney(plan.monthly)} a month keeps it on track`}
                     {goal.member ? ` · ${goal.member}` : ''}
                   </span>
                 </span>

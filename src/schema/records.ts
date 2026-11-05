@@ -202,6 +202,7 @@ export const GOAL_KINDS = [
   'car',
   'emergency',
   'vacation',
+  'portfolio',
   'custom',
 ] as const;
 
@@ -215,22 +216,30 @@ export const goalFundingSchema = z.object({
  * Something the family is saving for. Only the plan is stored: progress, the future cost
  * and the monthly amount needed are always worked out from the funding holdings.
  */
-export const goalSchema = z.object({
-  id,
-  kind: z.enum(GOAL_KINDS),
-  name,
-  /** In today's rupees. Inflation turns it into the amount needed on the date. */
-  target: positiveMoney,
-  targetDate: date,
-  /** Blank means it's for the whole household. */
-  member: z.string().max(100).default(''),
-  /** Yearly, as a percentage. */
-  inflation: number.min(0, 'Enter zero or more.').max(30, 'Use 30% or less.'),
-  /** Yearly, as a percentage. Left out, it follows how far away the goal is. */
-  expectedReturn: number.min(0, 'Enter zero or more.').max(30, 'Use 30% or less.').optional(),
-  funding: z.array(goalFundingSchema).max(50).default([]),
-  notes: notes.optional(),
-});
+export const goalSchema = z
+  .object({
+    id,
+    kind: z.enum(GOAL_KINDS),
+    name,
+    /** In today's rupees. Inflation turns it into the amount needed on the date. */
+    target: positiveMoney,
+    /** A portfolio target may leave it out, to ask when it will be reached. */
+    targetDate: date.optional(),
+    /** What a portfolio target follows. Left out, net worth. */
+    measure: z.enum(['netWorth', 'investments']).optional(),
+    /** Blank means it's for the whole household. */
+    member: z.string().max(100).default(''),
+    /** Yearly, as a percentage. */
+    inflation: number.min(0, 'Enter zero or more.').max(30, 'Use 30% or less.'),
+    /** Yearly, as a percentage. Left out, it follows how far away the goal is. */
+    expectedReturn: number.min(0, 'Enter zero or more.').max(30, 'Use 30% or less.').optional(),
+    funding: z.array(goalFundingSchema).max(50).default([]),
+    notes: notes.optional(),
+  })
+  .refine((goal) => goal.kind === 'portfolio' || goal.targetDate !== undefined, {
+    message: 'Pick the date you need it by.',
+    path: ['targetDate'],
+  });
 export type Goal = z.infer<typeof goalSchema>;
 export type GoalKind = Goal['kind'];
 

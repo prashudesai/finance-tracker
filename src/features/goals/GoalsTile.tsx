@@ -1,7 +1,7 @@
 import { ChevronRight, Target } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { goalPlan } from '../../domain/goals';
+import { goalDate, goalPlan } from '../../domain/goals';
 import { useTracker, useView } from '../../store/tracker';
 import { localDate } from '../../ui/format';
 import { Nudge } from '../../ui/Nudge';
@@ -62,7 +62,9 @@ export function GoalsTile() {
 
   const goals = data.goals
     .map((goal) => ({ goal, plan: goalPlan(goal, household, today) }))
-    .sort((a, b) => a.goal.targetDate.localeCompare(b.goal.targetDate));
+    .sort((a, b) =>
+      (goalDate(a.goal, a.plan) ?? '9999').localeCompare(goalDate(b.goal, b.plan) ?? '9999'),
+    );
   const onTrack = goals.filter(
     ({ plan }) => plan.status === 'onTrack' || plan.status === 'reached',
   );

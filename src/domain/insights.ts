@@ -3,7 +3,7 @@ import type { Expense } from '../schema/records';
 import { isEmi, isMarket, monthlyOverview, netWorthHistory, pmsGainChange } from './analytics';
 import { addDays, financialYearStart, previousMonth, roundMoney, toDayNumber } from './calendar';
 import { monthTotals } from './cashflow';
-import { goalPlan } from './goals';
+import { goalPlan, monthsUntil, portfolioInputs } from './goals';
 import { holdingValue } from './holdings';
 import { estimateSchedule } from './loan';
 import { amountAt, upcomingCommitments } from './recurring';
@@ -66,6 +66,23 @@ export type Insight = Base &
         date: string;
       }
     | { kind: 'goalReached'; goalId: string; name: string; saved: number; needed: number }
+    | {
+        kind: 'goalEta';
+        goalId: string;
+        name: string;
+        measure: 'netWorth' | 'investments';
+        current: number;
+        target: number;
+        /** Month it's reached at the current pace, or null if it never is. */
+        reachedBy: string | null;
+        months: number | null;
+        income: number;
+        expenses: number;
+        saving: number;
+        principal: number;
+        expectedReturn: number;
+        basedOn: number;
+      }
     | {
         kind: 'biggest';
         month: string;
@@ -472,7 +489,13 @@ function pmsGain(data: TrackerData, today: string): Insight | null {
 function goalBehind(data: TrackerData, today: string): Insight | null {
   const behind = data.goals
     .map((goal) => ({ goal, plan: goalPlan(goal, data, today) }))
-    .filter(({ plan }) => plan.status === 'behind' && plan.extraMonthly !== null && plan.needed > 0)
+    .filter(
+      ({ goal, plan }) =>
+        goal.targetDate !== undefined &&
+        plan.status === 'behind' &&
+        plan.extraMonthly !== null &&
+        plan.needed > 0,
+    )
     .sort((a, b) => a.plan.projected / a.plan.needed - b.plan.projected / b.plan.needed)[0];
   if (!behind) return null;
   return {
@@ -485,7 +508,35 @@ function goalBehind(data: TrackerData, today: string): Insight | null {
     extra: behind.plan.extraMonthly ?? 0,
     needed: behind.plan.needed,
     projected: behind.plan.projected,
-    date: behind.goal.targetDate,
+    date: behind.goal.targetDate ?? today,
+  };
+}
+
+/** When a portfolio target is reached at today's pace: saving each month, plus growth. */
+function goalEta(data: TrackerData, today: string): Insight | null {
+  const goal = data.goals.find((row) => row.kind === 'portfolio');
+  if (!goal) return null;
+  const plan = goalPlan(goal, data, today);
+  const funds = portfolioInputs(goal, data, today);
+  if (plan.status === 'reached' || !funds.averages) return null;
+  return {
+    id: `goalEta-${goal.id}`,
+    kind: 'goalEta',
+    tone: plan.reachedBy ? 'good' : 'watch',
+    score: 76,
+    goalId: goal.id,
+    name: goal.name,
+    measure: goal.measure ?? 'netWorth',
+    current: plan.saved,
+    target: goal.target,
+    reachedBy: plan.reachedBy,
+    months: plan.reachedBy ? monthsUntil(today, `${plan.reachedBy}-01`) : null,
+    income: funds.averages.income,
+    expenses: funds.averages.expenses,
+    saving: funds.averages.surplus,
+    principal: funds.principal,
+    expectedReturn: plan.expectedReturn,
+    basedOn: funds.averages.months,
   };
 }
 
@@ -525,6 +576,7 @@ export function insights(data: TrackerData, today: string): Insight[] {
     pmsGain(data, today),
     goalBehind(data, today),
     goalReached(data, today),
+    goalEta(data, today),
     ...monthSoFar(data, today),
   ]
     .filter((insight): insight is Insight => insight !== null)

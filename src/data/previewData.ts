@@ -239,6 +239,16 @@ export function previewData(): Partial<TrackerData> {
     projectionAdjustments: [],
     goals: [
       {
+        id: 'goal-50l',
+        kind: 'portfolio',
+        name: 'Net worth ₹50 lakh',
+        target: 50_00_000,
+        measure: 'netWorth',
+        member: '',
+        inflation: 0,
+        funding: [],
+      },
+      {
         id: 'goal-college',
         kind: 'education',
         name: "Riya's college",

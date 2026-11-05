@@ -1,7 +1,9 @@
 import type { TrackerData } from '../data/repository';
 import type { Goal, GoalKind, Holding } from '../schema/records';
 import { addMonths, previousMonth, roundMoney } from './calendar';
+import { netWorth } from './analytics';
 import { holdingValue } from './holdings';
+import { summarizeLoans } from './summary';
 
 /** Sensible starting points for each kind of goal. Every figure can be changed. */
 export const GOAL_DEFAULTS: Record<GoalKind, { label: string; inflation: number; years: number }> =
@@ -13,8 +15,12 @@ export const GOAL_DEFAULTS: Record<GoalKind, { label: string; inflation: number;
     car: { label: 'Car', inflation: 5, years: 3 },
     emergency: { label: 'Emergency fund', inflation: 6, years: 1 },
     vacation: { label: 'Vacation', inflation: 6, years: 1 },
+    portfolio: { label: 'Portfolio target', inflation: 0, years: 5 },
     custom: { label: 'Something else', inflation: 6, years: 5 },
   };
+
+/** A whole portfolio's yearly return when none is chosen: a mix of market and fixed. */
+export const PORTFOLIO_RETURN = 8;
 
 /** Longest look ahead for when a goal is reached: 50 years. */
 const MAX_MONTHS = 600;
@@ -87,41 +93,65 @@ export interface GoalPlan {
 }
 
 export interface GoalInputs {
+  /** What's set aside today. For a net worth target, everything owned. */
   saved: number;
   monthly: number;
   expectedReturn: number;
   target: number;
   inflation: number;
-  months: number;
+  /** Months to the goal's date, or null when it has none and the question is when. */
+  months: number | null;
+  /** Loans owed today, taken off the value, for a net worth target. */
+  debts?: number;
+  /** Loan principal repaid each month, which shrinks the debts. */
+  principal?: number;
 }
 
 /** Where a goal stands, from plain figures, so what-if changes can reuse it. */
 export function planGoal(inputs: GoalInputs, today: string): GoalPlan {
-  const { saved, monthly, expectedReturn, target, inflation, months } = inputs;
-  const needed = futureCost(target, inflation, months);
-  const projected = projectSavings(saved, monthly, expectedReturn, months);
-  const required = monthlyNeeded(saved, needed, expectedReturn, months);
-  let reachedBy: string | null = null;
+  const { saved, monthly, expectedReturn, target, inflation, debts = 0, principal = 0 } = inputs;
+  const valueAt = (month: number) =>
+    projectSavings(saved, monthly, expectedReturn, month) - Math.max(0, debts - principal * month);
+  let found: number | null = null;
   for (let month = 0; month <= MAX_MONTHS; month++) {
-    if (
-      projectSavings(saved, monthly, expectedReturn, month) >= futureCost(target, inflation, month)
-    ) {
-      reachedBy = addMonths(`${today.slice(0, 7)}-01`, month).slice(0, 7);
+    if (valueAt(month) >= futureCost(target, inflation, month)) {
+      found = month;
       break;
     }
   }
-  const progress = needed > 0 ? saved / needed : 1;
+  const reachedBy = found === null ? null : addMonths(`${today.slice(0, 7)}-01`, found).slice(0, 7);
+  // Without a date, the plan is measured at the month it gets there.
+  const months = inputs.months ?? found ?? 0;
+  const needed = futureCost(target, inflation, months);
+  const projected = valueAt(months);
+  const current = saved - debts;
+  const required =
+    inputs.months === null
+      ? found === null
+        ? null
+        : monthly
+      : monthlyNeeded(
+          saved - Math.max(0, debts - principal * months),
+          needed,
+          expectedReturn,
+          months,
+        );
+  const progress = needed > 0 ? current / needed : 1;
   const status =
-    saved >= needed
+    current >= needed
       ? 'reached'
-      : projected >= needed
-        ? 'onTrack'
-        : months > 0 && projected >= needed * CLOSE_SHARE
-          ? 'close'
-          : 'behind';
+      : inputs.months === null
+        ? found === null
+          ? 'behind'
+          : 'onTrack'
+        : projected >= needed
+          ? 'onTrack'
+          : months > 0 && projected >= needed * CLOSE_SHARE
+            ? 'close'
+            : 'behind';
   return {
     months,
-    saved: roundMoney(saved),
+    saved: roundMoney(current),
     monthly: roundMoney(monthly),
     expectedReturn,
     needed: roundMoney(needed),
@@ -130,6 +160,66 @@ export function planGoal(inputs: GoalInputs, today: string): GoalPlan {
     reachedBy,
     progress,
     status,
+  };
+}
+
+/**
+ * Average monthly income, spending and what's left, over recent complete months with
+ * records. A month with neither is skipped, so a gap doesn't drag the average down.
+ */
+export function monthlyAverages(
+  data: Pick<TrackerData, 'income' | 'expenses'>,
+  today: string,
+  span = 6,
+) {
+  let month = today.slice(0, 7);
+  let income = 0;
+  let expenses = 0;
+  let months = 0;
+  for (let step = 0; step < span; step++) {
+    month = previousMonth(month);
+    const key = month;
+    const earned = data.income
+      .filter((row) => row.date.startsWith(key))
+      .reduce((sum, row) => sum + row.amount, 0);
+    const spent = data.expenses
+      .filter((row) => row.date.startsWith(key))
+      .reduce((sum, row) => sum + row.amount, 0);
+    if (earned === 0 && spent === 0) continue;
+    income += earned;
+    expenses += spent;
+    months += 1;
+  }
+  if (months === 0) return null;
+  return {
+    income: roundMoney(income / months),
+    expenses: roundMoney(expenses / months),
+    surplus: roundMoney((income - expenses) / months),
+    months,
+  };
+}
+
+/** Principal repaid each month across loans still owed: each EMI less this month's interest. */
+export function monthlyPrincipal(data: TrackerData, today: string) {
+  return roundMoney(
+    summarizeLoans(data, today).reduce((sum, { ledger }) => {
+      if (!ledger || ledger.remaining <= 0) return sum;
+      return sum + Math.max(0, ledger.emi - (ledger.remaining * ledger.rate) / 1200);
+    }, 0),
+  );
+}
+
+/** A portfolio target follows the whole portfolio, or net worth, not a share of holdings. */
+export function portfolioInputs(goal: Goal, data: TrackerData, today: string) {
+  const worth = netWorth(data, today);
+  const averages = monthlyAverages(data, today);
+  const byNetWorth = (goal.measure ?? 'netWorth') === 'netWorth';
+  return {
+    assets: worth.assets,
+    debts: byNetWorth ? worth.debts : 0,
+    principal: byNetWorth ? monthlyPrincipal(data, today) : 0,
+    averages,
+    monthly: Math.max(0, averages?.surplus ?? 0),
   };
 }
 
@@ -146,19 +236,37 @@ export function goalFunds(goal: Goal, data: TrackerData, today: string) {
   return { saved, monthly };
 }
 
-export function goalPlan(goal: Goal, data: TrackerData, today: string): GoalPlan {
-  const months = monthsUntil(today, goal.targetDate);
-  return planGoal(
-    {
-      ...goalFunds(goal, data, today),
-      expectedReturn: goal.expectedReturn ?? defaultReturn(goal.kind, months),
+/** The figures a goal's plan starts from, from today's records. */
+export function goalInputs(goal: Goal, data: TrackerData, today: string): GoalInputs {
+  if (goal.kind === 'portfolio') {
+    const funds = portfolioInputs(goal, data, today);
+    return {
+      saved: funds.assets,
+      monthly: funds.monthly,
+      expectedReturn: goal.expectedReturn ?? PORTFOLIO_RETURN,
       target: goal.target,
       inflation: goal.inflation,
-      months,
-    },
-    today,
-  );
+      months: goal.targetDate ? monthsUntil(today, goal.targetDate) : null,
+      debts: funds.debts,
+      principal: funds.principal,
+    };
+  }
+  const months = monthsUntil(today, goal.targetDate ?? today);
+  return {
+    ...goalFunds(goal, data, today),
+    expectedReturn: goal.expectedReturn ?? defaultReturn(goal.kind, months),
+    target: goal.target,
+    inflation: goal.inflation,
+    months,
+  };
 }
+
+export const goalPlan = (goal: Goal, data: TrackerData, today: string): GoalPlan =>
+  planGoal(goalInputs(goal, data, today), today);
+
+/** The date a goal is due, or for an open-ended one, when it's expected. */
+export const goalDate = (goal: Goal, plan: GoalPlan) =>
+  goal.targetDate ?? (plan.reachedBy ? `${plan.reachedBy}-01` : null);
 
 /** The highest milestone a goal has passed, or 0. */
 export const milestoneOf = (progress: number) =>

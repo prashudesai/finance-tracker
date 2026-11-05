@@ -94,7 +94,7 @@ describe('Goals', () => {
     show('/investments?view=goals', [college]);
     fireEvent.click(await screen.findByRole('button', { name: /^College:/ }));
     const detail = within(await screen.findByRole('dialog', { name: 'College', hidden: true }));
-    expect(detail.getByText(/Add ₹[\d,]+ a month to reach it on time/)).toBeDefined();
+    expect(detail.getByText(/Add ₹[\d,]+ more a month to reach it on time/)).toBeDefined();
     expect(detail.getByText('Behind')).toBeDefined();
     const monthly = detail.getByRole('slider', { name: /Each month/, hidden: true });
     fireEvent.change(monthly, { target: { value: '50000' } });
@@ -110,6 +110,28 @@ describe('Goals', () => {
     fireEvent.click(detail.getByRole('button', { name: 'Delete', hidden: true }));
     await waitFor(() => expect(saved().goals).toEqual([]));
     expect(saved().holdings).toHaveLength(1);
+  });
+
+  test('a portfolio target says when net worth gets there, from income less spending', async () => {
+    show('/investments?view=goals', [
+      {
+        id: 'worth',
+        kind: 'portfolio',
+        name: 'Net worth ₹50 lakh',
+        target: 50_00_000,
+        member: '',
+        inflation: 0,
+        funding: [],
+      },
+    ]);
+    fireEvent.click(await screen.findByRole('button', { name: /^Net worth ₹50 lakh:/ }));
+    const detail = within(
+      await screen.findByRole('dialog', { name: 'Net worth ₹50 lakh', hidden: true }),
+    );
+    expect(detail.getByText(/Net worth today/)).toBeDefined();
+    // No income or spending recorded, so growth alone gets there.
+    expect(detail.getByText(/At your current pace you'll get there by/)).toBeDefined();
+    expect(detail.queryByRole('slider', { name: /Needed by/, hidden: true })).toBeNull();
   });
 
   test('the dashboard shows goals at a glance, or offers to set the first', async () => {

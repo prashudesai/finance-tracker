@@ -8,6 +8,7 @@ import {
   futureCost,
   goalPlan,
   milestoneOf,
+  monthlyAverages,
   passedMilestones,
   monthlyNeeded,
   monthsUntil,
@@ -232,5 +233,117 @@ describe('goal insights', () => {
     const kinds = insights(records, '2026-11-05').map((row) => row.kind);
     expect(kinds).toContain('goalReached');
     expect(kinds).not.toContain('goalBehind');
+  });
+});
+
+describe('portfolio target', () => {
+  const income = (date: string, amount: number) => ({
+    id: `i${date}`,
+    date,
+    member: 'A',
+    source: 'Salary',
+    amount,
+  });
+  const spend = (date: string, amount: number) => ({
+    id: `e${date}`,
+    date,
+    category: 'Groceries',
+    subcategory: '',
+    amount,
+    isAnnual: false,
+  });
+
+  test('averages recent complete months, skipping empty ones and the running month', () => {
+    const records = {
+      income: [
+        income('2026-10-01', 2_00_000),
+        income('2026-08-01', 1_80_000),
+        income('2026-11-01', 9),
+      ],
+      expenses: [spend('2026-10-05', 1_00_000), spend('2026-08-05', 80_000)],
+    };
+    expect(monthlyAverages(records, '2026-11-05')).toEqual({
+      income: 1_90_000,
+      expenses: 90_000,
+      surplus: 1_00_000,
+      months: 2,
+    });
+    expect(monthlyAverages({ income: [], expenses: [] }, '2026-11-05')).toBeNull();
+  });
+
+  test('without a date, it says when the target is reached', () => {
+    // ₹27 lakh, saving ₹1 lakh a month with no growth, reaches ₹50 lakh in 23 months.
+    const plan = planGoal(
+      {
+        saved: 27_00_000,
+        monthly: 1_00_000,
+        expectedReturn: 0,
+        target: 50_00_000,
+        inflation: 0,
+        months: null,
+      },
+      '2026-11-05',
+    );
+    expect(plan.reachedBy).toBe('2028-10');
+    expect(plan.status).toBe('onTrack');
+    const never = planGoal(
+      {
+        saved: 27_00_000,
+        monthly: 0,
+        expectedReturn: 0,
+        target: 50_00_000,
+        inflation: 0,
+        months: null,
+      },
+      '2026-11-05',
+    );
+    expect(never).toMatchObject({ reachedBy: null, status: 'behind' });
+  });
+
+  test('net worth counts loans, which shrink as they are repaid', () => {
+    const plan = planGoal(
+      {
+        saved: 40_00_000,
+        monthly: 0,
+        expectedReturn: 0,
+        target: 35_00_000,
+        inflation: 0,
+        months: null,
+        debts: 10_00_000,
+        principal: 1_00_000,
+      },
+      '2026-11-05',
+    );
+    expect(plan.saved).toBe(30_00_000);
+    // ₹5 lakh more needed, closed at ₹1 lakh of principal a month.
+    expect(plan.reachedBy).toBe('2027-04');
+  });
+
+  test('follows net worth by default, from the records', () => {
+    const records = data({
+      holdings: [holding('fund', 27_00_000)],
+      income: Array.from({ length: 6 }, (_, index) =>
+        income(`2026-${String(index + 5).padStart(2, '0')}-01`, 1_50_000),
+      ),
+      expenses: Array.from({ length: 6 }, (_, index) =>
+        spend(`2026-${String(index + 5).padStart(2, '0')}-02`, 50_000),
+      ),
+    });
+    const target = goal({
+      kind: 'portfolio',
+      target: 50_00_000,
+      inflation: 0,
+      targetDate: undefined,
+    });
+    const plan = goalPlan(target, records, '2026-11-05');
+    expect(plan.saved).toBe(27_00_000);
+    expect(plan.monthly).toBe(1_00_000);
+    expect(plan.expectedReturn).toBe(8);
+    expect(plan.reachedBy && plan.reachedBy < '2028-10').toBe(true);
+    const found = insights(
+      records.goals.length ? records : { ...records, goals: [target] },
+      '2026-11-05',
+    ).find((row) => row.kind === 'goalEta');
+    expect(found).toMatchObject({ reachedBy: plan.reachedBy, saving: 1_00_000, basedOn: 6 });
   });
 });

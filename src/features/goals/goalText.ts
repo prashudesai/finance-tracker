@@ -7,6 +7,7 @@ import {
   Palmtree,
   Sunset,
   Target,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 import type { GoalPlan } from '../../domain/goals';
@@ -20,6 +21,7 @@ export const GOAL_ICONS: Record<GoalKind, LucideIcon> = {
   car: Car,
   emergency: LifeBuoy,
   vacation: Palmtree,
+  portfolio: TrendingUp,
   custom: Target,
 };
 
