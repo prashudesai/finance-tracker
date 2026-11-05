@@ -164,30 +164,33 @@ export function planGoal(inputs: GoalInputs, today: string): GoalPlan {
 }
 
 /**
- * Average monthly income, spending and what's left, over recent complete months with
- * records. A month with neither is skipped, so a gap doesn't drag the average down.
+ * Average monthly income, spending, what's left and what was invested, over recent complete
+ * months with records. A month with none of them is skipped, so a gap doesn't drag the
+ * average down. Invested is contributions less withdrawals, so money taken out counts against it.
  */
 export function monthlyAverages(
-  data: Pick<TrackerData, 'income' | 'expenses'>,
+  data: Pick<TrackerData, 'income' | 'expenses'> &
+    Partial<Pick<TrackerData, 'contributions' | 'withdrawals'>>,
   today: string,
   span = 6,
 ) {
+  const total = (rows: { date: string; amount: number }[], key: string) =>
+    rows.filter((row) => row.date.startsWith(key)).reduce((sum, row) => sum + row.amount, 0);
+  const contributions = (data.contributions ?? []).filter((row) => !row.skipped);
   let month = today.slice(0, 7);
   let income = 0;
   let expenses = 0;
+  let invested = 0;
   let months = 0;
   for (let step = 0; step < span; step++) {
     month = previousMonth(month);
-    const key = month;
-    const earned = data.income
-      .filter((row) => row.date.startsWith(key))
-      .reduce((sum, row) => sum + row.amount, 0);
-    const spent = data.expenses
-      .filter((row) => row.date.startsWith(key))
-      .reduce((sum, row) => sum + row.amount, 0);
-    if (earned === 0 && spent === 0) continue;
+    const earned = total(data.income, month);
+    const spent = total(data.expenses, month);
+    const added = total(contributions, month) - total(data.withdrawals ?? [], month);
+    if (earned === 0 && spent === 0 && added === 0) continue;
     income += earned;
     expenses += spent;
+    invested += added;
     months += 1;
   }
   if (months === 0) return null;
@@ -195,6 +198,7 @@ export function monthlyAverages(
     income: roundMoney(income / months),
     expenses: roundMoney(expenses / months),
     surplus: roundMoney((income - expenses) / months),
+    invested: roundMoney(invested / months),
     months,
   };
 }
@@ -209,7 +213,11 @@ export function monthlyPrincipal(data: TrackerData, today: string) {
   );
 }
 
-/** A portfolio target follows the whole portfolio, or net worth, not a share of holdings. */
+/**
+ * A portfolio target follows the whole portfolio, or net worth, not a share of holdings.
+ * It grows by what's invested each month on average, plus returns, and for net worth, by
+ * loan principal repaid.
+ */
 export function portfolioInputs(goal: Goal, data: TrackerData, today: string) {
   const worth = netWorth(data, today);
   const averages = monthlyAverages(data, today);
@@ -219,7 +227,10 @@ export function portfolioInputs(goal: Goal, data: TrackerData, today: string) {
     debts: byNetWorth ? worth.debts : 0,
     principal: byNetWorth ? monthlyPrincipal(data, today) : 0,
     averages,
-    monthly: Math.max(0, averages?.surplus ?? 0),
+    // Only what's invested grows the portfolio. Money left in the bank isn't counted in it.
+    monthly: Math.max(0, averages?.invested ?? 0),
+    /** What's left after spending, beyond what's already invested each month. */
+    uninvested: Math.max(0, (averages?.surplus ?? 0) - Math.max(0, averages?.invested ?? 0)),
   };
 }
 

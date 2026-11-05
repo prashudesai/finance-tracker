@@ -56,7 +56,7 @@ function nextStep(goal: Goal, plan: GoalPlan, today: string) {
   if (!goal.targetDate) {
     return plan.reachedBy
       ? `At your current pace you'll get there by ${formatShortMonthYear(plan.reachedBy)}, in ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))}.`
-      : "At your current pace it won't get there. Save more each month, or lower the target.";
+      : "At your current pace it won't get there. Invest more each month, or lower the target.";
   }
   if (plan.extraMonthly === null)
     return 'The date has passed. Move it, or mark it done by deleting it.';
@@ -81,6 +81,15 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
   const months = inputs.months ?? 0;
   const baseReturn = inputs.expectedReturn;
   const baseMonthly = Math.round(inputs.monthly);
+  // The same plan with this month's leftover invested too, to show what that would change.
+  const fasterPlan =
+    portfolio && portfolio.uninvested > 0 && plan.status !== 'reached'
+      ? planGoal({ ...inputs, monthly: inputs.monthly + portfolio.uninvested }, today)
+      : null;
+  const faster =
+    fasterPlan?.reachedBy && (!plan.reachedBy || fasterPlan.reachedBy < plan.reachedBy)
+      ? fasterPlan.reachedBy
+      : null;
 
   // What-if: change the monthly amount, the date or the return, without saving anything.
   const [monthly, setMonthly] = useState(baseMonthly);
@@ -97,10 +106,12 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
     },
     today,
   );
-  const sliderTop = Math.max(
-    50_000,
-    Math.ceil(((plan.monthly + (plan.extraMonthly ?? 0)) * 2) / 5_000) * 5_000,
+  // Room to try investing everything left over, and more.
+  const sliderNeed = Math.max(
+    (plan.monthly + (plan.extraMonthly ?? 0)) * 2,
+    (plan.monthly + (portfolio?.uninvested ?? 0)) * 1.5,
   );
+  const sliderTop = Math.max(50_000, Math.ceil(sliderNeed / 5_000) * 5_000);
 
   const remove = () => {
     if (!window.confirm(`Delete the goal ${goal.name}? Your investments stay as they are.`)) return;
@@ -138,12 +149,14 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
           <li>
             <PiggyBank aria-hidden="true" size={18} />
             <span>
-              You save about <strong>{formatMoney(portfolio.averages?.surplus ?? 0)}</strong> a
-              month
+              You invest about <strong>{formatMoney(portfolio.monthly)}</strong> a month
               <small>
                 {portfolio.averages
-                  ? `Income ${formatMoney(portfolio.averages.income)} less spending ${formatMoney(portfolio.averages.expenses)}, averaged over the last ${portfolio.averages.months} month${portfolio.averages.months === 1 ? '' : 's'}`
-                  : 'Record income and expenses to see this'}
+                  ? `Contributions less withdrawals, averaged over the last ${portfolio.averages.months} month${portfolio.averages.months === 1 ? '' : 's'}. Income ${formatMoney(portfolio.averages.income)} less spending ${formatMoney(portfolio.averages.expenses)} leaves ${formatMoney(portfolio.averages.surplus)}`
+                  : 'Record income, expenses and contributions to see this'}
+                {portfolio.uninvested > 0
+                  ? `, so about ${formatMoney(portfolio.uninvested)} a month stays in the bank, which isn't counted`
+                  : ''}
                 {portfolio.principal > 0
                   ? `. Loans also shrink by about ${formatMoney(portfolio.principal)} a month`
                   : ''}
@@ -199,6 +212,12 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
       )}
       <p className={styles.fix} data-tone={tone}>
         {nextStep(goal, plan, today)}
+        {faster ? (
+          <small className={styles.sooner}>
+            Investing the {formatMoney(portfolio?.uninvested ?? 0)} left over each month too would
+            get there by {formatShortMonthYear(faster)}.
+          </small>
+        ) : null}
       </p>
 
       <section aria-label="What if" className={styles.whatIf}>
@@ -220,7 +239,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         </div>
         <label className={styles.slider}>
           <span>
-            {portfolio ? 'Saved each month' : 'Each month'} <b>{formatMoney(monthly)}</b>
+            {portfolio ? 'Invested each month' : 'Each month'} <b>{formatMoney(monthly)}</b>
           </span>
           <input
             max={sliderTop}
@@ -400,8 +419,8 @@ export function GoalsSection() {
                         : 'Fully funded'
                       : !goal.targetDate
                         ? plan.reachedBy
-                          ? `In ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))}, saving ${formatMoney(plan.monthly)} a month`
-                          : 'Save more each month to get there'
+                          ? `In ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))}, investing ${formatMoney(plan.monthly)} a month`
+                          : 'Invest more each month to get there'
                         : plan.extraMonthly
                           ? `Add ${formatMoney(plan.extraMonthly)} a month`
                           : `${formatMoney(plan.monthly)} a month keeps it on track`}

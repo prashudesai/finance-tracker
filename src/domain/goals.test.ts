@@ -266,6 +266,7 @@ describe('portfolio target', () => {
       income: 1_90_000,
       expenses: 90_000,
       surplus: 1_00_000,
+      invested: 0,
       months: 2,
     });
     expect(monthlyAverages({ income: [], expenses: [] }, '2026-11-05')).toBeNull();
@@ -319,15 +320,47 @@ describe('portfolio target', () => {
     expect(plan.reachedBy).toBe('2027-04');
   });
 
-  test('follows net worth by default, from the records', () => {
+  test('invested is contributions less withdrawals, and a skipped one does not count', () => {
+    const contribution = (id: string, date: string, amount: number, skipped = false) => ({
+      id,
+      holdingId: 'fund',
+      date,
+      amount,
+      automatic: true,
+      ...(skipped ? { skipped } : {}),
+    });
+    const averages = monthlyAverages(
+      {
+        income: [],
+        expenses: [],
+        contributions: [
+          contribution('a', '2026-10-05', 40_000),
+          contribution('b', '2026-09-05', 30_000),
+          contribution('c', '2026-08-05', 99_000, true),
+        ],
+        withdrawals: [{ id: 'w', holdingId: 'fund', date: '2026-09-20', amount: 10_000 }],
+      },
+      '2026-11-05',
+    );
+    expect(averages).toMatchObject({ invested: 30_000, months: 2 });
+  });
+
+  test('grows by what is invested each month, not by what stays in the bank', () => {
+    const months = Array.from(
+      { length: 6 },
+      (_, index) => `2026-${String(index + 5).padStart(2, '0')}`,
+    );
     const records = data({
       holdings: [holding('fund', 27_00_000)],
-      income: Array.from({ length: 6 }, (_, index) =>
-        income(`2026-${String(index + 5).padStart(2, '0')}-01`, 1_50_000),
-      ),
-      expenses: Array.from({ length: 6 }, (_, index) =>
-        spend(`2026-${String(index + 5).padStart(2, '0')}-02`, 50_000),
-      ),
+      income: months.map((month) => income(`${month}-01`, 1_50_000)),
+      expenses: months.map((month) => spend(`${month}-02`, 50_000)),
+      contributions: months.map((month) => ({
+        id: `c${month}`,
+        holdingId: 'fund',
+        date: `${month}-05`,
+        amount: 40_000,
+        automatic: true,
+      })),
     });
     const target = goal({
       kind: 'portfolio',
@@ -336,14 +369,27 @@ describe('portfolio target', () => {
       targetDate: undefined,
     });
     const plan = goalPlan(target, records, '2026-11-05');
-    expect(plan.saved).toBe(27_00_000);
-    expect(plan.monthly).toBe(1_00_000);
+    // The six contributions are part of the fund's value now.
+    expect(plan.saved).toBe(29_40_000);
+    // ₹1 lakh is left after spending, but only ₹40,000 of it is invested.
+    expect(plan.monthly).toBe(40_000);
     expect(plan.expectedReturn).toBe(8);
-    expect(plan.reachedBy && plan.reachedBy < '2028-10').toBe(true);
-    const found = insights(
-      records.goals.length ? records : { ...records, goals: [target] },
-      '2026-11-05',
-    ).find((row) => row.kind === 'goalEta');
-    expect(found).toMatchObject({ reachedBy: plan.reachedBy, saving: 1_00_000, basedOn: 6 });
+    const found = insights({ ...records, goals: [target] }, '2026-11-05').find(
+      (row) => row.kind === 'goalEta',
+    );
+    expect(found).toMatchObject({
+      reachedBy: plan.reachedBy,
+      invested: 40_000,
+      leftover: 60_000,
+      basedOn: 6,
+    });
+    // Investing the leftover too gets there sooner.
+    expect(
+      found &&
+        'fasterBy' in found &&
+        found.fasterBy &&
+        plan.reachedBy &&
+        found.fasterBy < plan.reachedBy,
+    ).toBe(true);
   });
 });

@@ -1,7 +1,8 @@
 {
-  "version": "1.14.1",
+  "version": "1.14.2",
   "released": "2026-11-05",
   "notes": [
+    "Portfolio target predicts from what you invest each month, and shows how much sooner investing what is left over would be",
     "Long goal names and the portfolio sort now fit on small phones",
     "Portfolio target: aim for a net worth or investment amount, and see when you will reach it",
     "The prediction uses your average income less spending, loan repayments and growth, with each figure shown",

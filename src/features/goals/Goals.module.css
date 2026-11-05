@@ -325,3 +325,10 @@
   border: 0;
   cursor: pointer;
 }
+
+.sooner {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}

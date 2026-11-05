@@ -245,12 +245,17 @@ export function describeInsight(insight: Insight): InsightText {
     case 'goalEta': {
       const what = insight.measure === 'netWorth' ? 'Net worth' : 'Your investments';
       const years = insight.months === null ? '' : timeFrom(insight.months);
+      const sooner =
+        insight.fasterBy && insight.reachedBy && insight.fasterBy < insight.reachedBy
+          ? ` Investing the ${formatMoney(insight.leftover)} left over each month too would get there by ${formatShortMonthYear(insight.fasterBy)}.`
+          : '';
       const why: [string, string][] = [
-        [what + ' today', formatMoney(insight.current)],
+        [`${what} today`, formatMoney(insight.current)],
         ['Target', formatMoney(insight.target)],
-        [`Average income, last ${insight.basedOn} months`, formatMoney(insight.income)],
+        [`Invested each month, last ${insight.basedOn} months`, formatMoney(insight.invested)],
+        ['Average income', formatMoney(insight.income)],
         ['Average spending', formatMoney(insight.expenses)],
-        ['Saved each month', formatMoney(insight.saving)],
+        ['Left over, not invested', formatMoney(insight.leftover)],
         ...(insight.principal > 0
           ? ([['Loan principal repaid each month', formatMoney(insight.principal)]] as [
               string,
@@ -263,18 +268,18 @@ export function describeInsight(insight: Insight): InsightText {
         ? {
             icon: TrendingUp,
             title: `${what} reaches ${formatMoney(insight.target)} by ${formatShortMonthYear(insight.reachedBy)}`,
-            detail: `That's ${years} at your current pace: about ${formatMoney(insight.saving)} saved each month, with growth on what you have.`,
+            detail: `That's ${years}, investing about ${formatMoney(insight.invested)} a month as you have been, with growth on what you have.${sooner}`,
             why,
             path: '/investments?view=goals',
-            note: 'Assumes your income, spending and returns stay as they’ve been.',
+            note: 'Assumes your investing and returns stay as they’ve been. Money left in the bank isn’t counted.',
           }
         : {
             icon: TrendingDown,
             title: `At this pace, ${what.toLowerCase()} won't reach ${formatMoney(insight.target)}`,
             detail:
-              insight.saving > 0
-                ? `You save about ${formatMoney(insight.saving)} a month, which isn't enough within 50 years.`
-                : 'Recent months spent as much as came in, so nothing is left to build it.',
+              insight.leftover > 0
+                ? `You invest about ${formatMoney(insight.invested)} a month. Investing more of the ${formatMoney(insight.leftover)} left over would help.`
+                : 'Recent months show little being invested, so there’s nothing to build it with.',
             why,
             path: '/investments?view=goals',
           };

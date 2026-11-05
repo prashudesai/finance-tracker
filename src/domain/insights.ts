@@ -3,7 +3,7 @@ import type { Expense } from '../schema/records';
 import { isEmi, isMarket, monthlyOverview, netWorthHistory, pmsGainChange } from './analytics';
 import { addDays, financialYearStart, previousMonth, roundMoney, toDayNumber } from './calendar';
 import { monthTotals } from './cashflow';
-import { goalPlan, monthsUntil, portfolioInputs } from './goals';
+import { goalInputs, goalPlan, monthsUntil, planGoal, portfolioInputs } from './goals';
 import { holdingValue } from './holdings';
 import { estimateSchedule } from './loan';
 import { amountAt, upcomingCommitments } from './recurring';
@@ -78,7 +78,12 @@ export type Insight = Base &
         months: number | null;
         income: number;
         expenses: number;
-        saving: number;
+        /** Invested each month on average: contributions less withdrawals. */
+        invested: number;
+        /** Left after spending each month, beyond what's invested. */
+        leftover: number;
+        /** When it's reached if the leftover were invested too, or null. */
+        fasterBy: string | null;
         principal: number;
         expectedReturn: number;
         basedOn: number;
@@ -533,7 +538,15 @@ function goalEta(data: TrackerData, today: string): Insight | null {
     months: plan.reachedBy ? monthsUntil(today, `${plan.reachedBy}-01`) : null,
     income: funds.averages.income,
     expenses: funds.averages.expenses,
-    saving: funds.averages.surplus,
+    invested: funds.monthly,
+    leftover: funds.uninvested,
+    fasterBy:
+      funds.uninvested > 0
+        ? planGoal(
+            { ...goalInputs(goal, data, today), monthly: funds.monthly + funds.uninvested },
+            today,
+          ).reachedBy
+        : null,
     principal: funds.principal,
     expectedReturn: plan.expectedReturn,
     basedOn: funds.averages.months,
