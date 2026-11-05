@@ -13,6 +13,7 @@ import {
   financialSummary,
   holdingRows,
   houseExpenses,
+  houseExpenseToSave,
   investedFromIncome,
   monthCloser,
   monthlyOverview,
@@ -348,6 +349,30 @@ describe('house expense from the bank balances', () => {
     expect(
       houseExpenses(october({ monthlyBalances: [{ month: '2026-10', startBalance: 50_000 }] })),
     ).toEqual([]);
+  });
+
+  test('once saved at review, the entry counts instead, and the gap stays the same', () => {
+    const entry = houseExpenseToSave(october(), '2026-10');
+    expect(entry).toMatchObject({ id: 'unrecorded-2026-10', date: '2026-10-31', amount: 15_000 });
+    const saved = october({ expenses: [...october().expenses, ...(entry ? [entry] : [])] });
+    // The gap and the review's signature don't move once the entry is saved.
+    expect(closeMonth(saved, '2026-10').unrecorded).toBe(15_000);
+    expect(monthSignature(saved, '2026-10')).toBe(monthSignature(october(), '2026-10'));
+    // No worked-out figure on top of the saved one, so it's counted once.
+    expect(houseExpenses(saved)).toEqual([]);
+    const counted = withHouseExpenses(saved, saved);
+    expect(monthlyOverview(counted, '2026-10', '2026-11-05').close.expenses).toBe(40_000);
+    expect(counted.expenses.filter((row) => row.date.startsWith('2026-10'))).toHaveLength(2);
+  });
+
+  test('nothing to save when the bank held as much as expected', () => {
+    const more = october({
+      monthlyBalances: [
+        { month: '2026-10', startBalance: 50_000 },
+        { month: '2026-11', startBalance: 95_000 },
+      ],
+    });
+    expect(houseExpenseToSave(more, '2026-10')).toBeNull();
   });
 
   test('a review signed before investing was counted still matches', () => {

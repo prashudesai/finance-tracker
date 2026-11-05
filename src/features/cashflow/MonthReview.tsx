@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
   closeMonth,
+  houseExpenseToSave,
+  savedHouseExpenseId,
   investedFromIncome,
   holdingLabel,
   isMonthEnd,
@@ -31,6 +33,10 @@ export function MonthReview({
   const [settingBalance, setSettingBalance] = useState(false);
   const close = closeMonth(data, month);
   const invested = investedFromIncome(data).get(month) ?? 0;
+  // Reviewing saves the house expense as an entry, or brings a saved one up to date.
+  const toSave = houseExpenseToSave(data, month);
+  const saved = data.expenses.find((row) => row.id === savedHouseExpenseId(month));
+  const entryChanged = (toSave?.amount ?? 0) !== (saved?.amount ?? 0);
   const status = monthReviewStatus(data, month);
   const today = localDate();
   const current = today.slice(0, 7);
@@ -125,8 +131,16 @@ export function MonthReview({
           </div>
         ) : null}
         <p className={ui.caption}>
-          Marking {formatMonth(month)} as reviewed doesn't lock it or change any money. If its
-          figures change later, it asks for review again.
+          {toSave && !saved
+            ? `Marking ${formatMonth(month)} as reviewed saves its ${formatMoney(toSave.amount)} of unrecorded house expense as an expense on ${formatDay(toSave.date)}.`
+            : toSave && saved && entryChanged
+              ? `The saved house expense is ${formatMoney(saved.amount)}. Reviewing again updates it to ${formatMoney(toSave.amount)}.`
+              : saved && !toSave
+                ? `The saved house expense of ${formatMoney(saved.amount)} is no longer needed. Reviewing again removes it.`
+                : saved
+                  ? `Its ${formatMoney(saved.amount)} of unrecorded house expense is saved as an expense.`
+                  : `Marking ${formatMonth(month)} as reviewed doesn't lock it.`}{' '}
+          If its figures change later, it asks for review again.
         </p>
         <div className={ui.formActions}>
           {(needsOpening || needsClosing) && canEdit ? (
@@ -137,9 +151,21 @@ export function MonthReview({
           {canEdit ? (
             <button
               className={needsOpening || needsClosing ? ui.quiet : ui.button}
-              disabled={!close.complete || status.reviewed}
+              disabled={!close.complete || (status.reviewed && !entryChanged)}
               onClick={() => {
                 commit([
+                  ...(toSave
+                    ? [
+                        {
+                          type: 'set' as const,
+                          collection: 'expenses' as const,
+                          id: toSave.id,
+                          value: toSave,
+                        },
+                      ]
+                    : saved
+                      ? [{ type: 'delete' as const, collection: 'expenses' as const, id: saved.id }]
+                      : []),
                   {
                     type: 'set',
                     collection: 'monthReviews',

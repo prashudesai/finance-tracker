@@ -793,6 +793,32 @@ describe('needs attention', () => {
     expect(await screen.findByText(`Month review · ${formatMonth(older)}`)).toBeDefined();
   });
 
+  test('reviewing a month saves its unrecorded house expense as an expense', async () => {
+    const current = localDate().slice(0, 7);
+    const newer = previousMonth(current);
+    renderApp('/', {
+      ...seen,
+      monthlyBalances: [
+        { month: newer, startBalance: 1000 },
+        { month: current, startBalance: 600 },
+      ],
+    });
+    await openReview(/balance review/);
+    expect(
+      await screen.findByText(/saves its ₹400 of unrecorded house expense as an expense/),
+    ).toBeDefined();
+    fireEvent.click(await screen.findByRole('button', { name: 'Mark month reviewed' }));
+    await waitFor(() =>
+      expect(useTracker.getState().data.expenses).toContainEqual(
+        expect.objectContaining({
+          id: `unrecorded-${newer}`,
+          category: 'Unrecorded house expense',
+          amount: 400,
+        }),
+      ),
+    );
+  });
+
   test('a backup reminder opens Data & backup', async () => {
     renderApp('/', { ...seen, holdings: [fund] });
     await screen.findByRole('heading', { level: 1 });

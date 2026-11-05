@@ -211,36 +211,75 @@ function contributionsOf(data: TrackerData, match: (holding: Holding) => boolean
 export const pmsTransfers = (data: TrackerData, month: string) =>
   sumAmount(contributionsOf(data, isPms).filter((row) => inMonth(row.date, month)));
 
+export const HOUSE_EXPENSE = 'Unrecorded house expense';
+const HOUSE_EXPENSE_ID = 'house-expense-';
+const SAVED_HOUSE_EXPENSE_ID = 'unrecorded-';
+
+/** A house expense worked out from the bank balances, which can't be edited on its own. */
+export const isHouseExpense = (row: Pick<Expense, 'id'>) => row.id.startsWith(HOUSE_EXPENSE_ID);
+
+/** The entry a month review saves its house expense under, one per month. */
+export const savedHouseExpenseId = (month: string) => `${SAVED_HOUSE_EXPENSE_ID}${month}`;
+
+const isSavedHouseExpense = (row: Pick<Expense, 'id'>) => row.id.startsWith(SAVED_HOUSE_EXPENSE_ID);
+
+/**
+ * Records for closing a month. A house expense saved at review is the gap itself, not
+ * spending that explains it, so it's left out: the gap, and the review's signature, stay
+ * the same once it's saved.
+ */
+const forClosing = (data: TrackerData): TrackerData =>
+  data.expenses.some(isSavedHouseExpense)
+    ? { ...data, expenses: data.expenses.filter((row) => !isSavedHouseExpense(row)) }
+    : data;
+
 /**
  * A month's close: what the bank balance should be after income, recorded expenses and
  * everything invested from income, PMS included. What's missing at the closing balance is
  * house expense, spending that was never recorded.
  */
-export const closeMonth = (data: TrackerData, month: string) =>
-  monthClose(data, month, investedFromIncome(data).get(month) ?? 0);
+export const closeMonth = (data: TrackerData, month: string) => {
+  const records = forClosing(data);
+  return monthClose(records, month, investedFromIncome(records).get(month) ?? 0);
+};
 
 /** Each month's figures from one pass over the records, for work across many months. */
 export function monthCloser(data: TrackerData): (month: string) => MonthClose {
-  const totals = monthTotals(data);
-  const balances = balancesByMonth(data);
-  const invested = investedFromIncome(data);
+  const records = forClosing(data);
+  const totals = monthTotals(records);
+  const balances = balancesByMonth(records);
+  const invested = investedFromIncome(records);
   return (month) => closeFrom(totals, balances, month, invested.get(month) ?? 0);
 }
 
-export const HOUSE_EXPENSE = 'Unrecorded house expense';
-const HOUSE_EXPENSE_ID = 'house-expense-';
-
-/** A house expense worked out from the bank balances, which can't be edited on its own. */
-export const isHouseExpense = (row: Pick<Expense, 'id'>) => row.id.startsWith(HOUSE_EXPENSE_ID);
+/**
+ * What a month review saves: the month's house expense as an entry on its last day, or
+ * null when the bank held as much as expected, or more, or the month isn't closed.
+ */
+export function houseExpenseToSave(data: TrackerData, month: string): Expense | null {
+  const { unrecorded } = closeMonth(data, month);
+  if (unrecorded === null || roundMoney(unrecorded) <= 0) return null;
+  return {
+    id: savedHouseExpenseId(month),
+    date: lastDayOfMonth(month),
+    category: HOUSE_EXPENSE,
+    subcategory: 'Confirmed at month review',
+    amount: roundMoney(unrecorded),
+    isAnnual: false,
+  };
+}
 
 /**
  * Each closed month's house expense as an expense on its last day, worked out from the
  * household's balances each time, so a forgotten expense added later takes it down again.
- * A closing balance above what was expected adds nothing.
+ * A closing balance above what was expected adds nothing, and a month whose house expense
+ * was saved at review counts the saved entry instead.
  */
 export function houseExpenses(household: TrackerData): Expense[] {
   const closeOf = monthCloser(household);
+  const saved = new Set(household.expenses.filter(isSavedHouseExpense).map((row) => row.id));
   return household.monthlyBalances.flatMap(({ month }) => {
+    if (saved.has(savedHouseExpenseId(month))) return [];
     const { unrecorded } = closeOf(month);
     if (unrecorded === null || roundMoney(unrecorded) <= 0) return [];
     return [
@@ -507,7 +546,8 @@ export function memberContributions(data: TrackerData, fy: number) {
  * What a review was signed against. Kept on the figures it always used, PMS alone taken
  * out, so months reviewed before investing was counted aren't marked as changed.
  */
-export function monthSigner(data: TrackerData): (month: string) => string {
+export function monthSigner(household: TrackerData): (month: string) => string {
+  const data = forClosing(household);
   const totals = monthTotals(data);
   const balances = balancesByMonth(data);
   const transfers = new Map<string, number>();

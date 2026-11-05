@@ -1,7 +1,8 @@
 {
-  "version": "1.19.0",
+  "version": "1.19.1",
   "released": "2026-11-05",
   "notes": [
+    "Marking a month reviewed saves its unrecorded house expense as an expense entry, and reviewing again updates or removes it",
     "Unrecorded house expense, what your closing balance falls short of, now counts as spending on the dashboard, in Analytics, goals and the retirement planner",
     "The month close takes off everything invested from your bank, so SIPs and PPF are no longer counted as house expense",
     "Add a forgotten expense later and the unrecorded part shrinks, so nothing is counted twice",
