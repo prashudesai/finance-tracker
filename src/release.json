@@ -1,7 +1,8 @@
 {
-  "version": "1.20.3",
+  "version": "1.20.4",
   "released": "2026-11-05",
   "notes": [
+    "Tablets keep the bottom tab bar, and the top bar fits from 1024px wide with short labels, full ones from 1180px",
     "The retirement planner responds faster while you type, especially on phones",
     "Retirement assumptions end with Save and close, which saves, folds them away and takes you back to the results",
     "A card scrolled into view stops below the header instead of under it",

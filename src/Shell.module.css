@@ -60,9 +60,11 @@
 
 .brand {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 10px;
   font-weight: 650;
+  white-space: nowrap;
 }
 
 .profile {
@@ -138,6 +140,17 @@
 }
 
 @media (min-width: 768px) {
+  .main {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+}
+
+/*
+ * The tab bar stays at the bottom until the header has room for every link, which tablets
+ * in portrait don't. Short labels fit from 1024px, and the full ones from 1180px.
+ */
+@media (min-width: 1024px) {
   .nav {
     position: static;
     padding: 0;
@@ -147,11 +160,6 @@
     backdrop-filter: none;
   }
 
-  .fullLabel {
-    display: inline !important;
-  }
-
-  .shortLabel,
   .mobileOnly {
     display: none !important;
   }
@@ -166,12 +174,29 @@
     flex: none;
     align-items: center;
     gap: 8px;
-    padding: 9px 12px;
+    padding: 9px 10px;
     font-size: 0.86rem;
+    white-space: nowrap;
   }
 
   .main {
-    padding: 28px 24px 84px;
+    padding-top: 28px;
+    padding-bottom: 84px;
+  }
+}
+
+@media (min-width: 1180px) {
+  .fullLabel {
+    display: inline !important;
+  }
+
+  .shortLabel {
+    display: none !important;
+  }
+
+  .link,
+  .active {
+    padding: 9px 12px;
   }
 }
 
@@ -237,7 +262,7 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
   cursor: pointer;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .search,
   .searchVisible {
     right: 20px;
@@ -362,7 +387,7 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
   box-shadow: var(--shadow);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .tour {
     right: 88px;
     bottom: 24px;
