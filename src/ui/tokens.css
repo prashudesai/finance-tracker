@@ -13,8 +13,8 @@
   --surface-sunken: #122c29;
   --text: #edf8f4;
   --muted: #a5c4ba;
-  --border: rgb(164 226 205 / 16%);
-  --border-strong: rgb(164 226 205 / 32%);
+  --border: rgb(164 226 205 / 22%);
+  --border-strong: rgb(164 226 205 / 36%);
   --accent: #69d6bb;
   --accent-soft: rgb(111 220 192 / 15%);
   --accent-text: #06231c;
@@ -28,7 +28,11 @@
   --warning-bg: rgb(229 149 44 / 16%);
   --warning-text: #ffd089;
   --shadow: 0 12px 32px rgb(0 0 0 / 22%);
-  --hero: linear-gradient(135deg, #1f4a42, #15322e 62%);
+  /* Dark where the number sits, with a mint glow in the far corner. */
+  --hero:
+    radial-gradient(120% 90% at 100% 0%, rgb(105 214 187 / 42%), transparent 62%),
+    linear-gradient(115deg, #10302b, #1b4a42);
+  --hero-edge: rgb(105 214 187 / 55%);
   --scenario-stress: #d96560;
   --scenario-base: #3494de;
   --scenario-optimistic: #1fac79;
@@ -73,7 +77,10 @@
   --warning-bg: #fff1d6;
   --warning-text: #6b4a00;
   --shadow: 0 10px 28px rgb(16 41 31 / 8%);
-  --hero: linear-gradient(135deg, #dff2ea, #ffffff 62%);
+  --hero:
+    radial-gradient(120% 90% at 100% 0%, rgb(7 102 79 / 30%), transparent 62%),
+    linear-gradient(115deg, #ffffff, #eef8f4);
+  --hero-edge: #8fd0b9;
 }
 
 @media (prefers-color-scheme: light) {
@@ -104,7 +111,10 @@
     --warning-bg: #fff1d6;
     --warning-text: #6b4a00;
     --shadow: 0 10px 28px rgb(16 41 31 / 8%);
-    --hero: linear-gradient(135deg, #dff2ea, #ffffff 62%);
+    --hero:
+      radial-gradient(120% 90% at 100% 0%, rgb(7 102 79 / 30%), transparent 62%),
+      linear-gradient(115deg, #ffffff, #eef8f4);
+    --hero-edge: #8fd0b9;
   }
 }
 

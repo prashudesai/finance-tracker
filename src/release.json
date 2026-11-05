@@ -1,7 +1,8 @@
 {
-  "version": "1.11.1",
-  "released": "2026-11-04",
+  "version": "1.11.2",
+  "released": "2026-11-05",
   "notes": [
+    "A fresher look: the Net Worth tile glows mint, and every tile has a mint edge",
     "Insights is now a tidy tile on the dashboard: tap to open, with the top one as a preview",
     "This month's investing, loan principal repaid and PMS gain now appear as insights",
     "Insights on your dashboard: patterns in your money, worked out privately on your phone",

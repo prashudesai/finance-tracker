@@ -38,7 +38,8 @@
     color-mix(in srgb, var(--surface-raised) 88%, transparent),
     var(--surface)
   );
-  border: 1px solid var(--border);
+  /* A mint edge on every tile; the hero's is brighter still. */
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
   border-radius: var(--radius);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent),
@@ -48,7 +49,7 @@
 .hero {
   composes: card;
   background: var(--hero);
-  border-color: var(--border-strong);
+  border-color: var(--hero-edge);
 }
 
 .cardHeader {

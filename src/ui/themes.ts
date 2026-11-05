@@ -124,12 +124,13 @@ function darkTokens(bg: string, surface: string, raised: string, sunken: string,
     '--surface-sunken': sunken,
     '--text': DARK_TEXT,
     '--muted': mix(DARK_TEXT, surface, 0.28),
-    '--border': alpha(accent, 16),
-    '--border-strong': alpha(accent, 32),
+    '--border': alpha(accent, 22),
+    '--border-strong': alpha(accent, 36),
     '--accent': accent,
     '--accent-soft': alpha(accent, 15),
     '--accent-text': '#0f172a',
-    '--hero': `linear-gradient(135deg, ${raised}, ${surface} 62%)`,
+    '--hero': `radial-gradient(120% 90% at 100% 0%, ${alpha(accent, 42)}, transparent 62%), linear-gradient(115deg, ${sunken}, ${raised})`,
+    '--hero-edge': alpha(accent, 55),
   };
 }
 
@@ -147,7 +148,8 @@ function lightTokens(bg: string, accent: string) {
     '--accent': accent,
     '--accent-soft': alpha(accent, 11),
     '--accent-text': '#ffffff',
-    '--hero': `linear-gradient(135deg, ${mix('#ffffff', accent, 0.12)}, #ffffff 62%)`,
+    '--hero': `radial-gradient(120% 90% at 100% 0%, ${alpha(accent, 30)}, transparent 62%), linear-gradient(115deg, #ffffff, ${mix('#ffffff', accent, 0.06)})`,
+    '--hero-edge': mix('#ffffff', accent, 0.45),
   };
 }
 
