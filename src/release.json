@@ -1,7 +1,8 @@
 {
-  "version": "1.20.2",
+  "version": "1.20.3",
   "released": "2026-11-05",
   "notes": [
+    "The retirement planner responds faster while you type, especially on phones",
     "Retirement assumptions end with Save and close, which saves, folds them away and takes you back to the results",
     "A card scrolled into view stops below the header instead of under it",
     "Retirement planner: \"What you'll need\" is never rosier than your own plan, so its \"On course for\" matches your fund at retirement when your rates are the cautious ones",

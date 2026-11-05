@@ -1,5 +1,5 @@
 import { Landmark, SlidersHorizontal, Sunset, TrendingUp, Wallet } from 'lucide-react';
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import { averageContributions, holdingGroups, netWorth } from '../../domain/analytics';
 import {
   addMonths,
@@ -15,6 +15,7 @@ import {
   REALISTIC,
   retirementFixes,
   retirementNeed,
+  type RetirementInputs,
   type RetirementPart,
 } from '../../domain/retirement';
 import type { TrackerSettings } from '../../schema/records';
@@ -333,10 +334,21 @@ export function RetirementPlanner() {
     firstStretch: (16 - Number(today.slice(5, 7))) % 12 || 12,
     ...(each ? { parts } : {}),
   };
-  const plan = error ? null : planRetirement(inputs);
-  const fixes = error ? null : retirementFixes(inputs);
-  // A sober check at long-run rates, whatever rates are typed in.
-  const need = error ? null : retirementNeed(inputs);
+  // Worked out again only when an input changes, not on every redraw, such as picking an age.
+  const inputsKey = error ? '' : JSON.stringify(inputs);
+  const worked = useMemo(() => {
+    if (!inputsKey) return null;
+    const given = JSON.parse(inputsKey) as RetirementInputs;
+    return {
+      plan: planRetirement(given),
+      fixes: retirementFixes(given),
+      // A sober check at long-run rates, or yours where they're more cautious.
+      need: retirementNeed(given),
+    };
+  }, [inputsKey]);
+  const plan = worked?.plan ?? null;
+  const fixes = worked?.fixes ?? null;
+  const need = worked?.need ?? null;
   const usesRosierRates =
     inputs.inflation < REALISTIC.inflation ||
     inputs.growthBefore > REALISTIC.growthBefore ||

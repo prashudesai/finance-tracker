@@ -121,10 +121,30 @@ const monthlyRate = (yearly: number) => Math.pow(1 + yearly / 100, 1 / 12) - 1;
  * year, counted from today.
  */
 export function planRetirement(inputs: RetirementInputs): RetirementPlan {
+  return simulate(inputs, 'full');
+}
+
+/**
+ * The plan itself. Searches that try many plans ask only what they need: whether the money
+ * lasts, stopping at the first month it falls short, or the fund at retirement, stopping
+ * there; neither keeps the year-by-year or month-by-month figures.
+ */
+function simulate(inputs: RetirementInputs, need: 'full' | 'lasts' | 'fund'): RetirementPlan {
+  const full = need === 'full';
   const { age, inflation, stepUp } = inputs;
   const retireAt = Math.max(0, inputs.monthsToRetire ?? (inputs.retireAge - age) * 12);
   const total = Math.max(retireAt, inputs.months ?? (inputs.untilAge - age + 1) * 12);
   const before = monthlyRate(inputs.growthBefore);
+  // A rate is worked out once per growth figure, not once per investment per month.
+  const rates = new Map<number, number>();
+  const rateOf = (yearly: number) => {
+    let rate = rates.get(yearly);
+    if (rate === undefined) {
+      rate = monthlyRate(yearly);
+      rates.set(yearly, rate);
+    }
+    return rate;
+  };
   // Each part keeps its own value; the simple plan is one part that grows and sells.
   let parts: RetirementPart[] = (
     inputs.parts ?? [
@@ -173,10 +193,15 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
   };
   /** Takes `amount` from the parts that `from` allows, in proportion to their value. */
   const draw = (amount: number, from: (part: RetirementPart) => boolean) => {
-    const pool = parts.filter((part) => from(part) && part.value > 0);
-    const available = pool.reduce((sum, part) => sum + part.value, 0);
+    if (amount <= 0) return 0;
+    let available = 0;
+    for (const part of parts) if (part.value > 0 && from(part)) available += part.value;
     const taken = Math.min(amount, available);
-    if (taken > 0) for (const part of pool) part.value -= (taken * part.value) / available;
+    if (taken > 0) {
+      for (const part of parts) {
+        if (part.value > 0 && from(part)) part.value -= (taken * part.value) / available;
+      }
+    }
     return taken;
   };
   // Cut at each year boundary, at the retirement month, and at the end.
@@ -189,14 +214,32 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
     .map((at, index): [number, number] => [at, sorted[index + 1] ?? total])
     .filter(([from, to]) => to > from);
   let fundAtRetirement = retireAt === 0 ? values() : 0;
-  if (retireAt === 0) retire();
   let runsOutMonth: number | null = null;
   const years: RetirementYear[] = [];
   const monthly: RetirementMonth[] = [];
+  const result = (): RetirementPlan => ({
+    years,
+    monthsToRetire: retireAt,
+    fundAtRetirement: roundMoney(fundAtRetirement),
+    monthlyAtRetirement: roundMoney(
+      inputs.monthlyExpense * Math.pow(1 + inflation / 100, retireAt / 12),
+    ),
+    payoutAtRetirement: roundMoney(payoutAtRetirement),
+    partsAtRetirement,
+    monthly,
+    runsOutAt: runsOutMonth === null ? null : age + Math.floor(runsOutMonth / 12),
+    runsOutMonth,
+    leftOver: roundMoney(values()),
+  });
+  if (retireAt === 0) {
+    if (need === 'fund') return result();
+    retire();
+  }
   for (const [from, to] of stretches) {
     const retired = from >= retireAt;
     if (from === retireAt && retireAt > 0) {
       fundAtRetirement = values();
+      if (need === 'fund') return result();
       retire();
     }
     const fundStart = values();
@@ -215,7 +258,7 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
       if (retired) {
         let income = 0;
         for (const part of parts) {
-          const gained = part.value * monthlyRate(part.growth);
+          const gained = part.value * rateOf(part.growth);
           growth += gained;
           part.value += gained;
           income += payoutOf(part);
@@ -238,7 +281,10 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
           paid += draw(short - paid, (part) => part.sellable);
           withdrawn += paid;
           unpaid += short - paid;
-          if (short - paid > 0.005 && runsOutMonth === null) runsOutMonth = month;
+          if (short - paid > 0.005 && runsOutMonth === null) {
+            runsOutMonth = month;
+            if (need === 'lasts') return result();
+          }
         }
       } else {
         const contribution = inputs.monthlyContribution * Math.pow(1 + stepUp / 100, year);
@@ -249,12 +295,15 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
           part.value += gained + contribution * part.share;
         }
       }
-      monthly.push({
-        fund: values(),
-        expense,
-        earned: growth - grownBefore + payouts - paidBefore,
-      });
+      if (full) {
+        monthly.push({
+          fund: values(),
+          expense,
+          earned: growth - grownBefore + payouts - paidBefore,
+        });
+      }
     }
+    if (!full) continue;
     const fund = values();
     years.push({
       start: from,
@@ -271,28 +320,18 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
       unpaid: roundMoney(unpaid),
     });
   }
-  return {
-    years,
-    monthsToRetire: retireAt,
-    fundAtRetirement: roundMoney(fundAtRetirement),
-    monthlyAtRetirement: roundMoney(
-      inputs.monthlyExpense * Math.pow(1 + inflation / 100, retireAt / 12),
-    ),
-    payoutAtRetirement: roundMoney(payoutAtRetirement),
-    partsAtRetirement,
-    monthly,
-    runsOutAt: runsOutMonth === null ? null : age + Math.floor(runsOutMonth / 12),
-    runsOutMonth,
-    leftOver: roundMoney(values()),
-  };
+  return result();
 }
 
-const lasts = (inputs: RetirementInputs) => planRetirement(inputs).runsOutAt === null;
+const lasts = (inputs: RetirementInputs) => simulate(inputs, 'lasts').runsOutAt === null;
 
-/** The smallest value in [low, high] for which `ok` holds, assuming it holds from some point up. */
+/**
+ * The smallest value in [low, high] for which `ok` holds, assuming it holds from some point
+ * up, to within a paisa: every answer is shown rounded to rupees or more.
+ */
 function lowest(ok: (value: number) => boolean, low: number, high: number) {
   if (!ok(high)) return null;
-  for (let step = 0; step < 60; step++) {
+  for (let step = 0; step < 60 && high - low > 0.01; step++) {
     const middle = (low + high) / 2;
     if (ok(middle)) high = middle;
     else low = middle;
@@ -371,23 +410,26 @@ export function retirementNeed(inputs: RetirementInputs) {
       ? { parts: mix.map((part) => ({ ...part, value: (fund * part.value) / mixTotal })) }
       : {};
   const lastsWith = (fund: number) =>
-    planRetirement({
-      ...realistic,
-      ...scaled(fund),
-      fund,
-      age: inputs.retireAge,
-      monthsToRetire: 0,
-      months: totalMonths - reached.monthsToRetire,
-      monthlyExpense: reached.monthlyAtRetirement,
-      monthlyContribution: 0,
-    }).runsOutAt === null;
+    simulate(
+      {
+        ...realistic,
+        ...scaled(fund),
+        fund,
+        age: inputs.retireAge,
+        monthsToRetire: 0,
+        months: totalMonths - reached.monthsToRetire,
+        monthlyExpense: reached.monthlyAtRetirement,
+        monthlyContribution: 0,
+      },
+      'lasts',
+    ).runsOutAt === null;
   // Rounded up to the rupee, so the fund named always lasts.
   const needed = Math.ceil(lowest(lastsWith, 0, reached.monthlyAtRetirement * 12 * 200) ?? 0);
   const working = reached.monthsToRetire > 0;
   const monthly = working
     ? lowest(
         (value) =>
-          planRetirement({ ...realistic, monthlyContribution: value }).fundAtRetirement >= needed,
+          simulate({ ...realistic, monthlyContribution: value }, 'fund').fundAtRetirement >= needed,
         0,
         Math.max(needed, 1),
       )
