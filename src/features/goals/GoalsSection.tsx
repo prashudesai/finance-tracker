@@ -21,6 +21,7 @@ import {
   unassignedValue,
   type GoalPlan,
 } from '../../domain/goals';
+import { holdingGroups } from '../../domain/analytics';
 import { holdingValue } from '../../domain/holdings';
 import { addMonths } from '../../domain/calendar';
 import type { Goal } from '../../schema/records';
@@ -300,17 +301,34 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         <section>
           <h3 className={ui.label}>Funded from</h3>
           <ul className={ui.list}>
-            {goal.funding.map(({ holdingId, share }) => {
-              const holding = data.holdings.find((row) => row.id === holdingId);
+            {holdingGroups(
+              goal.funding.flatMap(({ holdingId }) =>
+                data.holdings.filter((row) => row.id === holdingId),
+              ),
+            ).map((group) => {
+              const shares = group.holdings.map(
+                (holding) => goal.funding.find((row) => row.holdingId === holding.id)?.share ?? 0,
+              );
+              const value = group.holdings.reduce(
+                (sum, holding, index) =>
+                  sum + holdingValue(holding, data, today) * (shares[index] ?? 0),
+                0,
+              );
+              const same = shares.every((share) => share === shares[0]);
+              const share = `${Math.round((shares[0] ?? 0) * 1000) / 10}%`;
               return (
-                <li className={ui.row} key={holdingId}>
+                <li className={ui.row} key={group.key}>
                   <div className={ui.rowMain}>
-                    <div className={ui.rowTitle}>{holding?.name ?? 'A removed investment'}</div>
-                    <div className={ui.rowDetail}>{Math.round(share * 1000) / 10}% of it</div>
+                    <div className={ui.rowTitle}>{group.label}</div>
+                    <div className={ui.rowDetail}>
+                      {group.holdings.length === 1
+                        ? `${share} of it`
+                        : same
+                          ? `${share} of ${group.holdings.length} accounts`
+                          : `Part of ${group.holdings.length} accounts`}
+                    </div>
                   </div>
-                  <span className={ui.amount}>
-                    {holding ? formatAmount(holdingValue(holding, data, today) * share) : '—'}
-                  </span>
+                  <span className={ui.amount}>{formatAmount(value)}</span>
                 </li>
               );
             })}

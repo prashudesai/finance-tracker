@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { optionLists } from '../../domain/options';
 import {
+  holdingLabel,
   holdingRows,
   isPms,
   portfolioCategories,
@@ -310,7 +311,7 @@ export function InvestmentsPage() {
   const freshnessRow = (row: (typeof rows)[number], action: string) => (
     <li className={ui.row} key={row.holding.id}>
       <div className={ui.rowMain}>
-        <div className={ui.rowTitle}>{row.holding.name}</div>
+        <div className={ui.rowTitle}>{holdingLabel(row.holding)}</div>
         <div className={ui.rowDetail}>{valuationAge(row.holding.id, data, today)}</div>
       </div>
       <span className={ui.amount}>{formatMoney(row.position.current)}</span>

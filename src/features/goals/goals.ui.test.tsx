@@ -48,9 +48,19 @@ const college: Goal = {
   funding: [{ holdingId: 'fund', share: 0.5 }],
 };
 
-const show = (path: string, goals: Goal[] = []) => {
+const pfAccount = (id: string, name: string): Holding => ({
+  ...fund,
+  id,
+  kind: 'pf',
+  type: 'PF',
+  name,
+  openingInvested: 1_00_000,
+  openingValue: 1_00_000,
+});
+
+const show = (path: string, goals: Goal[] = [], extra: Holding[] = []) => {
   const repository = createMemoryRepository({
-    holdings: [fund],
+    holdings: [fund, ...extra],
     goals,
     settings: [{ ...defaultSettings(), onboardingDone: true }],
   });
@@ -88,6 +98,30 @@ describe('Goals', () => {
     const card = await section.findByRole('button', { name: /^Car: \d+% saved/ });
     // A quarter of ₹4,00,000.
     expect(card.textContent).toContain('₹1L of');
+  });
+
+  test('PF accounts are one row, named PF, and a share covers each account', async () => {
+    show(
+      '/analytics/goals',
+      [],
+      [pfAccount('pf1', '100281757735'), pfAccount('pf2', '100896586946')],
+    );
+    const section = within(await screen.findByRole('region', { name: 'Goals' }));
+    fireEvent.click(section.getByRole('button', { name: /Add goal/ }));
+    const form = within(await screen.findByRole('dialog', { name: 'Add a goal', hidden: true }));
+    expect(form.queryByText('100281757735')).toBeNull();
+    expect(form.getByText(/₹2L · 2 accounts · 100% free/)).toBeDefined();
+    fireEvent.change(form.getByLabelText("Cost in today's rupees (₹)"), {
+      target: { value: '500000' },
+    });
+    fireEvent.change(form.getByLabelText('Share of PF (%)'), { target: { value: '50' } });
+    fireEvent.click(form.getByRole('button', { name: 'Add goal', hidden: true }));
+    await waitFor(() =>
+      expect(saved().goals[0]?.funding).toEqual([
+        { holdingId: 'pf1', share: 0.5 },
+        { holdingId: 'pf2', share: 0.5 },
+      ]),
+    );
   });
 
   test('the detail says what to do, and what-if changes nothing saved', async () => {

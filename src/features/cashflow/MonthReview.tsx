@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { closeMonth, isMonthEnd, monthReviewStatus, monthSignature } from '../../domain/analytics';
+import {
+  closeMonth,
+  holdingLabel,
+  isMonthEnd,
+  monthReviewStatus,
+  monthSignature,
+} from '../../domain/analytics';
 import { holdingContributions } from '../../domain/holdings';
 import { useTracker } from '../../store/tracker';
 import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format';
@@ -87,7 +93,7 @@ export function MonthReview({
               {entries.map(({ row, holding }) => (
                 <li className={ui.row} key={row.id}>
                   <div className={ui.rowMain}>
-                    <div className={ui.rowTitle}>{holding.name}</div>
+                    <div className={ui.rowTitle}>{holdingLabel(holding)}</div>
                     <div className={ui.rowDetail}>
                       {formatDay(row.date)} · {formatMoney(row.amount)}
                     </div>

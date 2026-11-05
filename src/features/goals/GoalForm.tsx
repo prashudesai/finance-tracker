@@ -10,7 +10,7 @@ import {
   retirementFunding,
   retirementTarget,
 } from '../../domain/goals';
-import { netWorth } from '../../domain/analytics';
+import { categoryOf, holdingGroups, netWorth } from '../../domain/analytics';
 import { holdingValue } from '../../domain/holdings';
 import { addMonths } from '../../domain/calendar';
 import { GOAL_KINDS, goalSchema, type Goal, type GoalKind } from '../../schema/records';
@@ -45,8 +45,15 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
   const [expectedReturn, setExpectedReturn] = useState(
     goal?.expectedReturn === undefined ? '' : String(goal.expectedReturn),
   );
+  // PF, PPF and NPS accounts are chosen as one row each, keyed by category; others by id.
+  const groupKey = (holdingId: string) => {
+    const holding = data.holdings.find((row) => row.id === holdingId);
+    return holding && holding.kind !== 'investment' ? categoryOf(holding) : holdingId;
+  };
   const [shares, setShares] = useState<Record<string, string>>(() =>
-    Object.fromEntries((goal?.funding ?? []).map((row) => [row.holdingId, percentText(row.share)])),
+    Object.fromEntries(
+      (goal?.funding ?? []).map((row) => [groupKey(row.holdingId), percentText(row.share)]),
+    ),
   );
   // Helpers that suggest a target, for retirement and an emergency fund.
   const [monthlySpend, setMonthlySpend] = useState(
@@ -67,7 +74,7 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
       if (next === 'retirement' && Object.keys(shares).length === 0) {
         setShares(
           Object.fromEntries(
-            retirementFunding(data).map((row) => [row.holdingId, percentText(row.share)]),
+            retirementFunding(data).map((row) => [groupKey(row.holdingId), percentText(row.share)]),
           ),
         );
       }
@@ -83,19 +90,25 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
   const shownTarget = !targetEdited && suggested !== null ? String(Math.round(suggested)) : target;
 
   const others = assignedShares(data.goals, goal?.id);
-  const holdings = data.holdings
-    .filter((holding) => holding.date <= today)
-    .map((holding) => ({
-      holding,
-      value: holdingValue(holding, data, today),
-      free: Math.max(0, 1 - (others.get(holding.id) ?? 0)),
+  const holdings = holdingGroups(
+    data.holdings.filter(
+      (holding) => holding.date <= today && holdingValue(holding, data, today) > 0,
+    ),
+  )
+    .map((group) => ({
+      ...group,
+      value: group.holdings.reduce((sum, row) => sum + holdingValue(row, data, today), 0),
+      // A group can only give what its least free account can.
+      free: Math.min(...group.holdings.map((row) => Math.max(0, 1 - (others.get(row.id) ?? 0)))),
     }))
-    .filter((row) => row.value > 0)
     .sort((a, b) => b.value - a.value);
 
-  const funding = Object.entries(shares)
-    .filter(([, text]) => text.trim() !== '' && Number(text) > 0)
-    .map(([holdingId, text]) => ({ holdingId, share: Number(text) / 100 }));
+  // One share for a group applies to each of its accounts.
+  const funding = holdings.flatMap((group) => {
+    const text = shares[group.key] ?? '';
+    if (text.trim() === '' || !(Number(text) > 0)) return [];
+    return group.holdings.map((row) => ({ holdingId: row.id, share: Number(text) / 100 }));
+  });
   const portfolio = kind === 'portfolio';
   const months = monthsUntil(today, targetDate || today);
   const draft = {
@@ -112,10 +125,7 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
     ...(goal?.notes ? { notes: goal.notes } : {}),
   };
   const parsed = goalSchema.safeParse(draft);
-  const tooMuch = holdings.find(
-    ({ holding, free }) =>
-      (funding.find((row) => row.holdingId === holding.id)?.share ?? 0) > free + 1e-9,
-  );
+  const tooMuch = holdings.find(({ key, free }) => Number(shares[key] ?? 0) / 100 > free + 1e-9);
   const targetError =
     shownTarget.trim() === '' || !(Number(shownTarget) > 0)
       ? portfolio
@@ -131,7 +141,7 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
       : 'Pick the date you need it by.';
   const fundingError =
     !portfolio && tooMuch
-      ? `Only ${percentText(tooMuch.free)}% of ${tooMuch.holding.name} is free. The rest is set aside for other goals.`
+      ? `Only ${percentText(tooMuch.free)}% of ${tooMuch.label} is free. The rest is set aside for other goals.`
       : null;
   const error =
     targetError ??
@@ -334,25 +344,27 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
             <p className={ui.empty}>Add an investment first, then set part of it aside here.</p>
           ) : (
             <ul className={styles.funding}>
-              {holdings.map(({ holding, value, free }) => (
-                <li key={holding.id}>
+              {holdings.map(({ key, label, holdings: accounts, value, free }) => (
+                <li key={key}>
                   <span>
-                    <strong>{holding.name}</strong>
+                    <strong>{label}</strong>
                     <span className={ui.caption} style={{ display: 'block' }}>
-                      {formatCompactMoney(value)} · {percentText(free)}% free
+                      {formatCompactMoney(value)}
+                      {accounts.length > 1 ? ` · ${accounts.length} accounts` : ''} ·{' '}
+                      {percentText(free)}% free
                     </span>
                   </span>
                   <input
-                    aria-label={`Share of ${holding.name} (%)`}
+                    aria-label={`Share of ${label} (%)`}
                     inputMode="decimal"
                     max={100}
                     min={0}
                     onChange={(event) =>
-                      setShares((current) => ({ ...current, [holding.id]: event.target.value }))
+                      setShares((current) => ({ ...current, [key]: event.target.value }))
                     }
                     placeholder="0%"
                     type="number"
-                    value={shares[holding.id] ?? ''}
+                    value={shares[key] ?? ''}
                   />
                 </li>
               ))}

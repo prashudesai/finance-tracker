@@ -19,7 +19,13 @@ import {
   retirementTarget,
   unassignedValue,
 } from './goals';
-import { averageContributions, monthlyOverview, trackingStart } from './analytics';
+import {
+  averageContributions,
+  holdingGroups,
+  holdingLabel,
+  monthlyOverview,
+  trackingStart,
+} from './analytics';
 import { insights } from './insights';
 
 const holding = (id: string, value: number, extra: Partial<Holding> = {}): Holding => ({
@@ -398,5 +404,31 @@ describe('portfolio target', () => {
         plan.reachedBy &&
         found.fasterBy < plan.reachedBy,
     ).toBe(true);
+  });
+});
+
+describe('PF, PPF and NPS shown by kind', () => {
+  const pf1 = holding('pf1', 1_00_000, { kind: 'pf', type: 'PF', name: '100281757735' });
+  const pf2 = holding('pf2', 2_00_000, { kind: 'pf', type: 'PF', name: '100896586946' });
+  const ppf = holding('ppf', 50_000, { kind: 'ppf', type: 'PPF', name: 'PPF Account' });
+  const fund = holding('fund', 3_00_000);
+
+  test('a single account names its kind before an account number', () => {
+    expect(holdingLabel(pf1)).toBe('PF · 100281757735');
+    expect(holdingLabel(ppf)).toBe('PPF Account');
+    expect(holdingLabel(fund)).toBe('fund');
+  });
+
+  test('each kind becomes one group, while investments stay apart', () => {
+    expect(
+      holdingGroups([pf1, fund, pf2, ppf]).map((group) => [
+        group.label,
+        group.holdings.map((row) => row.id),
+      ]),
+    ).toEqual([
+      ['PF', ['pf1', 'pf2']],
+      ['fund', ['fund']],
+      ['PPF', ['ppf']],
+    ]);
   });
 });

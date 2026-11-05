@@ -65,6 +65,32 @@ const CATEGORY_NAMES: Record<Holding['kind'], string | null> = {
 
 export const categoryOf = (holding: Holding) => CATEGORY_NAMES[holding.kind] ?? holding.type;
 
+/**
+ * A holding's name with its kind in front, for lists of single accounts: PF, PPF and NPS
+ * accounts are often named by an account number alone, such as "PF · 100281757735".
+ */
+export function holdingLabel(holding: Holding) {
+  const category = CATEGORY_NAMES[holding.kind];
+  if (!category || holding.name.toLowerCase().includes(category.toLowerCase())) return holding.name;
+  return `${category} · ${holding.name}`;
+}
+
+/**
+ * Holdings for choosing or comparing: each investment on its own, and all PF, all PPF and
+ * all NPS accounts as one row each, so account numbers don't fill the list.
+ */
+export function holdingGroups(holdings: Holding[]) {
+  const groups = new Map<string, { key: string; label: string; holdings: Holding[] }>();
+  for (const holding of holdings) {
+    const category = CATEGORY_NAMES[holding.kind];
+    const key = category ?? holding.id;
+    const group = groups.get(key) ?? { key, label: category ?? holding.name, holdings: [] };
+    group.holdings.push(holding);
+    groups.set(key, group);
+  }
+  return [...groups.values()];
+}
+
 /** Holdings grouped by category, largest first. */
 export function portfolioCategories(rows: PositionRow[]): CategoryRow[] {
   const groups = new Map<string, PositionRow[]>();

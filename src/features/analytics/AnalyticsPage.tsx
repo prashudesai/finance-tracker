@@ -3,6 +3,7 @@ import {
   balanceTrend,
   debtProgress,
   financialSummary,
+  holdingGroups,
   financialYearsWithData,
   holdingRows,
   memberContributions,
@@ -12,6 +13,7 @@ import {
   portfolioCategories,
 } from '../../domain/analytics';
 import { financialYearLabel, financialYearStart } from '../../domain/calendar';
+import { groupXirr } from '../../domain/holdings';
 import { useView } from '../../store/tracker';
 import { ColumnChart, Donut, LineChart } from '../../ui/charts';
 import {
@@ -84,6 +86,25 @@ export function AnalyticsPage() {
     allocation === 'all' ? rows : rows.filter((row) => row.holding.kind !== 'investment'),
   );
   const allocationTotal = categories.reduce((sum, row) => sum + row.current, 0);
+  // PF, PPF and NPS accounts show as one row each, rather than by account number.
+  const holdingTotals = holdingGroups(rows.map((row) => row.holding)).map((group) => {
+    const members = rows.filter((row) => group.holdings.includes(row.holding));
+    const sum = (pick: (row: (typeof rows)[number]) => number) =>
+      members.reduce((total, row) => total + pick(row), 0);
+    return {
+      label:
+        group.holdings.length > 1
+          ? `${group.label} · ${group.holdings.length} accounts`
+          : group.label,
+      invested: sum((row) => row.position.invested),
+      current: sum((row) => row.position.current),
+      gain: sum((row) => row.position.gain),
+      xirr:
+        group.holdings.length > 1
+          ? groupXirr(group.holdings, data, today)
+          : (members[0]?.position.xirr ?? null),
+    };
+  });
   const returnsRows =
     returnsView === 'family'
       ? memberPositions(rows).map(({ member, invested, gain }) => ({
@@ -91,14 +112,10 @@ export function AnalyticsPage() {
           invested,
           gain,
         }))
-      : [...rows]
-          .sort((a, b) => b.position.gain - a.position.gain)
+      : [...holdingTotals]
+          .sort((a, b) => b.gain - a.gain)
           .slice(0, RETURN_ROWS)
-          .map(({ holding, position }) => ({
-            label: holding.name,
-            invested: position.invested,
-            gain: position.gain,
-          }));
+          .map(({ label, invested, gain }) => ({ label, invested, gain }));
   const returnsPeak = Math.max(
     ...returnsRows.map((row) => row.invested + Math.max(0, row.gain)),
     1,
@@ -357,19 +374,19 @@ export function AnalyticsPage() {
               ))}
             </ul>
           )}
-          {returnsView === 'holdings' && rows.length > RETURN_ROWS ? (
+          {returnsView === 'holdings' && holdingTotals.length > RETURN_ROWS ? (
             <div className={ui.caption}>
-              Showing top {RETURN_ROWS} of {rows.length} holdings. View details shows all.
+              Showing top {RETURN_ROWS} of {holdingTotals.length}. View details shows all.
             </div>
           ) : null}
           <ViewDetails
             headers={['Holding', 'Invested', 'Current', 'Gain', 'XIRR']}
-            rows={rows.map(({ holding, position }) => [
-              holding.name,
-              formatMoney(position.invested),
-              formatMoney(position.current),
-              formatMoney(position.gain),
-              formatPercent(position.xirr, 2),
+            rows={holdingTotals.map((row) => [
+              row.label,
+              formatMoney(row.invested),
+              formatMoney(row.current),
+              formatMoney(row.gain),
+              formatPercent(row.xirr, 2),
             ])}
           />
         </section>
