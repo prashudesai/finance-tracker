@@ -1,4 +1,4 @@
-import { Sunset } from 'lucide-react';
+import { Landmark, SlidersHorizontal, Sunset, TrendingUp, Wallet } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { averageContributions, holdingGroups, netWorth } from '../../domain/analytics';
 import {
@@ -57,8 +57,8 @@ interface AfterDraft {
 
 const BEHAVIOURS = [
   ['growth', 'Grows'],
-  ['income', 'Pays income'],
-  ['both', 'Grows and pays'],
+  ['income', 'Income'],
+  ['both', 'Both'],
 ] as const;
 
 const draftOf = (saved: After | undefined, growth: number): AfterDraft => ({
@@ -209,18 +209,27 @@ export function RetirementPlanner() {
       ...(after.move ? { move: after.move } : {}),
     };
   });
-  const badEach =
-    each &&
-    groups.some((group) => {
-      const after = afterOf(draftFor(group.key));
-      const inRange = (value: number) => value >= 0 && value <= 30;
-      return (
-        !inRange(after.growth) ||
-        !inRange(after.payout) ||
-        (after.move !== undefined &&
-          (!(after.move.share > 0 && after.move.share <= 1) || !inRange(after.move.payout)))
-      );
-    });
+  /** The first investment with a rate left blank or out of range, said in plain words. */
+  const eachError = (() => {
+    if (!each) return null;
+    const inRange = (value: string) =>
+      value.trim() !== '' && Number(value) >= 0 && Number(value) <= 30;
+    for (const group of groups) {
+      const draft = draftFor(group.key);
+      if (draft.behaviour !== 'income' && !inRange(draft.growth))
+        return `Enter how much ${group.label} grows a year, from 0% to 30%.`;
+      if (draft.behaviour !== 'growth' && !inRange(draft.payout))
+        return `Enter how much ${group.label} pays a year, from 0% to 30%.`;
+      if (draft.behaviour !== 'income' && draft.moving) {
+        const share = Number(draft.moveShare);
+        if (draft.moveShare.trim() === '' || !(share > 0 && share <= 100))
+          return `Enter a share of ${group.label} to move, from 1% to 100%.`;
+        if (!inRange(draft.movePayout))
+          return `Enter how much the money moved from ${group.label} pays a year, from 0% to 30%.`;
+      }
+    }
+    return null;
+  })();
   // Unless a date is chosen, retirement is the 60th birthday.
   const retireOn = retireDate || (birthDate ? addMonths(birthDate, RETIRE_AT * 12) : '');
   const age = birthDate ? ageOn(birthDate, today) : NaN;
@@ -242,9 +251,7 @@ export function RetirementPlanner() {
               ? 'Enter a yearly step-up between 0% and 50%.'
               : !(number('monthlyExpense') > 0)
                 ? 'Enter what your household spends in a month.'
-                : badEach
-                  ? 'Enter growth and payouts between 0% and 30%, and a share to move between 1% and 100%.'
-                  : null;
+                : eachError;
   /** The first day of the month `months` from now. */
   const monthFromNow = (months: number) => addMonths(`${today.slice(0, 7)}-01`, months);
   const monthLabel = (months: number) => formatShortMonthYear(monthFromNow(months).slice(0, 7));
@@ -327,8 +334,45 @@ export function RetirementPlanner() {
   };
   // Nothing saved yet means the dates are new, so the button shows once they're entered.
   const changed = JSON.stringify(next) !== JSON.stringify(settings.retirement ?? null);
-  const retireIndex = plan ? plan.years.findIndex((row) => row.retired) : -1;
-  const shown = plan?.years[picked ?? retireIndex];
+  /**
+   * The plan by year of age: the fund at the end of each, and, once retired, that year's
+   * spending against what the fund makes, both at a yearly rate so a part year doesn't dip.
+   */
+  const ages: {
+    age: number;
+    fund: number;
+    retired: boolean;
+    spending: number;
+    earned: number;
+  }[] = [];
+  if (plan) {
+    let retiredMonths = 0;
+    plan.monthly.forEach((month, index) => {
+      const at = ageAt(index);
+      let row = ages.at(-1);
+      if (!row || row.age !== at) {
+        retiredMonths = 0;
+        row = { age: at, fund: 0, retired: false, spending: 0, earned: 0 };
+        ages.push(row);
+      }
+      row.fund = month.fund;
+      if (index >= plan.monthsToRetire) {
+        retiredMonths += 1;
+        row.retired = true;
+        // Kept as a running yearly rate over the retired months so far.
+        row.spending =
+          (row.spending * (retiredMonths - 1)) / retiredMonths +
+          (month.expense * 12) / retiredMonths;
+        row.earned =
+          (row.earned * (retiredMonths - 1)) / retiredMonths + (month.earned * 12) / retiredMonths;
+      }
+    });
+  }
+  const retireAgeIndex = ages.findIndex((row) => row.retired);
+  const retiredAges = ages.filter((row) => row.retired);
+  // The first year spending passes what the fund makes, when it starts to shrink.
+  const shrinksFrom = retiredAges.find((row) => row.spending > row.earned);
+  const shown = ages[picked ?? retireAgeIndex];
 
   return (
     <section aria-label="Retirement planner" className={ui.card}>
@@ -469,51 +513,22 @@ export function RetirementPlanner() {
         </section>
       ) : null}
 
-      {plan ? (
+      {plan && ages.length > 1 ? (
         <div className={styles.retireChart}>
+          <h3 className={ui.label}>Your fund by age</h3>
           <LineChart
             fromZero
             narrow={phone}
             onPick={setPicked}
-            picked={picked ?? retireIndex}
+            picked={picked ?? retireAgeIndex}
             plain
             series={[
               {
                 name: 'Fund value',
-                points: plan.years.map((row) => ({
-                  label: String(ageAt(row.start)),
-                  value: row.fundEnd,
-                })),
+                points: ages.map((row) => ({ label: String(row.age), value: row.fund })),
               },
-              {
-                name: 'Yearly expenses',
-                color: 'var(--series-expense)',
-                dash: '6 4',
-                // A short stretch shows a full year's rate, so the line doesn't dip.
-                points: plan.years.map((row) => ({
-                  label: String(ageAt(row.start)),
-                  value: (row.expenses * 12) / Math.max(row.months, 1),
-                })),
-              },
-              ...(each && plan.payoutAtRetirement > 0
-                ? [
-                    {
-                      name: 'Yearly payouts',
-                      color: 'var(--series-income)',
-                      dash: '2 3',
-                      points: plan.years.map((row) => ({
-                        label: String(ageAt(row.start)),
-                        value: (row.payouts * 12) / Math.max(row.months, 1),
-                      })),
-                    },
-                  ]
-                : []),
             ]}
-            title={
-              each && plan.payoutAtRetirement > 0
-                ? 'Fund value, yearly expenses and payouts by age'
-                : 'Fund value and yearly expenses by age'
-            }
+            title="Your fund at the end of each year of age"
           />
           <p className={styles.milestoneNote}>
             <span aria-hidden="true">┃</span> The line marks retirement in{' '}
@@ -523,15 +538,51 @@ export function RetirementPlanner() {
           {shown ? (
             <p aria-live="polite" className={ui.caption} style={{ margin: 0 }}>
               <strong>
-                {fySpan(shown)}, age {ageAt(shown.start)}
+                Age {shown.age}
                 {shown.retired ? ', retired' : ''}
               </strong>
-              : fund {formatAmount(shown.fundEnd)} at the end, expenses{' '}
-              {formatAmount(shown.expenses)}
-              {shown.unpaid > 0 ? `, ${formatAmount(shown.unpaid)} not covered` : ''}. Tap the chart
-              to see another stretch.
+              : {formatAmount(shown.fund)} at the end of the year
+              {shown.retired
+                ? `, spending ${formatAmount(shown.spending)} a year while the fund makes ${formatAmount(shown.earned)}`
+                : ''}
+              . Tap the chart to see another age.
             </p>
           ) : null}
+        </div>
+      ) : null}
+
+      {plan && retiredAges.length > 1 ? (
+        <div className={styles.retireChart}>
+          <h3 className={ui.label}>Each year after you retire</h3>
+          <LineChart
+            fromZero
+            narrow={phone}
+            plain
+            series={[
+              {
+                name: each ? 'Fund makes (growth and payouts)' : 'Fund makes (growth)',
+                color: 'var(--series-income)',
+                points: retiredAges.map((row) => ({
+                  label: String(row.age),
+                  value: Math.max(0, row.earned),
+                })),
+              },
+              {
+                name: 'You spend',
+                color: 'var(--series-expense)',
+                dash: '6 4',
+                points: retiredAges.map((row) => ({ label: String(row.age), value: row.spending })),
+              },
+            ]}
+            title="Each year after you retire: what the fund makes against what you spend"
+          />
+          <p className={ui.caption} style={{ margin: 0 }}>
+            {!shrinksFrom
+              ? 'The fund makes more than you spend every year, so it keeps growing.'
+              : shrinksFrom === retiredAges[0]
+                ? 'You spend more than the fund makes from the start, so it shrinks each year.'
+                : `The fund makes more than you spend until ${shrinksFrom.age}. From then on, spending passes it, so the fund starts to shrink.`}
+          </p>
         </div>
       ) : null}
 
@@ -622,31 +673,42 @@ export function RetirementPlanner() {
       <details className={ui.fold} open={Boolean(error) || undefined}>
         <summary>Your assumptions</summary>
         <div className={ui.page}>
-          <div aria-label="Fund" className={styles.kinds} role="radiogroup">
-            {(
-              [
-                ['all', 'All investments', allFund],
-                ['retirement', 'Retirement accounts', retirementFund],
-              ] as const
-            ).map(([key, label, value]) => (
-              <button
-                aria-checked={fundKind === key}
-                className={styles.kind}
-                key={key}
-                onClick={() => setFundKind(key)}
-                role="radio"
-                type="button"
-              >
-                {label}
-                <span>{formatAmount(Math.round(value))} today</span>
-              </button>
-            ))}
+          <div className={styles.modeGroup}>
+            <h3 className={ui.label}>Your fund</h3>
+            <div aria-label="Fund" className={styles.modes} role="radiogroup">
+              {(
+                [
+                  ['all', 'All investments', allFund, Wallet],
+                  ['retirement', 'Retirement accounts', retirementFund, Landmark],
+                ] as const
+              ).map(([key, label, value, Icon]) => (
+                <button
+                  aria-checked={fundKind === key}
+                  className={styles.mode}
+                  key={key}
+                  onClick={() => setFundKind(key)}
+                  role="radio"
+                  type="button"
+                >
+                  <span aria-hidden="true" className={styles.modeIcon}>
+                    <Icon size={18} />
+                  </span>
+                  <strong>{label}</strong>
+                  <small>{formatAmount(Math.round(value))} today</small>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className={ui.form}>
+          <div className={styles.assumptions}>
             <NumberField
               label="Monthly spending today (₹)"
               onChange={set('monthlyExpense')}
               value={values.monthlyExpense}
+            />
+            <NumberField
+              label="Plan until age"
+              onChange={set('untilAge')}
+              value={values.untilAge}
             />
             <Field label="Date of birth">
               <input
@@ -679,11 +741,6 @@ export function RetirementPlanner() {
               </span>
             </Field>
             <NumberField
-              label="Plan until age"
-              onChange={set('untilAge')}
-              value={values.untilAge}
-            />
-            <NumberField
               label="Prices rise each year (%)"
               onChange={set('inflation')}
               step={0.5}
@@ -695,6 +752,12 @@ export function RetirementPlanner() {
               step={0.5}
               value={values.growthBefore}
             />
+            <NumberField
+              label="Contributions rise a year (%)"
+              onChange={set('stepUp')}
+              step={1}
+              value={values.stepUp}
+            />
             {each ? null : (
               <NumberField
                 label="Growth after retiring (%)"
@@ -703,12 +766,6 @@ export function RetirementPlanner() {
                 value={values.growthAfter}
               />
             )}
-            <NumberField
-              label="Contributions rise each year (%)"
-              onChange={set('stepUp')}
-              step={1}
-              value={values.stepUp}
-            />
           </div>
           <label className={ui.check}>
             <input
@@ -727,27 +784,32 @@ export function RetirementPlanner() {
             Contributions are your savings contributions average, and stop when you retire.
           </span>
 
-          <h3 className={ui.label}>After you retire</h3>
-          <div aria-label="After you retire" className={styles.kinds} role="radiogroup">
-            {(
-              [
-                ['simple', 'One growth rate', 'For the whole fund'],
-                ['each', 'Set each investment', 'Growth, income or both'],
-              ] as const
-            ).map(([key, label, detail]) => (
-              <button
-                aria-checked={afterMode === key}
-                className={styles.kind}
-                disabled={key === 'each' && groups.length === 0}
-                key={key}
-                onClick={() => setAfterMode(key)}
-                role="radio"
-                type="button"
-              >
-                {label}
-                <span>{detail}</span>
-              </button>
-            ))}
+          <div className={styles.modeGroup}>
+            <h3 className={ui.label}>After you retire</h3>
+            <div aria-label="After you retire" className={styles.modes} role="radiogroup">
+              {(
+                [
+                  ['simple', 'One growth rate', 'For the whole fund', TrendingUp],
+                  ['each', 'Set each investment', 'Growth, income or both', SlidersHorizontal],
+                ] as const
+              ).map(([key, label, detail, Icon]) => (
+                <button
+                  aria-checked={afterMode === key}
+                  className={styles.mode}
+                  disabled={key === 'each' && groups.length === 0}
+                  key={key}
+                  onClick={() => setAfterMode(key)}
+                  role="radio"
+                  type="button"
+                >
+                  <span aria-hidden="true" className={styles.modeIcon}>
+                    <Icon size={18} />
+                  </span>
+                  <strong>{label}</strong>
+                  <small>{detail}</small>
+                </button>
+              ))}
+            </div>
           </div>
           {each ? (
             <ul aria-label="Each investment after retiring" className={styles.afterList}>
@@ -835,7 +897,7 @@ export function RetirementPlanner() {
                           }
                           type="checkbox"
                         />
-                        At retirement, move part into an income investment
+                        Move part into income at retirement
                       </label>
                     ) : null}
                     {draft.behaviour !== 'income' && draft.moving ? (

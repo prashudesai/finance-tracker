@@ -310,3 +310,20 @@ describe('investments set one by one after retiring', () => {
     expect(need.needed).toBeGreaterThan(simple.needed);
   });
 });
+
+describe('month by month, for charts by age', () => {
+  test('every month has the fund, spending and what the fund made', () => {
+    const plan = planRetirement({
+      ...base,
+      growthBefore: 10,
+      growthAfter: 10,
+      monthlyContribution: 10_000,
+    });
+    expect(plan.monthly).toHaveLength(plan.years.reduce((sum, row) => sum + row.months, 0));
+    const made = plan.monthly.reduce((sum, row) => sum + row.earned, 0);
+    const growth = plan.years.reduce((sum, row) => sum + row.growth, 0);
+    expect(made).toBeCloseTo(growth, -1);
+    expect(plan.monthly.at(-1)?.fund).toBeCloseTo(plan.leftOver, 0);
+    expect(plan.monthly[0]?.expense).toBe(50_000);
+  });
+});

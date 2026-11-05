@@ -1,7 +1,10 @@
 {
-  "version": "1.18.0",
+  "version": "1.18.1",
   "released": "2026-11-05",
   "notes": [
+    "Retirement charts: your fund by age, and after retiring, what the fund makes against what you spend, with when it starts to shrink",
+    "Retirement assumptions sit two to a row, and each investment's settings are compact",
+    "A rate left blank asks for a figure instead of counting as 0%",
     "Retirement planner: set each investment after retiring to grow, pay income, or both",
     "Income investments such as SCSS or an FD keep their value and pay your spending first, before anything is sold",
     "At retirement, move a share of an investment into an income investment, and mark what can't be sold, such as an annuity",

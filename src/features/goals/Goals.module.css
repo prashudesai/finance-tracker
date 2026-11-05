@@ -426,10 +426,12 @@
   color: var(--border-strong);
 }
 
-/* Retirement planner: each investment after retiring */
+/* Retirement planner: each investment after retiring, kept compact as there can be many */
 .afterList {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+  gap: 8px;
+  align-items: start;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -437,8 +439,8 @@
 
 .afterRow {
   display: grid;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 10px 12px;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
   border-radius: var(--radius-small);
@@ -449,35 +451,146 @@
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 4px 12px;
+  gap: 2px 12px;
+  font-size: 0.92rem;
 }
 
+/* One slim switch of three, rather than three buttons */
 .behaviours {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
 }
 
 .behaviour {
-  padding: 8px 4px;
+  min-height: 30px;
+  padding: 4px 6px;
   color: var(--muted);
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-small);
+  line-height: 1.15;
+  background: none;
+  border: 0;
+  border-radius: 999px;
   cursor: pointer;
 }
 
 .behaviour[aria-checked='true'] {
-  color: var(--text);
-  background: var(--accent-soft);
-  border-color: var(--accent);
+  color: var(--accent-text);
+  background: var(--accent);
 }
 
 .afterFields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.afterRow label,
+.afterRow > span {
+  font-size: 0.78rem;
+}
+
+.afterFields input {
+  padding: 7px 10px;
+}
+
+/* Retirement planner: a choice of two, as cards with an icon, title and detail */
+.modeGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.modeGroup h3 {
+  margin: 0;
+}
+
+.modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.mode {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  padding: 12px;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.mode strong {
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.mode small {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.3;
+}
+
+.modeIcon {
+  display: grid;
+  grid-row: span 2;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: var(--muted);
+  background: var(--surface);
+  border-radius: 50%;
+}
+
+.mode[aria-checked='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.mode[aria-checked='true'] .modeIcon {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.mode:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Retirement planner assumptions: two to a row on phones, inputs lined up along the bottom */
+.assumptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(180px, calc(50% - 5px)), 1fr));
+  gap: 12px 10px;
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .assumptions {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.assumptions label {
+  gap: 4px;
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.assumptions input {
+  padding: 8px 10px;
 }

@@ -254,9 +254,13 @@ describe('Goals', () => {
     expect(planner.queryByLabelText('Growth after retiring (%)')).toBeNull();
     const rows = within(planner.getByRole('list', { name: 'Each investment after retiring' }));
     const first = within(rows.getAllByRole('listitem')[0] as HTMLElement);
-    fireEvent.click(first.getByRole('radio', { name: 'Pays income' }));
+    fireEvent.click(first.getByRole('radio', { name: 'Income' }));
     expect(first.getByText(/a month when you retire, on ₹.*, which stays the same/)).toBeDefined();
     expect(planner.getByText(/Payouts cover ₹/)).toBeDefined();
+    // A rate left blank asks for one, rather than counting as 0%.
+    fireEvent.change(first.getByLabelText('Pays a year (%)'), { target: { value: '' } });
+    expect(planner.getByRole('alert').textContent).toMatch(/^Enter how much .+ pays a year/);
+    fireEvent.change(first.getByLabelText('Pays a year (%)'), { target: { value: '7' } });
     fireEvent.click(planner.getByRole('button', { name: 'Save these assumptions' }));
     await waitFor(() =>
       expect(saved().settings[0]?.retirement).toMatchObject({

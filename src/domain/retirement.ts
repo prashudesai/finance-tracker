@@ -76,8 +76,20 @@ export interface RetirementYear {
   unpaid: number;
 }
 
+/** One month of the plan, for charting by age. */
+export interface RetirementMonth {
+  /** The fund at the month's end. */
+  fund: number;
+  /** What the household spends in it. */
+  expense: number;
+  /** Growth and payouts the fund made in it. */
+  earned: number;
+}
+
 export interface RetirementPlan {
   years: RetirementYear[];
+  /** Every month from now, in order. */
+  monthly: RetirementMonth[];
   /** Months from now to retiring. */
   monthsToRetire: number;
   fundAtRetirement: number;
@@ -165,6 +177,7 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
   if (retireAt === 0) retire();
   let runsOutMonth: number | null = null;
   const years: RetirementYear[] = [];
+  const monthly: RetirementMonth[] = [];
   for (const [from, to] of stretches) {
     const retired = from >= retireAt;
     if (from === retireAt && retireAt > 0) {
@@ -182,6 +195,8 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
       const year = Math.floor(month / 12);
       const expense = inputs.monthlyExpense * Math.pow(1 + inflation / 100, year);
       expenses += expense;
+      const grownBefore = growth;
+      const paidBefore = payouts;
       if (retired) {
         let income = 0;
         for (const part of parts) {
@@ -219,6 +234,11 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
           part.value += gained + contribution * part.share;
         }
       }
+      monthly.push({
+        fund: values(),
+        expense,
+        earned: growth - grownBefore + payouts - paidBefore,
+      });
     }
     const fund = values();
     years.push({
@@ -245,6 +265,7 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
     ),
     payoutAtRetirement: roundMoney(payoutAtRetirement),
     partsAtRetirement,
+    monthly,
     runsOutAt: runsOutMonth === null ? null : age + Math.floor(runsOutMonth / 12),
     runsOutMonth,
     leftOver: roundMoney(values()),
