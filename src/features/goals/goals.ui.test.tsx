@@ -169,10 +169,11 @@ describe('Goals', () => {
     expect(planner.getByText('To make it last until 85')).toBeDefined();
     // The table starts this month, by financial year, with a mark where retirement starts.
     fireEvent.click(planner.getByText('Year by year'));
-    const rows = planner.getAllByText(/^FY \d{4}-\d{2} · .* · age \d+$/);
+    const rows = planner.getAllByText(/^FY \d{4}-\d{2}( · .*)? · age \d+$/);
     // This month to March, then whole financial years.
     expect(rows[0]?.textContent).toMatch(/· \w+ \d{4}( – Mar \d{4})? · age 40$/);
-    expect(rows[1]?.textContent).toMatch(/· Apr \d{4} – Mar \d{4} · age \d+$/);
+    // A whole financial year shows the year alone.
+    expect(rows.some((row) => /^FY \d{4}-\d{2} · age \d+$/.test(row.textContent ?? ''))).toBe(true);
     expect(planner.getAllByText(/^Retire in \w+ \d{4} at 60, with ₹/).length).toBe(1);
     const need = within(planner.getByRole('region', { name: "What you'll need" }));
     expect(need.getByText('Needed at 60')).toBeDefined();

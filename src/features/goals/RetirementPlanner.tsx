@@ -146,9 +146,15 @@ export function RetirementPlanner() {
   // "You're 40", and that month's end for later ones, so a birthday that month counts.
   const ageAt = (months: number) =>
     ageOn(birthDate, months === 0 ? today : lastDayOfMonth(monthFromNow(months).slice(0, 7)));
-  /** "FY 2026-27 · Nov 2026 – Mar 2027", the financial year a stretch falls in. */
-  const fySpan = (row: { start: number; months: number }) =>
-    `${financialYearLabel(financialYearStart(monthFromNow(row.start)))} · ${span(row)}`;
+  /**
+   * The financial year a stretch falls in. A whole year is just "FY 2028-29"; part of one,
+   * such as the year you retire in, adds its months: "FY 2027-28 · Apr 2027 – May 2027".
+   */
+  const fySpan = (row: { start: number; months: number }) => {
+    const fy = financialYearLabel(financialYearStart(monthFromNow(row.start)));
+    const whole = row.months === 12 && monthFromNow(row.start).slice(5, 7) === '04';
+    return whole ? fy : `${fy} · ${span(row)}`;
+  };
   /** The month someone turns an age, for showing next to it. */
   const turns = (years: number) =>
     birthDate ? formatShortMonthYear(addMonths(birthDate, years * 12).slice(0, 7)) : '';

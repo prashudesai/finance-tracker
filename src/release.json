@@ -1,7 +1,8 @@
 {
-  "version": "1.17.1",
+  "version": "1.17.2",
   "released": "2026-11-05",
   "notes": [
+    "Retirement table shows months only on part years, such as the year you retire in",
     "Retirement planner runs from this month by financial year, retires in your exact month, and marks the retirement milestone",
     "Income tab: salary against other income, each source and how often it comes",
     "Salary over time with raises found for you, and this year against last year",
