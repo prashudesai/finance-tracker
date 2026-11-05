@@ -11,7 +11,7 @@ import {
   whereIncomeGoes,
   yearOnYear,
 } from '../../domain/income';
-import { useSaveSettings, useSettings, useView } from '../../store/tracker';
+import { useSaveSettings, useSettings, useSpendingView } from '../../store/tracker';
 import { chartColor, LineChart } from '../../ui/charts';
 import { formatAmount, formatShortMonth, formatShortMonthYear, localDate } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
@@ -33,7 +33,7 @@ function Change({ value }: { value: number | null }) {
 
 /** Where income comes from, how it's changing, and where it goes, for one financial year. */
 export function IncomeSection({ year }: { year: number }) {
-  const data = useView();
+  const data = useSpendingView();
   const settings = useSettings();
   const save = useSaveSettings();
   const phone = useIsPhone();

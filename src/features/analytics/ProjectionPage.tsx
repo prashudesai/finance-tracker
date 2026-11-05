@@ -7,12 +7,12 @@ import {
   type ProjectionResult,
 } from '../../domain/projection';
 import { SCENARIOS, type Scenario } from '../../schema/records';
-import { useSettings, useView } from '../../store/tracker';
+import { useSettings, useSpendingView } from '../../store/tracker';
 import { localDate } from '../../ui/format';
 import { ProjectionView } from './ProjectionView';
 
 export function ProjectionPage() {
-  const data = useView();
+  const data = useSpendingView();
   const settings = useSettings();
   const today = localDate();
   const [scenario, setScenario] = useState<Scenario>('base');

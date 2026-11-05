@@ -14,7 +14,7 @@ import {
   REPORT_TYPES,
   type ReportType,
 } from '../../domain/reports';
-import { useTracker, useView } from '../../store/tracker';
+import { useTracker, useSpendingView } from '../../store/tracker';
 import { downloadText } from '../../ui/download';
 import { Field } from '../../ui/Field';
 import { formatDay, formatMoney, localDate } from '../../ui/format';
@@ -27,7 +27,7 @@ const ROW_LIMIT = 200;
 const PHONE_ROWS = 20;
 
 export function ReportsPage() {
-  const data = useView();
+  const data = useSpendingView();
   const report = useTracker((state) => state.report);
   const today = localDate();
   const thisFy = financialYearStart(today);

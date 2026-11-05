@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { create } from 'zustand';
+import { withHouseExpenses } from '../domain/analytics';
 import { buildChange, pruneWrites, undoWrites } from '../domain/changes';
 import { dueContributions } from '../domain/holdings';
 import { plainError } from '../data/errors';
@@ -256,4 +258,20 @@ export function useView() {
   const data = useTracker((state) => state.data);
   const profile = useTracker((state) => state.profile);
   return selectView(data, profile);
+}
+
+/**
+ * The view for working out spending: each closed month's house expense counted as an
+ * expense. Screens that list or edit records, or close months, read the plain records.
+ */
+export function useSpendingView() {
+  const data = useTracker((state) => state.data);
+  const profile = useTracker((state) => state.profile);
+  return useMemo(() => withHouseExpenses(selectView(data, profile), data), [data, profile]);
+}
+
+/** The whole household's records, with house expense counted, for goals and the planner. */
+export function useSpendingHousehold() {
+  const data = useTracker((state) => state.data);
+  return useMemo(() => withHouseExpenses(data, data), [data]);
 }

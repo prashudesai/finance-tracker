@@ -2,7 +2,7 @@ import { CalendarHeart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { previousMonth } from '../../domain/calendar';
 import { monthRecap, recapMonths, type MonthRecap as Recap } from '../../domain/recap';
-import { useView } from '../../store/tracker';
+import { useSpendingView } from '../../store/tracker';
 import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { Nudge } from '../../ui/Nudge';
@@ -158,7 +158,7 @@ function RecapBody({ recap, running }: { recap: Recap; running: boolean }) {
 
 /** Any month with records, one at a time, newest first. */
 export function RecapView({ onClose, start }: { onClose: () => void; start?: string }) {
-  const data = useView();
+  const data = useSpendingView();
   const today = localDate();
   const months = useMemo(() => recapMonths(data, today.slice(0, 7)), [data, today]);
   // The latest finished month, unless asked for another. The running month is one tap on.
@@ -217,7 +217,7 @@ export function RecapView({ onClose, start }: { onClose: () => void; start?: str
 
 /** On the dashboard early in a month: last month in a sentence, until seen or set aside. */
 export function RecapCard() {
-  const data = useView();
+  const data = useSpendingView();
   const today = localDate();
   const last = previousMonth(today.slice(0, 7));
   const [dismissed, setDismissed] = useState(() => seen() === last);

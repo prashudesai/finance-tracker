@@ -3,6 +3,7 @@ import {
   defaultSettings,
   EMI_CATEGORY,
   PMS_TYPE,
+  type Expense,
   type Holding,
   type TrackerSettings,
 } from '../schema/records';
@@ -210,31 +211,64 @@ function contributionsOf(data: TrackerData, match: (holding: Holding) => boolean
 export const pmsTransfers = (data: TrackerData, month: string) =>
   sumAmount(contributionsOf(data, isPms).filter((row) => inMonth(row.date, month)));
 
+/**
+ * A month's close: what the bank balance should be after income, recorded expenses and
+ * everything invested from income, PMS included. What's missing at the closing balance is
+ * house expense, spending that was never recorded.
+ */
 export const closeMonth = (data: TrackerData, month: string) =>
-  monthClose(data, month, pmsTransfers(data, month));
+  monthClose(data, month, investedFromIncome(data).get(month) ?? 0);
 
 /** Each month's figures from one pass over the records, for work across many months. */
 export function monthCloser(data: TrackerData): (month: string) => MonthClose {
   const totals = monthTotals(data);
   const balances = balancesByMonth(data);
-  const transfers = new Map<string, number>();
-  for (const row of contributionsOf(data, isPms)) {
-    const month = row.date.slice(0, 7);
-    transfers.set(month, (transfers.get(month) ?? 0) + row.amount);
-  }
-  return (month) => closeFrom(totals, balances, month, transfers.get(month) ?? 0);
+  const invested = investedFromIncome(data);
+  return (month) => closeFrom(totals, balances, month, invested.get(month) ?? 0);
 }
 
-const isRetirement = (holding: Holding) => holding.kind === 'nps' || holding.kind === 'ppf';
+export const HOUSE_EXPENSE = 'Unrecorded house expense';
+const HOUSE_EXPENSE_ID = 'house-expense-';
+
+/** A house expense worked out from the bank balances, which can't be edited on its own. */
+export const isHouseExpense = (row: Pick<Expense, 'id'>) => row.id.startsWith(HOUSE_EXPENSE_ID);
+
+/**
+ * Each closed month's house expense as an expense on its last day, worked out from the
+ * household's balances each time, so a forgotten expense added later takes it down again.
+ * A closing balance above what was expected adds nothing.
+ */
+export function houseExpenses(household: TrackerData): Expense[] {
+  const closeOf = monthCloser(household);
+  return household.monthlyBalances.flatMap(({ month }) => {
+    const { unrecorded } = closeOf(month);
+    if (unrecorded === null || roundMoney(unrecorded) <= 0) return [];
+    return [
+      {
+        id: `${HOUSE_EXPENSE_ID}${month}`,
+        date: lastDayOfMonth(month),
+        category: HOUSE_EXPENSE,
+        subcategory: 'Not recorded, from bank balances',
+        amount: roundMoney(unrecorded),
+        isAnnual: false,
+      },
+    ];
+  });
+}
+
+/** Records for working out spending: recorded expenses and each month's house expense. */
+export function withHouseExpenses(view: TrackerData, household: TrackerData): TrackerData {
+  const derived = houseExpenses(household);
+  return derived.length === 0 ? view : { ...view, expenses: [...view.expenses, ...derived] };
+}
 
 export interface BalanceHistoryRow {
   month: string;
   opening: number;
   income: number;
   expenses: number;
-  pms: number;
-  /** NPS and PPF are tracked separately, so they don't change the surplus. */
-  retirement: number;
+  /** Invested from income, PMS included, which leaves the bank. */
+  invested: number;
   surplus: number;
   houseExpense: number | null;
 }
@@ -244,6 +278,7 @@ export function balanceHistory(data: TrackerData, fy: number, today: string): Ba
   const { start, end } = financialYearRange(fy);
   const current = today.slice(0, 7);
   const closeOf = monthCloser(data);
+  const invested = investedFromIncome(data);
   return data.monthlyBalances
     .filter(({ month }) => month < current && inRange(`${month}-01`, start, end))
     .map(({ month, startBalance }) => {
@@ -253,10 +288,7 @@ export function balanceHistory(data: TrackerData, fy: number, today: string): Ba
         opening: startBalance,
         income: close.income,
         expenses: close.expenses,
-        pms: pmsTransfers(data, month),
-        retirement: sumAmount(
-          contributionsOf(data, isRetirement).filter((row) => inMonth(row.date, month)),
-        ),
+        invested: invested.get(month) ?? 0,
         surplus: close.available,
         houseExpense: close.unrecorded,
       };
@@ -471,8 +503,22 @@ export function memberContributions(data: TrackerData, fy: number) {
   return [...totals].map(([member, amount]) => ({ member, amount }));
 }
 
-export const monthSignature = (data: TrackerData, month: string) =>
-  JSON.stringify(closeMonth(data, month));
+/**
+ * What a review was signed against. Kept on the figures it always used, PMS alone taken
+ * out, so months reviewed before investing was counted aren't marked as changed.
+ */
+export function monthSigner(data: TrackerData): (month: string) => string {
+  const totals = monthTotals(data);
+  const balances = balancesByMonth(data);
+  const transfers = new Map<string, number>();
+  for (const row of contributionsOf(data, isPms)) {
+    const month = row.date.slice(0, 7);
+    transfers.set(month, (transfers.get(month) ?? 0) + row.amount);
+  }
+  return (month) => JSON.stringify(closeFrom(totals, balances, month, transfers.get(month) ?? 0));
+}
+
+export const monthSignature = (data: TrackerData, month: string) => monthSigner(data)(month);
 
 export function monthReviewStatus(data: TrackerData, month: string) {
   const review = data.monthReviews.find((row) => row.month === month);
@@ -546,6 +592,7 @@ export const isMonthEnd = (today: string) => today === lastDayOfMonth(today.slic
 export function monthsToReview(household: TrackerData, today: string) {
   const current = today.slice(0, 7);
   const closeOf = monthCloser(household);
+  const signatureOf = monthSigner(household);
   const reviews = new Map(
     [...household.monthReviews].reverse().map((row) => [row.month, row.signature]),
   );
@@ -560,7 +607,7 @@ export function monthsToReview(household: TrackerData, today: string) {
       const close = closeOf(month);
       // A running month only needs its opening balance until its last day.
       if (month === current && !isMonthEnd(today)) return close.opening === null;
-      return !close.complete || reviews.get(month) !== JSON.stringify(close);
+      return !close.complete || reviews.get(month) !== signatureOf(month);
     })
     .sort()
     .reverse();

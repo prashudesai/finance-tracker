@@ -2,7 +2,7 @@ import { ChevronRight, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { insights, type Insight } from '../../domain/insights';
-import { useView } from '../../store/tracker';
+import { useSpendingView } from '../../store/tracker';
 import { localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
@@ -72,7 +72,7 @@ function InsightRow({ insight, onOpen }: { insight: Insight; onOpen?: () => void
 
 /** The most useful patterns in the records right now, worked out on this device. */
 export function InsightsCard() {
-  const data = useView();
+  const data = useSpendingView();
   const today = localDate();
   const list = useMemo(() => insights(data, today), [data, today]);
   const [all, setAll] = useState(false);

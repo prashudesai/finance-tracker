@@ -14,7 +14,7 @@ import { categoryOf, holdingGroups, netWorth } from '../../domain/analytics';
 import { holdingValue } from '../../domain/holdings';
 import { addMonths } from '../../domain/calendar';
 import { GOAL_KINDS, goalSchema, type Goal, type GoalKind } from '../../schema/records';
-import { useSettings, useTracker } from '../../store/tracker';
+import { useSettings, useSpendingHousehold, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
 import { formatCompactMoney, formatAmount, formatShortMonthYear, localDate } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
@@ -25,7 +25,7 @@ const percentText = (share: number) => String(Math.round(share * 1000) / 10);
 
 /** Adds or edits a goal. Only the plan is saved; progress is always worked out. */
 export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) {
-  const data = useTracker((state) => state.data);
+  const data = useSpendingHousehold();
   const commit = useTracker((state) => state.commit);
   const { familyMembers } = useSettings();
   const today = localDate();

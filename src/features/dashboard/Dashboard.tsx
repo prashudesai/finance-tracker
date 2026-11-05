@@ -23,7 +23,7 @@ import { financialYearRange, financialYearStart } from '../../domain/calendar';
 import { monthlyTrend } from '../../domain/cashflow';
 import { pendingOccurrences } from '../../domain/recurring';
 import { paidShare, summarizeLoans, totalOutstanding, greeting } from '../../domain/summary';
-import { useTracker, useView } from '../../store/tracker';
+import { useSpendingView, useTracker, useView } from '../../store/tracker';
 import { chartColor } from '../../ui/charts';
 import {
   formatCompactMoney,
@@ -103,7 +103,9 @@ export function Dashboard({ name = '' }: { name?: string }) {
     [data, today],
   );
   const trendUp = (trendValues.at(-1) ?? 0) >= (trendValues[0] ?? 0);
-  const overview = monthlyOverview(data, month, today);
+  // Spending figures count each closed month's house expense.
+  const spending = useSpendingView();
+  const overview = monthlyOverview(spending, month, today);
   const loans = summarizeLoans(data, today);
   const outstanding = totalOutstanding(loans);
 
@@ -149,7 +151,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
     Number(fyStartMonth.slice(5, 7)) +
     1;
   const invested = investedFromIncome(data);
-  const trend = monthlyTrend(data, month, phone ? PHONE_TREND_MONTHS : fyMonths).map((row) => ({
+  const trend = monthlyTrend(spending, month, phone ? PHONE_TREND_MONTHS : fyMonths).map((row) => ({
     ...row,
     invested: invested.get(row.month) ?? 0,
   }));

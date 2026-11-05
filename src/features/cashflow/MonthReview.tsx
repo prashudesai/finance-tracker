@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   closeMonth,
+  investedFromIncome,
   holdingLabel,
   isMonthEnd,
   monthReviewStatus,
@@ -29,6 +30,7 @@ export function MonthReview({
   const canEdit = useTracker((state) => state.canEdit);
   const [settingBalance, setSettingBalance] = useState(false);
   const close = closeMonth(data, month);
+  const invested = investedFromIncome(data).get(month) ?? 0;
   const status = monthReviewStatus(data, month);
   const today = localDate();
   const current = today.slice(0, 7);
@@ -71,8 +73,9 @@ export function MonthReview({
             ['Opening balance', close.opening],
             ['Income', close.income],
             ['Recorded expenses', close.expenses],
+            ['Invested from income', invested],
             ['Closing balance', close.closing],
-            ['House expense', close.unrecorded],
+            ['Unrecorded house expense', close.unrecorded],
           ].map(([label, value]) => (
             <li className={ui.row} key={String(label)}>
               <span className={ui.rowMain}>{label}</span>

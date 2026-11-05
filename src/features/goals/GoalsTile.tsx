@@ -2,7 +2,7 @@ import { ChevronRight, Target } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { goalDate, goalPlan } from '../../domain/goals';
-import { useTracker, useView } from '../../store/tracker';
+import { useSpendingHousehold, useView } from '../../store/tracker';
 import { localDate } from '../../ui/format';
 import { Nudge } from '../../ui/Nudge';
 import ui from '../../ui/ui.module.css';
@@ -24,7 +24,7 @@ function nudgeDismissed() {
 /** Goals at a glance on the dashboard, or a one-time offer to set the first. */
 export function GoalsTile() {
   const data = useView();
-  const household = useTracker((state) => state.data);
+  const household = useSpendingHousehold();
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(nudgeDismissed);
   const today = localDate();

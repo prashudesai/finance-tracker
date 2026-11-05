@@ -96,7 +96,8 @@ A scripted comparison of the visible text on every old page, at phone and deskto
 - Records are end-to-end encrypted, as a new design. See [encryption.md](encryption.md).
 - Net worth history is worked out from records, with no stored snapshots. Months where a market holding has no value update are marked as estimates.
 - Growth Projection follows the older app's layout at both widths, from one view.
-- The balance history's NPS + PPF column shows contributions recorded that month, not the older app's scheduled amount.
+- A month's calculated balance takes off everything invested from income, PMS and PPF included, where the older app took off Stallion PMS alone. PF and NPS come out of salary before it's paid, so they stay out. The balance history shows that as an Invested from income column in place of Stallion PMS and NPS + PPF. Review signatures keep the older formula, so months already reviewed aren't marked as changed.
+- Unrecorded house expense, what a closing balance falls short of the calculated one, counts as spending: `houseExpenses` adds it as a derived expense on the month's last day, worked out from the balances each time and never saved, through `useSpendingView` and `useSpendingHousehold` on the dashboard, Analytics, Income, reports, insights, goals and the retirement planner. Screens that list, edit or close records read the plain records. A closing balance above the calculated one adds nothing.
 - The change log is shared across the family, and changes of more than 50 records keep a summary only.
 - History rows open a modal with Edit and Delete, in place of an Actions column. Phones show only the key columns.
 - The dashboard's "What changed" tile was removed. Contributions, principal repaid and PMS gain change this month became insights, and its spending comparison was dropped, because it compared a running month with a whole one.

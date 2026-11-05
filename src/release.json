@@ -1,7 +1,10 @@
 {
-  "version": "1.18.5",
+  "version": "1.19.0",
   "released": "2026-11-05",
   "notes": [
+    "Unrecorded house expense, what your closing balance falls short of, now counts as spending on the dashboard, in Analytics, goals and the retirement planner",
+    "The month close takes off everything invested from your bank, so SIPs and PPF are no longer counted as house expense",
+    "Add a forgotten expense later and the unrecorded part shrinks, so nothing is counted twice",
     "The dashboard chart's investing bar shows only what you invested from income; PF and NPS, taken from salary first, are left out",
     "Dashboard chart shows income against expenses, with each month's investing stacked on top",
     "Dashboard on a computer: net worth beside this month's figures, and the expense snapshot tile is removed",

@@ -14,7 +14,7 @@ import {
 } from '../../domain/analytics';
 import { financialYearLabel, financialYearStart } from '../../domain/calendar';
 import { groupXirr } from '../../domain/holdings';
-import { useView } from '../../store/tracker';
+import { useSpendingView } from '../../store/tracker';
 import { ColumnChart, Donut, LineChart } from '../../ui/charts';
 import {
   formatCompactMoney,
@@ -70,7 +70,7 @@ const monthsLabel = (count: number, noun: string) =>
   count === 0 ? `No ${noun} entries recorded` : `Across ${count} months with ${noun} entries`;
 
 export function AnalyticsPage() {
-  const data = useView();
+  const data = useSpendingView();
   const today = localDate();
   const phone = useIsPhone();
   const [year, setYear] = useState(financialYearStart(today));

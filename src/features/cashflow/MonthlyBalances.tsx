@@ -102,10 +102,18 @@ export function BalanceForm({
         <summary>How is the monthly balance calculated?</summary>
         <div className={ui.caption}>
           <p>
-            Calculated balance = opening balance + recorded income − recorded expenses − Stallion
-            PMS contributions.
+            Calculated balance = opening balance + recorded income − recorded expenses − invested
+            from income.
           </p>
-          <p>NPS, PPF and PF contributions are tracked separately and aren't deducted here.</p>
+          <p>
+            Invested from income is every savings contribution paid from the bank, PMS and PPF
+            included. PF and NPS come out of salary before it's paid, so they aren't deducted.
+          </p>
+          <p>
+            If the closing balance is lower than the calculated balance, the difference is house
+            expense: spending that wasn't recorded. It counts as an expense on the dashboard, in
+            Analytics and in your goals, and shrinks if you add a forgotten expense later.
+          </p>
           <p>
             Enter a bank balance once, at the start of a month. It's also the previous month's
             closing balance: November 1 opening is October 31 closing. When you first start, older
@@ -128,8 +136,7 @@ const MONEY_COLUMNS: { column: HistoryColumn; label: string }[] = [
   { column: 'opening', label: 'Opening balance' },
   { column: 'income', label: 'Monthly income' },
   { column: 'expenses', label: 'Expenses' },
-  { column: 'pms', label: 'Stallion PMS' },
-  { column: 'retirement', label: 'NPS + PPF' },
+  { column: 'invested', label: 'Invested from income' },
   { column: 'surplus', label: 'Surplus balance' },
 ];
 
@@ -173,7 +180,7 @@ function BalanceHistory() {
                 ))}
                 <SortHeader
                   column="houseExpense"
-                  label="House expense"
+                  label="Unrecorded house expense"
                   numeric
                   onSort={toggle}
                   sort={sort}
@@ -194,7 +201,7 @@ function BalanceHistory() {
                       {formatMoney(row[column] as number)}
                     </td>
                   ))}
-                  <td className={ui.numeric} data-label="House expense">
+                  <td className={ui.numeric} data-label="Unrecorded house expense">
                     <span>
                       {row.houseExpense === null
                         ? "Awaiting next month's opening balance"
@@ -266,14 +273,14 @@ export function MonthlyBalances({ month }: { month: string }) {
           <div className={ui.caption}>Also {formatMonth(nextMonth(month))}'s opening</div>
         </div>
         <div className={ui.metric}>
-          <div className={ui.label}>House expense</div>
+          <div className={ui.label}>Unrecorded house expense</div>
           <div className={ui.metricValue}>
             {close.unrecorded === null ? 'Pending' : formatMoney(close.unrecorded)}
           </div>
           <div className={ui.caption}>
             {close.unrecorded !== null && close.unrecorded < 0
               ? NEGATIVE_NOTE
-              : 'Spending not recorded as expenses'}
+              : 'Not recorded, counted in your expenses'}
           </div>
         </div>
       </div>

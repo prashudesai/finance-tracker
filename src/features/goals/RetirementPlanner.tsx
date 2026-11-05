@@ -18,7 +18,7 @@ import {
   type RetirementPart,
 } from '../../domain/retirement';
 import type { TrackerSettings } from '../../schema/records';
-import { useSaveSettings, useSettings, useTracker } from '../../store/tracker';
+import { useSaveSettings, useSettings, useSpendingHousehold } from '../../store/tracker';
 import { LineChart } from '../../ui/charts';
 import { Field } from '../../ui/Field';
 import { formatAmount, formatShortMonthYear, localDate } from '../../ui/format';
@@ -118,7 +118,7 @@ function NumberField({
  * paying expenses that rise with inflation, while what's left keeps growing.
  */
 export function RetirementPlanner() {
-  const data = useTracker((state) => state.data);
+  const data = useSpendingHousehold();
   const settings = useSettings();
   const save = useSaveSettings();
   const phone = useIsPhone();

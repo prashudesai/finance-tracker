@@ -12,11 +12,13 @@ import {
   memberPositions,
   financialSummary,
   holdingRows,
+  houseExpenses,
   investedFromIncome,
   monthCloser,
   monthlyOverview,
   monthReviewStatus,
   monthSignature,
+  withHouseExpenses,
   monthsToReview,
   netWorthHistory,
   pmsGainChange,
@@ -285,6 +287,77 @@ test('investing from income leaves out PF and NPS, which come out of salary firs
   expect(investedFromIncome(state).get('2026-10')).toBe(23_000);
 });
 
+describe('house expense from the bank balances', () => {
+  // October: opened at ₹50,000, earned ₹1,00,000, recorded ₹40,000 of spending and invested
+  // ₹20,000 from the bank, so ₹90,000 should be left. The bank shows ₹75,000 on November 1.
+  const spend = (id: string, date: string, amount: number) => ({
+    id,
+    date,
+    category: 'Food',
+    subcategory: '',
+    isAnnual: false,
+    amount,
+  });
+  const october = (extra: Partial<TrackerData> = {}): TrackerData => ({
+    ...emptyTrackerData(),
+    holdings: [holding({ id: 'fund' }), holding({ id: 'pf', kind: 'pf', type: 'PF' })],
+    income: [{ id: 'i', date: '2026-10-01', member: 'A', source: 'Salary', amount: 1_00_000 }],
+    expenses: [spend('e', '2026-10-10', 40_000)],
+    contributions: [
+      { id: 'c', holdingId: 'fund', date: '2026-10-05', amount: 20_000, automatic: false },
+      { id: 'p', holdingId: 'pf', date: '2026-10-05', amount: 9_000, automatic: true },
+    ],
+    monthlyBalances: [
+      { month: '2026-10', startBalance: 50_000 },
+      { month: '2026-11', startBalance: 75_000 },
+    ],
+    ...extra,
+  });
+
+  test('is what the closing balance falls short of, after investing from income', () => {
+    expect(closeMonth(october(), '2026-10')).toMatchObject({
+      available: 90_000,
+      unrecorded: 15_000,
+    });
+    expect(houseExpenses(october())).toEqual([
+      expect.objectContaining({
+        date: '2026-10-31',
+        category: 'Unrecorded house expense',
+        amount: 15_000,
+      }),
+    ]);
+  });
+
+  test('counts in spending, and shrinks when a forgotten expense is added', () => {
+    const counted = withHouseExpenses(october(), october());
+    expect(monthlyOverview(counted, '2026-10', '2026-11-05').close.expenses).toBe(55_000);
+    const later = october({
+      expenses: [spend('e', '2026-10-10', 40_000), spend('f', '2026-10-20', 5_000)],
+    });
+    expect(houseExpenses(later)[0]?.amount).toBe(10_000);
+  });
+
+  test('adds nothing when the bank holds more than expected, or a month is open', () => {
+    const more = october({
+      monthlyBalances: [
+        { month: '2026-10', startBalance: 50_000 },
+        { month: '2026-11', startBalance: 95_000 },
+      ],
+    });
+    expect(houseExpenses(more)).toEqual([]);
+    expect(
+      houseExpenses(october({ monthlyBalances: [{ month: '2026-10', startBalance: 50_000 }] })),
+    ).toEqual([]);
+  });
+
+  test('a review signed before investing was counted still matches', () => {
+    const before = october();
+    expect(monthSignature(before, '2026-10')).toBe(
+      JSON.stringify({ ...closeMonth({ ...before, contributions: [] }, '2026-10') }),
+    );
+  });
+});
+
 test('full house expense adds spending that was not recorded', () => {
   const state = data({
     income: [{ id: 'i', date: '2026-03-01', member: 'A', source: 'S', amount: 100 }],
@@ -336,8 +409,8 @@ test('balance history lists completed months of one financial year, with their p
     opening: 10,
     income: 100,
     expenses: 20,
-    pms: 5,
-    retirement: 7,
+    // PMS leaves the bank; NPS comes out of salary first, so it isn't taken off.
+    invested: 5,
     surplus: 85,
     houseExpense: 35,
   });

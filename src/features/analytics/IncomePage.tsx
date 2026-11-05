@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { financialYearsWithData } from '../../domain/analytics';
 import { financialYearLabel, financialYearStart } from '../../domain/calendar';
-import { useView } from '../../store/tracker';
+import { useSpendingView } from '../../store/tracker';
 import { localDate } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 import { IncomeSection } from './IncomeSection';
 
 /** Planning › Income: where money comes from, how it's changing, and where it goes. */
 export function IncomePage() {
-  const data = useView();
+  const data = useSpendingView();
   const today = localDate();
   const [year, setYear] = useState(financialYearStart(today));
   return (

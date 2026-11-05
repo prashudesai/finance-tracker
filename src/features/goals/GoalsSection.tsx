@@ -25,7 +25,7 @@ import { holdingGroups } from '../../domain/analytics';
 import { holdingValue } from '../../domain/holdings';
 import { addMonths } from '../../domain/calendar';
 import type { Goal } from '../../schema/records';
-import { useTracker, useView } from '../../store/tracker';
+import { useSpendingHousehold, useTracker, useView } from '../../store/tracker';
 import { EmptyState } from '../../ui/EmptyState';
 import { formatAmount, formatShortMonthYear, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
@@ -73,7 +73,7 @@ function nextStep(goal: Goal, plan: GoalPlan, today: string) {
 }
 
 function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
-  const data = useTracker((state) => state.data);
+  const data = useSpendingHousehold();
   const commit = useTracker((state) => state.commit);
   const today = localDate();
   const plan = goalPlan(goal, data, today);
@@ -355,7 +355,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
 /** Saved goals, each funded from a share of real investments. */
 export function GoalsSection() {
   const data = useView();
-  const household = useTracker((state) => state.data);
+  const household = useSpendingHousehold();
   const today = localDate();
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);

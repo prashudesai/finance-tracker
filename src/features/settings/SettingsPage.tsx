@@ -583,7 +583,10 @@ const GUIDE = [
   ['Current value', 'Latest valuation, plus contributions and interest dated after it.'],
   ['XIRR', 'Annualised return that accounts for when each amount was invested.'],
   ['Gratuity', 'Basic salary x 15/26 x years counted, after 5 years, capped at 20,00,000.'],
-  ['House expense', 'Opening balance + income - expenses - PMS - next opening balance.'],
+  [
+    'Unrecorded house expense',
+    'Opening balance + income - expenses - invested from income - closing balance. Counted as an expense.',
+  ],
 ];
 
 const saveGuide = () =>
