@@ -194,6 +194,46 @@ export const valuationSchema = z.object({
 });
 export type Valuation = z.infer<typeof valuationSchema>;
 
+export const GOAL_KINDS = [
+  'education',
+  'house',
+  'retirement',
+  'wedding',
+  'car',
+  'emergency',
+  'vacation',
+  'custom',
+] as const;
+
+/** A share of one holding set aside for a goal, from just above 0 to 1. */
+export const goalFundingSchema = z.object({
+  holdingId: id,
+  share: number.gt(0, 'Enter a share above zero.').max(1, 'Use 100% or less.'),
+});
+
+/**
+ * Something the family is saving for. Only the plan is stored: progress, the future cost
+ * and the monthly amount needed are always worked out from the funding holdings.
+ */
+export const goalSchema = z.object({
+  id,
+  kind: z.enum(GOAL_KINDS),
+  name,
+  /** In today's rupees. Inflation turns it into the amount needed on the date. */
+  target: positiveMoney,
+  targetDate: date,
+  /** Blank means it's for the whole household. */
+  member: z.string().max(100).default(''),
+  /** Yearly, as a percentage. */
+  inflation: number.min(0, 'Enter zero or more.').max(30, 'Use 30% or less.'),
+  /** Yearly, as a percentage. Left out, it follows how far away the goal is. */
+  expectedReturn: number.min(0, 'Enter zero or more.').max(30, 'Use 30% or less.').optional(),
+  funding: z.array(goalFundingSchema).max(50).default([]),
+  notes: notes.optional(),
+});
+export type Goal = z.infer<typeof goalSchema>;
+export type GoalKind = Goal['kind'];
+
 /**
  * Money taken out of an investment. Its value afterwards is saved as a valuation on the
  * same date, so the invested amount and booked profit can be worked out by average cost.

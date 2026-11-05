@@ -42,8 +42,8 @@ export function PrivacyPage() {
 
       <Section title="What is stored, in unreadable form">
         <p>
-          Income, expenses, loans, investments, balances, reminders and settings. Only you and the
-          family members you approve can open them.
+          Income, expenses, loans, investments, goals, balances, reminders and settings. Only you
+          and the family members you approve can open them.
         </p>
       </Section>
 

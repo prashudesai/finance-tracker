@@ -42,6 +42,7 @@ import { useIsPhone } from '../../ui/useIsPhone';
 import { EmptyState } from '../../ui/EmptyState';
 import { TrendLine } from '../../ui/TrendLine';
 import { useCountUp } from '../../ui/useCountUp';
+import { GoalsTile } from '../goals/GoalsTile';
 import { InsightsCard } from '../insights/InsightsCard';
 import { RecapCard } from '../insights/MonthRecap';
 import { InstallCard } from '../install/InstallPrompts';
@@ -375,6 +376,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
       <InstallCard />
 
       <InsightsCard />
+      <GoalsTile />
 
       {trendCard}
 

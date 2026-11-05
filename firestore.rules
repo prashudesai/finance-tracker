@@ -42,7 +42,8 @@ service cloud.firestore {
                             'recurringOccurrences', 'monthlyBalances', 'holdings',
                             'contributions', 'valuations', 'gratuityAccounts',
                             'projectionAdjustments', 'settings', 'monthReviews',
-                            'changes', 'interestCredits', 'epsUpdates', 'withdrawals'];
+                            'changes', 'interestCredits', 'epsUpdates', 'withdrawals',
+                            'goals'];
     }
 
     // Records are encrypted on the device, so anything readable is refused.

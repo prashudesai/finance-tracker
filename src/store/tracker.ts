@@ -248,6 +248,7 @@ export function selectView(data: TrackerData, profile: string | null): TrackerDa
     contributions: data.contributions.filter((row) => ids.has(row.holdingId)),
     valuations: data.valuations.filter((row) => ids.has(row.holdingId)),
     withdrawals: data.withdrawals.filter((row) => ids.has(row.holdingId)),
+    goals: data.goals.filter((row) => row.member === '' || row.member === profile),
   };
 }
 

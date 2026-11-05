@@ -1,7 +1,11 @@
 {
-  "version": "1.12.1",
+  "version": "1.13.0",
   "released": "2026-11-05",
   "notes": [
+    "Goals: save for education, a house, retirement and more, funded from a share of your investments",
+    "Each goal says whether you are on track, and how much more a month gets you there",
+    "What-if sliders for each goal, a goals tile on the dashboard, and goal insights and celebrations",
+    "Retirement and emergency fund goals suggest a target from your own spending",
     "A brighter aurora behind every page, in your chosen colours",
     "Your net worth leads the dashboard, with the recap and install prompts as slim one-line cards below your figures",
     "Debts opens with what is left to repay, how much is paid and when you will be debt-free",

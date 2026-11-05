@@ -39,14 +39,23 @@ import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
 import { CategoryDialog } from './HoldingActions';
 import { HoldingForm } from './HoldingForm';
+import { GoalsSection } from '../goals/GoalsSection';
 
-type Section = 'investments' | 'retirement';
+type Section = 'investments' | 'retirement' | 'goals';
+
+const SECTIONS: Section[] = ['investments', 'retirement', 'goals'];
+const SECTION_NAMES: Record<Section, string> = {
+  investments: 'Investments',
+  retirement: 'Retirement',
+  goals: 'Goals',
+};
 
 const SECTION_KEY = 'investmentSection';
 
 function savedSection(): Section {
   try {
-    return localStorage.getItem(SECTION_KEY) === 'retirement' ? 'retirement' : 'investments';
+    const saved = localStorage.getItem(SECTION_KEY);
+    return SECTIONS.find((key) => key === saved) ?? 'investments';
   } catch {
     return 'investments';
   }
@@ -70,22 +79,21 @@ function SectionTabs({
   };
   return (
     <div aria-label="Investment sections" className={ui.segmented} role="tablist">
-      {(['investments', 'retirement'] as const).map((key) => (
+      {SECTIONS.map((key, index) => (
         <button
           aria-selected={section === key}
           className={section === key ? ui.segmentActive : ui.segment}
           key={key}
           onClick={() => choose(key)}
           onKeyDown={(event) => {
-            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-              choose(section === 'investments' ? 'retirement' : 'investments');
-            }
+            const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+            if (step) choose(SECTIONS[(index + step + SECTIONS.length) % SECTIONS.length] ?? key);
           }}
           role="tab"
           tabIndex={section === key ? 0 : -1}
           type="button"
         >
-          {key === 'investments' ? 'Investments' : 'Retirement'}
+          {SECTION_NAMES[key]}
         </button>
       ))}
     </div>
@@ -260,9 +268,16 @@ export function InvestmentsPage() {
   };
   const [section, setSection] = useState<Section>(savedSection);
   const phone = useIsPhone();
-  const { state: quickAdd } = useLocation() as {
+  const { state: quickAdd, search } = useLocation() as {
     state: { add?: 'investment' | 'pms'; open?: string; confirm?: boolean } | null;
+    search: string;
   };
+  // Insights and the dashboard tile link to ?view=goals.
+  useEffect(() => {
+    if (new URLSearchParams(search).get('view') !== 'goals') return;
+    setSection('goals');
+    scrollToSection('goals');
+  }, [search]);
 
   // The dashboard's add menu lands here with the entry to open.
   useEffect(() => {
@@ -276,6 +291,7 @@ export function InvestmentsPage() {
   }, [quickAdd]);
   const showInvestments = !phone || section === 'investments';
   const showRetirement = !phone || section === 'retirement';
+  const showGoals = !phone || section === 'goals';
 
   const rows = holdingRows(data, today);
   const isUnconfirmed = ({ holding }: (typeof rows)[number]) =>
@@ -381,6 +397,8 @@ export function InvestmentsPage() {
       </div>
 
       {phone ? <SectionTabs onChange={setSection} section={section} /> : null}
+
+      {showGoals ? <GoalsSection /> : null}
 
       {showInvestments && pms.length > 0 ? (
         <section className={ui.card}>

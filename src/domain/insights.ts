@@ -3,6 +3,7 @@ import type { Expense } from '../schema/records';
 import { isEmi, isMarket, monthlyOverview, netWorthHistory, pmsGainChange } from './analytics';
 import { addDays, financialYearStart, previousMonth, roundMoney, toDayNumber } from './calendar';
 import { monthTotals } from './cashflow';
+import { goalPlan } from './goals';
 import { holdingValue } from './holdings';
 import { estimateSchedule } from './loan';
 import { amountAt, upcomingCommitments } from './recurring';
@@ -55,6 +56,16 @@ export type Insight = Base &
     | { kind: 'principal'; month: string; amount: number }
     | { kind: 'pmsGain'; month: string; change: number }
     | { kind: 'weekend'; share: number; spent: number; days: number }
+    | {
+        kind: 'goalBehind';
+        goalId: string;
+        name: string;
+        extra: number;
+        needed: number;
+        projected: number;
+        date: string;
+      }
+    | { kind: 'goalReached'; goalId: string; name: string; saved: number; needed: number }
     | {
         kind: 'biggest';
         month: string;
@@ -457,6 +468,44 @@ function pmsGain(data: TrackerData, today: string): Insight | null {
   };
 }
 
+/** The goal furthest behind, with the monthly amount that would put it back on track. */
+function goalBehind(data: TrackerData, today: string): Insight | null {
+  const behind = data.goals
+    .map((goal) => ({ goal, plan: goalPlan(goal, data, today) }))
+    .filter(({ plan }) => plan.status === 'behind' && plan.extraMonthly !== null && plan.needed > 0)
+    .sort((a, b) => a.plan.projected / a.plan.needed - b.plan.projected / b.plan.needed)[0];
+  if (!behind) return null;
+  return {
+    id: `goalBehind-${behind.goal.id}`,
+    kind: 'goalBehind',
+    tone: 'watch',
+    score: 72,
+    goalId: behind.goal.id,
+    name: behind.goal.name,
+    extra: behind.plan.extraMonthly ?? 0,
+    needed: behind.plan.needed,
+    projected: behind.plan.projected,
+    date: behind.goal.targetDate,
+  };
+}
+
+function goalReached(data: TrackerData, today: string): Insight | null {
+  const reached = data.goals
+    .map((goal) => ({ goal, plan: goalPlan(goal, data, today) }))
+    .find(({ plan }) => plan.status === 'reached');
+  if (!reached) return null;
+  return {
+    id: `goalReached-${reached.goal.id}`,
+    kind: 'goalReached',
+    tone: 'good',
+    score: 88,
+    goalId: reached.goal.id,
+    name: reached.goal.name,
+    saved: reached.plan.saved,
+    needed: reached.plan.needed,
+  };
+}
+
 /** Every insight that applies today, most useful first. */
 export function insights(data: TrackerData, today: string): Insight[] {
   const lastMonth = previousMonth(today.slice(0, 7));
@@ -474,6 +523,8 @@ export function insights(data: TrackerData, today: string): Insight[] {
     weekend(data, today),
     biggest(data, lastMonth),
     pmsGain(data, today),
+    goalBehind(data, today),
+    goalReached(data, today),
     ...monthSoFar(data, today),
   ]
     .filter((insight): insight is Insight => insight !== null)

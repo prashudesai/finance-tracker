@@ -1,0 +1,327 @@
+.list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  list-style: none;
+}
+
+.goal {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  padding: 14px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.goal:hover {
+  border-color: var(--card-edge);
+  transform: translateY(-1px);
+}
+
+.goalBody {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.goalTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.goalTop strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goalLine {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The ring shows the share saved, with the kind's icon in the middle. */
+.ring {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+}
+
+.ringSvg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.ringTrack {
+  stroke: var(--surface-raised);
+}
+
+.ringFill {
+  stroke: var(--tone);
+  stroke-linecap: round;
+  transition: stroke-dasharray 400ms ease;
+}
+
+.ringIcon {
+  color: var(--tone);
+}
+
+.small {
+  width: 46px;
+  height: 46px;
+}
+
+[data-tone] {
+  --tone: var(--accent);
+}
+
+[data-tone='watch'] {
+  --tone: var(--warning-text);
+}
+
+[data-tone='neutral'] {
+  --tone: var(--scenario-base);
+}
+
+.status {
+  flex: none;
+  padding: 2px 9px;
+  color: var(--tone);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+  border-radius: 999px;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.summary strong {
+  color: var(--text);
+}
+
+.warning {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--warning-text);
+  font-size: 0.85rem;
+  background: var(--warning-bg);
+  border-radius: var(--radius-small);
+}
+
+/* Goal detail */
+.detailHead {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.detailHead .ring {
+  width: 92px;
+  height: 92px;
+}
+
+.percent {
+  font-size: 1.6rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.story {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.story li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  line-height: 1.4;
+}
+
+.story li > svg {
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.story small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.fix {
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+  border-left: 3px solid var(--tone);
+  border-radius: 0 var(--radius-small) var(--radius-small) 0;
+}
+
+.whatIf {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-small);
+}
+
+.slider {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.slider span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.slider b {
+  font-variant-numeric: tabular-nums;
+}
+
+.slider input {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+/* Goal form */
+.kinds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.kind {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 10px 6px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.kind[aria-checked='true'] {
+  color: var(--text);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.kind svg {
+  color: var(--accent);
+}
+
+.funding {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.funding li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 10px;
+  align-items: center;
+}
+
+.funding input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  text-align: right;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.helper {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-small);
+}
+
+/* Dashboard tile */
+.tileGoals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tileGoal {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: inherit;
+  font-size: 0.75rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+.tileGoal span {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}

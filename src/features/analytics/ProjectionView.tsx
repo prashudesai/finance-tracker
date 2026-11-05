@@ -1,5 +1,6 @@
 import { ChevronDown, Plus } from 'lucide-react';
 import { useState, type CSSProperties } from 'react';
+import { Link } from 'react-router';
 import { financialYearLabel } from '../../domain/calendar';
 import type { GrowthType } from '../../domain/holdings';
 import type { ProjectionAsset, ProjectionResult, ProjectionYear } from '../../domain/projection';
@@ -584,11 +585,18 @@ export function ProjectionView({
       {results ? <Breakdown rows={results[scenario].rows} scenario={scenario} /> : null}
       <details className={`${ui.card} ${ui.fold}`}>
         <summary>Goal planning</summary>
-        <div>
+        <div className={ui.actions}>
+          <Link className={ui.button} to="/investments?view=goals">
+            Your goals
+          </Link>
           <button className={ui.quiet} onClick={() => setPlanning(true)} type="button">
             Portfolio goal planner
           </button>
         </div>
+        <p className={ui.caption}>
+          Goals track each thing you're saving for, funded from your investments. The portfolio
+          planner checks your whole portfolio against one target.
+        </p>
       </details>
       {planning ? (
         <Modal onClose={() => setPlanning(false)} title="Portfolio goal planner">

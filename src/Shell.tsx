@@ -25,6 +25,7 @@ import { PullToRefresh } from './ui/PullToRefresh';
 import { InstallReminder } from './features/install/InstallPrompts';
 import { useAmounts } from './ui/amounts';
 import { Celebration } from './ui/Celebration';
+import { goalMilestones, passedMilestones } from './domain/goals';
 import { loanStates, newlyPaidOff } from './domain/summary';
 import { PageSkeleton } from './ui/Skeleton';
 import {
@@ -164,6 +165,29 @@ export function Shell({
     if (loan) setCelebration(`${loan.type} is paid off!`);
     owingBefore.current = states.owing;
   }, [loans, states]);
+  // Goals celebrate a new quarter passed during this visit, the same way.
+  const household = useTracker((state) => state.data);
+  const milestones = useMemo(
+    () => (loaded ? goalMilestones(household, localDate()) : null),
+    [household, loaded],
+  );
+  const milestonesBefore = useRef<Map<string, number> | null>(null);
+  useEffect(() => {
+    if (!milestones) return;
+    const passed = milestonesBefore.current
+      ? passedMilestones(milestonesBefore.current, milestones)
+      : [];
+    const first = passed[0];
+    const goal = household.goals.find((row) => row.id === first?.id);
+    if (goal && first) {
+      setCelebration(
+        first.step === 100
+          ? `${goal.name} is fully funded!`
+          : `${goal.name} passed ${first.step}%!`,
+      );
+    }
+    milestonesBefore.current = milestones;
+  }, [household.goals, milestones]);
   const endCelebration = useCallback(() => setCelebration(null), []);
   const toggleAmounts = useAmounts((state) => state.toggle);
   const savesStuck = useCloudStuck(pendingSaves > 0, SAVE_WAIT_MS);

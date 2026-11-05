@@ -95,6 +95,7 @@ describe('household records', () => {
       'interestCredits',
       'epsUpdates',
       'withdrawals',
+      'goals',
     ]) {
       await assertSucceeds(setDoc(doc(db, `households/owner/${name}/a`), sealed));
     }

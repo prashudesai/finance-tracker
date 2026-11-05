@@ -1,6 +1,8 @@
 import {
   CalendarClock,
   ChartPie,
+  Flag,
+  Goal as GoalIcon,
   Clock,
   HandCoins,
   PiggyBank,
@@ -14,7 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { Insight } from '../../domain/insights';
-import { formatDay, formatMoney, formatMonth } from '../../ui/format';
+import { formatDay, formatMoney, formatMonth, formatShortMonthYear } from '../../ui/format';
 
 export interface InsightText {
   icon: LucideIcon;
@@ -207,6 +209,30 @@ export function describeInsight(insight: Insight): InsightText {
         path: '/investments',
       };
     }
+    case 'goalBehind':
+      return {
+        icon: Flag,
+        title: `Add ${formatMoney(insight.extra)} a month to get ${insight.name} back on track`,
+        detail: `At the current pace it reaches ${formatMoney(insight.projected)} of the ${formatMoney(insight.needed)} needed by ${formatShortMonthYear(insight.date.slice(0, 7))}.`,
+        why: [
+          ['Needed, after inflation', formatMoney(insight.needed)],
+          ['Expected at the current pace', formatMoney(insight.projected)],
+          ['Extra each month', formatMoney(insight.extra)],
+        ],
+        path: '/investments?view=goals',
+        note: 'Projections assume steady returns, which markets never give.',
+      };
+    case 'goalReached':
+      return {
+        icon: GoalIcon,
+        title: `${insight.name} is fully funded`,
+        detail: `You've set aside ${formatMoney(insight.saved)}, enough for the ${formatMoney(insight.needed)} it needs. Well done.`,
+        why: [
+          ['Set aside', formatMoney(insight.saved)],
+          ['Needed, after inflation', formatMoney(insight.needed)],
+        ],
+        path: '/investments?view=goals',
+      };
     case 'biggest':
       return {
         icon: Receipt,

@@ -42,7 +42,8 @@ const GROUPS: { title: string; icon: LucideIcon; items: string[] }[] = [
     items: [
       'Insights on your dashboard, worked out privately on your phone',
       'A monthly recap of income, spending, savings and net worth',
-      'Growth projections and goal planning',
+      'Goals for education, a house, retirement and more, funded from your investments, with what to add each month to stay on track',
+      'Growth projections and a portfolio planner',
       'Planned changes to see their effect on your future',
       'Date range reports, exported as PDF or CSV',
       "EMI reminders on your phone's calendar",

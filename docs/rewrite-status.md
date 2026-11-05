@@ -1,6 +1,6 @@
 # Status
 
-Last updated 2026-11-01. The app is live at https://finance-trackerp.web.app. The older app remains at its own address, in its own Firebase project.
+Last updated 2026-11-05. The app is live at https://finance-trackerp.web.app. The older app remains at its own address, in its own Firebase project.
 
 ## Done
 
@@ -39,6 +39,7 @@ All pages from the older app exist and follow its layouts.
 - Dashboard greeting, a celebration when a loan seen owing this visit is paid off, page transitions where the browser supports them, and a light buzz on Android when saving.
 - Share invite for invited or pending family, and Share the app for friends, through the phone's share menu or by copying.
 - Insights and monthly recap: `domain/insights.ts` finds patterns (a category well above its usual, savings rate, EMI load, a prepayment's saving, net worth change or milestone, allocation shift, recurring total, weekend spending, a quiet week, a payment due soon) and `domain/recap.ts` sums a month. Both run on the device from records only; wording is in `features/insights`, so hidden amounts stay hidden. The dashboard shows them in a tile that opens on a tap, with the top one as a preview, and offers last month's recap for the first ten days of a month. A running month isn't compared with the one before.
+- Goals: named goals (education, house, retirement, wedding, car, emergency fund, vacation or custom) saved in the `goals` collection. A goal stores only its plan: the cost in today's rupees, the date, inflation, an optional expected return and the share of each holding set aside for it. Progress, the inflated cost, the projected value, the extra needed each month and the month it's reached are worked out by `domain/goals.ts` from the holdings' current values and planned monthly amounts. Without a chosen return it uses 7%, 9% or 11% by how far away the goal is (6% for an emergency fund). Retirement and emergency fund suggest a target from recorded spending. Goals sit in a Goals tab on Investments, with a what-if that changes nothing saved, a dashboard tile, insights for the goal furthest behind and a funded goal, and a celebration when a goal passes 25%, 50%, 75% or 100% during a visit. Goals for one person follow the selected profile; household goals always show.
 - Privacy page at `/privacy`, open without signing in and linked from sign-in and Settings. New accounts agree to it once at setup, and existing accounts aren't asked. Its statements must stay true, so update it when what's stored or visible changes.
 
 ## Verified on the test project
