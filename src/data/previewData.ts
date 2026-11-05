@@ -1,4 +1,4 @@
-import { addMonths, previousMonth } from '../domain/calendar';
+import { addMonths, financialYearStart, previousMonth } from '../domain/calendar';
 import {
   EMI_CATEGORY,
   defaultSettings,
@@ -178,7 +178,8 @@ export function previewData(): Partial<TrackerData> {
         date: `${month}-01`,
         member: MEMBERS[0] ?? '',
         source: 'Salary',
-        amount: 145_000,
+        // A raise each April.
+        amount: month >= `${financialYearStart(today)}-04` ? 145_000 : 134_000,
       },
       {
         id: `consulting-${month}`,
@@ -188,6 +189,25 @@ export function previewData(): Partial<TrackerData> {
         amount: 62_000 + (index % 4) * 3_000,
       },
     );
+    // A yearly bonus in March, and rent from a flat let out eight months ago.
+    if (month.endsWith('-03')) {
+      income.push({
+        id: `bonus-${month}`,
+        date: `${month}-28`,
+        member: MEMBERS[0] ?? '',
+        source: 'Bonus',
+        amount: 1_20_000,
+      });
+    }
+    if (index < 8) {
+      income.push({
+        id: `rent-${month}`,
+        date: [`${month}-05`, today].sort()[0] ?? today,
+        member: MEMBERS[1] ?? '',
+        source: 'Rental Income',
+        amount: 18_000,
+      });
+    }
     SPENDING.forEach(([category, amount], position) => {
       expenses.push(
         expense(

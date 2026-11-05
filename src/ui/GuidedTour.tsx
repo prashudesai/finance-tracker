@@ -27,8 +27,8 @@ const STEPS = [
   },
   {
     path: '/analytics',
-    title: 'Analytics & Reports',
-    text: 'Explore trends, project growth, plan goals and export reports.',
+    title: 'Analysis & Planning',
+    text: 'See where your income comes from, plan goals and retirement, project growth and export reports.',
   },
   {
     path: '/settings',

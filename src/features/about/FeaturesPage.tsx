@@ -46,6 +46,7 @@ const GROUPS: { title: string; icon: LucideIcon; items: string[] }[] = [
       'A retirement planner: your fund at retirement, how long it lasts as expenses rise, and what to change if it falls short',
       'Growth projections with stress, base and optimistic scenarios',
       'Planned changes to see their effect on your future',
+      'Income analysis: salary against other income, raises, this year against last, who earns what, and where each ₹100 goes',
       'Date range reports, exported as PDF or CSV',
       "EMI reminders on your phone's calendar",
       'A Needs attention list, so nothing gets missed',

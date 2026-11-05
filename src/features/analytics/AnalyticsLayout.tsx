@@ -4,6 +4,7 @@ import ui from '../../ui/ui.module.css';
 
 const TABS = [
   { to: '/analytics', label: 'Analytics', end: true },
+  { to: '/analytics/income', label: 'Income', end: false },
   { to: '/analytics/projection', label: 'Growth Projection', end: false },
   { to: '/analytics/goals', label: 'Goal planning', end: false },
   { to: '/analytics/reports', label: 'Date range reports', end: false },
@@ -13,9 +14,16 @@ export function AnalyticsLayout() {
   const { pathname } = useLocation();
   const projection = pathname.startsWith('/analytics/projection');
   const goals = pathname.startsWith('/analytics/goals');
+  const income = pathname.startsWith('/analytics/income');
   return (
     <div className={ui.page}>
-      {goals ? (
+      {income ? (
+        <PageHeader
+          eyebrow="Financial insights"
+          subtitle="Where your money comes from, how it's changing, and where each rupee goes."
+          title="Income"
+        />
+      ) : goals ? (
         <PageHeader
           eyebrow="Plan ahead"
           subtitle="Save for what matters, from your real investments, and see whether you're on track."

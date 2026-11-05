@@ -60,6 +60,7 @@ const AnalyticsLayout = named(
 const AnalyticsPage = named(() => import('./features/analytics/AnalyticsPage'), 'AnalyticsPage');
 const ProjectionPage = named(() => import('./features/analytics/ProjectionPage'), 'ProjectionPage');
 const ReportsPage = named(() => import('./features/analytics/ReportsPage'), 'ReportsPage');
+const IncomePage = named(() => import('./features/analytics/IncomePage'), 'IncomePage');
 const GoalPlanningPage = named(
   () => import('./features/goals/GoalPlanningPage'),
   'GoalPlanningPage',
@@ -73,7 +74,7 @@ const LINKS = [
   { to: '/cash-flow', label: 'Income & Expense', short: 'Cash flow', icon: ArrowUpDown },
   { to: '/investments', label: 'Investment', short: 'Investments', icon: Wallet },
   { to: '/debts', label: 'Debts', short: 'Debts', icon: CreditCard },
-  { to: '/analytics', label: 'Analytics & Reports', short: 'Reports', icon: LineChart },
+  { to: '/analytics', label: 'Analysis & Planning', short: 'Planning', icon: LineChart },
   { to: '/settings', label: 'Settings', short: 'Settings', icon: SlidersHorizontal },
 ];
 
@@ -358,6 +359,7 @@ export function Shell({
               <Route element={<DebtsPage />} path="/debts" />
               <Route element={<AnalyticsLayout />} path="/analytics">
                 <Route element={<AnalyticsPage />} index />
+                <Route element={<IncomePage />} path="income" />
                 <Route element={<ProjectionPage />} path="projection" />
                 <Route element={<GoalPlanningPage />} path="goals" />
                 <Route element={<ReportsPage />} path="reports" />

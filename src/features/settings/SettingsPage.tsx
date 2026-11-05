@@ -574,7 +574,10 @@ const GUIDE = [
   ['Income & Expense', 'Record money in and out, post recurring items, and review each month.'],
   ['Investment', 'Holdings, PMS, PF, PPF, NPS and gratuity, with values and contributions.'],
   ['Debts', 'Loans, EMIs, part payments, rate changes, top-ups and statement corrections.'],
-  ['Analytics & Reports', 'Trends, growth projections, goals, and date range reports.'],
+  [
+    'Analysis & Planning',
+    'Trends, income, growth projections, goals, the retirement planner and date range reports.',
+  ],
   ['Net worth', 'Current value of all holdings, less what remains on all loans.'],
   ['Invested', 'Opening amount plus contributions.'],
   ['Current value', 'Latest valuation, plus contributions and interest dated after it.'],

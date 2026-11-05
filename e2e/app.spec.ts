@@ -20,6 +20,7 @@ test.describe('every page', () => {
     '/investments',
     '/debts',
     '/analytics',
+    '/analytics/income',
     '/analytics/goals',
     '/settings',
   ]) {

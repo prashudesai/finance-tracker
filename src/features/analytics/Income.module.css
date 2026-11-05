@@ -1,0 +1,190 @@
+.split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.figure {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-small);
+}
+
+.figure strong {
+  font-size: clamp(1.15rem, 5vw, 1.5rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.figure small {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* One bar split by share, with a 2px gap between parts. */
+.shareBar {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.shareBar span {
+  min-width: 3px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  font-size: 0.82rem;
+  list-style: none;
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legend b {
+  font-variant-numeric: tabular-nums;
+}
+
+.sources {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sources li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+}
+
+.sources .track {
+  grid-column: 1 / -1;
+  height: 8px;
+  overflow: hidden;
+  background: var(--surface-sunken);
+  border-radius: 4px;
+}
+
+.sources .track span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.sources small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.amount {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.raises {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.88rem;
+}
+
+.raises li::before {
+  margin-right: 8px;
+  color: var(--gain);
+  content: '▲';
+}
+
+/* Savings rate: one column per month, kept share as its height. */
+.rates {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+  align-items: end;
+  height: 140px;
+  padding-top: 18px;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.rate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.rate span {
+  display: block;
+  min-height: 2px;
+  background: linear-gradient(var(--gain), color-mix(in srgb, var(--gain) 55%, transparent));
+  border-radius: 4px 4px 0 0;
+}
+
+.rate[data-negative='true'] span {
+  background: var(--loss);
+}
+
+.rate b {
+  position: absolute;
+  top: -16px;
+  right: 0;
+  left: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.rateLabels {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+.average {
+  position: absolute;
+  right: 0;
+  left: 0;
+  border-top: 1px dashed var(--accent);
+}
+
+.choose {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.change[data-tone='up'] {
+  color: var(--gain);
+}
+
+.change[data-tone='down'] {
+  color: var(--loss);
+}

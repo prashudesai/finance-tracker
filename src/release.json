@@ -1,7 +1,12 @@
 {
-  "version": "1.16.0",
+  "version": "1.17.0",
   "released": "2026-11-05",
   "notes": [
+    "Income tab: salary against other income, each source and how often it comes",
+    "Salary over time with raises found for you, and this year against last year",
+    "Who earns what, how steady your income is, where each ₹100 goes, and savings rate by month",
+    "Income insights on the dashboard",
+    "Reports is now called Planning, as it holds analysis, goals and the retirement planner",
     "Retirement planner in Goal planning: your fund at retirement, spending then, and how long the money lasts",
     "A graph of fund value and yearly expenses by age, with a year-by-year table",
     "What you will need at realistic rates, the gap, and the monthly investing that closes it",

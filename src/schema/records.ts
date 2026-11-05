@@ -343,6 +343,8 @@ export const trackerSettingsSchema = z.object({
   id,
   familyMembers: textList,
   incomeSources: textList,
+  /** Income sources counted as salary. Empty means any whose name mentions salary or pay. */
+  salarySources: textList,
   expenseCategories: textList,
   debtTypes: textList,
   investmentTypes: textList,

@@ -5,6 +5,14 @@ import { addDays, financialYearStart, previousMonth, roundMoney, toDayNumber } f
 import { monthTotals } from './cashflow';
 import { goalInputs, goalPlan, monthsUntil, planGoal, portfolioInputs } from './goals';
 import { holdingValue } from './holdings';
+import {
+  incomeByMember,
+  incomeBySource,
+  incomeSteadiness,
+  salaryHistory,
+  whereIncomeGoes,
+  yearOnYear,
+} from './income';
 import { estimateSchedule } from './loan';
 import { amountAt, upcomingCommitments } from './recurring';
 import { summarizeLoans } from './summary';
@@ -66,6 +74,41 @@ export type Insight = Base &
         date: string;
       }
     | { kind: 'goalReached'; goalId: string; name: string; saved: number; needed: number }
+    | {
+        kind: 'incomeMix';
+        salaryShare: number;
+        salary: number;
+        other: number;
+        months: number;
+        topOther: string | null;
+      }
+    | { kind: 'salaryRaise'; month: string; from: number; to: number; change: number }
+    | {
+        kind: 'incomeYoY';
+        change: number;
+        thisYear: number;
+        lastYear: number;
+        from: string;
+        to: string;
+      }
+    | { kind: 'topEarner'; member: string; share: number; total: number; members: number }
+    | {
+        kind: 'incomeSteadiness';
+        verdict: 'steady' | 'fairly steady' | 'varies a lot';
+        spread: number;
+        best: number;
+        worst: number;
+        worstMonth: string;
+        months: number;
+      }
+    | {
+        kind: 'per100';
+        spending: number;
+        emis: number;
+        invested: number;
+        left: number;
+        income: number;
+      }
     | {
         kind: 'goalEta';
         goalId: string;
@@ -573,6 +616,112 @@ function goalReached(data: TrackerData, today: string): Insight | null {
   };
 }
 
+const salarySources = (data: TrackerData) => data.settings[0]?.salarySources;
+
+/** How much of income is salary, and what else brings money in. */
+function incomeMix(data: TrackerData, today: string): Insight | null {
+  const found = incomeBySource(data, financialYearStart(today), today, salarySources(data));
+  if (found.months < 2 || found.total <= 0 || found.other.total <= 0) return null;
+  return {
+    id: 'incomeMix',
+    kind: 'incomeMix',
+    tone: 'neutral',
+    score: 52,
+    salaryShare: found.salaryShare,
+    salary: found.salary.monthly,
+    other: found.other.monthly,
+    months: found.months,
+    topOther: found.sources.find((row) => !row.salary)?.source ?? null,
+  };
+}
+
+/** A raise in the last six months. */
+function salaryRaise(data: TrackerData, today: string): Insight | null {
+  const raise = salaryHistory(data, today, salarySources(data)).raises.at(-1);
+  if (!raise) return null;
+  let cutoff = today.slice(0, 7);
+  for (let step = 0; step < 6; step++) cutoff = previousMonth(cutoff);
+  if (raise.month < cutoff) return null;
+  return {
+    id: `salaryRaise-${raise.month}`,
+    kind: 'salaryRaise',
+    tone: 'good',
+    score: 80,
+    ...raise,
+  };
+}
+
+/** This year's income against the same months last year, when it moved by 3% or more. */
+function incomeYoY(data: TrackerData, today: string): Insight | null {
+  const found = yearOnYear(data, financialYearStart(today), today);
+  if (found.change === null || Math.abs(found.change) < 0.03 || !found.from || !found.to) {
+    return null;
+  }
+  return {
+    id: 'incomeYoY',
+    kind: 'incomeYoY',
+    tone: found.change > 0 ? 'good' : 'watch',
+    score: 64,
+    change: found.change,
+    thisYear: found.thisYear,
+    lastYear: found.lastYear,
+    from: found.from,
+    to: found.to,
+  };
+}
+
+/** With two or more earners, who brings in most. */
+function topEarner(data: TrackerData, today: string): Insight | null {
+  const members = incomeByMember(data, financialYearStart(today), today, salarySources(data));
+  const top = members[0];
+  if (members.length < 2 || !top || !top.member) return null;
+  return {
+    id: 'topEarner',
+    kind: 'topEarner',
+    tone: 'neutral',
+    score: 38,
+    member: top.member,
+    share: top.share,
+    total: top.total,
+    members: members.length,
+  };
+}
+
+/** Income that swings from month to month makes planning harder. */
+function steadiness(data: TrackerData, today: string): Insight | null {
+  const found = incomeSteadiness(data, today);
+  if (!found || !found.best || !found.worst) return null;
+  return {
+    id: 'incomeSteadiness',
+    kind: 'incomeSteadiness',
+    tone: found.verdict === 'varies a lot' ? 'watch' : 'neutral',
+    score: found.verdict === 'varies a lot' ? 66 : 30,
+    verdict: found.verdict,
+    spread: found.spread,
+    best: found.best.amount,
+    worst: found.worst.amount,
+    worstMonth: found.worst.month,
+    months: found.months,
+  };
+}
+
+/** Where each ₹100 earned this year went. */
+function per100(data: TrackerData, today: string): Insight | null {
+  const found = whereIncomeGoes(data, financialYearStart(today), today);
+  if (found.months < 2 || found.income <= 0) return null;
+  return {
+    id: 'per100',
+    kind: 'per100',
+    tone: found.per100.left > 25 ? 'watch' : 'neutral',
+    score: found.per100.left > 25 ? 58 : 44,
+    spending: found.per100.spending,
+    emis: found.per100.emis,
+    invested: found.per100.invested,
+    left: found.per100.left,
+    income: found.income,
+  };
+}
+
 /** Every insight that applies today, most useful first. */
 export function insights(data: TrackerData, today: string): Insight[] {
   const lastMonth = previousMonth(today.slice(0, 7));
@@ -593,6 +742,12 @@ export function insights(data: TrackerData, today: string): Insight[] {
     goalBehind(data, today),
     goalReached(data, today),
     goalEta(data, today),
+    incomeMix(data, today),
+    salaryRaise(data, today),
+    incomeYoY(data, today),
+    topEarner(data, today),
+    steadiness(data, today),
+    per100(data, today),
     ...monthSoFar(data, today),
   ]
     .filter((insight): insight is Insight => insight !== null)

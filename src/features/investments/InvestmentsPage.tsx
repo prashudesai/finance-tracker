@@ -270,7 +270,7 @@ export function InvestmentsPage() {
     state: { add?: 'investment' | 'pms'; open?: string; confirm?: boolean } | null;
     search: string;
   };
-  // Goals moved to Reports › Goal planning. Older links still land there.
+  // Goals moved to Planning › Goal planning. Older links still land there.
   const navigate = useNavigate();
   useEffect(() => {
     if (new URLSearchParams(search).get('view') === 'goals') {

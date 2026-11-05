@@ -293,6 +293,86 @@ export function describeInsight(insight: Insight): InsightText {
             path: '/analytics/goals',
           };
     }
+    case 'incomeMix':
+      return {
+        icon: Wallet,
+        title: `Salary is ${percent(insight.salaryShare)} of your income`,
+        detail: `About ${formatAmount(insight.salary)} a month from salary and ${formatAmount(insight.other)} from other sources${insight.topOther ? `, mostly ${insight.topOther}` : ''}.`,
+        why: [
+          ['Salary, a month', formatAmount(insight.salary)],
+          ['Other income, a month', formatAmount(insight.other)],
+          ['Months counted this year', String(insight.months)],
+        ],
+        path: '/analytics/income',
+      };
+    case 'salaryRaise':
+      return {
+        icon: TrendingUp,
+        title: `Your salary rose ${percent(insight.change)} in ${formatShortMonthYear(insight.month)}`,
+        detail: `From ${formatAmount(insight.from)} to ${formatAmount(insight.to)} a month. A good time to raise your savings contributions too.`,
+        why: [
+          ['Before', formatAmount(insight.from)],
+          ['After', formatAmount(insight.to)],
+          ['Rise', percent(insight.change)],
+        ],
+        path: '/analytics/income',
+      };
+    case 'incomeYoY': {
+      const up = insight.change > 0;
+      return {
+        icon: up ? TrendingUp : TrendingDown,
+        title: `Income is ${up ? 'up' : 'down'} ${percent(Math.abs(insight.change))} on last year`,
+        detail: `${formatAmount(insight.thisYear)} from ${formatShortMonthYear(insight.from)} to ${formatShortMonthYear(insight.to)}, against ${formatAmount(insight.lastYear)} in the same months a year before.`,
+        why: [
+          ['This year', formatAmount(insight.thisYear)],
+          ['Same months last year', formatAmount(insight.lastYear)],
+        ],
+        path: '/analytics/income',
+      };
+    }
+    case 'topEarner':
+      return {
+        icon: HandCoins,
+        title: `${insight.member.split(' ')[0]} brings in ${percent(insight.share)} of household income`,
+        detail: `${formatAmount(insight.total)} this year, across ${insight.members} earners.`,
+        why: [
+          [insight.member, formatAmount(insight.total)],
+          ['Share', percent(insight.share)],
+        ],
+        path: '/analytics/income',
+      };
+    case 'incomeSteadiness':
+      return {
+        icon: insight.verdict === 'varies a lot' ? TrendingDown : Wallet,
+        title:
+          insight.verdict === 'varies a lot'
+            ? 'Your income varies a lot from month to month'
+            : `Your income has been ${insight.verdict}`,
+        detail:
+          insight.verdict === 'varies a lot'
+            ? `It ranged from ${formatAmount(insight.worst)} to ${formatAmount(insight.best)}. A bigger emergency fund helps with the lean months.`
+            : `Usually within ${percent(insight.spread)} of its average over the last ${insight.months} months.`,
+        why: [
+          ['Best month', formatAmount(insight.best)],
+          [`Lowest, ${formatShortMonthYear(insight.worstMonth)}`, formatAmount(insight.worst)],
+          ['Typical swing', percent(insight.spread)],
+        ],
+        path: '/analytics/income',
+      };
+    case 'per100':
+      return {
+        icon: PiggyBank,
+        title: `Of every ₹100 you earn, ₹${Math.round(insight.left)} is left in the bank`,
+        detail: `₹${Math.round(insight.spending)} goes on spending, ₹${Math.round(insight.emis)} on EMIs and ₹${Math.round(insight.invested)} into savings contributions.${insight.left > 25 ? ' Investing some of what’s left would grow it.' : ''}`,
+        why: [
+          ['Earned this year', formatAmount(insight.income)],
+          ['Spending', `₹${Math.round(insight.spending)} of ₹100`],
+          ['EMIs', `₹${Math.round(insight.emis)} of ₹100`],
+          ['Savings contributions', `₹${Math.round(insight.invested)} of ₹100`],
+          ['Left in the bank', `₹${Math.round(insight.left)} of ₹100`],
+        ],
+        path: '/analytics/income',
+      };
     case 'biggest':
       return {
         icon: Receipt,
