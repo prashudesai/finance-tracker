@@ -183,7 +183,8 @@
 }
 
 .fix {
-  padding: 12px 14px;
+  padding: 14px 16px;
+  line-height: 1.45;
   background: color-mix(in srgb, var(--tone) 14%, transparent);
   border-left: 3px solid var(--tone);
   border-radius: 0 var(--radius-small) var(--radius-small) 0;
@@ -328,7 +329,8 @@
 
 .sooner {
   display: block;
-  margin-top: 6px;
+  margin-top: 8px;
+  line-height: 1.5;
   color: var(--muted);
   font-size: 0.85rem;
 }
@@ -341,14 +343,21 @@
 
 .retireHead > div {
   display: grid;
-  gap: 2px;
-  padding: 12px 14px;
+  align-content: start;
+  gap: 4px;
+  padding: 14px 16px;
   background: var(--surface-sunken);
   border-radius: var(--radius-small);
 }
 
 .retireHead .percent {
-  font-size: clamp(1.15rem, 5vw, 1.6rem);
+  font-size: clamp(1.25rem, 5.5vw, 1.6rem);
+  line-height: 1.2;
+}
+
+.retireHead small {
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 .retireChart {
@@ -359,8 +368,9 @@
 
 .need {
   display: grid;
-  gap: 12px;
-  padding: 14px;
+  gap: 16px;
+  padding: 16px;
+  line-height: 1.5;
   background: var(--surface-sunken);
   border: 1px solid var(--card-edge);
   border-radius: var(--radius-small);
@@ -369,22 +379,26 @@
 .needFigures {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
+/* Each column starts at the top, so both figures sit on the same line. */
 .needFigures > div {
   display: grid;
-  gap: 2px;
+  align-content: start;
+  gap: 4px;
 }
 
 .needFigures strong {
-  font-size: clamp(1.15rem, 5vw, 1.5rem);
+  font-size: clamp(1.25rem, 5.5vw, 1.5rem);
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
 
 .needFigures small {
   color: var(--muted);
   font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 /* Where saving stops and retirement starts, in the year-by-year list. */

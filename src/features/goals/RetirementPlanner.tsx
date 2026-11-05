@@ -393,10 +393,12 @@ export function RetirementPlanner() {
               At {retireAge}, in {formatShortMonthYear(retireOn.slice(0, 7))}
             </span>
             <strong className={styles.percent}>{formatAmount(plan.fundAtRetirement)}</strong>
+            <small>Your fund then</small>
           </div>
           <div>
-            <span className={ui.caption}>Spending a month then</span>
+            <span className={ui.caption}>Spending then</span>
             <strong className={styles.percent}>{formatAmount(plan.monthlyAtRetirement)}</strong>
+            <small>A month, after inflation</small>
           </div>
         </div>
       ) : null}
