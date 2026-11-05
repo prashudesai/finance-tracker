@@ -171,9 +171,10 @@ describe('what retirement needs, at realistic rates', () => {
       stepUp: 5,
       inflation: 2,
       growthBefore: 15,
+      growthAfter: 12,
     };
     const need = retirementNeed(inputs);
-    // It ignores the rates typed in, and uses 6%, 10% and 7%.
+    // Rates more hopeful than the long-run ones give way to 6% inflation and 10% growth.
     const realistic = { ...inputs, ...REALISTIC };
     expect(need.onCourse).toBe(planRetirement(realistic).fundAtRetirement);
     const after = (fund: number) =>
@@ -197,11 +198,37 @@ describe('what retirement needs, at realistic rates', () => {
   });
 
   test('25 years at 10% growth and 6% inflation needs about 17 years of spending', () => {
-    const need = retirementNeed({ ...base, age: 60 });
+    const need = retirementNeed({ ...base, age: 60, growthBefore: 10, growthAfter: 10 });
     expect(need.yearsOfSpending).toBeGreaterThan(15.5);
     expect(need.yearsOfSpending).toBeLessThan(18);
     // Already retired: nothing more to invest.
     expect(need.monthlyInvesting).toBeNull();
+  });
+});
+
+describe('the realistic check is never rosier than the plan', () => {
+  test('more cautious rates of your own are kept, so on course matches your plan', () => {
+    const inputs = {
+      ...base,
+      monthlyContribution: 20_000,
+      inflation: 7,
+      growthBefore: 8,
+      growthAfter: 7,
+    };
+    const need = retirementNeed(inputs);
+    expect(need.rates).toEqual({ inflation: 7, growthBefore: 8, growthAfter: 7 });
+    expect(need.onCourse).toBe(planRetirement(inputs).fundAtRetirement);
+  });
+
+  test("nothing more to invest when today's fund gets there on its own", () => {
+    const need = retirementNeed({
+      ...base,
+      fund: 10_00_00_000,
+      growthBefore: 10,
+      growthAfter: 10,
+    });
+    expect(need.gap).toBe(0);
+    expect(need.monthlyInvesting).toBe(0);
   });
 });
 
@@ -328,8 +355,9 @@ describe('investments set one by one after retiring', () => {
       { ...part, name: 'SCSS', value: 50_00_000, payout: 8.2 },
       { ...part, name: 'Funds', value: 50_00_000, growth: 10 },
     ];
-    const need = retirementNeed({ ...base, fund: 1_00_00_000, parts });
-    const simple = retirementNeed({ ...base, fund: 1_00_00_000 });
+    const rates = { growthBefore: 10, growthAfter: 10 };
+    const need = retirementNeed({ ...base, ...rates, fund: 1_00_00_000, parts });
+    const simple = retirementNeed({ ...base, ...rates, fund: 1_00_00_000 });
     expect(need.needed).toBeGreaterThan(simple.needed);
   });
 });

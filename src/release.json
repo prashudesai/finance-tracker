@@ -1,7 +1,9 @@
 {
-  "version": "1.20.0",
+  "version": "1.20.1",
   "released": "2026-11-05",
   "notes": [
+    "Retirement planner: \"What you'll need\" is never rosier than your own plan, so its \"On course for\" matches your fund at retirement when your rates are the cautious ones",
+    "The rates it uses are spelt out, such as \"8% growth before retiring, 10% after\"",
     "Retirement planner: an income investment's payout can be a rupee amount paid monthly, quarterly or yearly, as well as a percentage a year",
     "Retirement assumptions stay open while you type, instead of closing once an error clears",
     "Opening a wide table, such as investment returns details or the retirement year-by-year, no longer makes the page scroll sideways",

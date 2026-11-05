@@ -490,12 +490,12 @@ export function RetirementPlanner() {
           <div className={ui.split}>
             <strong>What you'll need, realistically</strong>
             <span className={ui.chip}>
-              {REALISTIC.inflation}% inflation ·{' '}
+              {need.rates.inflation}% inflation ·{' '}
               {each
-                ? `${REALISTIC.growthBefore}% growth, then your rates`
-                : REALISTIC.growthBefore === REALISTIC.growthAfter
-                  ? `${REALISTIC.growthBefore}% growth`
-                  : `${REALISTIC.growthBefore}% then ${REALISTIC.growthAfter}% growth`}
+                ? `${need.rates.growthBefore}% growth before retiring, then your rates`
+                : need.rates.growthBefore === need.rates.growthAfter
+                  ? `${need.rates.growthBefore}% growth`
+                  : `${need.rates.growthBefore}% growth before retiring, ${need.rates.growthAfter}% after`}
             </span>
           </div>
           <div className={styles.needFigures}>
@@ -514,6 +514,9 @@ export function RetirementPlanner() {
                 {need.gap > 0
                   ? `${formatAmount(need.gap)} short`
                   : `${formatAmount(need.onCourse - need.needed)} to spare`}
+                {plan && need.onCourse !== plan.fundAtRetirement
+                  ? `. Your plan's ${inputs.growthBefore}% growth gives ${formatAmount(plan.fundAtRetirement)}`
+                  : ''}
               </small>
             </div>
           </div>
@@ -522,11 +525,14 @@ export function RetirementPlanner() {
               ? `To keep spending ${formatAmount(inputs.monthlyExpense)} a month in today's rupees, the fund has to last ${untilAge - retireAge} years.`
               : need.gap > 0
                 ? `Invest about ${formatAmount(need.monthlyInvesting)} a month from now, rising ${inputs.stepUp}% a year, to retire at ${retireAge} on today's ${formatAmount(inputs.monthlyExpense)} a month. You invest ${formatAmount(monthlyContribution)} a month now.`
-                : `Your current ${formatAmount(monthlyContribution)} a month, rising ${inputs.stepUp}% a year, gets there. About ${formatAmount(need.monthlyInvesting)} a month would be enough.`}
+                : need.monthlyInvesting === 0
+                  ? `Your fund today gets there on its own, even without investing more. You invest ${formatAmount(monthlyContribution)} a month now.`
+                  : `Your current ${formatAmount(monthlyContribution)} a month, rising ${inputs.stepUp}% a year, gets there. About ${formatAmount(need.monthlyInvesting)} a month would be enough.`}
           </p>
           {usesRosierRates ? (
             <p className={ui.caption} style={{ margin: 0 }}>
-              Your assumptions above are more hopeful than these.{' '}
+              Your assumptions above are more hopeful than {REALISTIC.inflation}% inflation and{' '}
+              {REALISTIC.growthBefore}% growth.{' '}
               <button
                 className={styles.reset}
                 onClick={() => {

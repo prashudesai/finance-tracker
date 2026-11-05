@@ -349,12 +349,18 @@ export function retirementFixes(inputs: RetirementInputs) {
 export const REALISTIC = { inflation: 6, growthBefore: 10, growthAfter: 10 } as const;
 
 /**
- * What retirement needs, at realistic rates: the fund that pays today's spending, rising with
+ * What retirement needs, at realistic rates, or yours where they're more cautious: the fund that pays today's spending, rising with
  * inflation, from retirement to the end of the plan; what the current plan reaches; and the
  * monthly investing, rising by the step-up, that gets there.
  */
 export function retirementNeed(inputs: RetirementInputs) {
-  const realistic = { ...inputs, ...REALISTIC };
+  // Never rosier than the plan itself: the more cautious of the long-run rates and yours.
+  const rates = {
+    inflation: Math.max(inputs.inflation, REALISTIC.inflation),
+    growthBefore: Math.min(inputs.growthBefore, REALISTIC.growthBefore),
+    growthAfter: Math.min(inputs.growthAfter, REALISTIC.growthAfter),
+  };
+  const realistic = { ...inputs, ...rates };
   const reached = planRetirement(realistic);
   const totalMonths = inputs.months ?? (inputs.untilAge - inputs.age + 1) * 12;
   // Investments set one by one keep their mix at retirement, scaled to the fund tried.
@@ -387,13 +393,18 @@ export function retirementNeed(inputs: RetirementInputs) {
       )
     : null;
   return {
+    /** The rates the check used, so they can be named. */
+    rates,
     needed,
     onCourse: reached.fundAtRetirement,
     gap: roundMoney(Math.max(0, needed - reached.fundAtRetirement)),
     monthlyAtRetirement: reached.monthlyAtRetirement,
     /** The fund needed, as years of spending at retirement. */
     yearsOfSpending: needed / (reached.monthlyAtRetirement * 12),
-    /** Total to invest each month from now, rising by the step-up, or null once retired. */
-    monthlyInvesting: monthly === null ? null : Math.ceil(monthly / 100) * 100,
+    /**
+     * Total to invest each month from now, rising by the step-up, or null once retired. Zero
+     * when today's fund gets there on its own.
+     */
+    monthlyInvesting: monthly === null ? null : monthly < 100 ? 0 : Math.ceil(monthly / 100) * 100,
   };
 }
