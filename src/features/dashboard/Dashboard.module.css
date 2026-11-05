@@ -1,0 +1,37 @@
+/*
+ * The top of the dashboard. On wide screens net worth sits beside this month's four
+ * figures, two by two; narrower, both fall back into the page's own column and spacing.
+ */
+.top,
+.overview {
+  display: contents;
+}
+
+@media (min-width: 1000px) {
+  .top {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: var(--space);
+    align-items: stretch;
+  }
+
+  /* Net worth fills the row's height, spreading its parts rather than leaving a gap below. */
+  .top > :first-child {
+    align-content: space-between;
+  }
+
+  .overview {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 10px;
+  }
+
+  .overview .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* The label sits level with the card's top edge, so nudge it in from the corner. */
+  .overview > :first-child {
+    padding: 0 4px;
+  }
+}

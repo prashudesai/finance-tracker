@@ -1,7 +1,6 @@
 import {
   Banknote,
   BellRing,
-  CalendarDays,
   ChevronRight,
   CreditCard,
   LineChart as TrendIcon,
@@ -21,7 +20,7 @@ import {
   portfolioCategories,
   type CategoryRow,
 } from '../../domain/analytics';
-import { financialYearRange, financialYearStart, previousMonth } from '../../domain/calendar';
+import { financialYearRange, financialYearStart } from '../../domain/calendar';
 import { monthlyTrend } from '../../domain/cashflow';
 import { pendingOccurrences } from '../../domain/recurring';
 import { paidShare, summarizeLoans, totalOutstanding, greeting } from '../../domain/summary';
@@ -38,6 +37,7 @@ import {
 import { PageHeader } from '../../ui/PageHeader';
 import { Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
+import styles from './Dashboard.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
 import { EmptyState } from '../../ui/EmptyState';
 import { TrendLine } from '../../ui/TrendLine';
@@ -97,7 +97,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const month = today.slice(0, 7);
   const [sort, setSort] = useState<SortKey>('size');
   const [fullHouse, setFullHouse] = useState(false);
-  const [snapshotMonth, setSnapshotMonth] = useState(previousMonth(month));
 
   const worth = netWorth(data, today);
   const shownWorth = useCountUp(worth.netWorth);
@@ -107,7 +106,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
   );
   const trendUp = (trendValues.at(-1) ?? 0) >= (trendValues[0] ?? 0);
   const overview = monthlyOverview(data, month, today);
-  const snapshot = closeMonth(data, snapshotMonth);
   const loans = summarizeLoans(data, today);
   const outstanding = totalOutstanding(loans);
 
@@ -163,13 +161,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
         }
       : row,
   );
-  const snapshotOptions = Array.from({ length: 6 }, (_, index) => {
-    let key = month;
-    for (let step = 0; step <= index; step++) key = previousMonth(key);
-    return key;
-  });
   const monthName = formatMonth(month).split(' ')[0];
-  const snapshotName = formatMonth(snapshotMonth).split(' ')[0];
   const firstTrend = trend[0]?.month ?? month;
 
   const netWorthCard = (
@@ -211,45 +203,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
       <div className={ui.meterLegend}>
         <span>Assets {formatPercent(worth.assetShare)}</span>
         <span>Debts {formatPercent(worth.debts > 0 ? 1 - worth.assetShare : 0)}</span>
-      </div>
-    </section>
-  );
-
-  const expenseSnapshot = (
-    <section aria-label="Expense snapshot" className={ui.card}>
-      <div className={ui.cardHeader}>
-        <div className={ui.cardHeader}>
-          <span aria-hidden="true" className={ui.tileIcon}>
-            <CalendarDays size={20} />
-          </span>
-          <span className={ui.caption}>Expense snapshot</span>
-        </div>
-        <select
-          aria-label="Snapshot month"
-          className={ui.fieldSelect}
-          onChange={(event) => setSnapshotMonth(event.target.value)}
-          value={snapshotMonth}
-        >
-          {snapshotOptions.map((key) => (
-            <option key={key} value={key}>
-              {formatMonth(key)}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className={ui.row}>
-        <strong className={ui.rowMain}>{snapshotName} House Expense</strong>
-        <strong className={ui.gain}>
-          {snapshot.unrecorded === null ? 'Pending' : formatMoney(snapshot.unrecorded)}
-        </strong>
-      </div>
-      <div className={ui.row}>
-        <strong className={ui.rowMain}>{snapshotName} Full Expense</strong>
-        <strong className={ui.gain}>
-          {snapshot.unrecorded === null
-            ? 'Pending'
-            : formatMoney(snapshot.unrecorded + snapshot.expenses)}
-        </strong>
       </div>
     </section>
   );
@@ -325,51 +278,50 @@ export function Dashboard({ name = '' }: { name?: string }) {
 
       <GettingStarted />
 
-      {phone ? (
-        netWorthCard
-      ) : (
-        <div className={ui.twoColumn}>
-          {netWorthCard}
-          {expenseSnapshot}
-        </div>
-      )}
+      <div className={styles.top}>
+        {netWorthCard}
 
-      <div className={ui.sectionLabel}>
-        Monthly overview <span>{formatMonth(month)}</span>
+        <div className={styles.overview}>
+          <div className={ui.sectionLabel}>
+            Monthly overview <span>{formatMonth(month)}</span>
+          </div>
+          <section aria-label="This month" className={`${ui.statGrid} ${styles.stats}`}>
+            <Stat
+              detail={`Avg ${formatMoney(overview.averageIncome)} · ${shortFy(month)}`}
+              empty={overview.close.income === 0}
+              hue="income"
+              icon={TrendingUp}
+              label="Monthly Income"
+              value={formatMoney(overview.close.income)}
+            />
+            <Stat
+              detail={`Avg ${formatMoney(overview.averageExpenses)} · ${shortFy(month)}`}
+              empty={overview.close.expenses === 0}
+              hue="expense"
+              icon={CreditCard}
+              label="Monthly Expenses"
+              value={formatMoney(overview.close.expenses)}
+            />
+            <Stat
+              detail={`Avg ${formatMoney(overview.averageSavings)} · ${shortFy(month)}`}
+              empty={overview.savings === 0}
+              hue="savings"
+              icon={RefreshCw}
+              label="Savings contributions"
+              tone={ui.gain}
+              value={formatMoney(overview.savings)}
+            />
+            <Stat
+              detail={
+                overview.close.opening === null ? 'Opening not set' : 'After recorded activity'
+              }
+              icon={Banknote}
+              label="Available Balance"
+              value={formatMoney(overview.close.available)}
+            />
+          </section>
+        </div>
       </div>
-      <section aria-label="This month" className={ui.statGrid}>
-        <Stat
-          detail={`Avg ${formatMoney(overview.averageIncome)} · ${shortFy(month)}`}
-          empty={overview.close.income === 0}
-          hue="income"
-          icon={TrendingUp}
-          label="Monthly Income"
-          value={formatMoney(overview.close.income)}
-        />
-        <Stat
-          detail={`Avg ${formatMoney(overview.averageExpenses)} · ${shortFy(month)}`}
-          empty={overview.close.expenses === 0}
-          hue="expense"
-          icon={CreditCard}
-          label="Monthly Expenses"
-          value={formatMoney(overview.close.expenses)}
-        />
-        <Stat
-          detail={`Avg ${formatMoney(overview.averageSavings)} · ${shortFy(month)}`}
-          empty={overview.savings === 0}
-          hue="savings"
-          icon={RefreshCw}
-          label="Savings contributions"
-          tone={ui.gain}
-          value={formatMoney(overview.savings)}
-        />
-        <Stat
-          detail={overview.close.opening === null ? 'Opening not set' : 'After recorded activity'}
-          icon={Banknote}
-          label="Available Balance"
-          value={formatMoney(overview.close.available)}
-        />
-      </section>
 
       {/* Prompts come after your own figures, never before them. */}
       <RecapCard />
