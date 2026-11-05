@@ -157,6 +157,13 @@
   background: var(--accent-soft);
 }
 
+.inlineSort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
 .heroGain {
   margin-top: -6px;
   font-weight: 650;

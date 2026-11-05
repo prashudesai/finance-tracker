@@ -381,13 +381,13 @@ export function Dashboard({ name = '' }: { name?: string }) {
       {trendCard}
 
       <section className={ui.card}>
-        <div className={ui.cardHeader}>
+        <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
           <div>
             <h2 className={ui.cardTitle}>Investment portfolio</h2>
             <div className={ui.caption}>Value and returns</div>
           </div>
-          <label className={ui.caption}>
-            Sort{phone ? ':' : ' by'}{' '}
+          <label className={`${ui.caption} ${ui.inlineSort}`}>
+            Sort by
             <select
               className={ui.fieldSelect}
               onChange={(event) => setSort(event.target.value as SortKey)}

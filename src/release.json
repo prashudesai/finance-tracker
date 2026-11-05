@@ -1,7 +1,8 @@
 {
-  "version": "1.14.0",
+  "version": "1.14.1",
   "released": "2026-11-05",
   "notes": [
+    "Long goal names and the portfolio sort now fit on small phones",
     "Portfolio target: aim for a net worth or investment amount, and see when you will reach it",
     "The prediction uses your average income less spending, loan repayments and growth, with each figure shown",
     "Goals: save for education, a house, retirement and more, funded from a share of your investments",
