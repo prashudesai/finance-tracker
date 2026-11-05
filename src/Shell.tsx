@@ -60,6 +60,10 @@ const AnalyticsLayout = named(
 const AnalyticsPage = named(() => import('./features/analytics/AnalyticsPage'), 'AnalyticsPage');
 const ProjectionPage = named(() => import('./features/analytics/ProjectionPage'), 'ProjectionPage');
 const ReportsPage = named(() => import('./features/analytics/ReportsPage'), 'ReportsPage');
+const GoalPlanningPage = named(
+  () => import('./features/goals/GoalPlanningPage'),
+  'GoalPlanningPage',
+);
 const SettingsPage = lazy(() =>
   import('./features/settings/SettingsPage').then(({ SettingsPage: Page }) => ({ default: Page })),
 );
@@ -355,6 +359,7 @@ export function Shell({
               <Route element={<AnalyticsLayout />} path="/analytics">
                 <Route element={<AnalyticsPage />} index />
                 <Route element={<ProjectionPage />} path="projection" />
+                <Route element={<GoalPlanningPage />} path="goals" />
                 <Route element={<ReportsPage />} path="reports" />
               </Route>
               <Route element={<SettingsPage account={account} />} path="/settings" />

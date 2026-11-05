@@ -1,7 +1,10 @@
 {
-  "version": "1.14.2",
+  "version": "1.15.0",
   "released": "2026-11-05",
   "notes": [
+    "Goal planning has its own page in Reports, next to Growth Projection",
+    "Portfolio targets count your investing only from when you started tracking",
+    "The older portfolio goal planner is replaced by the portfolio target goal",
     "Portfolio target predicts from what you invest each month, and shows how much sooner investing what is left over would be",
     "Long goal names and the portfolio sort now fit on small phones",
     "Portfolio target: aim for a net worth or investment amount, and see when you will reach it",

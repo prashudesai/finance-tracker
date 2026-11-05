@@ -152,7 +152,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
               You invest about <strong>{formatMoney(portfolio.monthly)}</strong> a month
               <small>
                 {portfolio.averages
-                  ? `Contributions less withdrawals, averaged over the last ${portfolio.averages.months} month${portfolio.averages.months === 1 ? '' : 's'}. Income ${formatMoney(portfolio.averages.income)} less spending ${formatMoney(portfolio.averages.expenses)} leaves ${formatMoney(portfolio.averages.surplus)}`
+                  ? `Contributions less withdrawals, averaged over ${portfolio.averages.months} month${portfolio.averages.months === 1 ? '' : 's'} since you started tracking in ${formatShortMonthYear(portfolio.averages.since)}. Income ${formatMoney(portfolio.averages.income)} less spending ${formatMoney(portfolio.averages.expenses)} leaves ${formatMoney(portfolio.averages.surplus)}`
                   : 'Record income, expenses and contributions to see this'}
                 {portfolio.uninvested > 0
                   ? `, so about ${formatMoney(portfolio.uninvested)} a month stays in the bank, which isn't counted`

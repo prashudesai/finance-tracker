@@ -37,7 +37,7 @@ export function GoalsTile() {
           <button
             aria-label="Set a goal"
             className={ui.button}
-            onClick={() => navigate('/investments?view=goals')}
+            onClick={() => navigate('/analytics/goals')}
             type="button"
           >
             Set
@@ -74,7 +74,7 @@ export function GoalsTile() {
       <Link
         className={ui.split}
         style={{ color: 'inherit', textDecoration: 'none' }}
-        to="/investments?view=goals"
+        to="/analytics/goals"
       >
         <span>
           <h2 style={{ fontSize: '1.05rem' }}>Goals · {goals.length}</h2>
@@ -90,7 +90,7 @@ export function GoalsTile() {
             aria-label={`${goal.name}, ${Math.round(Math.min(plan.progress, 1) * 100)}% saved, ${STATUS_LABELS[plan.status]}`}
             className={styles.tileGoal}
             key={goal.id}
-            to="/investments?view=goals"
+            to="/analytics/goals"
           >
             <GoalRing
               kind={goal.kind}

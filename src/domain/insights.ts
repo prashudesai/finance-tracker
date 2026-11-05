@@ -87,6 +87,8 @@ export type Insight = Base &
         principal: number;
         expectedReturn: number;
         basedOn: number;
+        /** The first month with income or spending recorded. */
+        since: string;
       }
     | {
         kind: 'biggest';
@@ -550,6 +552,7 @@ function goalEta(data: TrackerData, today: string): Insight | null {
     principal: funds.principal,
     expectedReturn: plan.expectedReturn,
     basedOn: funds.averages.months,
+    since: funds.averages.since,
   };
 }
 

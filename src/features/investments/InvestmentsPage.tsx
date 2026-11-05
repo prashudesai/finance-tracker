@@ -1,6 +1,6 @@
 import { ChevronRight, PiggyBank, Plus, Trash2, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { optionLists } from '../../domain/options';
 import {
   holdingRows,
@@ -39,15 +39,13 @@ import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
 import { CategoryDialog } from './HoldingActions';
 import { HoldingForm } from './HoldingForm';
-import { GoalsSection } from '../goals/GoalsSection';
 
-type Section = 'investments' | 'retirement' | 'goals';
+type Section = 'investments' | 'retirement';
 
-const SECTIONS: Section[] = ['investments', 'retirement', 'goals'];
+const SECTIONS: Section[] = ['investments', 'retirement'];
 const SECTION_NAMES: Record<Section, string> = {
   investments: 'Investments',
   retirement: 'Retirement',
-  goals: 'Goals',
 };
 
 const SECTION_KEY = 'investmentSection';
@@ -272,12 +270,13 @@ export function InvestmentsPage() {
     state: { add?: 'investment' | 'pms'; open?: string; confirm?: boolean } | null;
     search: string;
   };
-  // Insights and the dashboard tile link to ?view=goals.
+  // Goals moved to Reports › Goal planning. Older links still land there.
+  const navigate = useNavigate();
   useEffect(() => {
-    if (new URLSearchParams(search).get('view') !== 'goals') return;
-    setSection('goals');
-    scrollToSection('goals');
-  }, [search]);
+    if (new URLSearchParams(search).get('view') === 'goals') {
+      void navigate('/analytics/goals', { replace: true });
+    }
+  }, [navigate, search]);
 
   // The dashboard's add menu lands here with the entry to open.
   useEffect(() => {
@@ -291,7 +290,6 @@ export function InvestmentsPage() {
   }, [quickAdd]);
   const showInvestments = !phone || section === 'investments';
   const showRetirement = !phone || section === 'retirement';
-  const showGoals = !phone || section === 'goals';
 
   const rows = holdingRows(data, today);
   const isUnconfirmed = ({ holding }: (typeof rows)[number]) =>
@@ -397,8 +395,6 @@ export function InvestmentsPage() {
       </div>
 
       {phone ? <SectionTabs onChange={setSection} section={section} /> : null}
-
-      {showGoals ? <GoalsSection /> : null}
 
       {showInvestments && pms.length > 0 ? (
         <section className={ui.card}>

@@ -71,6 +71,7 @@ test.each([
   ['/debts', 'Debt & EMI Tracker'],
   ['/analytics', 'Analytics'],
   ['/analytics/projection', 'Growth Projection'],
+  ['/analytics/goals', 'Goal planning'],
   ['/analytics/reports', 'Analytics'],
   ['/settings', 'Settings'],
 ])('%s renders with full sample data', async (path, title) => {
@@ -87,6 +88,7 @@ test.each([
   '/debts',
   '/analytics',
   '/analytics/projection',
+  '/analytics/goals',
   '/analytics/reports',
   '/settings',
 ])('%s renders on an empty account', async (path) => {
@@ -839,7 +841,8 @@ test('phone projection opens assumptions by group and keeps goals last', async (
   expect(await screen.findByLabelText(/Mutual Funds annual step-up/)).toBeDefined();
   const headings = screen.getByText('Current values and assumptions');
   const planned = screen.getByText('Planned one-time changes');
-  const goal = screen.getByText('Goal planning');
+  // The link to its own page, not the tab of the same name.
+  const goal = screen.getByRole('link', { name: /^Goal planning Your goals/ });
   expect(headings.compareDocumentPosition(planned) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(planned.compareDocumentPosition(goal) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   Reflect.deleteProperty(window, 'matchMedia');

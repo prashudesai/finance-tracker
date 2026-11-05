@@ -14,7 +14,15 @@ const fitsTheScreen = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 
 test.describe('every page', () => {
-  for (const path of ['/', '/cash-flow', '/investments', '/debts', '/analytics', '/settings']) {
+  for (const path of [
+    '/',
+    '/cash-flow',
+    '/investments',
+    '/debts',
+    '/analytics',
+    '/analytics/goals',
+    '/settings',
+  ]) {
     test(`${path} opens and fits the screen`, async ({ page }) => {
       await open(page, path);
       await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();

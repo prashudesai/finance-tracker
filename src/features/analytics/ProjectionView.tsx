@@ -16,7 +16,6 @@ import { SortHeader, useSort, type SortValue } from '../../ui/useSort';
 import styles from './Projection.module.css';
 import {
   AdjustmentForm,
-  GoalPlanner,
   PlannedChanges,
   RateInput,
   SCENARIO_LABELS,
@@ -557,7 +556,6 @@ export function ProjectionView({
   onScenario: (scenario: Scenario) => void;
 }) {
   const { projectionYears } = useSettings();
-  const [planning, setPlanning] = useState(false);
   return (
     <div className={ui.page}>
       {error ? (
@@ -583,26 +581,15 @@ export function ProjectionView({
       </div>
       <Assumptions assets={assets} />
       {results ? <Breakdown rows={results[scenario].rows} scenario={scenario} /> : null}
-      <details className={`${ui.card} ${ui.fold}`}>
-        <summary>Goal planning</summary>
-        <div className={ui.actions}>
-          <Link className={ui.button} to="/investments?view=goals">
-            Your goals
-          </Link>
-          <button className={ui.quiet} onClick={() => setPlanning(true)} type="button">
-            Portfolio goal planner
-          </button>
-        </div>
-        <p className={ui.caption}>
-          Goals track each thing you're saving for, funded from your investments. The portfolio
-          planner checks your whole portfolio against one target.
-        </p>
-      </details>
-      {planning ? (
-        <Modal onClose={() => setPlanning(false)} title="Portfolio goal planner">
-          <GoalPlanner assets={assets} />
-        </Modal>
-      ) : null}
+      <Link className={`${ui.card} ${ui.linkRow}`} to="/analytics/goals">
+        <span>
+          <strong>Goal planning</strong>
+          <span className={ui.caption} style={{ display: 'block' }}>
+            Your goals have their own page, including a portfolio target
+          </span>
+        </span>
+        <span aria-hidden="true">›</span>
+      </Link>
     </div>
   );
 }

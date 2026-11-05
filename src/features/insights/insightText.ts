@@ -228,7 +228,7 @@ export function describeInsight(insight: Insight): InsightText {
           ['Expected at the current pace', formatMoney(insight.projected)],
           ['Extra each month', formatMoney(insight.extra)],
         ],
-        path: '/investments?view=goals',
+        path: '/analytics/goals',
         note: 'Projections assume steady returns, which markets never give.',
       };
     case 'goalReached':
@@ -240,7 +240,7 @@ export function describeInsight(insight: Insight): InsightText {
           ['Set aside', formatMoney(insight.saved)],
           ['Needed, after inflation', formatMoney(insight.needed)],
         ],
-        path: '/investments?view=goals',
+        path: '/analytics/goals',
       };
     case 'goalEta': {
       const what = insight.measure === 'netWorth' ? 'Net worth' : 'Your investments';
@@ -252,7 +252,10 @@ export function describeInsight(insight: Insight): InsightText {
       const why: [string, string][] = [
         [`${what} today`, formatMoney(insight.current)],
         ['Target', formatMoney(insight.target)],
-        [`Invested each month, last ${insight.basedOn} months`, formatMoney(insight.invested)],
+        [
+          `Invested each month, over ${insight.basedOn} month${insight.basedOn === 1 ? '' : 's'} since ${formatShortMonthYear(insight.since)}`,
+          formatMoney(insight.invested),
+        ],
         ['Average income', formatMoney(insight.income)],
         ['Average spending', formatMoney(insight.expenses)],
         ['Left over, not invested', formatMoney(insight.leftover)],
@@ -270,7 +273,7 @@ export function describeInsight(insight: Insight): InsightText {
             title: `${what} reaches ${formatMoney(insight.target)} by ${formatShortMonthYear(insight.reachedBy)}`,
             detail: `That's ${years}, investing about ${formatMoney(insight.invested)} a month as you have been, with growth on what you have.${sooner}`,
             why,
-            path: '/investments?view=goals',
+            path: '/analytics/goals',
             note: 'Assumes your investing and returns stay as they’ve been. Money left in the bank isn’t counted.',
           }
         : {
@@ -281,7 +284,7 @@ export function describeInsight(insight: Insight): InsightText {
                 ? `You invest about ${formatMoney(insight.invested)} a month. Investing more of the ${formatMoney(insight.leftover)} left over would help.`
                 : 'Recent months show little being invested, so there’s nothing to build it with.',
             why,
-            path: '/investments?view=goals',
+            path: '/analytics/goals',
           };
     }
     case 'biggest':

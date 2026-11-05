@@ -268,6 +268,7 @@ describe('portfolio target', () => {
       surplus: 1_00_000,
       invested: 0,
       months: 2,
+      since: '2026-08',
     });
     expect(monthlyAverages({ income: [], expenses: [] }, '2026-11-05')).toBeNull();
   });
@@ -331,18 +332,37 @@ describe('portfolio target', () => {
     });
     const averages = monthlyAverages(
       {
-        income: [],
+        income: [income('2026-10-01', 1_00_000), income('2026-09-01', 1_00_000)],
         expenses: [],
         contributions: [
           contribution('a', '2026-10-05', 40_000),
           contribution('b', '2026-09-05', 30_000),
-          contribution('c', '2026-08-05', 99_000, true),
+          contribution('c', '2026-09-06', 99_000, true),
         ],
         withdrawals: [{ id: 'w', holdingId: 'fund', date: '2026-09-20', amount: 10_000 }],
       },
       '2026-11-05',
     );
     expect(averages).toMatchObject({ invested: 30_000, months: 2 });
+  });
+
+  test('only counts from when tracking began, so earlier investments do not inflate it', () => {
+    const averages = monthlyAverages(
+      {
+        // Started using the app in September.
+        income: [income('2026-09-01', 1_00_000), income('2026-10-01', 1_00_000)],
+        expenses: [],
+        contributions: [
+          // Entered for the months before, when setting up.
+          { id: 'old1', holdingId: 'fund', date: '2026-06-05', amount: 5_00_000, automatic: false },
+          { id: 'old2', holdingId: 'fund', date: '2026-08-05', amount: 5_00_000, automatic: false },
+          { id: 'new1', holdingId: 'fund', date: '2026-09-05', amount: 20_000, automatic: true },
+          { id: 'new2', holdingId: 'fund', date: '2026-10-05', amount: 20_000, automatic: true },
+        ],
+      },
+      '2026-11-05',
+    );
+    expect(averages).toMatchObject({ invested: 20_000, months: 2, since: '2026-09' });
   });
 
   test('grows by what is invested each month, not by what stays in the bank', () => {

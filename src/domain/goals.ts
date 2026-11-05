@@ -165,8 +165,10 @@ export function planGoal(inputs: GoalInputs, today: string): GoalPlan {
 
 /**
  * Average monthly income, spending, what's left and what was invested, over recent complete
- * months with records. A month with none of them is skipped, so a gap doesn't drag the
- * average down. Invested is contributions less withdrawals, so money taken out counts against it.
+ * months since tracking began: the first month with income or spending recorded. A month
+ * counts only when it has income or spending, so investments entered for the time before
+ * someone started using the app don't inflate the figure. Invested is contributions less
+ * withdrawals, so money taken out counts against it.
  */
 export function monthlyAverages(
   data: Pick<TrackerData, 'income' | 'expenses'> &
@@ -177,6 +179,9 @@ export function monthlyAverages(
   const total = (rows: { date: string; amount: number }[], key: string) =>
     rows.filter((row) => row.date.startsWith(key)).reduce((sum, row) => sum + row.amount, 0);
   const contributions = (data.contributions ?? []).filter((row) => !row.skipped);
+  const tracked = [...data.income, ...data.expenses].map((row) => row.date.slice(0, 7)).sort();
+  const since = tracked[0];
+  if (!since) return null;
   let month = today.slice(0, 7);
   let income = 0;
   let expenses = 0;
@@ -184,13 +189,13 @@ export function monthlyAverages(
   let months = 0;
   for (let step = 0; step < span; step++) {
     month = previousMonth(month);
+    if (month < since) break;
     const earned = total(data.income, month);
     const spent = total(data.expenses, month);
-    const added = total(contributions, month) - total(data.withdrawals ?? [], month);
-    if (earned === 0 && spent === 0 && added === 0) continue;
+    if (earned === 0 && spent === 0) continue;
     income += earned;
     expenses += spent;
-    invested += added;
+    invested += total(contributions, month) - total(data.withdrawals ?? [], month);
     months += 1;
   }
   if (months === 0) return null;
@@ -200,6 +205,7 @@ export function monthlyAverages(
     surplus: roundMoney((income - expenses) / months),
     invested: roundMoney(invested / months),
     months,
+    since,
   };
 }
 

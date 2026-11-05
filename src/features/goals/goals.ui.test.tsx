@@ -70,7 +70,7 @@ afterEach(() => {
 
 describe('Goals', () => {
   test('a goal is added from a share of an investment, and shows how far along it is', async () => {
-    show('/investments?view=goals');
+    show('/analytics/goals');
     const section = within(await screen.findByRole('region', { name: 'Goals' }));
     fireEvent.click(section.getByRole('button', { name: /Add goal/ }));
     const form = within(await screen.findByRole('dialog', { name: 'Add a goal', hidden: true }));
@@ -91,7 +91,7 @@ describe('Goals', () => {
   });
 
   test('the detail says what to do, and what-if changes nothing saved', async () => {
-    show('/investments?view=goals', [college]);
+    show('/analytics/goals', [college]);
     fireEvent.click(await screen.findByRole('button', { name: /^College:/ }));
     const detail = within(await screen.findByRole('dialog', { name: 'College', hidden: true }));
     expect(detail.getByText(/Add ₹[\d,]+ more a month to reach it on time/)).toBeDefined();
@@ -104,7 +104,7 @@ describe('Goals', () => {
 
   test('deleting a goal leaves the investments alone', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    show('/investments?view=goals', [college]);
+    show('/analytics/goals', [college]);
     fireEvent.click(await screen.findByRole('button', { name: /^College:/ }));
     const detail = within(await screen.findByRole('dialog', { name: 'College', hidden: true }));
     fireEvent.click(detail.getByRole('button', { name: 'Delete', hidden: true }));
@@ -113,7 +113,7 @@ describe('Goals', () => {
   });
 
   test('a portfolio target says when net worth gets there, from income less spending', async () => {
-    show('/investments?view=goals', [
+    show('/analytics/goals', [
       {
         id: 'worth',
         kind: 'portfolio',
