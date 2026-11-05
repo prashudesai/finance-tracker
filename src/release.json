@@ -1,7 +1,8 @@
 {
-  "version": "1.18.4",
+  "version": "1.18.5",
   "released": "2026-11-05",
   "notes": [
+    "The dashboard chart's investing bar shows only what you invested from income; PF and NPS, taken from salary first, are left out",
     "Dashboard chart shows income against expenses, with each month's investing stacked on top",
     "Dashboard on a computer: net worth beside this month's figures, and the expense snapshot tile is removed",
     "Retirement planner reads more easily: matching headline tiles, figures lined up, and more room between lines",

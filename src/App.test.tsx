@@ -1350,10 +1350,10 @@ test('investing stacks on spending, and is left out when nothing was invested', 
   const months = container.querySelectorAll('[class*="month"]');
   expect(months[0]?.querySelectorAll('[class*="barInvested"]')).toHaveLength(1);
   expect(months[1]?.querySelectorAll('[class*="barInvested"]')).toHaveLength(0);
-  expect(screen.getAllByText('Invested ₹30').length).toBeGreaterThan(0);
+  expect(screen.getAllByText('Invested from income ₹30').length).toBeGreaterThan(0);
   unmount();
   render(<TrendChart months={[{ month: '2026-10', income: 100, expenses: 60 }]} />);
-  expect(screen.queryByText('Invested')).toBeNull();
+  expect(screen.queryByText(/Invested from income/)).toBeNull();
 });
 
 describe('monthly balances', () => {

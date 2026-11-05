@@ -11,7 +11,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
   attentionItems,
-  contributionsByMonth,
+  investedFromIncome,
   holdingRows,
   monthlyOverview,
   netWorth,
@@ -148,7 +148,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
     Number(month.slice(5, 7)) -
     Number(fyStartMonth.slice(5, 7)) +
     1;
-  const invested = contributionsByMonth(data);
+  const invested = investedFromIncome(data);
   const trend = monthlyTrend(data, month, phone ? PHONE_TREND_MONTHS : fyMonths).map((row) => ({
     ...row,
     invested: invested.get(row.month) ?? 0,

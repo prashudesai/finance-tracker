@@ -4,7 +4,7 @@ import { formatCompactMoney, formatMoney, formatMonth, formatShortMonth } from '
 import ui from '../../ui/ui.module.css';
 import styles from './TrendChart.module.css';
 
-/** A month's income, and what went out: spending, with savings contributions on top. */
+/** A month's income, and what went out: spending, with what was invested from it on top. */
 export interface TrendRow extends MonthTrend {
   invested?: number;
 }
@@ -20,7 +20,7 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
   const summary = (row: TrendRow) => [
     `Income ${formatMoney(row.income)}`,
     `Expenses ${formatMoney(row.expenses)}`,
-    ...(showInvested ? [`Invested ${formatMoney(row.invested ?? 0)}`] : []),
+    ...(showInvested ? [`Invested from income ${formatMoney(row.invested ?? 0)}`] : []),
   ];
   const height = (value: number) => `${(value / peak) * 100}%`;
 
@@ -35,7 +35,7 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
         </span>
         {showInvested ? (
           <span>
-            <i className={styles.swatchInvested} /> Invested
+            <i className={styles.swatchInvested} /> Invested from income
           </span>
         ) : null}
       </figcaption>
@@ -75,7 +75,7 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
               <th scope="col">Month</th>
               <th scope="col">Income</th>
               <th scope="col">Expenses</th>
-              {showInvested ? <th scope="col">Invested</th> : null}
+              {showInvested ? <th scope="col">Invested from income</th> : null}
             </tr>
           </thead>
           <tbody>

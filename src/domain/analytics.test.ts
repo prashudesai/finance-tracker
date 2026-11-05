@@ -12,6 +12,7 @@ import {
   memberPositions,
   financialSummary,
   holdingRows,
+  investedFromIncome,
   monthCloser,
   monthlyOverview,
   monthReviewStatus,
@@ -254,6 +255,34 @@ test('a recent cloud sync means no backup reminder', () => {
   expect(backupStatus(state, '2026-02-15').due).toBe(true);
   expect(backupStatus(state, '2026-02-15', '2026-02-10').due).toBe(false);
   expect(backupStatus(state, '2026-02-15', '2026-02-01').due).toBe(true);
+});
+
+test('investing from income leaves out PF and NPS, which come out of salary first', () => {
+  const contribution = (id: string, holdingId: string, amount: number, skipped = false) => ({
+    id,
+    holdingId,
+    date: '2026-10-05',
+    amount,
+    automatic: false,
+    ...(skipped ? { skipped } : {}),
+  });
+  const state: TrackerData = {
+    ...emptyTrackerData(),
+    holdings: [
+      holding({ id: 'fund' }),
+      holding({ id: 'pf', kind: 'pf', type: 'PF' }),
+      holding({ id: 'nps', kind: 'nps', type: 'NPS' }),
+      holding({ id: 'ppf', kind: 'ppf', type: 'PPF' }),
+    ],
+    contributions: [
+      contribution('a', 'fund', 20_000),
+      contribution('b', 'pf', 9_000),
+      contribution('c', 'nps', 5_000),
+      contribution('d', 'ppf', 3_000),
+      contribution('e', 'fund', 7_000, true),
+    ],
+  };
+  expect(investedFromIncome(state).get('2026-10')).toBe(23_000);
 });
 
 test('full house expense adds spending that was not recorded', () => {

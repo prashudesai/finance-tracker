@@ -183,10 +183,18 @@ function activeContributions(data: TrackerData) {
   return data.contributions.filter((row) => !row.skipped);
 }
 
-/** Savings contributions made each month, skipped ones left out, keyed by YYYY-MM. */
-export function contributionsByMonth(data: TrackerData) {
+/**
+ * What was invested each month out of income received, keyed by YYYY-MM: savings
+ * contributions, skipped ones left out, and PF and NPS too, as those come out of salary
+ * before it reaches the bank.
+ */
+export function investedFromIncome(data: TrackerData) {
+  const fromSalary = new Set(
+    data.holdings.filter((row) => row.kind === 'pf' || row.kind === 'nps').map((row) => row.id),
+  );
   const totals = new Map<string, number>();
   for (const row of activeContributions(data)) {
+    if (fromSalary.has(row.holdingId)) continue;
     const month = row.date.slice(0, 7);
     totals.set(month, roundMoney((totals.get(month) ?? 0) + row.amount));
   }
