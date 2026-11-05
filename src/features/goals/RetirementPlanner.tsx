@@ -49,6 +49,10 @@ interface AfterDraft {
   behaviour: After['behaviour'];
   growth: string;
   payout: string;
+  /** A payout as a percentage of the value a year, or a fixed amount a month. */
+  payoutIn: 'percent' | 'amount';
+  payoutAmount: string;
+  payoutEvery: Every;
   sellable: boolean;
   moving: boolean;
   moveShare: string;
@@ -64,7 +68,10 @@ const BEHAVIOURS = [
 const draftOf = (saved: After | undefined, growth: number): AfterDraft => ({
   behaviour: saved?.behaviour ?? 'growth',
   growth: String(saved?.growth ?? growth),
-  payout: String(saved?.payout ?? 7),
+  payout: String(saved?.payoutFixed ? 7 : (saved?.payout ?? 7)),
+  payoutIn: saved?.payoutFixed ? 'amount' : 'percent',
+  payoutAmount: saved?.payoutFixed ? String(saved.payoutFixed.amount) : '',
+  payoutEvery: saved?.payoutFixed?.every ?? 'month',
   sellable: saved?.sellable ?? true,
   moving: Boolean(saved?.move),
   moveShare: String(Math.round((saved?.move?.share ?? 0.3) * 100)),
@@ -78,7 +85,10 @@ function afterOf(draft: AfterDraft): After {
   return {
     behaviour: draft.behaviour,
     growth: grows ? Number(draft.growth) : 0,
-    payout: pays ? Number(draft.payout) : 0,
+    payout: pays && draft.payoutIn === 'percent' ? Number(draft.payout) : 0,
+    ...(pays && draft.payoutIn === 'amount'
+      ? { payoutFixed: { amount: Number(draft.payoutAmount), every: draft.payoutEvery } }
+      : {}),
     sellable: pays ? draft.sellable : true,
     ...(grows && draft.moving
       ? { move: { share: Number(draft.moveShare) / 100, payout: Number(draft.movePayout) } }
@@ -87,6 +97,18 @@ function afterOf(draft: AfterDraft): After {
 }
 
 const MOVED = ' → income';
+
+type Every = 'month' | 'quarter' | 'year';
+
+const EVERY = [
+  ['month', 'Monthly'],
+  ['quarter', 'Quarterly'],
+  ['year', 'Yearly'],
+] as const;
+
+/** A fixed payout spread evenly over the months it covers, for the month-by-month plan. */
+const monthlyOf = ({ amount, every }: { amount: number; every: Every }) =>
+  amount / (every === 'month' ? 1 : every === 'quarter' ? 3 : 12);
 
 /** A number field that keeps what's typed, even mid-edit, and reports a number. */
 function NumberField({
@@ -155,6 +177,8 @@ export function RetirementPlanner() {
   const [contributions, setContributions] = useState(saved.contributions);
   const [fundKind, setFundKind] = useState(saved.fund);
   const [picked, setPicked] = useState<number | null>(null);
+  // Opened by hand or by an error, the assumptions stay open until closed by hand.
+  const [assumptionsOpen, setAssumptionsOpen] = useState(false);
   const [afterMode, setAfterMode] = useState(saved.afterMode ?? 'simple');
   const [drafts, setDrafts] = useState<Record<string, AfterDraft>>(() =>
     Object.fromEntries(
@@ -205,6 +229,7 @@ export function RetirementPlanner() {
             : 1 / groups.length,
       growth: after.growth,
       payout: after.payout,
+      ...(after.payoutFixed ? { payoutMonthly: monthlyOf(after.payoutFixed) } : {}),
       sellable: after.sellable,
       ...(after.move ? { move: after.move } : {}),
     };
@@ -218,8 +243,14 @@ export function RetirementPlanner() {
       const draft = draftFor(group.key);
       if (draft.behaviour !== 'income' && !inRange(draft.growth))
         return `Enter how much ${group.label} grows a year, from 0% to 30%.`;
-      if (draft.behaviour !== 'growth' && !inRange(draft.payout))
+      if (draft.behaviour !== 'growth' && draft.payoutIn === 'percent' && !inRange(draft.payout))
         return `Enter how much ${group.label} pays a year, from 0% to 30%.`;
+      if (
+        draft.behaviour !== 'growth' &&
+        draft.payoutIn === 'amount' &&
+        !(Number(draft.payoutAmount) > 0 && Number(draft.payoutAmount) <= 1_00_00_000)
+      )
+        return `Enter how much ${group.label} pays each ${draft.payoutEvery}, in rupees.`;
       if (draft.behaviour !== 'income' && draft.moving) {
         const share = Number(draft.moveShare);
         if (draft.moveShare.trim() === '' || !(share > 0 && share <= 100))
@@ -672,7 +703,11 @@ export function RetirementPlanner() {
         </details>
       ) : null}
 
-      <details className={ui.fold} open={Boolean(error) || undefined}>
+      <details
+        className={ui.fold}
+        onToggle={(event) => setAssumptionsOpen(event.currentTarget.open)}
+        open={assumptionsOpen || Boolean(error)}
+      >
         <summary>Your assumptions</summary>
         <div className={ui.page}>
           <div className={styles.modeGroup}>
@@ -863,18 +898,73 @@ export function RetirementPlanner() {
                         />
                       ) : null}
                       {draft.behaviour !== 'growth' ? (
-                        <NumberField
-                          label="Pays a year (%)"
-                          onChange={(value) => setDraft(group.key, { payout: value })}
-                          step={0.1}
-                          value={draft.payout}
-                        />
+                        draft.payoutIn === 'amount' ? (
+                          <NumberField
+                            label="Pays (₹)"
+                            onChange={(value) => setDraft(group.key, { payoutAmount: value })}
+                            step={500}
+                            value={draft.payoutAmount}
+                          />
+                        ) : (
+                          <NumberField
+                            label="Pays a year (%)"
+                            onChange={(value) => setDraft(group.key, { payout: value })}
+                            step={0.1}
+                            value={draft.payout}
+                          />
+                        )
                       ) : null}
                     </div>
+                    {draft.behaviour !== 'growth' ? (
+                      <div
+                        aria-label={`How ${group.label} pays`}
+                        className={styles.payIn}
+                        role="radiogroup"
+                      >
+                        {(
+                          [
+                            ['amount', '₹ amount'],
+                            ['percent', '% a year'],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <button
+                            aria-checked={draft.payoutIn === key}
+                            className={styles.behaviour}
+                            key={key}
+                            onClick={() => setDraft(group.key, { payoutIn: key })}
+                            role="radio"
+                            type="button"
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                    {draft.behaviour !== 'growth' && draft.payoutIn === 'amount' ? (
+                      <div
+                        aria-label={`How often ${group.label} pays`}
+                        className={styles.every}
+                        role="radiogroup"
+                      >
+                        {EVERY.map(([key, label]) => (
+                          <button
+                            aria-checked={draft.payoutEvery === key}
+                            className={styles.behaviour}
+                            key={key}
+                            onClick={() => setDraft(group.key, { payoutEvery: key })}
+                            role="radio"
+                            type="button"
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                     {draft.behaviour !== 'growth' && atRetirement ? (
                       <span className={ui.caption}>
-                        About {monthly(atRetirement, after.payout)} a month when you retire, on{' '}
-                        {formatAmount(atRetirement.value)}
+                        {after.payoutFixed
+                          ? `${formatAmount(after.payoutFixed.amount)} a ${after.payoutFixed.every} from when you retire${after.payoutFixed.every === 'month' ? '' : `, about ${formatAmount(Math.round(monthlyOf(after.payoutFixed)))} a month`}${atRetirement.value > 0 ? `, or ${((monthlyOf(after.payoutFixed) * 1200) / atRetirement.value).toFixed(1)}% a year of ${formatAmount(atRetirement.value)}` : ''}`
+                          : `About ${monthly(atRetirement, after.payout)} a month when you retire, on ${formatAmount(atRetirement.value)}`}
                         {draft.behaviour === 'income' ? ', which stays the same' : ''}.
                       </span>
                     ) : null}

@@ -261,6 +261,18 @@ describe('Goals', () => {
     fireEvent.change(first.getByLabelText('Pays a year (%)'), { target: { value: '' } });
     expect(planner.getByRole('alert').textContent).toMatch(/^Enter how much .+ pays a year/);
     fireEvent.change(first.getByLabelText('Pays a year (%)'), { target: { value: '7' } });
+    // A payout can be a fixed amount instead, paid monthly, quarterly or yearly.
+    fireEvent.click(first.getByRole('radio', { name: '₹ amount' }));
+    expect(planner.getByRole('alert').textContent).toMatch(/pays each month, in rupees/);
+    fireEvent.change(first.getByLabelText('Pays (₹)'), { target: { value: '25000' } });
+    expect(planner.queryByRole('alert')).toBeNull();
+    expect(first.getByText(/₹25,000 a month from when you retire/)).toBeDefined();
+    fireEvent.click(first.getByRole('radio', { name: 'Quarterly' }));
+    fireEvent.change(first.getByLabelText('Pays (₹)'), { target: { value: '75000' } });
+    expect(
+      first.getByText(/₹75,000 a quarter from when you retire, about ₹25,000 a month/),
+    ).toBeDefined();
+    fireEvent.click(first.getByRole('radio', { name: '% a year' }));
     fireEvent.click(planner.getByRole('button', { name: 'Save these assumptions' }));
     await waitFor(() =>
       expect(saved().settings[0]?.retirement).toMatchObject({

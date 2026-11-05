@@ -232,6 +232,29 @@ describe('investments set one by one after retiring', () => {
     expect(plan.leftOver).toBe(1_48_20_000);
   });
 
+  test('a fixed payout a month is paid in full, and in part once some is sold', () => {
+    // Rent of ₹30,000 a month from a flat, with ₹50,000 spent: ₹20,000 is sold from funds.
+    const plan = planRetirement({
+      ...retired,
+      fund: 1_20_00_000,
+      parts: [
+        { ...part, name: 'Flat', value: 1_00_00_000, payoutMonthly: 30_000, sellable: false },
+        { ...part, name: 'Funds', value: 20_00_000 },
+      ],
+    });
+    expect(plan.payoutAtRetirement).toBe(30_000);
+    expect(plan.years[0]).toMatchObject({ payouts: 3_60_000, withdrawn: 2_40_000 });
+    // Half an income investment sold pays half as much.
+    const half = planRetirement({
+      ...retired,
+      monthlyExpense: 60_000,
+      months: 2,
+      fund: 10_00_000,
+      parts: [{ ...part, name: 'SCSS', value: 10_00_000, payoutMonthly: 10_000 }],
+    });
+    expect(half.years[0]?.payouts).toBeLessThan(20_000);
+  });
+
   test('growth applies only to what grows, unlike one rate for the whole fund', () => {
     const parts = [
       { ...part, name: 'SCSS', value: 50_00_000, payout: 8.2 },

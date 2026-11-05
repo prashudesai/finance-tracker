@@ -48,6 +48,11 @@ export interface RetirementPart {
   /** After retiring, as yearly percentages of its value. */
   growth: number;
   payout: number;
+  /**
+   * A fixed payout a month in place of the percentage, such as rent or an annuity. Paid in
+   * full while what it held at retirement is kept, and in part once some is sold.
+   */
+  payoutMonthly?: number;
   /** Whether it can be sold to pay expenses once the rest is spent. */
   sellable: boolean;
   /** At retirement, a share moved into an income investment paying `payout` a year. */
@@ -136,6 +141,15 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
   const values = () => parts.reduce((sum, part) => sum + part.value, 0);
   let partsAtRetirement: RetirementPart[] = [];
   let payoutAtRetirement = 0;
+  const heldAtRetirement = new Map<RetirementPart, number>();
+  /** A month's payout: the fixed amount, less any part sold, or the percentage of its value. */
+  const payoutOf = (part: RetirementPart) => {
+    if (part.payoutMonthly === undefined) return (part.value * part.payout) / 100 / 12;
+    const held = heldAtRetirement.get(part) ?? 0;
+    return part.payoutMonthly * (held > 0 ? Math.min(1, part.value / held) : 1);
+  };
+  const paysNothing = (part: RetirementPart) =>
+    part.payout === 0 && (part.payoutMonthly ?? 0) === 0;
   /** Moves money into income investments, once, as retirement starts. */
   const retire = () => {
     const moved: RetirementPart[] = [];
@@ -154,6 +168,7 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
     }
     for (const part of parts) delete part.move;
     parts = [...parts, ...moved];
+    for (const part of parts) heldAtRetirement.set(part, part.value);
     partsAtRetirement = parts.map((part) => ({ ...part, value: roundMoney(part.value) }));
   };
   /** Takes `amount` from the parts that `from` allows, in proportion to their value. */
@@ -203,7 +218,7 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
           const gained = part.value * monthlyRate(part.growth);
           growth += gained;
           part.value += gained;
-          income += (part.value * part.payout) / 100 / 12;
+          income += payoutOf(part);
         }
         if (month === retireAt) payoutAtRetirement = income;
         payouts += income;
@@ -218,7 +233,7 @@ export function planRetirement(inputs: RetirementInputs): RetirementPlan {
         } else {
           // Sell what pays nothing first, then what also grows, and what only pays last.
           const short = expense - income;
-          let paid = draw(short, (part) => part.sellable && part.payout === 0);
+          let paid = draw(short, (part) => part.sellable && paysNothing(part));
           paid += draw(short - paid, (part) => part.sellable && part.growth > 0);
           paid += draw(short - paid, (part) => part.sellable);
           withdrawn += paid;

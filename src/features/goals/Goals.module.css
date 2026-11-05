@@ -499,6 +499,30 @@
   background: var(--accent);
 }
 
+/* How often a fixed payout comes, the same slim switch with three options */
+.every {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  max-width: 320px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+/* ₹ amount or % a year, a smaller switch under the payout field */
+.payIn {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  max-width: 240px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
 .afterFields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

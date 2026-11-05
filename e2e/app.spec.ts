@@ -51,6 +51,27 @@ test('an income is added and shows in the history', async ({ page, isMobile }) =
   await expect(page.getByText('₹4,321').first()).toBeVisible();
 });
 
+test('a retirement payout can be a fixed amount each quarter, and the settings stay open while typing', async ({
+  page,
+}) => {
+  await open(page, '/analytics/goals');
+  const planner = page.getByRole('region', { name: 'Retirement planner' });
+  await planner.getByText('Your assumptions').click();
+  await planner.getByRole('radio', { name: /Set each investment/ }).click();
+  const list = planner.getByRole('list', { name: 'Each investment after retiring' });
+  const first = list.getByRole('listitem').first();
+  await first.getByRole('radio', { name: 'Income' }).click();
+  await first.getByRole('radio', { name: '₹ amount' }).click();
+  await first.getByRole('radio', { name: 'Quarterly' }).click();
+  // A blank amount shows an error; typing one clears it without closing the settings.
+  await first.getByLabel('Pays (₹)').fill('75000');
+  await expect(list).toBeVisible();
+  await expect(
+    first.getByText(/₹75,000 a quarter from when you retire, about ₹25,000 a month/),
+  ).toBeVisible();
+  await expect(planner.getByText(/Payouts cover ₹/)).toBeVisible();
+});
+
 test('a withdrawal shows its working, then books the profit', async ({ page }) => {
   await open(page, '/investments');
   await page.getByRole('button', { name: /^Mutual Funds/ }).click();

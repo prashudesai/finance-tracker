@@ -399,6 +399,13 @@ export const trackerSettingsSchema = z.object({
             behaviour: z.enum(['growth', 'income', 'both']),
             growth: z.number().min(0).max(30),
             payout: z.number().min(0).max(30),
+            /** A fixed payout in rupees, paid each month, quarter or year, in place of `payout`. */
+            payoutFixed: z
+              .object({
+                amount: z.number().positive().max(10_00_00_000),
+                every: z.enum(['month', 'quarter', 'year']),
+              })
+              .optional(),
             /** Whether it can be drawn on once the rest is spent. */
             sellable: z.boolean(),
             /** At retirement, a share moved into an income investment paying `payout` a year. */
