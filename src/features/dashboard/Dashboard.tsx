@@ -11,8 +11,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
   attentionItems,
-  closeMonth,
-  fullHouseExpense,
+  contributionsByMonth,
   holdingRows,
   monthlyOverview,
   netWorth,
@@ -96,7 +95,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const today = localDate();
   const month = today.slice(0, 7);
   const [sort, setSort] = useState<SortKey>('size');
-  const [fullHouse, setFullHouse] = useState(false);
 
   const worth = netWorth(data, today);
   const shownWorth = useCountUp(worth.netWorth);
@@ -150,17 +148,11 @@ export function Dashboard({ name = '' }: { name?: string }) {
     Number(month.slice(5, 7)) -
     Number(fyStartMonth.slice(5, 7)) +
     1;
-  // Phones show the last five months of full house expense, as the older app did.
-  const showFullHouse = phone || fullHouse;
-  const trend = monthlyTrend(data, month, phone ? PHONE_TREND_MONTHS : fyMonths).map((row) =>
-    showFullHouse
-      ? {
-          ...row,
-          expenses: fullHouseExpense(data, row.month),
-          pending: closeMonth(data, row.month).unrecorded === null,
-        }
-      : row,
-  );
+  const invested = contributionsByMonth(data);
+  const trend = monthlyTrend(data, month, phone ? PHONE_TREND_MONTHS : fyMonths).map((row) => ({
+    ...row,
+    invested: invested.get(row.month) ?? 0,
+  }));
   const monthName = formatMonth(month).split(' ')[0];
   const firstTrend = trend[0]?.month ?? month;
 
@@ -211,7 +203,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
     <section className={ui.card}>
       <div className={ui.cardHeader}>
         <div>
-          <h2>{showFullHouse ? 'Income vs full house expense' : 'Income vs expenses'}</h2>
+          <h2>Income vs expenses and investing</h2>
           <div className={ui.caption}>
             {phone
               ? `Last ${PHONE_TREND_MONTHS} months · ${formatMonth(firstTrend)} – ${formatMonth(month)}`
@@ -224,23 +216,8 @@ export function Dashboard({ name = '' }: { name?: string }) {
           </Link>
         )}
       </div>
-      {phone ? null : (
-        <select
-          aria-label="Expense measure"
-          className={ui.fieldSelect}
-          onChange={(event) => setFullHouse(event.target.value === 'full')}
-          value={fullHouse ? 'full' : 'recorded'}
-        >
-          <option value="recorded">Income vs expenses</option>
-          <option value="full">Income vs full house expense</option>
-        </select>
-      )}
       <TrendChart months={trend} />
-      {phone ? (
-        <p className={ui.notice}>
-          Tap a month to see amounts. Full expense is pending until both bank balances are recorded.
-        </p>
-      ) : null}
+      {phone ? <p className={ui.notice}>Tap a month to see amounts.</p> : null}
     </section>
   );
 

@@ -1,7 +1,8 @@
 {
-  "version": "1.18.3",
+  "version": "1.18.4",
   "released": "2026-11-05",
   "notes": [
+    "Dashboard chart shows income against expenses, with each month's investing stacked on top",
     "Dashboard on a computer: net worth beside this month's figures, and the expense snapshot tile is removed",
     "Retirement planner reads more easily: matching headline tiles, figures lined up, and more room between lines",
     "Retirement charts: your fund by age, and after retiring, what the fund makes against what you spend, with when it starts to shrink",

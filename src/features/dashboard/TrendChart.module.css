@@ -13,7 +13,8 @@
 }
 
 .swatchIncome,
-.swatchExpense {
+.swatchExpense,
+.swatchInvested {
   display: inline-block;
   width: 10px;
   height: 10px;
@@ -24,6 +25,10 @@
 
 .swatchExpense {
   background: var(--series-expense);
+}
+
+.swatchInvested {
+  background: var(--scenario-base);
 }
 
 .plot {
@@ -76,8 +81,22 @@
 }
 
 .barIncome,
-.barExpense {
+.stack {
   width: min(40%, 18px);
+}
+
+/* Expenses and investing stacked in one column, with a 2px gap between them. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  height: 100%;
+}
+
+.barIncome,
+.barExpense,
+.barInvested {
   min-height: 0;
   /* Full colour at the top, fading a little towards the baseline. */
   background: linear-gradient(
@@ -92,6 +111,20 @@
     var(--series-expense),
     color-mix(in srgb, var(--series-expense) 55%, transparent)
   );
+}
+
+/* The top of the stack carries the rounded end; the spending under it is square. */
+.barExpense,
+.barInvested {
+  flex: none;
+}
+
+.barInvested {
+  background: var(--scenario-base);
+}
+
+.barInvested + .barExpense {
+  border-radius: 0;
 }
 
 .label {
@@ -141,7 +174,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .barIncome,
-  .barExpense {
+  .stack {
     transform-origin: bottom;
     animation: grow 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }

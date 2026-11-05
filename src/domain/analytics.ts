@@ -12,6 +12,7 @@ import {
   addDays,
   lastDayOfMonth,
   previousMonth,
+  roundMoney,
   toDayNumber,
 } from './calendar';
 import { balancesByMonth, closeFrom, monthClose, monthTotals, type MonthClose } from './cashflow';
@@ -180,6 +181,16 @@ const sumAmount = (rows: { amount: number }[]) => rows.reduce((sum, row) => sum 
 
 function activeContributions(data: TrackerData) {
   return data.contributions.filter((row) => !row.skipped);
+}
+
+/** Savings contributions made each month, skipped ones left out, keyed by YYYY-MM. */
+export function contributionsByMonth(data: TrackerData) {
+  const totals = new Map<string, number>();
+  for (const row of activeContributions(data)) {
+    const month = row.date.slice(0, 7);
+    totals.set(month, roundMoney((totals.get(month) ?? 0) + row.amount));
+  }
+  return totals;
 }
 
 function contributionsOf(data: TrackerData, match: (holding: Holding) => boolean) {

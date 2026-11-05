@@ -1338,19 +1338,22 @@ test('a part payment asks whether to keep or reduce the EMI, and saves the choic
   });
 });
 
-test('a pending month has no expense bar and says pending', () => {
-  const { container } = render(
+test('investing stacks on spending, and is left out when nothing was invested', () => {
+  const { container, unmount } = render(
     <TrendChart
       months={[
-        { month: '2026-10', income: 100, expenses: 80 },
-        { month: '2026-11', income: 100, expenses: 20, pending: true },
+        { month: '2026-10', income: 100, expenses: 60, invested: 30 },
+        { month: '2026-11', income: 100, expenses: 50, invested: 0 },
       ]}
     />,
   );
   const months = container.querySelectorAll('[class*="month"]');
-  expect(months[0]?.querySelectorAll('[class*="barExpense"]')).toHaveLength(1);
-  expect(months[1]?.querySelectorAll('[class*="barExpense"]')).toHaveLength(0);
-  expect(screen.getAllByText(/Pending/).length).toBeGreaterThan(0);
+  expect(months[0]?.querySelectorAll('[class*="barInvested"]')).toHaveLength(1);
+  expect(months[1]?.querySelectorAll('[class*="barInvested"]')).toHaveLength(0);
+  expect(screen.getAllByText('Invested ₹30').length).toBeGreaterThan(0);
+  unmount();
+  render(<TrendChart months={[{ month: '2026-10', income: 100, expenses: 60 }]} />);
+  expect(screen.queryByText('Invested')).toBeNull();
 });
 
 describe('monthly balances', () => {
