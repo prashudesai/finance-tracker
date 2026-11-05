@@ -1,5 +1,5 @@
 import { Landmark, SlidersHorizontal, Sunset, TrendingUp, Wallet } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import { averageContributions, holdingGroups, netWorth } from '../../domain/analytics';
 import {
   addMonths,
@@ -179,6 +179,7 @@ export function RetirementPlanner() {
   const [picked, setPicked] = useState<number | null>(null);
   // Opened by hand or by an error, the assumptions stay open until closed by hand.
   const [assumptionsOpen, setAssumptionsOpen] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
   const [afterMode, setAfterMode] = useState(saved.afterMode ?? 'simple');
   const [drafts, setDrafts] = useState<Record<string, AfterDraft>>(() =>
     Object.fromEntries(
@@ -406,7 +407,7 @@ export function RetirementPlanner() {
   const shown = ages[picked ?? retireAgeIndex];
 
   return (
-    <section aria-label="Retirement planner" className={ui.card}>
+    <section aria-label="Retirement planner" className={ui.card} ref={sectionRef}>
       <div className={ui.cardHeader} style={{ justifyContent: 'flex-start' }}>
         <span aria-hidden="true" className={ui.tileIcon}>
           <Sunset size={20} />
@@ -1034,6 +1035,21 @@ export function RetirementPlanner() {
               are reinvested in what grows.
             </span>
           ) : null}
+          <div className={ui.actions}>
+            <button
+              className={changed ? ui.button : ui.quiet}
+              disabled={Boolean(error)}
+              onClick={() => {
+                if (changed) save({ retirement: next });
+                // Fold the settings away and go back up to the results they change.
+                setAssumptionsOpen(false);
+                sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              type="button"
+            >
+              {changed ? 'Save and close' : 'Close'}
+            </button>
+          </div>
         </div>
       </details>
 
@@ -1042,7 +1058,8 @@ export function RetirementPlanner() {
           {error}
         </p>
       ) : null}
-      {changed && !error ? (
+      {/* Changes left after closing the settings by hand can still be saved here. */}
+      {changed && !error && !assumptionsOpen ? (
         <div className={ui.actions}>
           <button className={ui.button} onClick={() => save({ retirement: next })} type="button">
             Save these assumptions

@@ -34,6 +34,8 @@
   gap: 14px;
   align-content: start;
   min-width: 0;
+  /* Scrolled to, a card stops below the sticky header instead of under it. */
+  scroll-margin-top: calc(env(safe-area-inset-top) + 84px);
   padding: 20px;
   background: linear-gradient(
     165deg,

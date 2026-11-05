@@ -229,7 +229,7 @@ describe('Goals', () => {
     fireEvent.change(planner.getByLabelText(/^Date of birth/), {
       target: { value: addMonths(today, -480) },
     });
-    fireEvent.click(planner.getByRole('button', { name: 'Save these assumptions' }));
+    fireEvent.click(planner.getByRole('button', { name: 'Save and close' }));
     await waitFor(() =>
       expect(saved().settings[0]?.retirement).toMatchObject({
         birthDate: addMonths(today, -480),
@@ -273,7 +273,7 @@ describe('Goals', () => {
       first.getByText(/₹75,000 a quarter from when you retire, about ₹25,000 a month/),
     ).toBeDefined();
     fireEvent.click(first.getByRole('radio', { name: '% a year' }));
-    fireEvent.click(planner.getByRole('button', { name: 'Save these assumptions' }));
+    fireEvent.click(planner.getByRole('button', { name: 'Save and close' }));
     await waitFor(() =>
       expect(saved().settings[0]?.retirement).toMatchObject({
         afterMode: 'each',
@@ -282,6 +282,32 @@ describe('Goals', () => {
     );
     const after = Object.values(saved().settings[0]?.retirement?.after ?? {});
     expect(after.some((row) => row.behaviour === 'income' && row.payout === 7)).toBe(true);
+  });
+
+  test('Save and close at the end of the assumptions saves them', async () => {
+    show('/analytics/goals');
+    const planner = within(await screen.findByRole('region', { name: 'Retirement planner' }));
+    fireEvent.click(planner.getByText('Your assumptions'));
+    // Nothing to save until the plan can be worked out.
+    expect(
+      (planner.getByRole('button', { name: 'Save and close' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    fireEvent.change(planner.getByLabelText(/^Date of birth/), {
+      target: { value: addMonths(today, -480) },
+    });
+    fireEvent.change(planner.getByLabelText('Monthly spending today (₹)'), {
+      target: { value: '50000' },
+    });
+    fireEvent.click(planner.getByRole('radio', { name: /Set each investment/ }));
+    fireEvent.click(planner.getByRole('button', { name: 'Save and close' }));
+    await waitFor(() =>
+      expect(saved().settings[0]?.retirement).toMatchObject({
+        afterMode: 'each',
+        monthlyExpense: 50000,
+      }),
+    );
+    // Once saved there's nothing left to save, so it only closes.
+    expect(await planner.findByRole('button', { name: 'Close' })).toBeDefined();
   });
 
   test('the dashboard shows goals at a glance, or offers to set the first', async () => {
