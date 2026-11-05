@@ -322,7 +322,7 @@ export function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) 
             ? 'Leave the date empty to see when you’ll get there instead.'
             : 'With no date, it works out when you’ll get there.'}{' '}
           It follows your whole {measure === 'netWorth' ? 'net worth' : 'portfolio'}, adding what
-          you invest each month on average, with growth on what you have.
+          your savings contributions add each month on average, with growth on what you have.
         </p>
       ) : (
         <div className={ui.formWide}>

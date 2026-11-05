@@ -253,10 +253,10 @@ export function describeInsight(insight: Insight): InsightText {
         [`${what} today`, formatMoney(insight.current)],
         ['Target', formatMoney(insight.target)],
         [
-          `Invested each month, over ${insight.basedOn} month${insight.basedOn === 1 ? '' : 's'} since ${formatShortMonthYear(insight.since)}`,
+          `Savings contributions a month, this year since ${formatShortMonthYear(insight.since)}`,
           formatMoney(insight.invested),
         ],
-        ['Average income', formatMoney(insight.income)],
+        [`Average income, last ${insight.basedOn} months`, formatMoney(insight.income)],
         ['Average spending', formatMoney(insight.expenses)],
         ['Left over, not invested', formatMoney(insight.leftover)],
         ...(insight.principal > 0
@@ -271,7 +271,7 @@ export function describeInsight(insight: Insight): InsightText {
         ? {
             icon: TrendingUp,
             title: `${what} reaches ${formatMoney(insight.target)} by ${formatShortMonthYear(insight.reachedBy)}`,
-            detail: `That's ${years}, investing about ${formatMoney(insight.invested)} a month as you have been, with growth on what you have.${sooner}`,
+            detail: `That's ${years}, with savings contributions of about ${formatMoney(insight.invested)} a month as you have been, plus growth on what you have.${sooner}`,
             why,
             path: '/analytics/goals',
             note: 'Assumes your investing and returns stay as they’ve been. Money left in the bank isn’t counted.',
@@ -281,8 +281,8 @@ export function describeInsight(insight: Insight): InsightText {
             title: `At this pace, ${what.toLowerCase()} won't reach ${formatMoney(insight.target)}`,
             detail:
               insight.leftover > 0
-                ? `You invest about ${formatMoney(insight.invested)} a month. Investing more of the ${formatMoney(insight.leftover)} left over would help.`
-                : 'Recent months show little being invested, so there’s nothing to build it with.',
+                ? `Your savings contributions are about ${formatMoney(insight.invested)} a month. Investing more of the ${formatMoney(insight.leftover)} left over would help.`
+                : 'There are few savings contributions this year, so there’s little to build it with.',
             why,
             path: '/analytics/goals',
           };

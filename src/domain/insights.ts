@@ -78,7 +78,7 @@ export type Insight = Base &
         months: number | null;
         income: number;
         expenses: number;
-        /** Invested each month on average: contributions less withdrawals. */
+        /** Savings contributions a month on average, as on the dashboard. */
         invested: number;
         /** Left after spending each month, beyond what's invested. */
         leftover: number;
@@ -552,7 +552,7 @@ function goalEta(data: TrackerData, today: string): Insight | null {
     principal: funds.principal,
     expectedReturn: plan.expectedReturn,
     basedOn: funds.averages.months,
-    since: funds.averages.since,
+    since: funds.since ?? funds.averages.since,
   };
 }
 

@@ -149,10 +149,11 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
           <li>
             <PiggyBank aria-hidden="true" size={18} />
             <span>
-              You invest about <strong>{formatMoney(portfolio.monthly)}</strong> a month
+              Savings contributions of about <strong>{formatMoney(portfolio.monthly)}</strong> a
+              month
               <small>
                 {portfolio.averages
-                  ? `Contributions less withdrawals, averaged over ${portfolio.averages.months} month${portfolio.averages.months === 1 ? '' : 's'} since you started tracking in ${formatShortMonthYear(portfolio.averages.since)}. Income ${formatMoney(portfolio.averages.income)} less spending ${formatMoney(portfolio.averages.expenses)} leaves ${formatMoney(portfolio.averages.surplus)}`
+                  ? `Everything you invested each month, averaged over this financial year since you started tracking in ${formatShortMonthYear(portfolio.averages.since)}. Over the last ${portfolio.averages.months} month${portfolio.averages.months === 1 ? '' : 's'}, income ${formatMoney(portfolio.averages.income)} less spending ${formatMoney(portfolio.averages.expenses)} leaves ${formatMoney(portfolio.averages.surplus)}`
                   : 'Record income, expenses and contributions to see this'}
                 {portfolio.uninvested > 0
                   ? `, so about ${formatMoney(portfolio.uninvested)} a month stays in the bank, which isn't counted`
@@ -239,7 +240,8 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         </div>
         <label className={styles.slider}>
           <span>
-            {portfolio ? 'Invested each month' : 'Each month'} <b>{formatMoney(monthly)}</b>
+            {portfolio ? 'Savings contributions a month' : 'Each month'}{' '}
+            <b>{formatMoney(monthly)}</b>
           </span>
           <input
             max={sliderTop}
@@ -419,7 +421,7 @@ export function GoalsSection() {
                         : 'Fully funded'
                       : !goal.targetDate
                         ? plan.reachedBy
-                          ? `In ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))}, investing ${formatMoney(plan.monthly)} a month`
+                          ? `In ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))}, with ${formatMoney(plan.monthly)} a month in savings contributions`
                           : 'Invest more each month to get there'
                         : plan.extraMonthly
                           ? `Add ${formatMoney(plan.extraMonthly)} a month`

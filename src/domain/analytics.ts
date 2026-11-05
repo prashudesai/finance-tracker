@@ -241,6 +241,25 @@ function principalRepaid(data: TrackerData, today: string, match: (date: string)
   return total;
 }
 
+/** The first month with income or spending recorded: when someone started tracking. */
+export function trackingStart(data: Pick<TrackerData, 'income' | 'expenses'>) {
+  return [...data.income, ...data.expenses].map((row) => row.date.slice(0, 7)).sort()[0] ?? null;
+}
+
+/**
+ * Savings contributions per month: this financial year's contributions over the months that
+ * have any, counting only from when tracking began, so contributions entered for earlier
+ * months don't inflate it. Withdrawals aren't taken off: this is what was put in.
+ */
+export function averageContributions(data: TrackerData, month: string) {
+  const { start, end } = financialYearRange(financialYearStart(month));
+  const since = trackingStart(data);
+  const from = since && `${since}-01` > start ? `${since}-01` : start;
+  const rows = activeContributions(data).filter((row) => inRange(row.date, from, end));
+  const months = new Set(rows.map((row) => row.date.slice(0, 7))).size;
+  return months > 0 ? sumAmount(rows) / months : 0;
+}
+
 export function monthlyOverview(data: TrackerData, month: string, today: string) {
   const fy = financialYearStart(month);
   const { start, end } = financialYearRange(fy);
@@ -264,7 +283,7 @@ export function monthlyOverview(data: TrackerData, month: string, today: string)
     savings: sumAmount(contributions.filter((row) => inMonth(row.date, month))),
     averageIncome: average(data.income),
     averageExpenses: average(data.expenses),
-    averageSavings: average(contributions),
+    averageSavings: averageContributions(data, month),
     previous,
     spendingChange: current && prior ? current.expenses - prior.expenses : null,
     principalRepaid: principalRepaid(data, today, (date) => inMonth(date, month)),

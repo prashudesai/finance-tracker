@@ -1,7 +1,7 @@
 import type { TrackerData } from '../data/repository';
 import type { Goal, GoalKind, Holding } from '../schema/records';
 import { addMonths, previousMonth, roundMoney } from './calendar';
-import { netWorth } from './analytics';
+import { averageContributions, netWorth, trackingStart } from './analytics';
 import { holdingValue } from './holdings';
 import { summarizeLoans } from './summary';
 
@@ -164,28 +164,22 @@ export function planGoal(inputs: GoalInputs, today: string): GoalPlan {
 }
 
 /**
- * Average monthly income, spending, what's left and what was invested, over recent complete
- * months since tracking began: the first month with income or spending recorded. A month
- * counts only when it has income or spending, so investments entered for the time before
- * someone started using the app don't inflate the figure. Invested is contributions less
- * withdrawals, so money taken out counts against it.
+ * Average monthly income, spending and what's left, over recent complete months since
+ * tracking began: the first month with income or spending recorded. A month counts only when
+ * it has income or spending, so a gap doesn't drag the average down.
  */
 export function monthlyAverages(
-  data: Pick<TrackerData, 'income' | 'expenses'> &
-    Partial<Pick<TrackerData, 'contributions' | 'withdrawals'>>,
+  data: Pick<TrackerData, 'income' | 'expenses'>,
   today: string,
   span = 6,
 ) {
   const total = (rows: { date: string; amount: number }[], key: string) =>
     rows.filter((row) => row.date.startsWith(key)).reduce((sum, row) => sum + row.amount, 0);
-  const contributions = (data.contributions ?? []).filter((row) => !row.skipped);
-  const tracked = [...data.income, ...data.expenses].map((row) => row.date.slice(0, 7)).sort();
-  const since = tracked[0];
+  const since = trackingStart(data);
   if (!since) return null;
   let month = today.slice(0, 7);
   let income = 0;
   let expenses = 0;
-  let invested = 0;
   let months = 0;
   for (let step = 0; step < span; step++) {
     month = previousMonth(month);
@@ -195,7 +189,6 @@ export function monthlyAverages(
     if (earned === 0 && spent === 0) continue;
     income += earned;
     expenses += spent;
-    invested += total(contributions, month) - total(data.withdrawals ?? [], month);
     months += 1;
   }
   if (months === 0) return null;
@@ -203,7 +196,6 @@ export function monthlyAverages(
     income: roundMoney(income / months),
     expenses: roundMoney(expenses / months),
     surplus: roundMoney((income - expenses) / months),
-    invested: roundMoney(invested / months),
     months,
     since,
   };
@@ -221,22 +213,25 @@ export function monthlyPrincipal(data: TrackerData, today: string) {
 
 /**
  * A portfolio target follows the whole portfolio, or net worth, not a share of holdings.
- * It grows by what's invested each month on average, plus returns, and for net worth, by
+ * It grows by the savings contributions each month on average, plus returns, and for net worth, by
  * loan principal repaid.
  */
 export function portfolioInputs(goal: Goal, data: TrackerData, today: string) {
   const worth = netWorth(data, today);
   const averages = monthlyAverages(data, today);
   const byNetWorth = (goal.measure ?? 'netWorth') === 'netWorth';
+  // Savings contributions, the same figure as the dashboard: all that's invested each month.
+  // Only that grows the portfolio; money left in the bank isn't counted in it.
+  const contributions = roundMoney(averageContributions(data, today.slice(0, 7)));
   return {
     assets: worth.assets,
     debts: byNetWorth ? worth.debts : 0,
     principal: byNetWorth ? monthlyPrincipal(data, today) : 0,
     averages,
-    // Only what's invested grows the portfolio. Money left in the bank isn't counted in it.
-    monthly: Math.max(0, averages?.invested ?? 0),
-    /** What's left after spending, beyond what's already invested each month. */
-    uninvested: Math.max(0, (averages?.surplus ?? 0) - Math.max(0, averages?.invested ?? 0)),
+    monthly: contributions,
+    /** What's left after spending, beyond the savings contributions. */
+    uninvested: Math.max(0, (averages?.surplus ?? 0) - contributions),
+    since: trackingStart(data),
   };
 }
 

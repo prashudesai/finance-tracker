@@ -19,6 +19,7 @@ import {
   retirementTarget,
   unassignedValue,
 } from './goals';
+import { averageContributions, monthlyOverview, trackingStart } from './analytics';
 import { insights } from './insights';
 
 const holding = (id: string, value: number, extra: Partial<Holding> = {}): Holding => ({
@@ -266,7 +267,6 @@ describe('portfolio target', () => {
       income: 1_90_000,
       expenses: 90_000,
       surplus: 1_00_000,
-      invested: 0,
       months: 2,
       since: '2026-08',
     });
@@ -321,7 +321,7 @@ describe('portfolio target', () => {
     expect(plan.reachedBy).toBe('2027-04');
   });
 
-  test('invested is contributions less withdrawals, and a skipped one does not count', () => {
+  test('savings contributions average this year, from when tracking began', () => {
     const contribution = (id: string, date: string, amount: number, skipped = false) => ({
       id,
       holdingId: 'fund',
@@ -330,42 +330,28 @@ describe('portfolio target', () => {
       automatic: true,
       ...(skipped ? { skipped } : {}),
     });
-    const averages = monthlyAverages(
-      {
-        income: [income('2026-10-01', 1_00_000), income('2026-09-01', 1_00_000)],
-        expenses: [],
-        contributions: [
-          contribution('a', '2026-10-05', 40_000),
-          contribution('b', '2026-09-05', 30_000),
-          contribution('c', '2026-09-06', 99_000, true),
-        ],
-        withdrawals: [{ id: 'w', holdingId: 'fund', date: '2026-09-20', amount: 10_000 }],
-      },
-      '2026-11-05',
-    );
-    expect(averages).toMatchObject({ invested: 30_000, months: 2 });
+    const records = data({
+      // Started using the app in September.
+      income: [income('2026-09-01', 1_00_000), income('2026-10-01', 1_00_000)],
+      contributions: [
+        // Entered for the months before, when setting up.
+        contribution('old', '2026-06-05', 5_00_000),
+        contribution('a', '2026-09-05', 30_000),
+        contribution('b', '2026-10-05', 50_000),
+        contribution('c', '2026-10-06', 99_000, true),
+        // Last financial year doesn't count.
+        contribution('d', '2026-03-05', 70_000),
+      ],
+      // Withdrawals aren't taken off: this is what was put in.
+      withdrawals: [{ id: 'w', holdingId: 'fund', date: '2026-10-20', amount: 10_000 }],
+    });
+    expect(averageContributions(records, '2026-11')).toBe(40_000);
+    expect(trackingStart(records)).toBe('2026-09');
+    // The dashboard's tile shows the same figure.
+    expect(monthlyOverview(records, '2026-11', '2026-11-05').averageSavings).toBe(40_000);
   });
 
-  test('only counts from when tracking began, so earlier investments do not inflate it', () => {
-    const averages = monthlyAverages(
-      {
-        // Started using the app in September.
-        income: [income('2026-09-01', 1_00_000), income('2026-10-01', 1_00_000)],
-        expenses: [],
-        contributions: [
-          // Entered for the months before, when setting up.
-          { id: 'old1', holdingId: 'fund', date: '2026-06-05', amount: 5_00_000, automatic: false },
-          { id: 'old2', holdingId: 'fund', date: '2026-08-05', amount: 5_00_000, automatic: false },
-          { id: 'new1', holdingId: 'fund', date: '2026-09-05', amount: 20_000, automatic: true },
-          { id: 'new2', holdingId: 'fund', date: '2026-10-05', amount: 20_000, automatic: true },
-        ],
-      },
-      '2026-11-05',
-    );
-    expect(averages).toMatchObject({ invested: 20_000, months: 2, since: '2026-09' });
-  });
-
-  test('grows by what is invested each month, not by what stays in the bank', () => {
+  test('grows by savings contributions, not by what stays in the bank', () => {
     const months = Array.from(
       { length: 6 },
       (_, index) => `2026-${String(index + 5).padStart(2, '0')}`,

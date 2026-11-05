@@ -1,7 +1,8 @@
 {
-  "version": "1.15.0",
+  "version": "1.15.1",
   "released": "2026-11-05",
   "notes": [
+    "Portfolio targets use your savings contributions, the same figure as the dashboard, counted from when you started tracking",
     "Goal planning has its own page in Reports, next to Growth Projection",
     "Portfolio targets count your investing only from when you started tracking",
     "The older portfolio goal planner is replaced by the portfolio target goal",
