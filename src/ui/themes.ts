@@ -118,8 +118,8 @@ const LIGHT_TEXT = '#14211d';
 function darkTokens(bg: string, surface: string, raised: string, sunken: string, accent: string) {
   return {
     '--bg': bg,
-    '--bg-glow': alpha(accent, 12),
-    '--bg-glow-low': alpha(mix(accent, '#3b82f6', 0.35), 10),
+    '--bg-glow': alpha(accent, 36),
+    '--bg-glow-low': alpha(mix(accent, '#3b82f6', 0.35), 28),
     '--surface': surface,
     '--surface-raised': raised,
     '--surface-sunken': sunken,
@@ -138,8 +138,8 @@ function darkTokens(bg: string, surface: string, raised: string, sunken: string,
 function lightTokens(bg: string, accent: string) {
   return {
     '--bg': bg,
-    '--bg-glow': alpha(accent, 10),
-    '--bg-glow-low': alpha(accent, 6),
+    '--bg-glow': alpha(accent, 20),
+    '--bg-glow-low': alpha(mix(accent, '#3b82f6', 0.35), 13),
     '--surface': '#ffffff',
     '--surface-raised': mix('#ffffff', accent, 0.04),
     '--surface-sunken': mix(bg, accent, 0.06),

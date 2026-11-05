@@ -1,7 +1,8 @@
 {
-  "version": "1.12.0",
+  "version": "1.12.1",
   "released": "2026-11-05",
   "notes": [
+    "A brighter aurora behind every page, in your chosen colours",
     "Your net worth leads the dashboard, with the recap and install prompts as slim one-line cards below your figures",
     "Debts opens with what is left to repay, how much is paid and when you will be debt-free",
     "Reports list each record with its amount on phones, 20 at a time",
