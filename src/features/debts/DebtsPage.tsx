@@ -61,7 +61,9 @@ function LoanCard({ summary, onOpen }: { summary: LoanSummary; onOpen: () => voi
           <div className={ui.caption}>{member}</div>
         </div>
         <span className={ui.tableActions} style={{ alignItems: 'center' }}>
-          <span className={active ? ui.badge : ui.badgeDone}>{active ? 'Active' : 'Paid off'}</span>
+          <span className={active ? ui.badgeDone : ui.badgeMuted}>
+            {active ? 'Active' : 'Paid off'}
+          </span>
           <ChevronRight aria-hidden="true" size={16} />
         </span>
       </div>
@@ -309,7 +311,7 @@ export function DebtsPage() {
                         {ledger ? (remainingEmis(ledger) ?? '—') : '—'}
                       </td>
                       <td>
-                        <span className={active ? ui.badge : ui.badgeDone}>
+                        <span className={active ? ui.badgeDone : ui.badgeMuted}>
                           {active ? 'Active' : 'Paid off'}
                         </span>
                       </td>

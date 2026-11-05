@@ -194,7 +194,9 @@ export function Shell({
   const navigate = useNavigate();
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      const heading = document.querySelector('main h1')?.textContent;
+      // The dashboard's heading is a greeting, so its title uses the page name instead.
+      const heading =
+        pathname === '/' ? 'Dashboard' : document.querySelector('main h1')?.textContent;
       document.title = heading ? `${heading} · Finance Tracker` : 'Finance Tracker';
     });
     return () => cancelAnimationFrame(frame);

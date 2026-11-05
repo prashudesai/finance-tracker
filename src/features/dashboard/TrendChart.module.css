@@ -79,12 +79,19 @@
 .barExpense {
   width: min(40%, 18px);
   min-height: 0;
-  background: var(--series-income);
+  /* Full colour at the top, fading a little towards the baseline. */
+  background: linear-gradient(
+    var(--series-income),
+    color-mix(in srgb, var(--series-income) 55%, transparent)
+  );
   border-radius: 4px 4px 0 0;
 }
 
 .barExpense {
-  background: var(--series-expense);
+  background: linear-gradient(
+    var(--series-expense),
+    color-mix(in srgb, var(--series-expense) 55%, transparent)
+  );
 }
 
 .label {

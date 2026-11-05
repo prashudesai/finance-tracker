@@ -65,7 +65,7 @@ const fund: Holding = {
 };
 
 test.each([
-  ['/', 'Dashboard'],
+  ['/', /^Good (morning|afternoon|evening)/],
   ['/cash-flow', 'Cash flow'],
   ['/investments', 'Investments'],
   ['/debts', 'Debt & EMI Tracker'],

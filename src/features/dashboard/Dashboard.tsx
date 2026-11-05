@@ -1,5 +1,6 @@
 import {
   Banknote,
+  BellRing,
   CalendarDays,
   ChevronRight,
   CreditCard,
@@ -294,10 +295,12 @@ export function Dashboard({ name = '' }: { name?: string }) {
       {attention.length > 0 ? (
         <details className={ui.attention}>
           <summary>
-            <span>Needs attention · {attention.length}</span>
-            <span className={ui.caption}>
-              {attention.length} item{attention.length === 1 ? '' : 's'} to review ›
+            <span className={ui.attentionTitle}>
+              <BellRing aria-hidden="true" size={18} />
+              Needs attention
+              <span className={ui.attentionCount}>{attention.length}</span>
             </span>
+            <span className={ui.caption}>Review ›</span>
           </summary>
           <ul className={ui.list} style={{ marginTop: 10 }}>
             {attention.map(({ label, path, state }) => (
@@ -317,12 +320,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
         </details>
       ) : null}
 
-      <PageHeader
-        eyebrow="Financial overview"
-        subtitle="Your wealth, spending and progress — all in one place."
-        title="Dashboard"
-      />
-      <p className={ui.greeting}>{greeting(new Date().getHours(), name)}</p>
+      <PageHeader eyebrow="Dashboard" title={greeting(new Date().getHours(), name)} />
 
       <GettingStarted />
       <InstallCard />
@@ -343,18 +341,24 @@ export function Dashboard({ name = '' }: { name?: string }) {
       <section aria-label="This month" className={ui.statGrid}>
         <Stat
           detail={`Avg ${formatMoney(overview.averageIncome)} · ${shortFy(month)}`}
+          empty={overview.close.income === 0}
+          hue="income"
           icon={TrendingUp}
           label="Monthly Income"
           value={formatMoney(overview.close.income)}
         />
         <Stat
           detail={`Avg ${formatMoney(overview.averageExpenses)} · ${shortFy(month)}`}
+          empty={overview.close.expenses === 0}
+          hue="expense"
           icon={CreditCard}
           label="Monthly Expenses"
           value={formatMoney(overview.close.expenses)}
         />
         <Stat
           detail={`Avg ${formatMoney(overview.averageSavings)} · ${shortFy(month)}`}
+          empty={overview.savings === 0}
+          hue="savings"
           icon={RefreshCw}
           label="Savings contributions"
           tone={ui.gain}

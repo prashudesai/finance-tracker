@@ -91,6 +91,28 @@
   border-radius: 10px;
 }
 
+.tileIcon[data-hue='income'] {
+  --hue: var(--series-income);
+}
+
+.tileIcon[data-hue='expense'] {
+  --hue: var(--series-expense);
+}
+
+.tileIcon[data-hue='savings'] {
+  --hue: var(--scenario-base);
+}
+
+.tileIcon[data-hue] {
+  color: var(--hue);
+  background: color-mix(in srgb, var(--hue) 18%, transparent);
+}
+
+.statEmpty {
+  color: var(--muted);
+  font-weight: 600;
+}
+
 .statGrid {
   display: grid;
   gap: 12px;
@@ -394,6 +416,13 @@
   background: var(--accent-soft);
 }
 
+/* Settled things, such as a paid-off loan: no call to action. */
+.badgeMuted {
+  composes: badge;
+  color: var(--muted);
+  background: var(--surface-sunken);
+}
+
 .loan {
   display: grid;
   gap: 10px;
@@ -525,17 +554,42 @@
 
 .attention {
   padding: 12px 16px;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border-strong);
+  background: linear-gradient(90deg, var(--warning-bg), transparent 70%), var(--surface-sunken);
+  border: 1px solid color-mix(in srgb, var(--warning-text) 35%, transparent);
+  border-left: 4px solid var(--warning-text);
   border-radius: 14px;
 }
 
 .attention summary {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.attentionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.attentionTitle svg {
+  color: var(--warning-text);
+}
+
+.attentionCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  color: var(--bg);
+  font-size: 0.78rem;
+  font-weight: 750;
+  background: var(--warning-text);
+  border-radius: 999px;
 }
 
 .twoColumn {
@@ -1751,9 +1805,3 @@ details.fold[open] > summary {
 }
 
 /* The dashboard's hello, under its title. */
-.greeting {
-  margin: -6px 0 0;
-  color: var(--muted);
-  font-size: 1.05rem;
-  font-weight: 600;
-}

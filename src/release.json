@@ -1,7 +1,10 @@
 {
-  "version": "1.11.2",
+  "version": "1.11.3",
   "released": "2026-11-05",
   "notes": [
+    "The dashboard opens with your greeting, and Needs attention stands out with a bell and a count",
+    "Monthly figures have colour-coded icons, and nothing recorded yet shows as Not yet",
+    "Active loans are marked in mint, and the trend chart bars have a soft fade",
     "A fresher look: the Net Worth tile glows mint, and every tile has a mint edge",
     "Insights is now a tidy tile on the dashboard: tap to open, with the top one as a preview",
     "This month's investing, loan principal repaid and PMS gain now appear as insights",
