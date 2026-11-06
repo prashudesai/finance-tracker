@@ -336,11 +336,11 @@ export function Dashboard({ name = '' }: { name?: string }) {
             />
             <Stat
               detail={`Avg ${formatMoney(overview.averageExpenses)} · ${shortFy(month)}`}
-              empty={overview.close.expenses === 0}
+              empty={overview.spent === 0}
               hue="expense"
               icon={CreditCard}
               label="Monthly Expenses"
-              value={formatMoney(overview.close.expenses)}
+              value={formatMoney(overview.spent)}
             />
             <Stat
               detail={`Avg ${formatMoney(overview.averageSavings)} · ${shortFy(month)}`}

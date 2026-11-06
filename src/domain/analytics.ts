@@ -227,14 +227,18 @@ export const savedHouseExpenseId = (month: string) => `${SAVED_HOUSE_EXPENSE_ID}
 
 const isSavedHouseExpense = (row: Pick<Expense, 'id'>) => row.id.startsWith(SAVED_HOUSE_EXPENSE_ID);
 
+/** A house expense, worked out or saved at review: the gap at month end, not spending. */
+const isAnyHouseExpense = (row: Pick<Expense, 'id'>) =>
+  isHouseExpense(row) || isSavedHouseExpense(row);
+
 /**
- * Records for closing a month. A house expense saved at review is the gap itself, not
- * spending that explains it, so it's left out: the gap, and the review's signature, stay
- * the same once it's saved.
+ * Records for closing a month. A house expense, worked out or saved at review, is the gap
+ * itself, not spending that explains it, so it's left out: the gap, the available balance and
+ * the review's signature are the same before and after it's saved.
  */
 const forClosing = (data: TrackerData): TrackerData =>
-  data.expenses.some(isSavedHouseExpense)
-    ? { ...data, expenses: data.expenses.filter((row) => !isSavedHouseExpense(row)) }
+  data.expenses.some(isAnyHouseExpense)
+    ? { ...data, expenses: data.expenses.filter((row) => !isAnyHouseExpense(row)) }
     : data;
 
 /**
@@ -401,6 +405,11 @@ export function monthlyOverview(data: TrackerData, month: string, today: string)
   const current = totals.get(month);
   return {
     close,
+    /**
+     * Everything spent in the month, a saved house expense included. The close leaves that
+     * entry out, as it is the gap at month end rather than spending that explains it.
+     */
+    spent: roundMoney(current?.expenses ?? 0),
     savings: sumAmount(contributions.filter((row) => inMonth(row.date, month))),
     averageIncome: average(data.income),
     averageExpenses: average(data.expenses),

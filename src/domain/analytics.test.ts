@@ -347,7 +347,7 @@ describe('house expense from the bank balances', () => {
 
   test('counts in spending, and shrinks when a forgotten expense is added', () => {
     const counted = withHouseExpenses(october(), october());
-    expect(monthlyOverview(counted, '2026-10', '2026-11-05').close.expenses).toBe(55_000);
+    expect(monthlyOverview(counted, '2026-10', '2026-11-05').spent).toBe(55_000);
     const later = october({
       expenses: [spend('e', '2026-10-10', 40_000), spend('f', '2026-10-20', 5_000)],
     });
@@ -379,6 +379,18 @@ describe('house expense from the bank balances', () => {
     const counted = withHouseExpenses(saved, saved);
     expect(monthlyOverview(counted, '2026-10', '2026-11-05').close.expenses).toBe(40_000);
     expect(counted.expenses.filter((row) => row.date.startsWith('2026-10'))).toHaveLength(2);
+  });
+
+  test("a month's spending is the same before and after its review", () => {
+    const before = withHouseExpenses(october(), october());
+    const entry = houseExpenseToSave(october(), '2026-10');
+    const reviewed = october({ expenses: [...october().expenses, ...(entry ? [entry] : [])] });
+    const after = withHouseExpenses(reviewed, reviewed);
+    expect(monthlyOverview(before, '2026-10', '2026-11-05').spent).toBe(55_000);
+    expect(monthlyOverview(after, '2026-10', '2026-11-05').spent).toBe(55_000);
+    // The available balance is after recorded activity, both times.
+    expect(monthlyOverview(before, '2026-10', '2026-11-05').close.available).toBe(90_000);
+    expect(monthlyOverview(after, '2026-10', '2026-11-05').close.available).toBe(90_000);
   });
 
   test('nothing to save when the bank held as much as expected', () => {
