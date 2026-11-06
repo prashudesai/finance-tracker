@@ -55,3 +55,16 @@ test('on the current month there is nowhere later to go', () => {
       .disabled,
   ).toBe(true);
 });
+
+test('tapping the month opens a month picker that jumps straight there, within range', () => {
+  const onMonth = show('2026-11');
+  const picker = screen.getByLabelText('Month') as HTMLInputElement;
+  expect(picker.type).toBe('month');
+  expect(picker.min).toBe('2025-11');
+  expect(picker.max).toBe('2026-11');
+  fireEvent.change(picker, { target: { value: '2026-03' } });
+  expect(onMonth).toHaveBeenLastCalledWith('2026-03');
+  onMonth.mockClear();
+  fireEvent.change(picker, { target: { value: '2027-01' } });
+  expect(onMonth).not.toHaveBeenCalled();
+});

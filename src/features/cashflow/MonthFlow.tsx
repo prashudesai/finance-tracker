@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRef, type ReactNode } from 'react';
 import { nextMonth, previousMonth } from '../../domain/calendar';
 import { formatMoney, formatMonth, formatShortMonth } from '../../ui/format';
@@ -11,8 +11,6 @@ interface Part {
   color: string;
 }
 
-/** Months back from the current one that get a dot; older ones say how far back they are. */
-const DOTS = 6;
 /** How far a finger must travel sideways before it counts as a swipe. */
 const SWIPE = 50;
 
@@ -62,9 +60,6 @@ export function MonthFlow({
   const before = month > earliest ? previousMonth(month) : null;
   const after = month < current ? nextMonth(month) : null;
   const start = useRef<{ x: number; y: number } | null>(null);
-  // How many months back from the running one, for the dots.
-  let back = 0;
-  for (let at = current; at > month && back < 99; at = previousMonth(at)) back += 1;
 
   return (
     <section
@@ -97,7 +92,22 @@ export function MonthFlow({
           <ChevronLeft aria-hidden="true" size={16} />
           {before ? formatShortMonth(before) : ''}
         </button>
-        <strong aria-live="polite">{formatMonth(month)}</strong>
+        {/* Tapping the month opens the phone's own month picker, to jump straight to one. */}
+        <label className={styles.pick}>
+          <strong aria-live="polite">{formatMonth(month)}</strong>
+          <ChevronDown aria-hidden="true" size={16} />
+          <input
+            aria-label="Month"
+            max={current}
+            min={earliest}
+            onChange={(event) => {
+              const picked = event.target.value;
+              if (picked && picked >= earliest && picked <= current) onMonth(picked);
+            }}
+            type="month"
+            value={month}
+          />
+        </label>
         <button
           aria-label={after ? `Next month, ${formatMonth(after)}` : 'No later month'}
           className={styles.step}
@@ -162,18 +172,6 @@ export function MonthFlow({
           <span className={styles.amount}>{formatMoney(balance)}</span>
         </li>
       </ol>
-      <div aria-hidden="true" className={styles.where}>
-        {back < DOTS ? (
-          <span className={styles.dots}>
-            {Array.from({ length: DOTS }, (_, index) => (
-              <i data-on={DOTS - 1 - index === back || undefined} key={index} />
-            ))}
-          </span>
-        ) : (
-          <span>{back} months ago</span>
-        )}
-        <span>Swipe for other months</span>
-      </div>
       {explainer}
     </section>
   );

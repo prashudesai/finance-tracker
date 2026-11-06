@@ -185,19 +185,22 @@ export function CashFlowPage() {
   return (
     <div className={ui.page}>
       <PageHeader
+        // Phones pick the month from the summary card's title instead.
         action={
-          <select
-            aria-label="Month"
-            className={ui.fieldSelect}
-            onChange={(event) => setMonth(event.target.value)}
-            value={month}
-          >
-            {(months.includes(month) ? months : [...months, month]).map((key) => (
-              <option key={key} value={key}>
-                {formatMonth(key)}
-              </option>
-            ))}
-          </select>
+          phone ? undefined : (
+            <select
+              aria-label="Month"
+              className={ui.fieldSelect}
+              onChange={(event) => setMonth(event.target.value)}
+              value={month}
+            >
+              {(months.includes(month) ? months : [...months, month]).map((key) => (
+                <option key={key} value={key}>
+                  {formatMonth(key)}
+                </option>
+              ))}
+            </select>
+          )
         }
         eyebrow="Your money at a glance"
         subtitle="Income, spending and what remains"
