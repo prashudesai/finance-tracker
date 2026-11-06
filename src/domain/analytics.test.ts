@@ -367,18 +367,32 @@ describe('house expense from the bank balances', () => {
     ).toEqual([]);
   });
 
-  test('once saved at review, the entry counts instead, and the gap stays the same', () => {
+  test('once saved at review, the gap stays the same and is counted once', () => {
     const entry = houseExpenseToSave(october(), '2026-10');
     expect(entry).toMatchObject({ id: 'unrecorded-2026-10', date: '2026-10-31', amount: 15_000 });
     const saved = october({ expenses: [...october().expenses, ...(entry ? [entry] : [])] });
     // The gap and the review's signature don't move once the entry is saved.
     expect(closeMonth(saved, '2026-10').unrecorded).toBe(15_000);
     expect(monthSignature(saved, '2026-10')).toBe(monthSignature(october(), '2026-10'));
-    // No worked-out figure on top of the saved one, so it's counted once.
-    expect(houseExpenses(saved)).toEqual([]);
+    // The current figure stands in for the saved one, so it's counted once.
     const counted = withHouseExpenses(saved, saved);
-    expect(monthlyOverview(counted, '2026-10', '2026-11-05').close.expenses).toBe(40_000);
-    expect(counted.expenses.filter((row) => row.date.startsWith('2026-10'))).toHaveLength(2);
+    const october2026 = counted.expenses.filter((row) => row.date.startsWith('2026-10'));
+    expect(october2026.map((row) => row.amount)).toEqual([40_000, 15_000]);
+  });
+
+  test('a forgotten expense added after review is not counted twice', () => {
+    const entry = houseExpenseToSave(october(), '2026-10');
+    // Reviewed at ₹15,000, then a ₹5,000 bill turns up for October.
+    const later = october({
+      expenses: [
+        spend('e', '2026-10-10', 40_000),
+        spend('f', '2026-10-20', 5_000),
+        ...(entry ? [entry] : []),
+      ],
+    });
+    const counted = withHouseExpenses(later, later);
+    // ₹40,000 + ₹5,000 + ₹10,000 still unrecorded: the same ₹55,000 as before.
+    expect(monthlyOverview(counted, '2026-10', '2026-11-05').spent).toBe(55_000);
   });
 
   test("a month's spending is the same before and after its review", () => {

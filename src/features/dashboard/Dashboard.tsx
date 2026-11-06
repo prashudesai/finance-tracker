@@ -62,9 +62,10 @@ const MIN_TREND_MONTHS = 3;
 const CHART_MONTHS = 6;
 type SortKey = 'size' | 'gain';
 
+/** "FY 26–27", held together so a narrow tile never breaks it across lines. */
 function shortFy(month: string) {
   const start = financialYearStart(month);
-  return `FY ${String(start % 100)}–${String((start + 1) % 100)}`;
+  return `FY\u00a0${String(start % 100)}\u2060–\u2060${String((start + 1) % 100)}`;
 }
 
 function PortfolioRow({ row, peak, index }: { row: CategoryRow; peak: number; index: number }) {

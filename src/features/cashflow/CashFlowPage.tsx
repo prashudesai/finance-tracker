@@ -2,11 +2,11 @@ import { ArrowDownToLine, ArrowUpFromLine, TrendingUp } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
-import { isMonthEnd, monthsToReview } from '../../domain/analytics';
+import { isAnyHouseExpense, isMonthEnd, monthsToReview } from '../../domain/analytics';
 import { previousMonth } from '../../domain/calendar';
 import { monthTotals } from '../../domain/cashflow';
 import type { Expense, Income } from '../../schema/records';
-import { useTracker, useView } from '../../store/tracker';
+import { useSpendingView, useTracker, useView } from '../../store/tracker';
 import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format';
 import { CategoryLabel } from '../../ui/CategoryLabel';
 import { Modal } from '../../ui/Modal';
@@ -61,9 +61,10 @@ function BalanceExplainer() {
     <details className={ui.fold}>
       <summary>How this balance is calculated</summary>
       <p className={ui.caption}>
-        Income recorded this month, less expenses recorded this month, including EMIs. Opening bank
-        balances aren't included. Family members' personal income follows the selected profile, and
-        household expenses stay shared.
+        Income recorded this month, less expenses recorded this month, including EMIs, and, once the
+        month's closing balance is in, its unrecorded house expense. Opening bank balances aren't
+        included. Family members' personal income follows the selected profile, and household
+        expenses stay shared.
       </p>
     </details>
   );
@@ -152,7 +153,18 @@ export function CashFlowPage() {
       sortValue: (row) => row.date,
     },
   ];
-  const totals = monthTotals(data).get(month) ?? { income: 0, expenses: 0 };
+  // Recorded entries, and spending with the month's unrecorded house expense, which is worked
+  // out from the bank balances once the month is closed, whether or not it was reviewed.
+  const spendingView = useSpendingView();
+  const recorded = monthTotals({
+    ...data,
+    expenses: data.expenses.filter((row) => !isAnyHouseExpense(row)),
+  }).get(month) ?? { income: 0, expenses: 0 };
+  const spent = monthTotals(spendingView).get(month)?.expenses ?? recorded.expenses;
+  const unrecorded = Math.max(0, spent - recorded.expenses);
+  const totals = { income: recorded.income, expenses: spent };
+  // The expense list's total adds up the entries it shows.
+  const listed = monthTotals(data).get(month)?.expenses ?? 0;
   const newest = <Row extends { date: string }>(rows: Row[]) =>
     rows.filter((row) => row.date.startsWith(month)).sort((a, b) => b.date.localeCompare(a.date));
   const months = Array.from({ length: MONTH_CHOICES }).reduce<string[]>(
@@ -201,8 +213,11 @@ export function CashFlowPage() {
           </div>
           <div className={ui.metricsTwo}>
             <Metric label="Income recorded" value={formatMoney(totals.income)} />
-            <Metric label="Expenses recorded" value={formatMoney(totals.expenses)} />
+            <Metric label="Expenses recorded" value={formatMoney(recorded.expenses)} />
           </div>
+          {unrecorded > 0 ? (
+            <Metric label="Unrecorded house expense" value={formatMoney(unrecorded)} />
+          ) : null}
           {totals.income > 0 ? (
             <div className={ui.meter}>
               <span
@@ -231,8 +246,16 @@ export function CashFlowPage() {
             <Stat
               icon={ArrowDownToLine}
               label="Expenses recorded"
-              value={formatMoney(totals.expenses)}
+              value={formatMoney(recorded.expenses)}
             />
+            {unrecorded > 0 ? (
+              <Stat
+                detail="From the bank balances"
+                icon={ArrowDownToLine}
+                label="Unrecorded house expense"
+                value={formatMoney(unrecorded)}
+              />
+            ) : null}
             <Stat
               icon={TrendingUp}
               label="Income after expenses"
@@ -319,7 +342,7 @@ export function CashFlowPage() {
                 </button>
               ) : undefined
             }
-            total={formatMoney(totals.expenses)}
+            total={formatMoney(listed)}
           />
         ) : null}
       </div>

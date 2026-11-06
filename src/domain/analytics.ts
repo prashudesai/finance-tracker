@@ -228,7 +228,7 @@ export const savedHouseExpenseId = (month: string) => `${SAVED_HOUSE_EXPENSE_ID}
 const isSavedHouseExpense = (row: Pick<Expense, 'id'>) => row.id.startsWith(SAVED_HOUSE_EXPENSE_ID);
 
 /** A house expense, worked out or saved at review: the gap at month end, not spending. */
-const isAnyHouseExpense = (row: Pick<Expense, 'id'>) =>
+export const isAnyHouseExpense = (row: Pick<Expense, 'id'>) =>
   isHouseExpense(row) || isSavedHouseExpense(row);
 
 /**
@@ -279,16 +279,14 @@ export function houseExpenseToSave(data: TrackerData, month: string): Expense | 
 }
 
 /**
- * Each closed month's house expense as an expense on its last day, worked out from the
- * household's balances each time, so a forgotten expense added later takes it down again.
- * A closing balance above what was expected adds nothing, and a month whose house expense
- * was saved at review counts the saved entry instead.
+ * Each closed month's house expense as an expense on its last day, always worked out from
+ * the household's balances as they are now, whether or not the month was reviewed: a
+ * forgotten expense added later, or a balance corrected, changes it at once. A closing
+ * balance above what was expected adds nothing.
  */
 export function houseExpenses(household: TrackerData): Expense[] {
   const closeOf = monthCloser(household);
-  const saved = new Set(household.expenses.filter(isSavedHouseExpense).map((row) => row.id));
   return household.monthlyBalances.flatMap(({ month }) => {
-    if (saved.has(savedHouseExpenseId(month))) return [];
     const { unrecorded } = closeOf(month);
     if (unrecorded === null || roundMoney(unrecorded) <= 0) return [];
     return [
@@ -304,10 +302,20 @@ export function houseExpenses(household: TrackerData): Expense[] {
   });
 }
 
-/** Records for working out spending: recorded expenses and each month's house expense. */
+/**
+ * Records for working out spending: recorded expenses and each month's house expense. A
+ * house expense saved at review is the record of it, kept in the list, but it can go out of
+ * date until the month is reviewed again, so the current figure stands in for it here and
+ * it is never counted twice.
+ */
 export function withHouseExpenses(view: TrackerData, household: TrackerData): TrackerData {
   const derived = houseExpenses(household);
-  return derived.length === 0 ? view : { ...view, expenses: [...view.expenses, ...derived] };
+  const saved = view.expenses.some(isSavedHouseExpense);
+  if (derived.length === 0 && !saved) return view;
+  return {
+    ...view,
+    expenses: [...view.expenses.filter((row) => !isSavedHouseExpense(row)), ...derived],
+  };
 }
 
 export interface BalanceHistoryRow {

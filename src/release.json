@@ -1,7 +1,10 @@
 {
-  "version": "1.22.2",
+  "version": "1.22.3",
   "released": "2026-11-05",
   "notes": [
+    "A forgotten expense added after a month is reviewed is no longer counted twice",
+    "Cash flow shows the month's unrecorded house expense as its own figure, the same before and after review",
+    "The financial year label no longer breaks across lines",
     "Monthly Expenses and Available Balance on the dashboard no longer change when a month is reviewed",
     "Gratuity opens to edit the basic salary or delete, both inside its details",
     "Retirement planner: the second chart shows yearly spending, tappable by age, and both charts sit side by side on a computer",
