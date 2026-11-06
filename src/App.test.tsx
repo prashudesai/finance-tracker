@@ -1418,6 +1418,33 @@ test('a part payment asks whether to keep or reduce the EMI, and saves the choic
   });
 });
 
+test('Cash flow shows what was invested from income and the balance after it', async () => {
+  const month = localDate().slice(0, 7);
+  renderApp('/cash-flow', {
+    holdings: [fund],
+    income: [{ id: 'i', date: `${month}-01`, member: 'Alex', source: 'Salary', amount: 1_00_000 }],
+    expenses: [
+      {
+        id: 'e',
+        date: `${month}-01`,
+        category: 'Food',
+        subcategory: '',
+        isAnnual: false,
+        amount: 30_000,
+      },
+    ],
+    contributions: [
+      { id: 'c', holdingId: fund.id, date: `${month}-01`, amount: 20_000, automatic: false },
+    ],
+  });
+  const summary = within(await screen.findByRole('region', { name: 'Selected month' }));
+  expect(summary.getByText('Invested from income')).toBeDefined();
+  expect(summary.getByText('₹20,000')).toBeDefined();
+  // ₹1,00,000 less ₹30,000 spent and ₹20,000 invested.
+  expect(summary.getByText('Balance')).toBeDefined();
+  expect(summary.getByText('₹50,000')).toBeDefined();
+});
+
 test('a gratuity estimate opens to edit its basic salary, or delete it', async () => {
   const account = { id: 'g', member: 'Alex Morgan', date: '2015-04-01', basicSalary: 50_000 };
   renderApp('/investments', { gratuityAccounts: [account] });

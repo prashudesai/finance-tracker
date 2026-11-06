@@ -246,6 +246,11 @@
   border-radius: 999px;
 }
 
+.meterInvested {
+  composes: meterFill;
+  background: var(--scenario-base);
+}
+
 .meterExpense {
   composes: meterFill;
   background: var(--series-expense);

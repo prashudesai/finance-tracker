@@ -1,8 +1,13 @@
-import { ArrowDownToLine, ArrowUpFromLine, TrendingUp } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, PiggyBank, Wallet } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
-import { isAnyHouseExpense, isMonthEnd, monthsToReview } from '../../domain/analytics';
+import {
+  investedFromIncome,
+  isAnyHouseExpense,
+  isMonthEnd,
+  monthsToReview,
+} from '../../domain/analytics';
 import { previousMonth } from '../../domain/calendar';
 import { monthTotals } from '../../domain/cashflow';
 import type { Expense, Income } from '../../schema/records';
@@ -61,9 +66,10 @@ function BalanceExplainer() {
     <details className={ui.fold}>
       <summary>How this balance is calculated</summary>
       <p className={ui.caption}>
-        Income recorded this month, less expenses recorded this month, including EMIs, and, once the
-        month's closing balance is in, its unrecorded house expense. Opening bank balances aren't
-        included. Family members' personal income follows the selected profile, and household
+        Income recorded this month, less expenses recorded this month including EMIs, its unrecorded
+        house expense once the closing balance is in, and what was invested from the bank. PF and
+        NPS come out of salary before it's paid, so they aren't taken off. Opening bank balances
+        aren't included. Family members' personal income follows the selected profile, and household
         expenses stay shared.
       </p>
     </details>
@@ -163,6 +169,9 @@ export function CashFlowPage() {
   const spent = monthTotals(spendingView).get(month)?.expenses ?? recorded.expenses;
   const unrecorded = Math.max(0, spent - recorded.expenses);
   const totals = { income: recorded.income, expenses: spent };
+  // Paid into investments from the bank this month; PF and NPS come out of salary first.
+  const invested = investedFromIncome(data).get(month) ?? 0;
+  const left = totals.income - totals.expenses - invested;
   // The expense list's total adds up the entries it shows.
   const listed = monthTotals(data).get(month)?.expenses ?? 0;
   const newest = <Row extends { date: string }>(rows: Row[]) =>
@@ -208,30 +217,37 @@ export function CashFlowPage() {
       {phone ? (
         <section aria-label="Selected month" className={ui.card}>
           <div className={ui.metric}>
-            <div className={ui.statLabel}>Balance after expenses</div>
-            <div className={ui.value}>{formatMoney(totals.income - totals.expenses)}</div>
+            <div className={ui.statLabel}>Balance</div>
+            <div className={ui.value}>{formatMoney(left)}</div>
           </div>
           <div className={ui.metricsTwo}>
             <Metric label="Income recorded" value={formatMoney(totals.income)} />
             <Metric label="Expenses recorded" value={formatMoney(recorded.expenses)} />
+            {unrecorded > 0 ? (
+              <Metric label="Unrecorded house expense" value={formatMoney(unrecorded)} />
+            ) : null}
+            <Metric label="Invested from income" value={formatMoney(invested)} />
           </div>
-          {unrecorded > 0 ? (
-            <Metric label="Unrecorded house expense" value={formatMoney(unrecorded)} />
-          ) : null}
           {totals.income > 0 ? (
             <div className={ui.meter}>
               <span
                 className={ui.meterExpense}
                 style={{ width: `${Math.min(1, totals.expenses / totals.income) * 100}%` }}
               />
+              <span
+                className={ui.meterInvested}
+                style={{
+                  width: `${Math.max(0, Math.min(1 - totals.expenses / totals.income, invested / totals.income)) * 100}%`,
+                }}
+              />
             </div>
           ) : null}
           <div className={ui.caption}>
             {totals.income === 0 && totals.expenses === 0
               ? 'No income or expenses recorded for this month'
-              : totals.expenses > totals.income
-                ? 'Expenses are above income this month'
-                : `${totals.income > 0 ? Math.round((totals.expenses / totals.income) * 100) : 0}% of income spent`}
+              : left < 0
+                ? 'More went out than came in this month'
+                : `${totals.income > 0 ? Math.round((totals.expenses / totals.income) * 100) : 0}% of income spent, ${totals.income > 0 ? Math.round((invested / totals.income) * 100) : 0}% invested`}
           </div>
           <BalanceExplainer />
         </section>
@@ -250,16 +266,23 @@ export function CashFlowPage() {
             />
             {unrecorded > 0 ? (
               <Stat
-                detail="From the bank balances"
+                detail="House expense, from bank balances"
                 icon={ArrowDownToLine}
-                label="Unrecorded house expense"
+                label="Unrecorded spending"
                 value={formatMoney(unrecorded)}
               />
             ) : null}
             <Stat
-              icon={TrendingUp}
-              label="Income after expenses"
-              value={formatMoney(totals.income - totals.expenses)}
+              detail="PF and NPS come from salary"
+              icon={PiggyBank}
+              label="Invested from income"
+              value={formatMoney(invested)}
+            />
+            <Stat
+              detail="After spending and investing"
+              icon={Wallet}
+              label="Balance"
+              value={formatMoney(left)}
             />
           </section>
           <BalanceExplainer />

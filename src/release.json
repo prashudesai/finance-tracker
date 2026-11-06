@@ -1,7 +1,8 @@
 {
-  "version": "1.22.3",
+  "version": "1.22.4",
   "released": "2026-11-05",
   "notes": [
+    "Cash flow shows what you invested from income, and the balance after spending and investing",
     "A forgotten expense added after a month is reviewed is no longer counted twice",
     "Cash flow shows the month's unrecorded house expense as its own figure, the same before and after review",
     "The financial year label no longer breaks across lines",
