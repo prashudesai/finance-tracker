@@ -26,6 +26,7 @@ const LABELS: Partial<Record<CollectionName, string>> = {
   interestCredits: 'interest credit',
   epsUpdates: 'EPS correction',
   goals: 'goal',
+  budgets: 'budget',
 };
 
 const find = (data: TrackerData, collection: CollectionName, id: string) =>

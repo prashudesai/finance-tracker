@@ -71,9 +71,9 @@ test.each([
   ['/debts', 'Debt & EMI Tracker'],
   ['/analytics', 'Analytics'],
   ['/analytics/income', 'Income'],
-  ['/analytics/projection', 'Growth Projection'],
+  ['/analytics/projection', 'Growth projection'],
   ['/analytics/goals', 'Goal planning'],
-  ['/analytics/reports', 'Analytics'],
+  ['/analytics/reports', 'Date range reports'],
   ['/settings', 'Settings'],
 ])('%s renders with full sample data', async (path, title) => {
   renderApp(path, previewData());
@@ -887,7 +887,7 @@ describe('needs attention', () => {
 
 test('desktop projection follows the chosen scenario and edits assumptions', async () => {
   renderApp('/analytics/projection', { holdings: [fund] });
-  expect(await screen.findByRole('heading', { level: 1, name: 'Growth Projection' })).toBeDefined();
+  expect(await screen.findByRole('heading', { level: 1, name: 'Growth projection' })).toBeDefined();
   expect(await screen.findByText('Base · 5-year projection')).toBeDefined();
   expect(screen.getByRole('columnheader', { name: /Base growth/ })).toBeDefined();
   fireEvent.click(screen.getByRole('button', { name: /^Stress/ }));
@@ -917,7 +917,7 @@ test('phone projection opens assumptions by group and keeps goals last', async (
     removeEventListener: () => undefined,
   })) as unknown as typeof window.matchMedia;
   renderApp('/analytics/projection', { holdings: [fund] });
-  expect(await screen.findByRole('heading', { level: 1, name: 'Growth Projection' })).toBeDefined();
+  expect(await screen.findByRole('heading', { level: 1, name: 'Growth projection' })).toBeDefined();
   expect(screen.queryByLabelText(/Mutual Funds annual step-up/)).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: /Market linked/ }));
   expect(await screen.findByLabelText(/Mutual Funds annual step-up/)).toBeDefined();

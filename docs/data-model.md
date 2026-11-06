@@ -30,6 +30,8 @@ households/{ownerUid}/
   changes/{id}
   interestCredits/{id}
   epsUpdates/{id}
+  goals/{id}
+  budgets/{id}
 ```
 
 Email addresses in `memberships` are lowercase.
@@ -56,6 +58,7 @@ Every record below is stored encrypted, as `{ k, iv, c }`, under a scrambled doc
 | `monthReviews`          | Months someone has reviewed                                       | Holds a signature, so later changes ask for review again |
 | `interestCredits`       | Annual PF and PPF interest                                        | One per account per financial year                       |
 | `epsUpdates`            | EPS balance corrections                                           | Signed amounts                                           |
+| `budgets`               | A financial year's spending plan, one per year                    | `fy-<start year>`; what was spent is worked out          |
 | `changes`               | The change log                                                    | Newest 200, with earlier values for undo                 |
 
 ## Loans

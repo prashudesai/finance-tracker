@@ -19,6 +19,7 @@ const ROUTES = [
   '/analytics/income',
   '/analytics/projection',
   '/analytics/goals',
+  '/analytics/budget',
   '/analytics/reports',
   '/settings',
   '/signin',

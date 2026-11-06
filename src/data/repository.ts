@@ -5,6 +5,7 @@ import {
   epsUpdateSchema,
   expenseSchema,
   goalSchema,
+  budgetSchema,
   gratuityAccountSchema,
   holdingSchema,
   incomeSchema,
@@ -23,6 +24,7 @@ import {
   type EpsUpdate,
   type Expense,
   type Goal,
+  type Budget,
   type GratuityAccount,
   type Holding,
   type Income,
@@ -57,6 +59,7 @@ export interface TrackerData {
   interestCredits: InterestCredit[];
   epsUpdates: EpsUpdate[];
   goals: Goal[];
+  budgets: Budget[];
 }
 
 export type CollectionName = keyof TrackerData;
@@ -80,6 +83,7 @@ export const COLLECTIONS: { [Name in CollectionName]: z.ZodType<TrackerData[Name
   interestCredits: interestCreditSchema,
   epsUpdates: epsUpdateSchema,
   goals: goalSchema,
+  budgets: budgetSchema,
 };
 
 export const COLLECTION_NAMES = Object.keys(COLLECTIONS) as CollectionName[];
@@ -103,6 +107,7 @@ export const emptyTrackerData = (): TrackerData => ({
   interestCredits: [],
   epsUpdates: [],
   goals: [],
+  budgets: [],
 });
 
 export type RecordWrite =

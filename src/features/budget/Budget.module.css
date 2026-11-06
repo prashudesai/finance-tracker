@@ -1,0 +1,257 @@
+.heroTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.heroTop select {
+  width: auto;
+  min-width: 0;
+}
+
+.heroLine {
+  margin: 0;
+  color: var(--muted);
+}
+
+.heroLine strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Spent so far along the year's plan, with a tick where spending should be by today. */
+.pace {
+  position: relative;
+}
+
+.paceMark {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: var(--text);
+  border-radius: 2px;
+}
+
+.paceText {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.over {
+  color: var(--warning-text);
+}
+
+/* Month by month: twelve thin columns, April first, with the monthly set-aside as a line. */
+.chart {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+  align-items: end;
+  height: 140px;
+  padding-top: 8px;
+}
+
+.setAside {
+  position: absolute;
+  right: 0;
+  left: 0;
+  border-top: 1px dashed var(--muted);
+  pointer-events: none;
+}
+
+.column {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.column:hover,
+.column[aria-pressed='true'] {
+  background: var(--surface-sunken);
+}
+
+.bar {
+  width: min(100%, 22px);
+  min-height: 2px;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
+}
+
+.heavy .bar {
+  background: var(--warning-text);
+}
+
+.monthNames {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.monthDetail {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-small);
+}
+
+.monthDetail ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.monthDetail li,
+.split {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.group {
+  display: grid;
+  gap: 6px;
+}
+
+.groupHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px 14px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.line:hover {
+  border-color: var(--card-edge);
+}
+
+.line:disabled {
+  cursor: default;
+}
+
+.lineName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.lineAmount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  text-align: right;
+}
+
+.lineDetail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.lineYearly {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.kids {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.kids .segmentedSmall {
+  min-width: 220px;
+}
+
+.monthsPicker {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.monthChip {
+  min-height: 40px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.monthChip[aria-pressed='true'] {
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.rises {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.upcoming {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upcoming li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.segmentedSmall {
+  composes: segmented from '../../ui/ui.module.css';
+}

@@ -1,7 +1,14 @@
 {
-  "version": "1.23.0",
-  "released": "2026-11-05",
+  "version": "1.24.0",
+  "released": "2026-11-06",
   "notes": [
+    "Yearly budget, in Planning › Future: plan the financial year line by line, monthly, yearly, in chosen months or once",
+    "A starting plan filled in from your last twelve months of spending, with school fees added for each kid",
+    "See what each month needs and which months need more than you set aside, how spending is going against the plan, and what's left to invest",
+    "Big yearly bills due this month or next show in Needs attention",
+    "Copy a year's plan to the next, with prices and school fees up by the percent you choose",
+    "Planning is split into Insights (Analytics, Income, Date range reports) and Future (Growth projection, Goal planning, Yearly budget)",
+    "Monthly balances no longer repeat the unrecorded house expense, which the month summary already shows",
     "Data health in Settings: what would make your figures wrong, with a fix for each",
     "Cash flow spots expenses that repeat each month and offers to make them recurring",
     "Year at a glance in Date range reports, with a PDF for tax time",

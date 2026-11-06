@@ -61,6 +61,7 @@ const AnalyticsPage = named(() => import('./features/analytics/AnalyticsPage'), 
 const ProjectionPage = named(() => import('./features/analytics/ProjectionPage'), 'ProjectionPage');
 const ReportsPage = named(() => import('./features/analytics/ReportsPage'), 'ReportsPage');
 const IncomePage = named(() => import('./features/analytics/IncomePage'), 'IncomePage');
+const BudgetPage = named(() => import('./features/budget/BudgetPage'), 'BudgetPage');
 const GoalPlanningPage = named(
   () => import('./features/goals/GoalPlanningPage'),
   'GoalPlanningPage',
@@ -363,6 +364,7 @@ export function Shell({
                 <Route element={<ProjectionPage />} path="projection" />
                 <Route element={<GoalPlanningPage />} path="goals" />
                 <Route element={<ReportsPage />} path="reports" />
+                <Route element={<BudgetPage />} path="budget" />
               </Route>
               <Route element={<SettingsPage account={account} />} path="/settings" />
             </Routes>

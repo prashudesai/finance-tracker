@@ -21,6 +21,7 @@ import {
   portfolioCategories,
   type CategoryRow,
 } from '../../domain/analytics';
+import { budgetReminders } from '../../domain/budget';
 import { financialYearStart } from '../../domain/calendar';
 import { monthlyTrend } from '../../domain/cashflow';
 import { pendingOccurrences } from '../../domain/recurring';
@@ -143,6 +144,11 @@ export function Dashboard({ name = '' }: { name?: string }) {
       pending.length,
       syncedAt ? localDate(syncedAt) : null,
     ).filter(({ emi }) => !emi || emi.missed || !isHidden(emi.loanId, emi.date)),
+    ...budgetReminders(household, today).map(({ line, month: due, amount }) => ({
+      label: `${line.name} due ${due === month ? 'this month' : `in ${formatMonth(due).split(' ')[0]}`}, ${formatMoney(amount)}`,
+      path: '/analytics/budget',
+      state: { open: line.id },
+    })),
   ];
 
   const rows = holdingRows(data, today);

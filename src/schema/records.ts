@@ -243,6 +243,45 @@ export const goalSchema = z
 export type Goal = z.infer<typeof goalSchema>;
 export type GoalKind = Goal['kind'];
 
+export const BUDGET_GROUPS = [
+  'home',
+  'insurance',
+  'kids',
+  'health',
+  'vehicles',
+  'lifestyle',
+  'other',
+] as const;
+
+/**
+ * One line of a yearly budget. `amount` is one payment: a month's for monthly lines, and each
+ * payment's for the rest. `months` are 1 to 12, the months it's paid in.
+ */
+export const budgetLineSchema = z.object({
+  id,
+  name,
+  group: z.enum(BUDGET_GROUPS),
+  amount: money,
+  every: z.enum(['month', 'months', 'once']),
+  months: z.array(z.number().int().min(1).max(12)).max(12).default([]),
+  /** The expense category this line's spending is recorded under, to match plan with actual. */
+  category: z.string().max(100).default(''),
+});
+export type BudgetLine = z.infer<typeof budgetLineSchema>;
+
+/**
+ * A financial year's spending plan, one per year, `fy-<start year>`. Only the plan is stored;
+ * what was spent against it is always worked out from expenses.
+ */
+export const budgetSchema = z.object({
+  id,
+  /** The year the financial year starts in. */
+  fy: z.number().int().min(2000).max(2200),
+  kids: z.number().int().min(0).max(4).default(0),
+  lines: z.array(budgetLineSchema).max(200).default([]),
+});
+export type Budget = z.infer<typeof budgetSchema>;
+
 /**
  * Money taken out of an investment. Its value afterwards is saved as a valuation on the
  * same date, so the invested amount and booked profit can be worked out by average cost.

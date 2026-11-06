@@ -1597,6 +1597,19 @@ details.fold[open] > summary {
   background: var(--accent);
 }
 
+/* A switch made of links, such as Planning's Insights and Future. */
+nav.segmented {
+  width: 100%;
+  max-width: 420px;
+}
+
+a.segment,
+a.segmentActive {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+}
+
 /* Phones show the page title alone, as the older app did. */
 @media (max-width: 700px) {
   .statGrid {

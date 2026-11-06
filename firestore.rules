@@ -43,7 +43,7 @@ service cloud.firestore {
                             'contributions', 'valuations', 'gratuityAccounts',
                             'projectionAdjustments', 'settings', 'monthReviews',
                             'changes', 'interestCredits', 'epsUpdates', 'withdrawals',
-                            'goals'];
+                            'goals', 'budgets'];
     }
 
     // Records are encrypted on the device, so anything readable is refused.

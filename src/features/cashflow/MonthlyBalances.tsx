@@ -272,17 +272,6 @@ export function MonthlyBalances({ month }: { month: string }) {
           </div>
           <div className={ui.caption}>Also {formatMonth(nextMonth(month))}'s opening</div>
         </div>
-        <div className={ui.metric}>
-          <div className={ui.label}>Unrecorded house expense</div>
-          <div className={ui.metricValue}>
-            {close.unrecorded === null ? 'Pending' : formatMoney(close.unrecorded)}
-          </div>
-          <div className={ui.caption}>
-            {close.unrecorded !== null && close.unrecorded < 0
-              ? NEGATIVE_NOTE
-              : 'Not recorded, counted in your expenses'}
-          </div>
-        </div>
       </div>
       {setting ? (
         <Modal onClose={() => setSetting(false)} title="Set bank balance">

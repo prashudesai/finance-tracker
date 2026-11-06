@@ -22,6 +22,7 @@ test.describe('every page', () => {
     '/analytics',
     '/analytics/income',
     '/analytics/goals',
+    '/analytics/budget',
     '/settings',
   ]) {
     test(`${path} opens and fits the screen`, async ({ page }) => {
