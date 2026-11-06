@@ -1,4 +1,4 @@
-import { ChevronRight, PiggyBank, Plus, Trash2, TrendingUp } from 'lucide-react';
+import { ChevronRight, Pencil, PiggyBank, Plus, Trash2, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { optionLists } from '../../domain/options';
@@ -29,7 +29,7 @@ import { useSettings, useTracker, useView } from '../../store/tracker';
 import { Donut } from '../../ui/charts';
 import { Field } from '../../ui/Field';
 import { MemberField, useDefaultMember } from '../../ui/MemberField';
-import { formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
+import { formatDay, formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
 import { EmptyState } from '../../ui/EmptyState';
 import { Modal } from '../../ui/Modal';
 import { AddValueDialog } from '../../ui/Select';
@@ -99,12 +99,14 @@ function SectionTabs({
   );
 }
 
-function GratuityForm({ onDone }: { onDone: () => void }) {
+/** Adds a gratuity estimate, or edits one, as basic salary changes over the years. */
+function GratuityForm({ onDone, initial }: { onDone: () => void; initial?: GratuityAccount }) {
   const commit = useTracker((state) => state.commit);
-  const [member, setMember] = useState(useDefaultMember());
-  const [date, setDate] = useState('');
-  const [salary, setSalary] = useState('');
-  const id = crypto.randomUUID();
+  const defaultMember = useDefaultMember();
+  const [member, setMember] = useState(initial?.member ?? defaultMember);
+  const [date, setDate] = useState(initial?.date ?? '');
+  const [salary, setSalary] = useState(initial ? String(initial.basicSalary) : '');
+  const [id] = useState(() => initial?.id ?? crypto.randomUUID());
   const parsed = gratuityAccountSchema.safeParse({ id, member, date, basicSalary: Number(salary) });
   return (
     <form
@@ -136,7 +138,7 @@ function GratuityForm({ onDone }: { onDone: () => void }) {
       </Field>
       <div className={ui.formActions}>
         <button className={ui.button} disabled={!parsed.success} type="submit">
-          Save gratuity estimate
+          {initial ? 'Save changes' : 'Save gratuity estimate'}
         </button>
       </div>
     </form>
@@ -252,6 +254,8 @@ export function InvestmentsPage() {
   const commit = useTracker((state) => state.commit);
   const today = localDate();
   const [adding, setAdding] = useState<Holding['kind'] | 'gratuity' | null>(null);
+  const [gratuityOpen, setGratuityOpen] = useState(false);
+  const [editingGratuity, setEditingGratuity] = useState<GratuityAccount | null>(null);
   const [addingType, setAddingType] = useState<string | null>(null);
   const [openName, setOpenName] = useState<string | null>(null);
   const [addingNewType, setAddingNewType] = useState(false);
@@ -575,7 +579,12 @@ export function InvestmentsPage() {
               />
             ))}
             {data.gratuityAccounts.length > 0 ? (
-              <div className={ui.categoryCard} style={{ cursor: 'default' }}>
+              <button
+                aria-label="Gratuity: open to edit or delete"
+                className={ui.categoryCard}
+                onClick={() => setGratuityOpen(true)}
+                type="button"
+              >
                 <div>
                   <div style={{ fontSize: '1.1rem' }}>Gratuity</div>
                   <div className={ui.caption}>
@@ -598,24 +607,11 @@ export function InvestmentsPage() {
                           </div>
                         </div>
                         <span className={ui.amount}>{formatMoney(estimate.amount)}</span>
-                        <button
-                          aria-label={`Delete gratuity for ${account.member}`}
-                          className={ui.smallIcon}
-                          onClick={() =>
-                            commit([
-                              { type: 'delete', collection: 'gratuityAccounts', id: account.id },
-                            ])
-                          }
-                          type="button"
-                          data-tip="Delete"
-                        >
-                          <Trash2 size={14} />
-                        </button>
                       </li>
                     );
                   })}
                 </ul>
-              </div>
+              </button>
             ) : null}
           </div>
         </section>
@@ -645,6 +641,70 @@ export function InvestmentsPage() {
         </details>
       ) : null}
 
+      {gratuityOpen && !editingGratuity ? (
+        <Modal onClose={() => setGratuityOpen(false)} title="Gratuity">
+          <ul className={ui.list}>
+            {data.gratuityAccounts.map((account) => {
+              const estimate = estimateGratuity(account, today);
+              return (
+                <li className={ui.row} key={account.id}>
+                  <div className={ui.rowMain}>
+                    <div className={ui.rowTitle}>
+                      {account.member} · {formatMoney(estimate.amount)}
+                    </div>
+                    <div className={ui.rowDetail}>
+                      Basic {formatMoney(account.basicSalary)} a month · joined{' '}
+                      {formatDay(account.date)} {account.date.slice(0, 4)} ·{' '}
+                      {estimate.eligible
+                        ? `${estimate.countedYears} years counted`
+                        : `eligible after 5 years, ${estimate.completedYears} served`}
+                    </div>
+                  </div>
+                  <span className={ui.actions}>
+                    <button
+                      aria-label={`Edit gratuity for ${account.member}`}
+                      className={ui.smallIcon}
+                      data-tip="Edit"
+                      onClick={() => setEditingGratuity(account)}
+                      type="button"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      aria-label={`Delete gratuity for ${account.member}`}
+                      className={ui.smallIcon}
+                      data-tip="Delete"
+                      onClick={() => {
+                        if (!window.confirm(`Delete the gratuity estimate for ${account.member}?`))
+                          return;
+                        commit([
+                          { type: 'delete', collection: 'gratuityAccounts', id: account.id },
+                        ]);
+                        if (data.gratuityAccounts.length === 1) setGratuityOpen(false);
+                      }}
+                      type="button"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className={ui.caption}>
+            Update the basic salary whenever it changes. The estimate is basic × 15/26 × years
+            counted, after 5 years, capped at ₹20 lakh.
+          </p>
+        </Modal>
+      ) : null}
+      {editingGratuity ? (
+        <Modal
+          onClose={() => setEditingGratuity(null)}
+          title={`Edit gratuity for ${editingGratuity.member}`}
+        >
+          <GratuityForm initial={editingGratuity} onDone={() => setEditingGratuity(null)} />
+        </Modal>
+      ) : null}
       {adding === 'gratuity' ? (
         <Modal onClose={() => setAdding(null)} title="Add gratuity estimate">
           <GratuityForm onDone={() => setAdding(null)} />

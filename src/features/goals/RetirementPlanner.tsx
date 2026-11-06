@@ -25,6 +25,7 @@ import { Field } from '../../ui/Field';
 import { formatAmount, formatShortMonthYear, localDate } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
+import { useMedia } from '../../ui/useMedia';
 import styles from './Goals.module.css';
 
 type Assumptions = NonNullable<TrackerSettings['retirement']>;
@@ -145,6 +146,8 @@ export function RetirementPlanner() {
   const settings = useSettings();
   const save = useSaveSettings();
   const phone = useIsPhone();
+  // Wide enough for the two charts side by side, each drawn in its narrower form.
+  const paired = useMedia('(min-width: 1000px)');
   const today = localDate();
   const saved = settings.retirement ?? DEFAULTS;
 
@@ -178,6 +181,7 @@ export function RetirementPlanner() {
   const [contributions, setContributions] = useState(saved.contributions);
   const [fundKind, setFundKind] = useState(saved.fund);
   const [picked, setPicked] = useState<number | null>(null);
+  const [spendPicked, setSpendPicked] = useState(0);
   // Opened by hand or by an error, the assumptions stay open until closed by hand.
   const [assumptionsOpen, setAssumptionsOpen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -414,6 +418,9 @@ export function RetirementPlanner() {
   }
   const retireAgeIndex = ages.findIndex((row) => row.retired);
   const retiredAges = ages.filter((row) => row.retired);
+  // The age picked on the spending chart, from the first year retired.
+  const spendIndex = Math.min(spendPicked, retiredAges.length - 1);
+  const spendRow = retiredAges[spendIndex];
   // The first year spending passes what the fund makes, when it starts to shrink.
   const shrinksFrom = retiredAges.find((row) => row.spending > row.earned);
   const shown = ages[picked ?? retireAgeIndex];
@@ -565,78 +572,84 @@ export function RetirementPlanner() {
         </section>
       ) : null}
 
-      {plan && ages.length > 1 ? (
-        <div className={styles.retireChart}>
-          <h3 className={ui.label}>Your fund by age</h3>
-          <LineChart
-            fromZero
-            narrow={phone}
-            onPick={setPicked}
-            picked={picked ?? retireAgeIndex}
-            plain
-            series={[
-              {
-                name: 'Fund value',
-                points: ages.map((row) => ({ label: String(row.age), value: row.fund })),
-              },
-            ]}
-            title="Your fund at the end of each year of age"
-          />
-          <p className={styles.milestoneNote}>
-            <span aria-hidden="true">┃</span> The line marks retirement in{' '}
-            {monthLabel(plan.monthsToRetire)}, at {ageAt(plan.monthsToRetire)}, with{' '}
-            {formatAmount(plan.fundAtRetirement)}.
-          </p>
-          {shown ? (
-            <p aria-live="polite" className={ui.caption} style={{ margin: 0 }}>
-              <strong>
-                Age {shown.age}
-                {shown.retired ? ', retired' : ''}
-              </strong>
-              : {formatAmount(shown.fund)} at the end of the year
-              {shown.retired
-                ? `, spending ${formatAmount(shown.spending)} a year while the fund makes ${formatAmount(shown.earned)}`
-                : ''}
-              . Tap the chart to see another age.
+      <div className={styles.retireCharts}>
+        {plan && ages.length > 1 ? (
+          <div className={styles.retireChart}>
+            <h3 className={ui.label}>Your fund by age</h3>
+            <LineChart
+              fromZero
+              narrow={phone || paired}
+              onPick={setPicked}
+              picked={picked ?? retireAgeIndex}
+              plain
+              series={[
+                {
+                  name: 'Fund value',
+                  points: ages.map((row) => ({ label: String(row.age), value: row.fund })),
+                },
+              ]}
+              title="Your fund at the end of each year of age"
+            />
+            <p className={styles.milestoneNote}>
+              <span aria-hidden="true">┃</span> The line marks retirement in{' '}
+              {monthLabel(plan.monthsToRetire)}, at {ageAt(plan.monthsToRetire)}, with{' '}
+              {formatAmount(plan.fundAtRetirement)}.
             </p>
-          ) : null}
-        </div>
-      ) : null}
+            {shown ? (
+              <p aria-live="polite" className={ui.caption} style={{ margin: 0 }}>
+                <strong>
+                  Age {shown.age}
+                  {shown.retired ? ', retired' : ''}
+                </strong>
+                : {formatAmount(shown.fund)} at the end of the year
+                {shown.retired
+                  ? `, spending ${formatAmount(shown.spending)} a year while the fund makes ${formatAmount(shown.earned)}`
+                  : ''}
+                . Tap the chart to see another age.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
-      {plan && retiredAges.length > 1 ? (
-        <div className={styles.retireChart}>
-          <h3 className={ui.label}>Each year after you retire</h3>
-          <LineChart
-            fromZero
-            narrow={phone}
-            plain
-            series={[
-              {
-                name: each ? 'Fund makes (growth and payouts)' : 'Fund makes (growth)',
-                color: 'var(--series-income)',
-                points: retiredAges.map((row) => ({
-                  label: String(row.age),
-                  value: Math.max(0, row.earned),
-                })),
-              },
-              {
-                name: 'You spend',
-                color: 'var(--series-expense)',
-                dash: '6 4',
-                points: retiredAges.map((row) => ({ label: String(row.age), value: row.spending })),
-              },
-            ]}
-            title="Each year after you retire: what the fund makes against what you spend"
-          />
-          <p className={ui.caption} style={{ margin: 0 }}>
-            {!shrinksFrom
-              ? 'The fund makes more than you spend every year, so it keeps growing.'
-              : shrinksFrom === retiredAges[0]
-                ? 'You spend more than the fund makes from the start, so it shrinks each year.'
-                : `The fund makes more than you spend until ${shrinksFrom.age}. From then on, spending passes it, so the fund starts to shrink.`}
-          </p>
-        </div>
-      ) : null}
+        {plan && retiredAges.length > 1 ? (
+          <div className={styles.retireChart}>
+            <h3 className={ui.label}>Yearly spending after you retire</h3>
+            <LineChart
+              fromZero
+              narrow={phone || paired}
+              onPick={setSpendPicked}
+              picked={spendIndex}
+              plain
+              series={[
+                {
+                  name: 'Spending a year',
+                  color: 'var(--series-expense)',
+                  points: retiredAges.map((row) => ({
+                    label: String(row.age),
+                    value: row.spending,
+                  })),
+                },
+              ]}
+              title="Yearly spending after you retire, by age"
+            />
+            <p className={ui.caption} style={{ margin: 0 }}>
+              Rising {inputs.inflation}% a year with prices:{' '}
+              {formatAmount(retiredAges[0]?.spending ?? 0)} a year at {retiredAges[0]?.age}, and{' '}
+              {formatAmount(retiredAges.at(-1)?.spending ?? 0)} by {retiredAges.at(-1)?.age}.
+              {shrinksFrom
+                ? ` From ${shrinksFrom.age}, that's more than the fund makes, so it starts to shrink.`
+                : ' The fund makes more than this every year, so it keeps growing.'}
+            </p>
+            {spendRow ? (
+              <p aria-live="polite" className={ui.caption} style={{ margin: 0 }}>
+                <strong>Age {spendRow.age}</strong>: spending {formatAmount(spendRow.spending)} a
+                year, about {formatAmount(spendRow.spending / 12)} a month. Tap the chart to see
+                another age.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       {plan ? (
         <details className={ui.fold}>

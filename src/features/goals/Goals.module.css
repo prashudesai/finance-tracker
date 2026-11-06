@@ -313,6 +313,32 @@
   white-space: nowrap;
 }
 
+/* Wide screens: each ring beside its name and percentage, so the tile is half as tall. */
+@media (min-width: 1000px) {
+  .tileGoal {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    justify-items: start;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 0;
+    font-size: 0.85rem;
+    text-align: left;
+  }
+
+  .tileGoal > :first-child {
+    grid-row: span 2;
+  }
+
+  .tileGoal span:nth-of-type(1) {
+    align-self: end;
+  }
+
+  .tileGoal span:last-child {
+    align-self: start;
+  }
+}
+
 .reset {
   display: inline-flex;
   align-items: center;
@@ -358,6 +384,20 @@
 .retireHead small {
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+/* The two retirement charts, side by side on wide screens. */
+.retireCharts {
+  display: grid;
+  gap: 18px;
+}
+
+@media (min-width: 1000px) {
+  .retireCharts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    align-items: start;
+  }
 }
 
 .retireChart {

@@ -48,6 +48,27 @@
     gap: var(--space);
     align-items: stretch;
   }
+
+  /* The chart card's spare height goes to the pie, which sits centred in it. */
+  .pair > :first-child {
+    grid-template-rows: auto auto 1fr;
+  }
+
+  .pair .split {
+    align-content: center;
+  }
+
+  /* Half width: names get room to stay on one line, and the bar takes what's left. */
+  .pair [class*='barRow'] {
+    grid-template-columns: minmax(0, 1.5fr) minmax(40px, 1fr) 64px 136px;
+    gap: 14px;
+  }
+
+  .pair [class*='barName'] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 /* Under the income chart: where one month's income went. */

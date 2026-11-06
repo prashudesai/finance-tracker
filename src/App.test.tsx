@@ -1418,6 +1418,34 @@ test('a part payment asks whether to keep or reduce the EMI, and saves the choic
   });
 });
 
+test('a gratuity estimate opens to edit its basic salary, or delete it', async () => {
+  const account = { id: 'g', member: 'Alex Morgan', date: '2015-04-01', basicSalary: 50_000 };
+  renderApp('/investments', { gratuityAccounts: [account] });
+  fireEvent.click(await screen.findByRole('button', { name: 'Gratuity: open to edit or delete' }));
+  const dialog = within(await screen.findByRole('dialog', { name: 'Gratuity', hidden: true }));
+  expect(dialog.getByText(/Basic ₹50,000 a month/)).toBeDefined();
+  fireEvent.click(
+    dialog.getByRole('button', { name: 'Edit gratuity for Alex Morgan', hidden: true }),
+  );
+  const edit = within(
+    await screen.findByRole('dialog', { name: 'Edit gratuity for Alex Morgan', hidden: true }),
+  );
+  fireEvent.change(edit.getByLabelText('Monthly basic salary (₹)'), { target: { value: '65000' } });
+  fireEvent.click(edit.getByRole('button', { name: 'Save changes', hidden: true }));
+  await waitFor(() =>
+    expect(useTracker.getState().data.gratuityAccounts).toEqual([
+      { ...account, basicSalary: 65_000 },
+    ]),
+  );
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+  fireEvent.click(await screen.findByRole('button', { name: 'Gratuity: open to edit or delete' }));
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Delete gratuity for Alex Morgan', hidden: true }),
+  );
+  await waitFor(() => expect(useTracker.getState().data.gratuityAccounts).toEqual([]));
+  confirm.mockRestore();
+});
+
 test('investing stacks on spending, and is left out when nothing was invested', () => {
   const { container, unmount } = render(
     <TrendChart

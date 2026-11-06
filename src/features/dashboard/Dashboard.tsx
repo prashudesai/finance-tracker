@@ -41,6 +41,7 @@ import { Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import styles from './Dashboard.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
+import { useMedia } from '../../ui/useMedia';
 import { EmptyState } from '../../ui/EmptyState';
 import { TrendLine } from '../../ui/TrendLine';
 import { useCountUp } from '../../ui/useCountUp';
@@ -53,7 +54,8 @@ import { GettingStarted } from './GettingStarted';
 import { QuickAdd } from './QuickAdd';
 import { TrendChart } from './TrendChart';
 
-const DASHBOARD_CATEGORIES = 5;
+/** Portfolio rows on the dashboard: more on wide screens, where it sits beside the taller chart. */
+const DASHBOARD_CATEGORIES = { narrow: 5, wide: 8 };
 const TREND_MONTHS = 12;
 const MIN_TREND_MONTHS = 3;
 /** The income chart shows the same six months on every screen. */
@@ -97,6 +99,8 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const syncedAt = useTracker((state) => state.syncedAt);
   const accessRequests = useTracker((state) => state.accessRequests);
   const phone = useIsPhone();
+  // The width where the chart and portfolio sit side by side.
+  const wide = useMedia('(min-width: 1000px)');
   const today = localDate();
   const month = today.slice(0, 7);
   const [sort, setSort] = useState<SortKey>('size');
@@ -144,7 +148,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const categories = portfolioCategories(rows).sort((a, b) =>
     sort === 'gain' ? b.gain - a.gain : b.current - a.current,
   );
-  const shown = categories.slice(0, DASHBOARD_CATEGORIES);
+  const shown = categories.slice(0, wide ? DASHBOARD_CATEGORIES.wide : DASHBOARD_CATEGORIES.narrow);
   const peak = Math.max(...categories.map((row) => Math.max(row.invested, row.current)), 1);
   const portfolioCurrent = rows.reduce((sum, row) => sum + row.position.current, 0);
   const portfolioInvested = rows.reduce((sum, row) => sum + row.position.invested, 0);
@@ -438,7 +442,8 @@ export function Dashboard({ name = '' }: { name?: string }) {
           <div className={ui.caption}>Tap a category to view its holdings and exact amounts.</div>
           {categories.length > shown.length ? (
             <Link className={ui.textLinkCenter} to="/investments">
-              View remaining {categories.length - shown.length} investments ›
+              View remaining {categories.length - shown.length}{' '}
+              {categories.length - shown.length === 1 ? 'investment' : 'investments'} ›
             </Link>
           ) : null}
         </section>
