@@ -282,3 +282,63 @@
 .dotLeft {
   background: var(--accent);
 }
+
+/* Budget vs actual: planned and spent side by side in each month. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.dotPlanned {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  background: var(--border-strong);
+  border-radius: 50%;
+}
+
+.pair {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.plannedBar,
+.spentBar,
+.spentOver {
+  width: min(45%, 16px);
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+}
+
+.plannedBar {
+  background: var(--border-strong);
+}
+
+.spentBar {
+  background: var(--accent);
+}
+
+.spentOver {
+  background: var(--series-expense);
+}
+
+.actualList {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.actualRow {
+  display: grid;
+  gap: 6px;
+}

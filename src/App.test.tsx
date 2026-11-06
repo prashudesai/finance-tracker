@@ -74,6 +74,7 @@ test.each([
   ['/analytics/projection', 'Growth projection'],
   ['/analytics/goals', 'Goal planning'],
   ['/analytics/reports', 'Date range reports'],
+  ['/analytics/budget-actual', 'Budget vs actual'],
   ['/settings', 'Settings'],
 ])('%s renders with full sample data', async (path, title) => {
   renderApp(path, previewData());

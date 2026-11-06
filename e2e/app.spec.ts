@@ -23,6 +23,7 @@ test.describe('every page', () => {
     '/analytics/income',
     '/analytics/goals',
     '/analytics/budget',
+    '/analytics/budget-actual',
     '/settings',
   ]) {
     test(`${path} opens and fits the screen`, async ({ page }) => {

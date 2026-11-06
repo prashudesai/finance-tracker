@@ -107,4 +107,50 @@ describe('Yearly budget', () => {
     await waitFor(() => expect(saved()[0]?.income).toBe(0));
     expect(card.getByText('Optional')).toBeDefined();
   });
+
+  test('Budget vs actual asks for a plan first, then compares it with spending', async () => {
+    const repository = createMemoryRepository({
+      settings: [{ ...defaultSettings(), onboardingDone: true }],
+      budgets: [
+        {
+          id: `fy-${fy}`,
+          fy,
+          kids: 0,
+          income: 0,
+          lines: [
+            {
+              id: 'food',
+              name: 'Groceries',
+              group: 'home',
+              amount: 1_000,
+              every: 'month',
+              months: [],
+              category: 'Groceries',
+            },
+          ],
+        },
+      ],
+      expenses: [
+        {
+          id: 'e1',
+          date: localDate(),
+          category: 'Groceries',
+          subcategory: '',
+          isAnnual: false,
+          amount: 50_000,
+        },
+      ],
+    });
+    render(
+      <MemoryRouter initialEntries={['/analytics/budget-actual']}>
+        <Shell repository={repository} />
+      </MemoryRouter>,
+    );
+    const categories = within(await screen.findByRole('region', { name: 'By category' }));
+    expect(categories.getByText('Groceries')).toBeDefined();
+    expect(categories.getByText(/over$/).textContent).toMatch(/^₹\d/);
+    expect(screen.getByRole('link', { name: 'Insights' }).getAttribute('aria-current')).toBe(
+      'page',
+    );
+  });
 });

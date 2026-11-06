@@ -13,6 +13,7 @@ const SECTIONS = [
     tabs: [
       { to: '/analytics', label: 'Analytics', end: true },
       { to: '/analytics/income', label: 'Income', end: false },
+      { to: '/analytics/budget-actual', label: 'Budget vs actual', end: false },
       { to: '/analytics/reports', label: 'Date range reports', end: false },
     ],
   },
@@ -38,6 +39,11 @@ const HEADERS: Record<string, { eyebrow: string; title: string; subtitle: string
     eyebrow: 'Insights',
     title: 'Income',
     subtitle: "Where your money comes from, how it's changing, and where each rupee goes.",
+  },
+  '/analytics/budget-actual': {
+    eyebrow: 'Insights',
+    title: 'Budget vs actual',
+    subtitle: 'Your yearly budget against what you actually spent, by category and month.',
   },
   '/analytics/reports': {
     eyebrow: 'Insights',

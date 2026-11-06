@@ -257,6 +257,22 @@ export interface BudgetProgress {
   upcoming: { line: BudgetLine; month: string; amount: number }[];
 }
 
+/**
+ * The year's spending up to today that a budget is judged on: EMIs are loans, and unrecorded
+ * house expenses have no category, so neither counts.
+ */
+export function budgetSpending(budget: Budget, data: TrackerData, today: string) {
+  const months = fyMonths(budget.fy);
+  return data.expenses.filter(
+    (row) =>
+      row.date.slice(0, 7) >= (months[0] ?? '') &&
+      row.date <= today &&
+      row.date.slice(0, 7) <= (months[11] ?? '') &&
+      !isEmi(row) &&
+      !isAnyHouseExpense(row),
+  );
+}
+
 /** How far through a month today is, from 0 to 1. */
 const monthShare = (today: string) => {
   const day = Number(today.slice(8, 10));
@@ -274,9 +290,7 @@ export function budgetProgress(budget: Budget, data: TrackerData, today: string)
     date.slice(0, 7) >= (months[0] ?? '') &&
     date <= today &&
     date.slice(0, 7) <= (months[11] ?? '');
-  const spending = data.expenses.filter(
-    (row) => inYear(row.date) && !isEmi(row) && !isAnyHouseExpense(row),
-  );
+  const spending = budgetSpending(budget, data, today);
   const byCategory = new Map<string, number>();
   for (const row of spending)
     byCategory.set(
@@ -408,4 +422,113 @@ export function nextYearBudget(budget: Budget, rise: number, kidsRise: number): 
 export function budgetReminders(data: TrackerData, today: string) {
   const budget = data.budgets.find((row) => row.fy === financialYearStart(today));
   return budget ? budgetProgress(budget, data, today).upcoming : [];
+}
+
+export interface CategoryActual {
+  category: string;
+  /** The plan's lines that count spending here. */
+  lines: string[];
+  yearly: number;
+  /** What the plan expected by today: the whole year once it's over. */
+  planned: number;
+  spent: number;
+  /** Spent less planned: above 0 is over plan. */
+  difference: number;
+}
+
+export interface BudgetActuals {
+  /** True while the year is still running, so planned is "by today". */
+  running: boolean;
+  total: number;
+  planned: number;
+  /** Spent in categories the plan counts. */
+  spent: number;
+  /** Spent in categories the plan doesn't count. */
+  outside: number;
+  months: { month: string; planned: number; spent: number | null; outside: number | null }[];
+  categories: CategoryActual[];
+  /** Spending in categories no line counts, largest first. */
+  unplanned: { category: string; spent: number }[];
+  /** Lines with no category, so their spending can't be followed. */
+  untracked: { name: string; yearly: number }[];
+}
+
+/** A year's plan against what was spent, by category and by month, up to today. */
+export function budgetActuals(budget: Budget, data: TrackerData, today: string): BudgetActuals {
+  const months = fyMonths(budget.fy);
+  const current = today.slice(0, 7);
+  const progress = budgetProgress(budget, data, today);
+  const spending = budgetSpending(budget, data, today);
+  const covered = new Set(budget.lines.map((line) => line.category.toLowerCase()).filter(Boolean));
+  const names = new Map<string, string>();
+  const spentBy = new Map<string, number>();
+  for (const row of spending) {
+    const key = row.category.toLowerCase();
+    if (!names.has(key)) names.set(key, row.category);
+    spentBy.set(key, (spentBy.get(key) ?? 0) + row.amount);
+  }
+
+  const groups = new Map<string, CategoryActual>();
+  for (const status of progress.lines) {
+    const { line } = status;
+    if (!line.category) continue;
+    const key = line.category.toLowerCase();
+    const group = groups.get(key) ?? {
+      category: line.category,
+      lines: [],
+      yearly: 0,
+      planned: 0,
+      spent: roundMoney(spentBy.get(key) ?? 0),
+      difference: 0,
+    };
+    group.lines.push(line.name);
+    group.yearly += status.yearly;
+    group.planned += status.due;
+    groups.set(key, group);
+  }
+  const categories = [...groups.values()]
+    .map((group) => ({
+      ...group,
+      yearly: roundMoney(group.yearly),
+      planned: roundMoney(group.planned),
+      difference: roundMoney(group.spent - group.planned),
+    }))
+    .sort((a, b) => b.difference - a.difference || b.spent - a.spent);
+
+  const unplanned = [...spentBy]
+    .filter(([key]) => !covered.has(key))
+    .map(([key, spent]) => ({ category: names.get(key) ?? key, spent: roundMoney(spent) }))
+    .sort((a, b) => b.spent - a.spent);
+
+  const plan = monthPlan(budget);
+  const monthRows = months.map((month, index) => {
+    if (month > current) return { month, planned: plan[index] ?? 0, spent: null, outside: null };
+    let inPlan = 0;
+    let other = 0;
+    for (const row of spending) {
+      if (!row.date.startsWith(month)) continue;
+      if (covered.has(row.category.toLowerCase())) inPlan += row.amount;
+      else other += row.amount;
+    }
+    return {
+      month,
+      planned: plan[index] ?? 0,
+      spent: roundMoney(inPlan),
+      outside: roundMoney(other),
+    };
+  });
+
+  return {
+    running: (months[11] ?? '') >= current && (months[0] ?? '') <= current,
+    total: progress.total,
+    planned: progress.due,
+    spent: progress.spent,
+    outside: progress.outside,
+    months: monthRows,
+    categories,
+    unplanned,
+    untracked: budget.lines
+      .filter((line) => !line.category && line.amount > 0)
+      .map((line) => ({ name: line.name, yearly: roundMoney(lineYearly(line)) })),
+  };
 }

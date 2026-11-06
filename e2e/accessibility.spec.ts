@@ -20,6 +20,7 @@ const ROUTES = [
   '/analytics/projection',
   '/analytics/goals',
   '/analytics/budget',
+  '/analytics/budget-actual',
   '/analytics/reports',
   '/settings',
   '/signin',

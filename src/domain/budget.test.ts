@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { emptyTrackerData, type TrackerData } from '../data/repository';
-import type { Budget, BudgetLine, Expense } from '../schema/records';
+import { EMI_CATEGORY, type Budget, type BudgetLine, type Expense } from '../schema/records';
 import {
+  budgetActuals,
   budgetProgress,
   budgetTotal,
   fyMonths,
@@ -157,5 +158,56 @@ describe('a first plan, and next year', () => {
     const later = nextYearBudget(plan, 6, 10);
     expect(later).toMatchObject({ id: 'fy-2027', fy: 2027 });
     expect(later.lines.map((row) => row.amount)).toEqual([10_600, 55_000]);
+  });
+});
+
+describe('budget against what was spent', () => {
+  const plan = budget([
+    line({ id: 'rent', name: 'Rent', amount: 30_000, category: 'House Rent' }),
+    line({ id: 'food', name: 'Groceries', amount: 10_000, category: 'Groceries' }),
+    line({ id: 'snacks', name: 'Snacks', amount: 2_000, category: 'Groceries' }),
+    line({ id: 'gift', name: 'Gifts', amount: 5_000, every: 'once', months: [10] }),
+  ]);
+  const expenses = [
+    spend('2026-04-05', 30_000, 'House Rent'),
+    spend('2026-05-05', 30_000, 'House Rent'),
+    spend('2026-04-10', 15_000, 'Groceries'),
+    spend('2026-05-10', 8_000, 'groceries'),
+    spend('2026-05-12', 4_000, 'Dining'),
+    spend('2026-05-20', 9_000, EMI_CATEGORY),
+  ];
+
+  test('a finished year compares the whole plan, by category, most over first', () => {
+    const actuals = budgetActuals(plan, data(expenses), '2027-06-01');
+    expect(actuals.running).toBe(false);
+    expect(actuals.planned).toBe(budgetTotal(plan));
+    const [groceries, rent] = actuals.categories;
+    // Two lines share Groceries, so they're judged together, whatever the case.
+    expect(groceries).toMatchObject({
+      category: 'Groceries',
+      lines: ['Groceries', 'Snacks'],
+      planned: 1_44_000,
+      spent: 23_000,
+      difference: 23_000 - 1_44_000,
+    });
+    expect(rent).toMatchObject({ category: 'House Rent', planned: 3_60_000, spent: 60_000 });
+    // EMIs aren't spending against a budget.
+    expect(actuals.unplanned).toEqual([{ category: 'Dining', spent: 4_000 }]);
+    expect(actuals.untracked).toEqual([{ name: 'Gifts', yearly: 5_000 }]);
+    expect(actuals.months[1]).toEqual({
+      month: '2026-05',
+      planned: 42_000,
+      spent: 38_000,
+      outside: 4_000,
+    });
+  });
+
+  test('a running year compares against the plan so far, with months ahead left empty', () => {
+    const actuals = budgetActuals(plan, data(expenses), '2026-05-31');
+    expect(actuals.running).toBe(true);
+    // April and all of May for the monthly lines.
+    expect(actuals.planned).toBe(2 * 42_000);
+    expect(actuals.months[2]?.spent).toBeNull();
+    expect(actuals.categories[0]?.category).toBe('House Rent');
   });
 });
