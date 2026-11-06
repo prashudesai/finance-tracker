@@ -1410,6 +1410,36 @@ details.fold[open] > summary {
   font-size: 0.8rem;
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
+}
+
+.quietLink {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* An EMI reminder's two actions, as text buttons after its label */
+.emiActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 14px;
+}
+
+.emiActions button {
+  min-height: 32px;
+  padding: 0;
+  font-family: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.emiActions [role='alert'] {
+  flex-basis: 100%;
+  text-align: right;
 }
 
 .textLinkCenter {

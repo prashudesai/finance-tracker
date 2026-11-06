@@ -28,7 +28,7 @@ import {
 import { isLoanFailure } from './loan';
 import { summarizeLoans, totalOutstanding } from './summary';
 import { rebuildLoan } from './loan';
-import { emiReminders } from './reminders';
+import { emiReminders, missedEmis } from './reminders';
 import { loanPayments } from './recurring';
 
 export const isPms = (holding: Holding) => holding.type === PMS_TYPE;
@@ -621,7 +621,24 @@ export interface AttentionItem {
   label: string;
   path: string;
   state: AttentionTarget;
+  /** An EMI that can be marked as paid here: due soon, or missed and so not to be hidden. */
+  emi?: { loanId: string; date: string; missed: boolean };
 }
+
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 
 const needs = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? ' needs' : 's need'}`;
@@ -673,11 +690,20 @@ export function attentionItems(
       state: { review: latest },
     });
   }
-  for (const { name, date } of emiReminders(view, today)) {
+  for (const { loanId, name, date } of emiReminders(view, today)) {
     items.push({
       label: `${name} EMI due ${date === today ? 'today' : 'tomorrow'}`,
       path: '/cash-flow',
       state: { commitments: true },
+      emi: { loanId, date, missed: false },
+    });
+  }
+  for (const { loanId, name, date } of missedEmis(view, today, trackingStart(view))) {
+    items.push({
+      label: `${name} EMI for ${MONTH_NAMES[Number(date.slice(5, 7)) - 1]} isn't recorded`,
+      path: '/cash-flow',
+      state: { commitments: true },
+      emi: { loanId, date, missed: true },
     });
   }
   if (addDays(today, 1) === lastDayOfMonth(current)) {

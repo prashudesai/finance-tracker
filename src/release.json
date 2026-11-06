@@ -1,7 +1,9 @@
 {
-  "version": "1.20.4",
+  "version": "1.21.0",
   "released": "2026-11-05",
   "notes": [
+    "EMI reminders can be marked as paid in one tap, which records the EMI, or hidden for the month",
+    "An EMI whose due date passed with nothing recorded is flagged, so a hidden or forgotten one isn't missed",
     "Tablets keep the bottom tab bar, and the top bar fits from 1024px wide with short labels, full ones from 1180px",
     "The retirement planner responds faster while you type, especially on phones",
     "Retirement assumptions end with Save and close, which saves, folds them away and takes you back to the results",

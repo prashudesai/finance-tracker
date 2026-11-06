@@ -1,5 +1,5 @@
 import type { TrackerData } from '../data/repository';
-import { addDays, dayInMonth, lastDayOfMonth, nextMonth } from './calendar';
+import { addDays, dayInMonth, lastDayOfMonth, nextMonth, previousMonth } from './calendar';
 import { isLoanFailure, rebuildLoan } from './loan';
 import { loanPayments } from './recurring';
 
@@ -34,6 +34,15 @@ function emiDays(data: TrackerData, today: string) {
   return rows;
 }
 
+/** Whether a loan's EMI for the month holding `date` is recorded. Part payments don't count. */
+const emiPaid = (data: TrackerData, loanId: string, date: string) =>
+  data.expenses.some(
+    (row) =>
+      row.loanId === loanId &&
+      row.repaymentType !== 'part-payment' &&
+      row.date.startsWith(date.slice(0, 7)),
+  );
+
 /** EMIs due today or tomorrow that haven't been paid yet this month. */
 export function emiReminders(data: TrackerData, today: string) {
   const tomorrow = addDays(today, 1);
@@ -41,13 +50,26 @@ export function emiReminders(data: TrackerData, today: string) {
     const dates = [today, tomorrow].map((date) => dayInMonth(date.slice(0, 7), loan.day));
     const date = dates.find((row) => row === today || row === tomorrow);
     if (!date) return [];
-    const paid = data.expenses.some(
-      (row) =>
-        row.loanId === loan.loanId &&
-        row.repaymentType !== 'part-payment' &&
-        row.date.startsWith(date.slice(0, 7)),
-    );
-    return paid ? [] : [{ ...loan, date }];
+    return emiPaid(data, loan.loanId, date) ? [] : [{ ...loan, date }];
+  });
+}
+
+/**
+ * EMIs whose due date has passed with nothing recorded: last month's, and this month's on its
+ * last day, so the month-end review catches one that was hidden or forgotten. Only from when
+ * the loan's EMIs began and the household started tracking, `since` (YYYY-MM).
+ */
+export function missedEmis(data: TrackerData, today: string, since: string | null) {
+  const month = today.slice(0, 7);
+  const months = [previousMonth(month), ...(today === lastDayOfMonth(month) ? [month] : [])];
+  return emiDays(data, today).flatMap((loan): EmiDue[] => {
+    const record = data.loans.find((row) => row.id === loan.loanId);
+    const began = record?.firstEmiDate ?? record?.date ?? '';
+    return months.flatMap((key) => {
+      const date = dayInMonth(key, loan.day);
+      if (date >= today || date < began || (since !== null && key < since)) return [];
+      return emiPaid(data, loan.loanId, date) ? [] : [{ ...loan, date }];
+    });
   });
 }
 

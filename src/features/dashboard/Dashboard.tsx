@@ -45,6 +45,7 @@ import { GoalsTile } from '../goals/GoalsTile';
 import { InsightsCard } from '../insights/InsightsCard';
 import { RecapCard } from '../insights/MonthRecap';
 import { InstallCard } from '../install/InstallPrompts';
+import { EmiActions, useHiddenEmis } from './EmiActions';
 import { GettingStarted } from './GettingStarted';
 import { QuickAdd } from './QuickAdd';
 import { TrendChart } from './TrendChart';
@@ -119,6 +120,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
     },
     today,
   );
+  const { hide, isHidden } = useHiddenEmis();
   const attention = [
     ...accessRequests.map(({ email }) => ({
       label: `${email} wants access`,
@@ -131,7 +133,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
       today,
       pending.length,
       syncedAt ? localDate(syncedAt) : null,
-    ),
+    ).filter(({ emi }) => !emi || emi.missed || !isHidden(emi.loanId, emi.date)),
   ];
 
   const rows = holdingRows(data, today);
@@ -236,19 +238,36 @@ export function Dashboard({ name = '' }: { name?: string }) {
             <span className={ui.caption}>Review ›</span>
           </summary>
           <ul className={ui.list} style={{ marginTop: 10 }}>
-            {attention.map(({ label, path, state }) => (
-              <li className={ui.row} key={label}>
-                <span className={ui.rowMain}>{label}</span>
+            {attention.map((item) => {
+              const review = (
                 <Link
-                  aria-label={`Review: ${label}`}
+                  aria-label={`Review: ${item.label}`}
                   className={ui.textLink}
-                  state={state}
-                  to={path}
+                  state={item.state}
+                  to={item.path}
                 >
                   Review ›
                 </Link>
-              </li>
-            ))}
+              );
+              const emi = 'emi' in item ? item.emi : undefined;
+              return (
+                <li className={ui.row} key={item.label}>
+                  <span className={ui.rowMain}>{item.label}</span>
+                  {emi ? (
+                    <EmiActions
+                      date={emi.date}
+                      fallback={review}
+                      label={item.label}
+                      loanId={emi.loanId}
+                      missed={emi.missed}
+                      onHide={() => hide(emi.loanId, emi.date)}
+                    />
+                  ) : (
+                    review
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </details>
       ) : null}

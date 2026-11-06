@@ -1,6 +1,6 @@
 import { emptyTrackerData, type TrackerData } from '../data/repository';
 import type { Loan } from '../schema/records';
-import { emiReminders, reminderCalendar } from './reminders';
+import { emiReminders, missedEmis, reminderCalendar } from './reminders';
 
 const loan: Loan = {
   id: 'l',
@@ -90,4 +90,27 @@ test('late days fall back in short months, and text is escaped', () => {
   const file = reminderCalendar(data({ loans: [late] }), '2026-03-01');
   expect(file).toContain('BYMONTHDAY=31,-1;BYSETPOS=1');
   expect(file).toContain('SUMMARY:Car\\, new EMI due');
+});
+
+describe('an EMI past its due date with nothing recorded', () => {
+  const dates = (state: TrackerData, today: string, since: string | null = null) =>
+    missedEmis(state, today, since).map((row) => row.date);
+
+  test("last month's is flagged until it's recorded", () => {
+    expect(dates(data(), '2026-04-10')).toEqual(['2026-03-05']);
+    expect(dates(data({ expenses: [payment] }), '2026-04-10')).toEqual([]);
+  });
+
+  test("this month's is flagged on the month's last day, not before", () => {
+    const paidMarch = data({ expenses: [payment] });
+    expect(dates(paidMarch, '2026-04-29')).toEqual([]);
+    expect(dates(paidMarch, '2026-04-30')).toEqual(['2026-04-05']);
+  });
+
+  test('nothing before the EMIs began or tracking started', () => {
+    // EMIs began on 5 February, so January's isn't missed.
+    expect(dates(data(), '2026-02-10')).toEqual([]);
+    // Tracking started in April, so March isn't asked about.
+    expect(dates(data(), '2026-04-10', '2026-04')).toEqual([]);
+  });
 });

@@ -819,6 +819,60 @@ describe('needs attention', () => {
     );
   });
 
+  test('an EMI due today can be marked as paid, or hidden for the month', async () => {
+    const today = localDate();
+    // Days 29 to 31 don't exist in every month, so the made-up loan needs an earlier day.
+    if (Number(today.slice(8)) > 28) return;
+    localStorage.removeItem('emiRemindersHidden');
+    const firstEmi = `${previousMonth(previousMonth(today.slice(0, 7)))}-${today.slice(8)}`;
+    const emiLoan = {
+      id: 'home',
+      type: 'Home Loan',
+      member: '',
+      date: `${firstEmi.slice(0, 7)}-01`,
+      principal: 10_00_000,
+      openingRate: 9,
+      openingEmi: 20_000,
+      firstEmiDate: firstEmi,
+      changes: [],
+    };
+    const paidBefore = [previousMonth(today.slice(0, 7)), firstEmi.slice(0, 7)].map(
+      (month, index) => ({
+        id: `paid${index}`,
+        date: `${month}-${today.slice(8)}`,
+        category: 'EMI Payment',
+        subcategory: '',
+        isAnnual: false,
+        amount: 20_000,
+        loanId: 'home',
+        repaymentType: 'emi' as const,
+      }),
+    );
+    renderApp('/', { ...seen, loans: [emiLoan], expenses: paidBefore });
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Mark as paid: Home Loan EMI due today',
+        hidden: true,
+      }),
+    );
+    await waitFor(() =>
+      expect(useTracker.getState().data.expenses).toContainEqual(
+        expect.objectContaining({ loanId: 'home', date: today, repaymentType: 'emi' }),
+      ),
+    );
+    expect(screen.queryByText('Home Loan EMI due today')).toBeNull();
+    cleanup();
+    renderApp('/', { ...seen, loans: [emiLoan], expenses: paidBefore });
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Hide this month: Home Loan EMI due today',
+        hidden: true,
+      }),
+    );
+    expect(screen.queryByText('Home Loan EMI due today')).toBeNull();
+    expect(useTracker.getState().data.expenses).toHaveLength(2);
+  });
+
   test('a backup reminder opens Data & backup', async () => {
     renderApp('/', { ...seen, holdings: [fund] });
     await screen.findByRole('heading', { level: 1 });
