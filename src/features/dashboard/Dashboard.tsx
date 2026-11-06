@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
   attentionItems,
+  trackingStart,
   investedFromIncome,
   holdingRows,
   monthlyOverview,
@@ -153,10 +154,14 @@ export function Dashboard({ name = '' }: { name?: string }) {
     Number(fyStartMonth.slice(5, 7)) +
     1;
   const invested = investedFromIncome(data);
-  const trend = monthlyTrend(spending, month, phone ? PHONE_TREND_MONTHS : fyMonths).map((row) => ({
-    ...row,
-    invested: invested.get(row.month) ?? 0,
-  }));
+  // From when tracking began: months before it have no income or spending to compare.
+  const since = trackingStart(data) ?? month;
+  const trend = monthlyTrend(spending, month, phone ? PHONE_TREND_MONTHS : fyMonths)
+    .filter((row) => row.month >= since)
+    .map((row) => ({
+      ...row,
+      invested: invested.get(row.month) ?? 0,
+    }));
   const monthName = formatMonth(month).split(' ')[0];
   const firstTrend = trend[0]?.month ?? month;
 
@@ -210,8 +215,12 @@ export function Dashboard({ name = '' }: { name?: string }) {
           <h2>Income vs expenses and investing</h2>
           <div className={ui.caption}>
             {phone
-              ? `Last ${PHONE_TREND_MONTHS} months · ${formatMonth(firstTrend)} – ${formatMonth(month)}`
-              : `${shortFy(month)} · April to ${monthName}`}
+              ? trend.length > 1
+                ? `Last ${trend.length} months · ${formatMonth(firstTrend)} – ${formatMonth(month)}`
+                : formatMonth(month)
+              : firstTrend === month
+                ? `${shortFy(month)} · ${monthName}`
+                : `${shortFy(month)} · ${formatMonth(firstTrend).split(' ')[0]} to ${monthName}`}
           </div>
         </div>
         {phone ? null : (

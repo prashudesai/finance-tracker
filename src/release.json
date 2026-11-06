@@ -1,7 +1,8 @@
 {
-  "version": "1.21.0",
+  "version": "1.21.1",
   "released": "2026-11-05",
   "notes": [
+    "The dashboard chart starts from your first month of income or spending, and investments entered for earlier months no longer count as invested from income",
     "EMI reminders can be marked as paid in one tap, which records the EMI, or hidden for the month",
     "An EMI whose due date passed with nothing recorded is flagged, so a hidden or forgotten one isn't missed",
     "Tablets keep the bottom tab bar, and the top bar fits from 1024px wide with short labels, full ones from 1180px",

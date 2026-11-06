@@ -284,8 +284,24 @@ test('investing from income leaves out PF and NPS, which come out of salary firs
       contribution('d', 'ppf', 3_000),
       contribution('e', 'fund', 7_000, true),
     ],
+    income: [{ id: 'i', date: '2026-10-01', member: 'A', source: 'Salary', amount: 1_00_000 }],
   };
   expect(investedFromIncome(state).get('2026-10')).toBe(23_000);
+});
+
+test('investing from income counts only from when tracking began', () => {
+  // Past SIPs entered for August, before any income or spending was recorded.
+  const state: TrackerData = {
+    ...emptyTrackerData(),
+    holdings: [holding({ id: 'fund' })],
+    contributions: [
+      { id: 'a', holdingId: 'fund', date: '2026-08-05', amount: 16_25_000, automatic: false },
+      { id: 'b', holdingId: 'fund', date: '2026-11-05', amount: 20_000, automatic: false },
+    ],
+    income: [{ id: 'i', date: '2026-11-01', member: 'A', source: 'Salary', amount: 1_00_000 }],
+  };
+  expect([...investedFromIncome(state)]).toEqual([['2026-11', 20_000]]);
+  expect(investedFromIncome({ ...state, income: [] }).size).toBe(0);
 });
 
 describe('house expense from the bank balances', () => {

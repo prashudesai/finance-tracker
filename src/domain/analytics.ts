@@ -187,16 +187,20 @@ function activeContributions(data: TrackerData) {
 /**
  * What was invested each month out of income received, keyed by YYYY-MM: savings
  * contributions, skipped ones left out, and PF and NPS too, as those come out of salary
- * before it reaches the bank.
+ * before it reaches the bank. Only from when tracking began: contributions entered for
+ * earlier months, with no income or spending beside them, weren't paid from tracked income.
  */
 export function investedFromIncome(data: TrackerData) {
   const fromSalary = new Set(
     data.holdings.filter((row) => row.kind === 'pf' || row.kind === 'nps').map((row) => row.id),
   );
+  const since = trackingStart(data);
   const totals = new Map<string, number>();
+  if (since === null) return totals;
   for (const row of activeContributions(data)) {
     if (fromSalary.has(row.holdingId)) continue;
     const month = row.date.slice(0, 7);
+    if (month < since) continue;
     totals.set(month, roundMoney((totals.get(month) ?? 0) + row.amount));
   }
   return totals;
