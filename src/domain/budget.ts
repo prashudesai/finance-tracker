@@ -9,13 +9,12 @@ import {
   previousMonth,
   roundMoney,
 } from './calendar';
-import { monthlyAverages } from './goals';
 import { summarizeLoans } from './summary';
 
 /**
- * A financial year's spending plan, and how the year is going against it. Only the plan is
- * stored; spending is always worked out from expenses, with unrecorded spending left out, as
- * it has no category to match.
+ * A financial year's spending plan, and how the year is going against it. Only the plan and
+ * the income planned for the year are stored; spending is always worked out from expenses,
+ * with unrecorded spending left out, as it has no category to match.
  */
 
 export const budgetId = (fy: number) => `fy-${fy}`;
@@ -205,6 +204,7 @@ export function starterBudget(
     fy,
     kids: 0,
     lines: lines.map((line) => ({ ...line, category: line.category || '' })),
+    income: 0,
   };
 }
 
@@ -248,11 +248,11 @@ export interface BudgetProgress {
   /** Spending in categories no line covers. */
   outside: number;
   lines: LineStatus[];
-  /** Income expected over the year: recorded so far, then the usual each month left. */
+  /** The income planned for the year, as entered. */
   income: number;
   emis: number;
-  /** What income leaves after the plan and EMIs, to invest. */
-  left: number;
+  /** What planned income leaves after the plan and EMIs, to invest, or null with no income planned. */
+  left: number | null;
   /** Payments due this month or next, not yet paid. */
   upcoming: { line: BudgetLine; month: string; amount: number }[];
 }
@@ -350,17 +350,7 @@ export function budgetProgress(budget: Budget, data: TrackerData, today: string)
     .reduce((sum, [, amount]) => sum + amount, 0);
   const due = lines.reduce((sum, row) => sum + row.due, 0);
 
-  const usualIncome = monthlyAverages(data, today)?.income ?? 0;
-  const incomeIn = (month: string) =>
-    data.income
-      .filter((row) => row.date.startsWith(month))
-      .reduce((sum, row) => sum + row.amount, 0);
   const monthsLeft = months.filter((month) => month > current).length;
-  // Months gone count what came in; this month, at least the usual; the rest, the usual.
-  const income =
-    months.filter((month) => month < current).reduce((sum, month) => sum + incomeIn(month), 0) +
-    (months.includes(current) ? Math.max(incomeIn(current), usualIncome) : 0) +
-    usualIncome * monthsLeft;
   const monthlyEmi = summarizeLoans(data, today)
     .filter((loan) => (loan.ledger?.remaining ?? 0) > 0)
     .reduce((sum, loan) => sum + (loan.ledger?.emi ?? 0), 0);
@@ -392,9 +382,9 @@ export function budgetProgress(budget: Budget, data: TrackerData, today: string)
     due: roundMoney(due),
     outside: roundMoney(outside),
     lines,
-    income: roundMoney(income),
+    income: budget.income,
     emis: roundMoney(emis),
-    left: roundMoney(income - total - emis),
+    left: budget.income > 0 ? roundMoney(budget.income - total - emis) : null,
     upcoming,
   };
 }

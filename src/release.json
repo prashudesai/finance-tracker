@@ -1,7 +1,8 @@
 {
-  "version": "1.24.0",
+  "version": "1.24.1",
   "released": "2026-11-06",
   "notes": [
+    "Yearly budget: use it for spending only, or add the income you expect (monthly or yearly) to see income vs budget and what's left to invest. Income recorded so far is no longer used",
     "Yearly budget, in Planning › Future: plan the financial year line by line, monthly, yearly, in chosen months or once",
     "A starting plan filled in from your last twelve months of spending, with school fees added for each kid",
     "See what each month needs and which months need more than you set aside, how spending is going against the plan, and what's left to invest",

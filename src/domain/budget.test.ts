@@ -22,7 +22,13 @@ const line = (overrides: Partial<BudgetLine>): BudgetLine => ({
   category: '',
   ...overrides,
 });
-const budget = (lines: BudgetLine[]): Budget => ({ id: 'fy-2026', fy: 2026, kids: 0, lines });
+const budget = (lines: BudgetLine[]): Budget => ({
+  id: 'fy-2026',
+  fy: 2026,
+  kids: 0,
+  lines,
+  income: 0,
+});
 let next = 0;
 const spend = (date: string, amount: number, category: string): Expense => ({
   id: `e${++next}`,
@@ -106,18 +112,15 @@ describe('a yearly budget', () => {
     ]);
   });
 
-  test('what income leaves after the plan and EMIs', () => {
-    const income = ['04', '05', '06', '07', '08', '09', '10'].map((m) => ({
-      id: `i${m}`,
-      date: `2026-${m}-01`,
-      member: 'A',
-      source: 'Salary',
-      amount: 1_00_000,
-    }));
-    const progress = budgetProgress(plan, data([], { income }), TODAY);
-    // Seven months recorded, then November and four more at the usual ₹1 lakh.
-    expect(progress.income).toBe(12_00_000);
-    expect(progress.left).toBe(12_00_000 - budgetTotal(plan));
+  test('what planned income leaves after the plan and EMIs', () => {
+    // Recorded income doesn't count: only the income planned for the year.
+    const income = [
+      { id: 'i', date: '2026-04-01', member: 'A', source: 'Salary', amount: 1_00_000 },
+    ];
+    expect(budgetProgress(plan, data([], { income }), TODAY).left).toBeNull();
+    const planned = budgetProgress({ ...plan, income: 18_00_000 }, data([], { income }), TODAY);
+    expect(planned.income).toBe(18_00_000);
+    expect(planned.left).toBe(18_00_000 - budgetTotal(plan));
   });
 });
 

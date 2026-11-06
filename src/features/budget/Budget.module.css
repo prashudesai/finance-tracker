@@ -255,3 +255,30 @@
 .segmentedSmall {
   composes: segmented from '../../ui/ui.module.css';
 }
+
+.dotPlan,
+.dotEmi,
+.dotLeft {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+}
+
+.dotPlan {
+  background: var(--series-expense);
+}
+
+.dotEmi,
+.meterEmi {
+  background: var(--scenario-base);
+}
+
+.meterEmi {
+  border-radius: 999px;
+}
+
+.dotLeft {
+  background: var(--accent);
+}

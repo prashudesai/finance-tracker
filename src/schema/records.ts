@@ -279,6 +279,8 @@ export const budgetSchema = z.object({
   fy: z.number().int().min(2000).max(2200),
   kids: z.number().int().min(0).max(4).default(0),
   lines: z.array(budgetLineSchema).max(200).default([]),
+  /** The income the family plans on for the year, or 0 when not given. */
+  income: money.default(0),
 });
 export type Budget = z.infer<typeof budgetSchema>;
 

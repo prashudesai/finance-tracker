@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarClock, Copy, Plus, Sparkles } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Copy, Pencil, Plus, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   budgetId,
@@ -19,6 +19,7 @@ import { Field } from '../../ui/Field';
 import { formatMoney, formatMonth, formatShortMonth, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
+import { BudgetIncomeForm } from './BudgetIncomeForm';
 import { BudgetLineForm } from './BudgetLineForm';
 import { GROUP_LABELS, MONTH_NAMES, scheduleText } from './budgetText';
 import styles from './Budget.module.css';
@@ -56,6 +57,7 @@ export function BudgetPage() {
   const [rise, setRise] = useState('6');
   const [kidsRise, setKidsRise] = useState('10');
   const [error, setError] = useState<string | null>(null);
+  const [incomeOpen, setIncomeOpen] = useState(false);
 
   const categories = optionLists(settings).expenseCategories;
   const saved = data.budgets.find((row) => row.fy === fy);
@@ -112,6 +114,10 @@ export function BudgetPage() {
           .filter((row) => row.amount > 0)
           .sort((a, b) => b.amount - a.amount);
   const pace = progress.spent - progress.due;
+  // Over income, the bar shows each part's share of everything taken out instead.
+  const used = Math.max(progress.income, progress.total + progress.emis);
+  const percentOf = (amount: number) =>
+    progress.income > 0 ? `${Math.round((amount / progress.income) * 100)}%` : '';
 
   return (
     <>
@@ -174,6 +180,11 @@ export function BudgetPage() {
               </p>
             ) : null}
           </>
+        ) : null}
+        {progress.outside > 0 ? (
+          <p className={ui.caption}>
+            {formatMoney(progress.outside)} spent this year in categories no line counts.
+          </p>
         ) : null}
       </section>
 
@@ -279,38 +290,106 @@ export function BudgetPage() {
           ) : null}
         </section>
 
-        <section aria-labelledby="budget-left" className={ui.card}>
-          <h2 className={ui.cardTitle} id="budget-left">
-            Left to invest
-          </h2>
-          <p className={`${ui.heroValue} ${progress.left < 0 ? styles.over : ''}`}>
-            {formatMoney(progress.left)}
-          </p>
-          <div className={styles.monthDetail}>
-            <div className={styles.split}>
-              <span>Income this year</span>
-              <span>{formatMoney(progress.income)}</span>
+        {progress.left === null ? (
+          <section aria-labelledby="budget-left" className={ui.card}>
+            <div className={ui.cardHeader}>
+              <h2 className={ui.cardTitle} id="budget-left">
+                Income vs budget
+              </h2>
+              <span className={ui.badgeMuted}>Optional</span>
             </div>
-            <div className={styles.split}>
-              <span>Planned spending</span>
-              <span>−{formatMoney(progress.total)}</span>
-            </div>
-            <div className={styles.split}>
-              <span>EMIs</span>
-              <span>−{formatMoney(progress.emis)}</span>
-            </div>
-          </div>
-          <p className={ui.caption}>
-            {progress.left < 0
-              ? 'The plan and EMIs come to more than the income expected this year.'
-              : `About ${formatMoney(progress.left / 12)} a month. Income counts what's recorded so far, then your usual for each month left.`}
-          </p>
-          {progress.outside > 0 ? (
             <p className={ui.caption}>
-              {formatMoney(progress.outside)} spent this year in categories no line counts.
+              Just planning spending? You're all set. Add the income you expect this year to see how
+              much the plan and EMIs take, and what's left to invest.
             </p>
-          ) : null}
-        </section>
+            <div className={ui.actions}>
+              <button className={ui.quiet} onClick={() => setIncomeOpen(true)} type="button">
+                <Plus aria-hidden="true" size={16} /> Add expected income
+              </button>
+            </div>
+          </section>
+        ) : (
+          <section aria-labelledby="budget-left" className={ui.card}>
+            <div className={ui.cardHeader}>
+              <h2 className={ui.cardTitle} id="budget-left">
+                Income vs budget
+              </h2>
+              <button
+                aria-label="Change income"
+                className={ui.iconButton}
+                onClick={() => setIncomeOpen(true)}
+                type="button"
+              >
+                <Pencil aria-hidden="true" size={16} />
+              </button>
+            </div>
+            <div>
+              <span className={ui.eyebrow}>
+                {progress.left < 0 ? 'Short by' : 'Left to invest'}
+              </span>
+              <p className={`${ui.heroValue} ${progress.left < 0 ? styles.over : ''}`}>
+                {formatMoney(Math.abs(progress.left))}
+              </p>
+            </div>
+            <div
+              aria-label={`Of ${formatMoney(progress.income)} income: plan ${percentOf(progress.total)}, EMIs ${percentOf(progress.emis)}, left ${percentOf(Math.max(0, progress.left))}`}
+              className={ui.meter}
+              role="img"
+            >
+              <div className={ui.meterExpense} style={{ width: share(progress.total, used) }} />
+              {progress.emis > 0 ? (
+                <div className={styles.meterEmi} style={{ width: share(progress.emis, used) }} />
+              ) : null}
+              {progress.left > 0 ? (
+                <div className={ui.meterFill} style={{ width: share(progress.left, used) }} />
+              ) : null}
+            </div>
+            <div className={styles.monthDetail}>
+              <div className={styles.split}>
+                <span>Expected income</span>
+                <strong>{formatMoney(progress.income)}</strong>
+              </div>
+              <div className={styles.split}>
+                <span>
+                  <i className={styles.dotPlan} /> Budget
+                </span>
+                <span>
+                  {formatMoney(progress.total)} · {percentOf(progress.total)}
+                </span>
+              </div>
+              <div className={styles.split}>
+                <span>
+                  <i className={styles.dotEmi} /> EMIs
+                </span>
+                <span>
+                  {formatMoney(progress.emis)} · {percentOf(progress.emis)}
+                </span>
+              </div>
+              <div className={styles.split}>
+                <span>
+                  <i className={styles.dotLeft} /> Left to invest
+                </span>
+                <span>
+                  {formatMoney(progress.left)} · {percentOf(progress.left)}
+                </span>
+              </div>
+            </div>
+            <p className={ui.caption}>
+              {progress.left < 0
+                ? 'The budget and EMIs come to more than the income you expect this year.'
+                : `About ${formatMoney(progress.left / 12)} a month to invest.`}
+            </p>
+            <div className={ui.actions}>
+              <button
+                className={ui.quiet}
+                onClick={() => save({ ...budget, income: 0 })}
+                type="button"
+              >
+                Budget only
+              </button>
+            </div>
+          </section>
+        )}
       </div>
 
       <section aria-labelledby="budget-lines" className={ui.card}>
@@ -436,6 +515,18 @@ export function BudgetPage() {
             </>
           )}
         </section>
+      ) : null}
+
+      {incomeOpen ? (
+        <Modal onClose={() => setIncomeOpen(false)} title="Expected income">
+          <BudgetIncomeForm
+            income={budget.income}
+            onCancel={() => setIncomeOpen(false)}
+            onSave={(income) => {
+              if (save({ ...budget, income })) setIncomeOpen(false);
+            }}
+          />
+        </Modal>
       ) : null}
 
       {editing ? (

@@ -88,4 +88,23 @@ describe('Yearly budget', () => {
     const next = saved().find((row) => row.fy === fy + 1);
     expect(next?.lines.find((line) => line.name === 'Swimming')?.amount).toBe(10_600);
   });
+
+  test('income is asked for, never taken from records, and saved for the year', async () => {
+    show();
+    const card = within(await screen.findByRole('region', { name: 'Income vs budget' }));
+    expect(card.queryByText('Expected income')).toBeNull();
+    fireEvent.click(card.getByRole('button', { name: /Add expected income/ }));
+    const form = within(
+      await screen.findByRole('dialog', { name: 'Expected income', hidden: true }),
+    );
+    fireEvent.change(form.getByLabelText('Income a month'), { target: { value: '150000' } });
+    fireEvent.click(form.getByRole('button', { name: 'Save', hidden: true }));
+    await waitFor(() => expect(saved()[0]?.income).toBe(18_00_000));
+    expect(card.getByText('Expected income')).toBeDefined();
+    // An empty plan and no loans leave all of it.
+    expect(card.getByRole('img', { name: /left 100%$/ })).toBeDefined();
+    fireEvent.click(card.getByRole('button', { name: 'Budget only' }));
+    await waitFor(() => expect(saved()[0]?.income).toBe(0));
+    expect(card.getByText('Optional')).toBeDefined();
+  });
 });
