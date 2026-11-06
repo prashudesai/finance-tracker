@@ -1,7 +1,10 @@
 {
-  "version": "1.22.4",
+  "version": "1.22.5",
   "released": "2026-11-05",
   "notes": [
+    "Cash flow on phones: the month reads as a flow from income to balance, with one bar showing where it went",
+    "Swipe the month summary, or tap the arrows, to move between months",
+    "On phones the portfolio sort sits beside its title",
     "Cash flow shows what you invested from income, and the balance after spending and investing",
     "A forgotten expense added after a month is reviewed is no longer counted twice",
     "Cash flow shows the month's unrecorded house expense as its own figure, the same before and after review",

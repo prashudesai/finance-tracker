@@ -1,0 +1,57 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { expect, test, vi } from 'vitest';
+import { MonthFlow } from './MonthFlow';
+
+const show = (month: string, onMonth = vi.fn()) => {
+  render(
+    <MonthFlow
+      current="2026-11"
+      earliest="2025-11"
+      explainer={null}
+      income={1_00_000}
+      invested={20_000}
+      month={month}
+      onMonth={onMonth}
+      spent={30_000}
+      unrecorded={0}
+    />,
+  );
+  return onMonth;
+};
+
+const swipe = (from: number, to: number) => {
+  const card = screen.getByRole('region', { name: 'Selected month' });
+  fireEvent.touchStart(card, { touches: [{ clientX: from, clientY: 100 }] });
+  fireEvent.touchEnd(card, { changedTouches: [{ clientX: to, clientY: 104 }] });
+};
+
+test('the month adds up to the balance, with each part of income', () => {
+  show('2026-11');
+  expect(screen.getByText('November 2026')).toBeDefined();
+  expect(screen.getAllByText('₹50,000').length).toBe(2);
+  expect(screen.getByText('30%')).toBeDefined();
+});
+
+test('swiping or tapping moves a month, but never past the current one', () => {
+  const onMonth = show('2026-10');
+  swipe(300, 60);
+  expect(onMonth).toHaveBeenLastCalledWith('2026-11');
+  swipe(60, 300);
+  expect(onMonth).toHaveBeenLastCalledWith('2026-09');
+  fireEvent.click(screen.getByRole('button', { name: 'Previous month, September 2026' }));
+  expect(onMonth).toHaveBeenLastCalledWith('2026-09');
+  // A short or mostly upward drag is a scroll, not a swipe.
+  onMonth.mockClear();
+  swipe(100, 130);
+  expect(onMonth).not.toHaveBeenCalled();
+});
+
+test('on the current month there is nowhere later to go', () => {
+  const onMonth = show('2026-11');
+  swipe(300, 60);
+  expect(onMonth).not.toHaveBeenCalled();
+  expect(
+    (screen.getByRole('button', { name: 'No later month', hidden: true }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(true);
+});

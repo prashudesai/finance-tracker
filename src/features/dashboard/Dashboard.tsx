@@ -376,20 +376,21 @@ export function Dashboard({ name = '' }: { name?: string }) {
         {trendCard}
 
         <section className={ui.card}>
-          <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
-            <div>
+          {/* On phones the sort stays beside the title, with shorter words, not on a line of its own. */}
+          <div className={ui.cardHeader} style={phone ? undefined : { flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 0 }}>
               <h2 className={ui.cardTitle}>Investment portfolio</h2>
               <div className={ui.caption}>Value and returns</div>
             </div>
             <label className={`${ui.caption} ${ui.inlineSort}`}>
-              Sort by
+              <span className={phone ? ui.visuallyHidden : undefined}>Sort by</span>
               <select
                 className={ui.fieldSelect}
                 onChange={(event) => setSort(event.target.value as SortKey)}
                 value={sort}
               >
-                <option value="size">Portfolio size</option>
-                <option value="gain">Gain</option>
+                <option value="size">{phone ? 'By size' : 'Portfolio size'}</option>
+                <option value="gain">{phone ? 'By gain' : 'Gain'}</option>
               </select>
             </label>
           </div>

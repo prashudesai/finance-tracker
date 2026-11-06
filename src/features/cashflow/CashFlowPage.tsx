@@ -16,11 +16,12 @@ import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format'
 import { CategoryLabel } from '../../ui/CategoryLabel';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
-import { Metric, Stat } from '../../ui/Stat';
+import { Stat } from '../../ui/Stat';
 import { scrollToSection } from '../../ui/scroll';
 import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
 import { Commitments } from './Commitments';
+import { MonthFlow } from './MonthFlow';
 import { ExpenseForm, IncomeForm } from './EntryForms';
 import { HistoryTable, type Column } from './HistoryTable';
 import { MonthlyBalances } from './MonthlyBalances';
@@ -215,42 +216,17 @@ export function CashFlowPage() {
         </button>
       ) : null}
       {phone ? (
-        <section aria-label="Selected month" className={ui.card}>
-          <div className={ui.metric}>
-            <div className={ui.statLabel}>Balance</div>
-            <div className={ui.value}>{formatMoney(left)}</div>
-          </div>
-          <div className={ui.metricsTwo}>
-            <Metric label="Income recorded" value={formatMoney(totals.income)} />
-            <Metric label="Expenses recorded" value={formatMoney(recorded.expenses)} />
-            {unrecorded > 0 ? (
-              <Metric label="Unrecorded house expense" value={formatMoney(unrecorded)} />
-            ) : null}
-            <Metric label="Invested from income" value={formatMoney(invested)} />
-          </div>
-          {totals.income > 0 ? (
-            <div className={ui.meter}>
-              <span
-                className={ui.meterExpense}
-                style={{ width: `${Math.min(1, totals.expenses / totals.income) * 100}%` }}
-              />
-              <span
-                className={ui.meterInvested}
-                style={{
-                  width: `${Math.max(0, Math.min(1 - totals.expenses / totals.income, invested / totals.income)) * 100}%`,
-                }}
-              />
-            </div>
-          ) : null}
-          <div className={ui.caption}>
-            {totals.income === 0 && totals.expenses === 0
-              ? 'No income or expenses recorded for this month'
-              : left < 0
-                ? 'More went out than came in this month'
-                : `${totals.income > 0 ? Math.round((totals.expenses / totals.income) * 100) : 0}% of income spent, ${totals.income > 0 ? Math.round((invested / totals.income) * 100) : 0}% invested`}
-          </div>
-          <BalanceExplainer />
-        </section>
+        <MonthFlow
+          current={current}
+          earliest={months.at(-1) ?? current}
+          explainer={<BalanceExplainer />}
+          month={month}
+          onMonth={setMonth}
+          income={totals.income}
+          invested={invested}
+          spent={recorded.expenses}
+          unrecorded={unrecorded}
+        />
       ) : (
         <>
           <section aria-label="Selected month" className={ui.tiles}>
