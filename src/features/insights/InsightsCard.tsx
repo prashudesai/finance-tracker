@@ -1,16 +1,15 @@
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { insights, type Insight } from '../../domain/insights';
+import { dailyInsights, insights, type Insight } from '../../domain/insights';
 import { useSpendingView } from '../../store/tracker';
-import { localDate } from '../../ui/format';
+import { formatDay, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
 import { describeInsight } from './insightText';
 import { RecapView } from './MonthRecap';
 import styles from './Insights.module.css';
 
-const SHOWN = 3;
 const OPEN_KEY = 'insightsOpen';
 
 /** Whether the tile was left open on this device. Closed until someone opens it. */
@@ -75,11 +74,13 @@ export function InsightsCard() {
   const data = useSpendingView();
   const today = localDate();
   const list = useMemo(() => insights(data, today), [data, today]);
+  // Ten a day, picked fresh each morning; See all keeps the full list.
+  const today10 = useMemo(() => dailyInsights(list, today), [list, today]);
   const [all, setAll] = useState(false);
   const [recap, setRecap] = useState(false);
   const [open, setOpen] = useState(savedOpen);
   if (list.length === 0) return null;
-  const top = list[0];
+  const top = today10[0];
   const preview = top ? describeInsight(top).title : '';
 
   return (
@@ -95,21 +96,26 @@ export function InsightsCard() {
     >
       <summary className={styles.summary}>
         <span className={styles.summaryTitle}>
-          <Sparkles aria-hidden="true" size={16} /> Insights · {list.length}
+          <Sparkles aria-hidden="true" size={16} /> Today's insights · {today10.length}
         </span>
         {/* The headline, so the tile is useful even closed. Amber when it's a warning. */}
         <span className={styles.preview} data-tone={top?.tone}>
           {preview}
         </span>
       </summary>
-      <p className={ui.caption}>Worked out on your phone, from your records only.</p>
+      <p className={ui.caption}>
+        {today10.length < list.length
+          ? `Picked for ${formatDay(today)} from ${list.length}, with anything needing action first. New picks each morning.`
+          : 'Anything needing action comes first.'}{' '}
+        Worked out on your phone, from your records only.
+      </p>
       <ul className={styles.list}>
-        {list.slice(0, SHOWN).map((insight) => (
+        {today10.map((insight) => (
           <InsightRow insight={insight} key={insight.id} />
         ))}
       </ul>
       <div className={ui.actions}>
-        {list.length > SHOWN ? (
+        {list.length > today10.length ? (
           <button className={ui.quiet} onClick={() => setAll(true)} type="button">
             See all {list.length}
           </button>

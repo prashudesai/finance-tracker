@@ -1,10 +1,33 @@
 import type { TrackerData } from '../data/repository';
 import type { Expense } from '../schema/records';
-import { isEmi, isMarket, monthlyOverview, netWorthHistory, pmsGainChange } from './analytics';
-import { addDays, financialYearStart, previousMonth, roundMoney, toDayNumber } from './calendar';
+import {
+  isEmi,
+  isMarket,
+  monthlyOverview,
+  netWorthHistory,
+  pmsGainChange,
+  trackingStart,
+} from './analytics';
+import {
+  addDays,
+  addMonths,
+  daysInMonth,
+  financialYearRange,
+  financialYearStart,
+  previousMonth,
+  roundMoney,
+  toDayNumber,
+} from './calendar';
 import { monthTotals } from './cashflow';
-import { goalInputs, goalPlan, monthsUntil, planGoal, portfolioInputs } from './goals';
-import { holdingValue } from './holdings';
+import {
+  goalInputs,
+  goalPlan,
+  monthlyAverages,
+  monthsUntil,
+  planGoal,
+  portfolioInputs,
+} from './goals';
+import { holdingValue, latestValuation } from './holdings';
 import {
   incomeByMember,
   incomeBySource,
@@ -132,6 +155,48 @@ export type Insight = Base &
         basedOn: number;
         /** The first month with income or spending recorded. */
         since: string;
+      }
+    | { kind: 'cushion'; balance: number; monthly: number; months: number; asOf: string }
+    | {
+        kind: 'subscriptions';
+        count: number;
+        yearly: number;
+        monthly: number;
+        biggest: string;
+        biggestYearly: number;
+      }
+    | { kind: 'staleValues'; count: number; oldest: string; names: string[] }
+    | {
+        kind: 'savingsRange';
+        best: { month: string; rate: number };
+        worst: { month: string; rate: number };
+        months: number;
+      }
+    | {
+        kind: 'memberSpend';
+        month: string;
+        total: number;
+        rows: { member: string; amount: number }[];
+      }
+    | {
+        kind: 'ppfRoom';
+        room: number;
+        contributed: number;
+        accounts: number;
+        monthsLeft: number;
+        perMonth: number;
+      }
+    | { kind: 'streak'; months: number; since: string; threshold: number; latest: number }
+    | { kind: 'debtFree'; date: string; months: number; loans: number; remaining: number }
+    | { kind: 'dailyPace'; perDay: number; before: number; change: number; days: number }
+    | { kind: 'noSpendDays'; month: string; days: number; ofDays: number }
+    | {
+        kind: 'leftoverToRetirement';
+        perMonth: number;
+        months: number;
+        value: number;
+        retireDate: string;
+        growth: number;
       }
     | {
         kind: 'biggest';
@@ -492,6 +557,294 @@ function biggest(data: TrackerData, month: string): Insight | null {
   };
 }
 
+const STREAK_RATE = 0.3;
+const STALE_DAYS = 45;
+const PPF_LIMIT = 1_50_000;
+const PACE_WINDOW = 30;
+const PACE_CHANGE = 0.1;
+const NO_SPEND_MIN = 4;
+const LEFTOVER_GROWTH = 10;
+
+/** How many months of usual spending the latest bank balance would cover. */
+function cushion(data: TrackerData, today: string): Insight | null {
+  const latest = [...data.monthlyBalances]
+    .filter((row) => row.month <= today.slice(0, 7))
+    .sort((a, b) => b.month.localeCompare(a.month))[0];
+  const monthly = monthlyAverages(data, today)?.expenses ?? 0;
+  if (!latest || latest.startBalance <= 0 || monthly <= 0) return null;
+  const months = latest.startBalance / monthly;
+  const tone: InsightTone = months < 1 ? 'watch' : months > 12 ? 'neutral' : 'good';
+  return {
+    id: `cushion-${latest.month}`,
+    kind: 'cushion',
+    tone,
+    score: months < 1 ? 58 : months > 12 ? 44 : 28,
+    balance: latest.startBalance,
+    monthly: roundMoney(monthly),
+    months,
+    asOf: latest.month,
+  };
+}
+
+/** Regular payments set up as schedules, other than EMIs, over a whole year. */
+function subscriptions(data: TrackerData, today: string): Insight | null {
+  const month = today.slice(0, 7);
+  const rows = data.recurringRules.flatMap((rule) => {
+    if (rule.kind !== 'expense' || rule.paused || rule.archived) return [];
+    if (rule.startMonth > month || (rule.endMonth && rule.endMonth < month)) return [];
+    const amount = amountAt(rule, month) ?? 0;
+    return [
+      {
+        name: rule.name,
+        yearly: rule.isAnnual ? amount : amount * 12,
+        monthly: rule.isAnnual ? 0 : amount,
+      },
+    ];
+  });
+  if (rows.length < 2) return null;
+  const biggest = [...rows].sort((a, b) => b.yearly - a.yearly)[0];
+  if (!biggest) return null;
+  return {
+    id: `subscriptions-${month}`,
+    kind: 'subscriptions',
+    tone: 'neutral',
+    score: 26,
+    count: rows.length,
+    yearly: roundMoney(rows.reduce((total, row) => total + row.yearly, 0)),
+    monthly: roundMoney(rows.reduce((total, row) => total + row.monthly, 0)),
+    biggest: biggest.name,
+    biggestYearly: roundMoney(biggest.yearly),
+  };
+}
+
+/** Market investments whose value hasn't been updated for a while. */
+function staleValues(data: TrackerData, today: string): Insight | null {
+  const cutoff = addDays(today, -STALE_DAYS);
+  const stale = data.holdings
+    .filter((holding) => holding.date <= cutoff && isMarket(holding, data.settings[0]))
+    .map((holding) => ({
+      name: holding.name,
+      date: latestValuation(holding.id, data.valuations, today)?.date ?? holding.date,
+    }))
+    .filter(({ date }) => date < cutoff)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const oldest = stale[0];
+  if (!oldest) return null;
+  return {
+    id: `stale-${today.slice(0, 7)}`,
+    kind: 'staleValues',
+    tone: 'watch',
+    score: 46,
+    count: stale.length,
+    oldest: oldest.date,
+    names: stale.slice(0, 3).map((row) => row.name),
+  };
+}
+
+const complete = (data: TrackerData, today: string) => {
+  const current = today.slice(0, 7);
+  const since = trackingStart(data);
+  return [...monthTotals(data)]
+    .filter(([month, totals]) => month < current && (!since || month >= since) && totals.income > 0)
+    .sort(([a], [b]) => a.localeCompare(b));
+};
+
+/** This financial year's best and worst months for keeping income. */
+function savingsRange(data: TrackerData, today: string): Insight | null {
+  const fy = financialYearStart(today);
+  const months = complete(data, today)
+    .filter(([month]) => financialYearStart(month) === fy)
+    .map(([month, totals]) => ({ month, rate: savingsRate(totals) ?? 0 }));
+  if (months.length < 3) return null;
+  const ordered = [...months].sort((a, b) => b.rate - a.rate);
+  const best = ordered[0];
+  const worst = ordered.at(-1);
+  if (!best || !worst || best.rate - worst.rate < 0.05) return null;
+  return {
+    id: `savingsRange-${fy}-${months.length}`,
+    kind: 'savingsRange',
+    tone: 'neutral',
+    score: 22,
+    best,
+    worst,
+    months: months.length,
+  };
+}
+
+/** Last month's spending by family member, where expenses name one. */
+function memberSpend(data: TrackerData, month: string): Insight | null {
+  const rows = data.expenses.filter((row) => within(row.date, month));
+  if (!rows.some((row) => row.member)) return null;
+  const byMember = new Map<string, number>();
+  for (const row of rows) {
+    const who = row.member || 'Household';
+    byMember.set(who, (byMember.get(who) ?? 0) + row.amount);
+  }
+  if (byMember.size < 2) return null;
+  return {
+    id: `members-${month}`,
+    kind: 'memberSpend',
+    tone: 'neutral',
+    score: 20,
+    month,
+    total: roundMoney(sum(rows)),
+    rows: [...byMember]
+      .map(([member, amount]) => ({ member, amount: roundMoney(amount) }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 4),
+  };
+}
+
+/** PPF room left this financial year, ₹1.5 lakh an account, more pressing near March. */
+function ppfRoom(data: TrackerData, today: string): Insight | null {
+  const ppf = data.holdings.filter((holding) => holding.kind === 'ppf');
+  if (ppf.length === 0) return null;
+  const { start, end } = financialYearRange(financialYearStart(today));
+  let room = 0;
+  let contributed = 0;
+  for (const holding of ppf) {
+    const paid = sum(
+      data.contributions.filter(
+        (row) =>
+          !row.skipped && row.holdingId === holding.id && row.date >= start && row.date <= end,
+      ),
+    );
+    contributed += paid;
+    room += Math.max(0, PPF_LIMIT - paid);
+  }
+  if (room < 1_000) return null;
+  const monthsLeft = Math.max(1, monthsUntil(today, end) + 1);
+  return {
+    id: `ppf-${start}`,
+    kind: 'ppfRoom',
+    tone: 'neutral',
+    score: monthsLeft <= 3 ? 56 : 24,
+    room: roundMoney(room),
+    contributed: roundMoney(contributed),
+    accounts: ppf.length,
+    monthsLeft,
+    perMonth: roundMoney(room / monthsLeft),
+  };
+}
+
+/** Complete months in a row keeping at least 30% of income, back from last month. */
+function streak(data: TrackerData, today: string): Insight | null {
+  const months = complete(data, today).reverse();
+  let count = 0;
+  for (const [, totals] of months) {
+    if ((savingsRate(totals) ?? 0) < STREAK_RATE) break;
+    count += 1;
+  }
+  const since = months[count - 1]?.[0];
+  const latest = months[0]?.[1];
+  if (count < 3 || !since || !latest) return null;
+  return {
+    id: `streak-${count}`,
+    kind: 'streak',
+    tone: 'good',
+    score: 38,
+    months: count,
+    since,
+    threshold: STREAK_RATE,
+    latest: savingsRate(latest) ?? 0,
+  };
+}
+
+/** When the last loan is paid off at today's EMIs. */
+function debtFree(data: TrackerData, today: string): Insight | null {
+  const open = summarizeLoans(data, today).filter((loan) => (loan.ledger?.remaining ?? 0) > 0);
+  if (open.length === 0) return null;
+  let months = 0;
+  for (const { ledger } of open) {
+    if (!ledger) return null;
+    const count = estimateSchedule(ledger.remaining, ledger.emi, ledger.rate).count;
+    if (count === null) return null;
+    months = Math.max(months, count);
+  }
+  return {
+    id: `debtFree-${today.slice(0, 7)}`,
+    kind: 'debtFree',
+    tone: 'good',
+    score: 24,
+    date: addMonths(`${today.slice(0, 7)}-01`, months),
+    months,
+    loans: open.length,
+    remaining: roundMoney(open.reduce((total, loan) => total + (loan.ledger?.remaining ?? 0), 0)),
+  };
+}
+
+/** Everyday spending a day over the last 30 days, against the 30 before. */
+function dailyPace(data: TrackerData, today: string): Insight | null {
+  const since = trackingStart(data);
+  const start = addDays(today, -PACE_WINDOW * 2 + 1);
+  if (!since || `${since}-01` > start) return null;
+  const middle = addDays(today, -PACE_WINDOW);
+  const recent = data.expenses.filter(
+    (row) => everyday(row) && row.date > middle && row.date <= today,
+  );
+  const before = data.expenses.filter(
+    (row) => everyday(row) && row.date >= start && row.date <= middle,
+  );
+  const perDay = sum(recent) / PACE_WINDOW;
+  const earlier = sum(before) / PACE_WINDOW;
+  if (perDay <= 0 || earlier <= 0) return null;
+  const change = perDay / earlier - 1;
+  if (Math.abs(change) < PACE_CHANGE) return null;
+  return {
+    id: `pace-${today}`,
+    kind: 'dailyPace',
+    tone: change > 0 ? 'watch' : 'good',
+    score: change > 0 ? 42 : 36,
+    perDay: roundMoney(perDay),
+    before: roundMoney(earlier),
+    change,
+    days: PACE_WINDOW,
+  };
+}
+
+/** Days last month with no everyday spending, once that month was being recorded. */
+function noSpendDays(data: TrackerData, month: string): Insight | null {
+  const rows = data.expenses.filter((row) => within(row.date, month) && everyday(row));
+  if (rows.length < 10) return null;
+  const spent = new Set(rows.map((row) => row.date));
+  const ofDays = daysInMonth(Number(month.slice(0, 4)), Number(month.slice(5, 7)));
+  const days = ofDays - spent.size;
+  if (days < NO_SPEND_MIN) return null;
+  return {
+    id: `noSpend-${month}`,
+    kind: 'noSpendDays',
+    tone: 'good',
+    score: 14,
+    month,
+    days,
+    ofDays,
+  };
+}
+
+/** What the money left in the bank each month would grow to by retirement, invested. */
+function leftoverToRetirement(data: TrackerData, today: string): Insight | null {
+  const retireDate = data.settings[0]?.retirement?.retireDate;
+  if (!retireDate || retireDate <= today) return null;
+  const goes = whereIncomeGoes(data, financialYearStart(today), today);
+  if (goes.months < 2) return null;
+  const perMonth = goes.left / goes.months;
+  if (perMonth < 1_000) return null;
+  const months = monthsUntil(today, retireDate);
+  const rate = Math.pow(1 + LEFTOVER_GROWTH / 100, 1 / 12) - 1;
+  const value = perMonth * ((Math.pow(1 + rate, months) - 1) / rate);
+  return {
+    id: `leftover-${today.slice(0, 7)}`,
+    kind: 'leftoverToRetirement',
+    tone: 'neutral',
+    score: 31,
+    perMonth: roundMoney(perMonth),
+    months,
+    value: roundMoney(value),
+    retireDate,
+    growth: LEFTOVER_GROWTH,
+  };
+}
+
 /** This month so far: what went into investments, and loan principal paid off. */
 function monthSoFar(data: TrackerData, today: string): Insight[] {
   const month = today.slice(0, 7);
@@ -749,7 +1102,53 @@ export function insights(data: TrackerData, today: string): Insight[] {
     steadiness(data, today),
     per100(data, today),
     ...monthSoFar(data, today),
+    cushion(data, today),
+    subscriptions(data, today),
+    staleValues(data, today),
+    savingsRange(data, today),
+    memberSpend(data, lastMonth),
+    ppfRoom(data, today),
+    streak(data, today),
+    debtFree(data, today),
+    dailyPace(data, today),
+    noSpendDays(data, lastMonth),
+    leftoverToRetirement(data, today),
   ]
     .filter((insight): insight is Insight => insight !== null)
     .sort((a, b) => b.score - a.score);
+}
+
+/** How many insights each day brings. */
+export const DAILY_INSIGHTS = 10;
+
+/** A number from 0 to 1 that's always the same for the same text, so a day's mix holds. */
+function dayHash(text: string) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < text.length; index++) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return (hash + 0.5) / 2 ** 32;
+}
+
+/**
+ * Today's insights: anything that needs acting on first, then a draw from the rest that
+ * favours the more useful ones but gives every one its turn. The same all day, on every
+ * device, and different tomorrow.
+ */
+export function dailyInsights(all: Insight[], today: string, count = DAILY_INSIGHTS) {
+  const urgent = all.filter((insight) => insight.tone === 'watch' && insight.score >= 60);
+  const first = urgent.slice(0, count);
+  const drawn = all
+    .filter((insight) => !first.includes(insight))
+    // Weighted sampling: the smallest keys win, and a higher score makes a smaller key likelier.
+    .map((insight) => ({
+      insight,
+      key: -Math.log(dayHash(`${today}|${insight.id}`)) / (insight.score + 10),
+    }))
+    .sort((a, b) => a.key - b.key)
+    .slice(0, count - first.length)
+    .map(({ insight }) => insight)
+    .sort((a, b) => b.score - a.score);
+  return [...first, ...drawn];
 }

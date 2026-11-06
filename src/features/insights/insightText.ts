@@ -1,5 +1,14 @@
 import {
+  BadgeCheck,
+  CalendarCheck,
   CalendarClock,
+  ChartColumn,
+  Flame,
+  Gauge,
+  Landmark,
+  Shield,
+  Sunset,
+  Users,
   ChartPie,
   Flag,
   Goal as GoalIcon,
@@ -383,6 +392,152 @@ export function describeInsight(insight: Insight): InsightText {
           ['Date', formatDay(insight.date)],
         ],
         path: '/cash-flow',
+      };
+    case 'cushion': {
+      const months = insight.months;
+      const covers =
+        months < 1
+          ? `about ${Math.max(1, Math.round(months * 30))} days`
+          : months >= 12
+            ? `over ${Math.floor(months / 12)} year${months >= 24 ? 's' : ''}`
+            : `about ${months.toFixed(1)} months`;
+      return {
+        icon: Shield,
+        title: `Your bank balance covers ${covers} of spending`,
+        detail:
+          months < 1
+            ? 'Less than a month in hand. An emergency fund of 3 to 6 months gives breathing room.'
+            : months > 12
+              ? 'More than a year sits in the bank. Some of it could be earning more, invested.'
+              : months < 3
+                ? 'A little thin. 3 to 6 months of spending is a common cushion.'
+                : 'A healthy cushion for surprises.',
+        why: [
+          [`Balance, ${monthName(insight.asOf)} 1`, formatMoney(insight.balance)],
+          ['Usual spending a month', formatMoney(insight.monthly)],
+        ],
+        path: '/cash-flow',
+      };
+    }
+    case 'subscriptions':
+      return {
+        icon: Repeat,
+        title: `${insight.count} regular payments add up to ${formatMoney(insight.yearly)} a year`,
+        detail: `The biggest is ${insight.biggest}, ${formatMoney(insight.biggestYearly)} a year. Worth checking each still earns its place.`,
+        why: [
+          ['Each month', formatMoney(insight.monthly)],
+          ['Over a year', formatMoney(insight.yearly)],
+          [insight.biggest, `${formatMoney(insight.biggestYearly)} a year`],
+        ],
+        path: '/cash-flow',
+      };
+    case 'staleValues':
+      return {
+        icon: Clock,
+        title:
+          insight.count === 1
+            ? `${insight.names[0] ?? 'An investment'} hasn't had a value update since ${formatDay(insight.oldest)}`
+            : `${insight.count} investments haven't had a value update in over 6 weeks`,
+        detail: 'Net worth and returns use the last value entered, so they may be out of date.',
+        why: [
+          ['Oldest update', formatDay(insight.oldest)],
+          ...insight.names.map((name): [string, string] => ['Needs a value', name]),
+        ],
+        path: '/investments',
+      };
+    case 'savingsRange':
+      return {
+        icon: ChartColumn,
+        title: `Best saving month this year: ${monthName(insight.best.month)}, ${percent(insight.best.rate)} kept`,
+        detail: `The lowest was ${monthName(insight.worst.month)}, at ${percent(insight.worst.rate)}.`,
+        why: [
+          [`Kept in ${formatMonth(insight.best.month)}`, percent(insight.best.rate)],
+          [`Kept in ${formatMonth(insight.worst.month)}`, percent(insight.worst.rate)],
+          ['Months compared', String(insight.months)],
+        ],
+        path: '/analytics/income',
+      };
+    case 'memberSpend': {
+      const top = insight.rows[0];
+      return {
+        icon: Users,
+        title: `${top?.member ?? 'One person'} spent the most in ${monthName(insight.month)}, ${formatMoney(top?.amount ?? 0)}`,
+        detail: `Out of ${formatMoney(insight.total)} spent that month, by who it was for.`,
+        why: insight.rows.map((row): [string, string] => [row.member, formatMoney(row.amount)]),
+        path: '/cash-flow',
+      };
+    }
+    case 'ppfRoom':
+      return {
+        icon: Landmark,
+        title: `${formatMoney(insight.room)} of PPF room left this financial year`,
+        detail:
+          insight.monthsLeft <= 3
+            ? `Only ${timeFrom(insight.monthsLeft)} to March. About ${formatMoney(insight.perMonth)} a month would use it, tax-free.`
+            : `About ${formatMoney(insight.perMonth)} a month until March would use it, tax-free.`,
+        why: [
+          ['Paid in this year', formatMoney(insight.contributed)],
+          ['Limit', `${formatMoney(150_000)} an account × ${insight.accounts}`],
+          ['Months to March', String(insight.monthsLeft)],
+        ],
+        path: '/investments',
+      };
+    case 'streak':
+      return {
+        icon: Flame,
+        title: `${insight.months} months in a row keeping over ${percent(insight.threshold)} of income`,
+        detail: `Since ${formatMonth(insight.since)}. Last month you kept ${percent(insight.latest)}.`,
+        why: [
+          ['Months in a row', String(insight.months)],
+          ['Last month', percent(insight.latest)],
+        ],
+        path: '/analytics/income',
+      };
+    case 'debtFree':
+      return {
+        icon: BadgeCheck,
+        title: `Debt-free by ${formatShortMonthYear(insight.date.slice(0, 7))} at today's EMIs`,
+        detail: `${timeFrom(insight.months)} to clear ${formatMoney(insight.remaining)} across ${insight.loans} loan${insight.loans === 1 ? '' : 's'}. Part payments bring it closer.`,
+        why: [
+          ['Still owed', formatMoney(insight.remaining)],
+          ['Loans', String(insight.loans)],
+          ['Months to go', String(insight.months)],
+        ],
+        path: '/debts',
+      };
+    case 'dailyPace':
+      return {
+        icon: Gauge,
+        title: `Everyday spending is ${formatMoney(insight.perDay)} a day, ${insight.change > 0 ? 'up' : 'down'} ${percent(Math.abs(insight.change))}`,
+        detail: `Over the last ${insight.days} days, against ${formatMoney(insight.before)} a day the ${insight.days} before. Bills, EMIs and yearly costs aren't counted.`,
+        why: [
+          [`Last ${insight.days} days`, `${formatMoney(insight.perDay)} a day`],
+          [`${insight.days} days before`, `${formatMoney(insight.before)} a day`],
+        ],
+        path: '/cash-flow',
+      };
+    case 'noSpendDays':
+      return {
+        icon: CalendarCheck,
+        title: `${insight.days} no-spend days in ${monthName(insight.month)}`,
+        detail: `Days with no everyday spending, out of ${insight.ofDays}.`,
+        why: [
+          ['No-spend days', String(insight.days)],
+          ['Days in the month', String(insight.ofDays)],
+        ],
+        path: '/cash-flow',
+      };
+    case 'leftoverToRetirement':
+      return {
+        icon: Sunset,
+        title: `Investing the ${formatMoney(insight.perMonth)} a month left in your bank could add ${formatAmount(insight.value)} by retirement`,
+        detail: `At ${insight.growth}% a year until ${formatShortMonthYear(insight.retireDate.slice(0, 7))}. That money doesn't grow sitting in the bank.`,
+        why: [
+          ['Left in the bank a month', formatMoney(insight.perMonth)],
+          ['Months to retirement', String(insight.months)],
+          ['Growth assumed', `${insight.growth}% a year`],
+        ],
+        path: '/analytics/goals',
       };
   }
 }

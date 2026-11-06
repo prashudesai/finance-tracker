@@ -13,6 +13,7 @@ import {
   attentionItems,
   trackingStart,
   investedFromIncome,
+  isEmi,
   holdingRows,
   monthlyOverview,
   netWorth,
@@ -20,13 +21,14 @@ import {
   portfolioCategories,
   type CategoryRow,
 } from '../../domain/analytics';
-import { financialYearRange, financialYearStart } from '../../domain/calendar';
+import { financialYearStart } from '../../domain/calendar';
 import { monthlyTrend } from '../../domain/cashflow';
 import { pendingOccurrences } from '../../domain/recurring';
 import { paidShare, summarizeLoans, totalOutstanding, greeting } from '../../domain/summary';
 import { useSpendingView, useTracker, useView } from '../../store/tracker';
-import { chartColor } from '../../ui/charts';
+import { chartColor, Donut } from '../../ui/charts';
 import {
+  formatAmount,
   formatCompactMoney,
   formatMoney,
   formatMonth,
@@ -54,7 +56,8 @@ import { TrendChart } from './TrendChart';
 const DASHBOARD_CATEGORIES = 5;
 const TREND_MONTHS = 12;
 const MIN_TREND_MONTHS = 3;
-const PHONE_TREND_MONTHS = 5;
+/** The income chart shows the same six months on every screen. */
+const CHART_MONTHS = 6;
 type SortKey = 'size' | 'gain';
 
 function shortFy(month: string) {
@@ -147,23 +150,25 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const portfolioInvested = rows.reduce((sum, row) => sum + row.position.invested, 0);
   const portfolioGain = portfolioCurrent - portfolioInvested;
 
-  const fyStartMonth = financialYearRange(financialYearStart(month)).start.slice(0, 7);
-  const fyMonths =
-    (Number(month.slice(0, 4)) - Number(fyStartMonth.slice(0, 4))) * 12 +
-    Number(month.slice(5, 7)) -
-    Number(fyStartMonth.slice(5, 7)) +
-    1;
   const invested = investedFromIncome(data);
   // From when tracking began: months before it have no income or spending to compare.
   const since = trackingStart(data) ?? month;
-  const trend = monthlyTrend(spending, month, phone ? PHONE_TREND_MONTHS : fyMonths)
+  const trend = monthlyTrend(spending, month, CHART_MONTHS)
     .filter((row) => row.month >= since)
     .map((row) => ({
       ...row,
       invested: invested.get(row.month) ?? 0,
     }));
-  const monthName = formatMonth(month).split(' ')[0];
   const firstTrend = trend[0]?.month ?? month;
+  // Where one month's income went: the last complete month, or this one while it's the only one.
+  const splitMonth = trend.length > 1 ? (trend.at(-2)?.month ?? month) : month;
+  const inSplit = (row: { date: string }) => row.date.startsWith(splitMonth);
+  const splitRows = spending.expenses.filter(inSplit);
+  const splitEmis = splitRows.filter(isEmi).reduce((total, row) => total + row.amount, 0);
+  const splitSpent = splitRows.reduce((total, row) => total + row.amount, 0) - splitEmis;
+  const splitIncome = spending.income.filter(inSplit).reduce((total, row) => total + row.amount, 0);
+  const splitInvested = invested.get(splitMonth) ?? 0;
+  const splitLeft = splitIncome - splitSpent - splitEmis - splitInvested;
 
   const netWorthCard = (
     <section aria-label="Net worth" className={ui.hero}>
@@ -214,13 +219,9 @@ export function Dashboard({ name = '' }: { name?: string }) {
         <div>
           <h2>Income vs expenses and investing</h2>
           <div className={ui.caption}>
-            {phone
-              ? trend.length > 1
-                ? `Last ${trend.length} months · ${formatMonth(firstTrend)} – ${formatMonth(month)}`
-                : formatMonth(month)
-              : firstTrend === month
-                ? `${shortFy(month)} · ${monthName}`
-                : `${shortFy(month)} · ${formatMonth(firstTrend).split(' ')[0]} to ${monthName}`}
+            {trend.length > 1
+              ? `Last ${trend.length} months · ${formatMonth(firstTrend)} – ${formatMonth(month)}`
+              : formatMonth(month)}
           </div>
         </div>
         {phone ? null : (
@@ -231,6 +232,34 @@ export function Dashboard({ name = '' }: { name?: string }) {
       </div>
       <TrendChart months={trend} />
       {phone ? <p className={ui.notice}>Tap a month to see amounts.</p> : null}
+      {!phone && splitIncome > 0 ? (
+        <div className={styles.split}>
+          <h3 className={ui.label}>
+            Where {formatMonth(splitMonth)}
+            {splitMonth === month ? ' so far' : ''} income went
+          </h3>
+          <Donut
+            centerLabel="Income"
+            centerValue={formatAmount(Math.round(splitIncome))}
+            segments={[
+              { label: 'Spending', value: splitSpent, color: 'var(--series-expense)' },
+              { label: 'EMIs', value: splitEmis, color: 'var(--loss)' },
+              { label: 'Invested', value: splitInvested, color: 'var(--scenario-base)' },
+              {
+                label: 'Left in the bank',
+                value: Math.max(0, splitLeft),
+                color: 'var(--series-income)',
+              },
+            ].filter((row) => row.value > 0)}
+            title={`Where ${formatMonth(splitMonth)} income went`}
+          />
+          {splitLeft < 0 ? (
+            <p className={ui.caption} style={{ margin: 0 }}>
+              {formatMoney(Math.round(-splitLeft))} more went out than came in.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 
@@ -337,80 +366,83 @@ export function Dashboard({ name = '' }: { name?: string }) {
       <InsightsCard />
       <GoalsTile />
 
-      {trendCard}
+      {/* Side by side on wide screens, half and half; one after the other on phones. */}
+      <div className={styles.pair}>
+        {trendCard}
 
-      <section className={ui.card}>
-        <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
-          <div>
-            <h2 className={ui.cardTitle}>Investment portfolio</h2>
-            <div className={ui.caption}>Value and returns</div>
+        <section className={ui.card}>
+          <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
+            <div>
+              <h2 className={ui.cardTitle}>Investment portfolio</h2>
+              <div className={ui.caption}>Value and returns</div>
+            </div>
+            <label className={`${ui.caption} ${ui.inlineSort}`}>
+              Sort by
+              <select
+                className={ui.fieldSelect}
+                onChange={(event) => setSort(event.target.value as SortKey)}
+                value={sort}
+              >
+                <option value="size">Portfolio size</option>
+                <option value="gain">Gain</option>
+              </select>
+            </label>
           </div>
-          <label className={`${ui.caption} ${ui.inlineSort}`}>
-            Sort by
-            <select
-              className={ui.fieldSelect}
-              onChange={(event) => setSort(event.target.value as SortKey)}
-              value={sort}
-            >
-              <option value="size">Portfolio size</option>
-              <option value="gain">Gain</option>
-            </select>
-          </label>
-        </div>
-        <div className={ui.metric}>
-          <div className={ui.metricsThree}>
-            <div>
-              <div className={ui.label}>Current value</div>
-              <div className={ui.metricValue}>{formatCompactMoney(portfolioCurrent)}</div>
-            </div>
-            <div>
-              <div className={ui.label}>Invested</div>
-              <div className={ui.metricValue}>{formatCompactMoney(portfolioInvested)}</div>
-            </div>
-            <div>
-              <div className={ui.label}>Total gain</div>
-              <div className={`${ui.metricValue} ${portfolioGain < 0 ? ui.loss : ui.gain}`}>
-                {signedMoney(portfolioGain)}
+          <div className={ui.metric}>
+            <div className={ui.metricsThree}>
+              <div>
+                <div className={ui.label}>Current value</div>
+                <div className={ui.metricValue}>{formatCompactMoney(portfolioCurrent)}</div>
               </div>
-              <div className={`${ui.caption} ${portfolioGain < 0 ? ui.loss : ui.gain}`}>
-                {formatPercent(portfolioInvested > 0 ? portfolioGain / portfolioInvested : null)}
+              <div>
+                <div className={ui.label}>Invested</div>
+                <div className={ui.metricValue}>{formatCompactMoney(portfolioInvested)}</div>
+              </div>
+              <div>
+                <div className={ui.label}>Total gain</div>
+                <div className={`${ui.metricValue} ${portfolioGain < 0 ? ui.loss : ui.gain}`}>
+                  {signedMoney(portfolioGain)}
+                </div>
+                <div className={`${ui.caption} ${portfolioGain < 0 ? ui.loss : ui.gain}`}>
+                  {formatPercent(portfolioInvested > 0 ? portfolioGain / portfolioInvested : null)}
+                </div>
               </div>
             </div>
+            <div className={ui.legendRow}>
+              <span>
+                <i className={ui.stackInvested} /> Invested
+              </span>
+              <span>
+                <i className={ui.stackGain} /> Gain
+              </span>
+            </div>
           </div>
-          <div className={ui.legendRow}>
-            <span>
-              <i className={ui.stackInvested} /> Invested
-            </span>
-            <span>
-              <i className={ui.stackGain} /> Gain
-            </span>
-          </div>
-        </div>
-        {shown.length === 0 ? (
-          <EmptyState
-            action={
-              <Link className={ui.quiet} state={{ add: 'investment' }} to="/investments">
-                Add your first investment
-              </Link>
-            }
-            icon={TrendingUp}
-            text="See their value and returns here."
-            title="No investments recorded yet."
-          />
-        ) : (
-          <div className={ui.barList}>
-            {shown.map((row, index) => (
-              <PortfolioRow index={index} key={row.name} peak={peak} row={row} />
-            ))}
-          </div>
-        )}
-        <div className={ui.caption}>Tap a category to view its holdings and exact amounts.</div>
-        {categories.length > shown.length ? (
-          <Link className={ui.textLinkCenter} to="/investments">
-            View remaining {categories.length - shown.length} investments ›
-          </Link>
-        ) : null}
-      </section>
+          {shown.length === 0 ? (
+            <EmptyState
+              action={
+                <Link className={ui.quiet} state={{ add: 'investment' }} to="/investments">
+                  Add your first investment
+                </Link>
+              }
+              icon={TrendingUp}
+              text="See their value and returns here."
+              title="No investments recorded yet."
+            />
+          ) : (
+            <div className={ui.barList}>
+              {shown.map((row, index) => (
+                <PortfolioRow index={index} key={row.name} peak={peak} row={row} />
+              ))}
+            </div>
+          )}
+          <div className={ui.caption}>Tap a category to view its holdings and exact amounts.</div>
+          {categories.length > shown.length ? (
+            <Link className={ui.textLinkCenter} to="/investments">
+              View remaining {categories.length - shown.length} investments ›
+            </Link>
+          ) : null}
+        </section>
+      </div>
 
       <section className={ui.card}>
         <div className={ui.cardHeader}>

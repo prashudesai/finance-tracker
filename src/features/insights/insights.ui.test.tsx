@@ -70,7 +70,7 @@ afterEach(() => {
 });
 
 describe('Insights on the dashboard', () => {
-  test('shows the most useful few, with the numbers behind each', async () => {
+  test("shows today's ten at most, with the numbers behind each", async () => {
     show(seed().data);
     const card = within(await screen.findByRole('group', { name: 'Insights' }));
     const dining = (await card.findAllByText(/Dining was ₹4,500/)).find((node) =>
@@ -78,7 +78,7 @@ describe('Insights on the dashboard', () => {
     );
     if (!dining) throw new Error('No dining insight in the list');
     expect(dining.textContent).toMatch(/50% more than usual/);
-    expect(card.getAllByRole('listitem').length).toBeLessThanOrEqual(3);
+    expect(card.getAllByRole('listitem').length).toBeLessThanOrEqual(10);
     const row = within(dining.closest('li') as HTMLElement);
     fireEvent.click(row.getByRole('button', { name: 'Why?' }));
     expect(row.getByText('Difference')).toBeDefined();
@@ -91,7 +91,7 @@ describe('Insights on the dashboard', () => {
     const tile = (await screen.findByRole('group', { name: 'Insights' })) as HTMLDetailsElement;
     expect(tile.open).toBe(false);
     const summary = tile.querySelector('summary') as HTMLElement;
-    expect(summary.textContent).toMatch(/Insights · \d+/);
+    expect(summary.textContent).toMatch(/Today's insights · \d+/);
     // The preview is the first insight's headline.
     expect(summary.textContent).toContain(tile.querySelector('li strong')?.textContent ?? '');
     tile.open = true;

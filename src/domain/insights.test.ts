@@ -10,7 +10,7 @@ import {
   type Loan,
   type RecurringRule,
 } from '../schema/records';
-import { insights, type Insight } from './insights';
+import { dailyInsights, insights, type Insight } from './insights';
 import { monthRecap, recapMonths } from './recap';
 
 const TODAY = '2026-11-10';
@@ -373,5 +373,138 @@ describe('monthly recap', () => {
     expect(
       monthRecap(data({ expenses: [expense('2026-10-01', 100)] }), '2026-10', TODAY).savingsRate,
     ).toBeNull();
+  });
+});
+
+describe('deeper insights', () => {
+  test('how many months of spending the bank balance covers', () => {
+    const list = insights(
+      data({
+        income: steady().filter((row) => 'source' in row) as Income[],
+        expenses: steady().filter((row) => 'category' in row) as Expense[],
+        monthlyBalances: [{ month: '2026-11', startBalance: 40_000 }],
+      }),
+      TODAY,
+    );
+    // ₹40,000 against ₹80,000 a month is half a month: thin, so it's a warning.
+    expect(find(list, 'cushion')).toMatchObject({ months: 0.5, tone: 'watch' });
+  });
+
+  test('regular payments are added up over a year', () => {
+    const rule = (name: string, amount: number, isAnnual = false): RecurringRule => ({
+      id: id(),
+      name,
+      kind: 'expense',
+      category: 'Bills',
+      subcategory: '',
+      isAnnual,
+      amount,
+      amountChanges: [],
+      day: 5,
+      startMonth: '2026-01',
+      paused: false,
+    });
+    const found = find(
+      insights(
+        data({ recurringRules: [rule('Netflix', 649), rule('Insurance', 24_000, true)] }),
+        TODAY,
+      ),
+      'subscriptions',
+    );
+    expect(found).toMatchObject({ count: 2, yearly: 649 * 12 + 24_000, biggest: 'Insurance' });
+  });
+
+  test('a run of good months, and the best and worst of the year', () => {
+    const months = ['04', '05', '06', '07', '08', '09', '10'];
+    const kept = [0.1, 0.35, 0.4, 0.32, 0.5, 0.31, 0.36];
+    const rows = months.flatMap((m, index) => [
+      income(`2026-${m}-01`, 1_00_000),
+      expense(`2026-${m}-12`, Math.round(1_00_000 * (1 - (kept[index] ?? 0)))),
+    ]);
+    const list = insights(
+      data({
+        income: rows.filter((row) => 'source' in row) as Income[],
+        expenses: rows.filter((row) => 'category' in row) as Expense[],
+      }),
+      TODAY,
+    );
+    // May to October all kept over 30%; April didn't.
+    expect(find(list, 'streak')).toMatchObject({ months: 6, since: '2026-05' });
+    expect(find(list, 'savingsRange')).toMatchObject({
+      best: { month: '2026-08' },
+      worst: { month: '2026-04' },
+    });
+  });
+
+  test('PPF room left this financial year', () => {
+    const ppf: Holding = {
+      id: 'p',
+      kind: 'ppf',
+      type: 'PPF',
+      name: 'PPF',
+      member: 'A',
+      date: '2026-01-01',
+      openingInvested: 1_00_000,
+      openingValue: 1_00_000,
+      monthly: 0,
+      autoContribute: false,
+    } as Holding;
+    const found = find(
+      insights(
+        data({
+          holdings: [ppf],
+          contributions: [
+            { id: 'c', holdingId: 'p', date: '2026-06-01', amount: 50_000, automatic: false },
+          ],
+        }),
+        TODAY,
+      ),
+      'ppfRoom',
+    );
+    expect(found).toMatchObject({ room: 1_00_000, contributed: 50_000, monthsLeft: 5 });
+  });
+
+  test('no-spend days are counted from everyday spending only', () => {
+    const october = Array.from({ length: 20 }, (_, day) =>
+      expense(`2026-10-${String(day + 1).padStart(2, '0')}`, 500),
+    );
+    const found = find(
+      insights(
+        data({ expenses: [...october, expense('2026-10-25', 30_000, EMI_CATEGORY)] }),
+        TODAY,
+      ),
+      'noSpendDays',
+    );
+    // 20 days with spending out of 31; the EMI on the 25th doesn't count as spending that day.
+    expect(found).toMatchObject({ days: 11, ofDays: 31 });
+  });
+});
+
+describe('ten a day', () => {
+  const make = (count: number, urgentCount = 0): Insight[] =>
+    Array.from({ length: count }, (_, index) => ({
+      id: `i${index}`,
+      kind: 'quiet',
+      days: 7,
+      lastDate: TODAY,
+      tone: index < urgentCount ? 'watch' : 'neutral',
+      score: index < urgentCount ? 80 : 10 + index,
+    }));
+
+  test('ten, with anything needing action first', () => {
+    const today = dailyInsights(make(30, 2), TODAY);
+    expect(today).toHaveLength(10);
+    expect(today.slice(0, 2).map((row) => row.id)).toEqual(['i0', 'i1']);
+  });
+
+  test('the same all day, different another day, and every one gets a turn', () => {
+    const all = make(30);
+    const ids = (day: string) => dailyInsights(all, day).map((row) => row.id);
+    expect(ids(TODAY)).toEqual(ids(TODAY));
+    expect(ids('2026-11-11')).not.toEqual(ids(TODAY));
+    const seen = new Set<string>();
+    for (let day = 1; day <= 30; day++)
+      for (const one of ids(`2026-12-${String(day).padStart(2, '0')}`)) seen.add(one);
+    expect(seen.size).toBe(30);
   });
 });

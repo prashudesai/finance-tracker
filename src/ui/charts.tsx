@@ -5,6 +5,8 @@ import ui from './ui.module.css';
 export interface Segment {
   label: string;
   value: number;
+  /** A colour with a meaning of its own, such as spending, in place of the next in order. */
+  color?: string;
 }
 
 /** Fixed order, so a category keeps its colour wherever it appears. */
@@ -89,7 +91,7 @@ export function Donut({
                 fill="none"
                 key={row.label}
                 r={radius}
-                stroke={chartColor(index)}
+                stroke={row.color ?? chartColor(index)}
                 strokeDasharray={dash}
                 strokeDashoffset={-offset}
                 strokeWidth="13"
@@ -109,7 +111,7 @@ export function Donut({
       <ul className={styles.legend}>
         {shown.map((row, index) => (
           <li key={row.label}>
-            <i style={{ background: chartColor(index) }} />
+            <i style={{ background: row.color ?? chartColor(index) }} />
             <span>{row.label}</span>
             <b>{total > 0 ? ((row.value / total) * 100).toFixed(1) : '0.0'}%</b>
           </li>

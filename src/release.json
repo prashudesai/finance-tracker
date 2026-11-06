@@ -1,7 +1,10 @@
 {
-  "version": "1.21.1",
+  "version": "1.22.0",
   "released": "2026-11-05",
   "notes": [
+    "Today's insights: ten a day, anything needing action first, fresh picks each morning",
+    "Eleven new insights, from how long your bank balance lasts to PPF room left, saving streaks and when you'll be debt-free",
+    "The income chart shows six months everywhere, and on a computer sits beside your portfolio with a pie of where last month's income went",
     "The dashboard chart starts from your first month of income or spending, and investments entered for earlier months no longer count as invested from income",
     "EMI reminders can be marked as paid in one tap, which records the EMI, or hidden for the month",
     "An EMI whose due date passed with nothing recorded is flagged, so a hidden or forgotten one isn't missed",
