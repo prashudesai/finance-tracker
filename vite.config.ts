@@ -36,6 +36,25 @@ export default defineConfig({
       },
     },
     {
+      // Sign-in waits on Firebase, which loads after the app starts. Asking for it up front
+      // lets it download alongside the app instead of after it.
+      name: 'preload-firebase',
+      apply: 'build',
+      transformIndexHtml: {
+        order: 'post',
+        handler(html, context) {
+          const chunk = Object.values(context.bundle ?? {}).find(
+            (file) => file.type === 'chunk' && file.name === 'firebase',
+          );
+          if (!chunk) return html;
+          return html.replace(
+            '</head>',
+            `  <link rel="modulepreload" crossorigin href="/${chunk.fileName}">\n  </head>`,
+          );
+        },
+      },
+    },
+    {
       name: 'page-previews',
       apply: 'build',
       closeBundle() {

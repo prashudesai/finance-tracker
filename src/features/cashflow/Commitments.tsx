@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { addDays, isValidMonth } from '../../domain/calendar';
 import { optionLists } from '../../domain/options';
+import { repeatingExpenses, type RepeatingExpense } from '../../domain/repeating';
 import {
   amountAt,
   applyOccurrences,
@@ -231,8 +232,42 @@ function RuleForm({ initial, onDone }: { initial?: RecurringRule; onDone: () => 
   );
 }
 
+const DISMISSED_KEY = 'repeatingDismissed';
+
+/** Suggestions turned down on this device, by their pattern's key. */
+function useDismissed() {
+  const [dismissed, setDismissed] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? '[]') as string[];
+    } catch {
+      return [];
+    }
+  });
+  const dismiss = (key: string) => {
+    const next = [...dismissed, key];
+    setDismissed(next);
+    try {
+      localStorage.setItem(DISMISSED_KEY, JSON.stringify(next));
+    } catch {
+      // Shown again next visit.
+    }
+  };
+  return { dismissed, dismiss };
+}
+
+/** "5th", "1st", "22nd": the day a payment falls on. */
+const ordinal = (day: number) => {
+  const teen = day % 100 >= 11 && day % 100 <= 13;
+  const suffix = teen
+    ? 'th'
+    : (({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[day % 10] ?? 'th');
+  return `${day}${suffix}`;
+};
+
 export function Commitments({ open = false }: { open?: boolean }) {
   const data = useTracker((state) => state.data);
+  const canEdit = useTracker((state) => state.canEdit);
+  const { dismissed, dismiss } = useDismissed();
   const commit = useTracker((state) => state.commit);
   const report = useTracker((state) => state.report);
   const [adding, setAdding] = useState(false);
@@ -244,6 +279,28 @@ export function Commitments({ open = false }: { open?: boolean }) {
   const upcoming = upcomingCommitments(recurring, today, addDays(today, COMMITMENT_DAYS));
   const ruleName = (id: string) => data.recurringRules.find((rule) => rule.id === id)?.name ?? id;
   const active = data.recurringRules.filter((rule) => !rule.paused);
+  // Expenses that repeat but aren't scheduled, less the ones turned down here.
+  const repeating = canEdit
+    ? repeatingExpenses(data, today).filter((row) => !dismissed.includes(row.key))
+    : [];
+
+  const schedule = (row: RepeatingExpense) => {
+    const id = crypto.randomUUID();
+    const value: RecurringRule = {
+      id,
+      name: row.name,
+      kind: 'expense',
+      category: row.category,
+      subcategory: row.subcategory,
+      isAnnual: false,
+      amount: row.amount,
+      amountChanges: [],
+      day: row.day,
+      startMonth: row.startMonth,
+      paused: false,
+    };
+    commit([{ type: 'set', collection: 'recurringRules', id, value }]);
+  };
 
   const run = (request: OccurrenceRequest) => {
     let result: ReturnType<typeof applyOccurrences>;
@@ -276,8 +333,45 @@ export function Commitments({ open = false }: { open?: boolean }) {
         <span>Upcoming commitments</span>
         <span className={ui.caption} style={{ color: 'var(--accent)' }}>
           <Repeat size={12} /> Recurring · {pending.length} due
+          {repeating.length > 0 ? ` · ${repeating.length} found` : ''}
         </span>
       </summary>
+      {repeating.length > 0 ? (
+        <>
+          <div className={ui.groupLabel}>Looks regular</div>
+          <ul className={ui.list}>
+            {repeating.map((row) => (
+              <li className={ui.row} key={row.key}>
+                <div className={ui.rowMain}>
+                  <div className={ui.rowTitle}>{row.name}</div>
+                  <div className={ui.rowDetail}>
+                    {formatMoney(row.amount)} around the {ordinal(row.day)} · in {row.months} of the
+                    last {row.of} months
+                  </div>
+                </div>
+                <div className={ui.actions}>
+                  <button
+                    aria-label={`Make ${row.name} recurring`}
+                    className={ui.button}
+                    onClick={() => schedule(row)}
+                    type="button"
+                  >
+                    Make recurring
+                  </button>
+                  <button
+                    aria-label={`${row.name} is not regular`}
+                    className={ui.quiet}
+                    onClick={() => dismiss(row.key)}
+                    type="button"
+                  >
+                    Not regular
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
       {pending.length === 0 ? (
         <p className={ui.empty}>Nothing is due.</p>
       ) : (

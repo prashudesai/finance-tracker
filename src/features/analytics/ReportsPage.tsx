@@ -22,6 +22,7 @@ import { downloadTablePdf, pdfAmount } from '../../ui/pdf';
 import { Metric } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
+import { YearAtGlance } from './YearAtGlance';
 
 const ROW_LIMIT = 200;
 const PHONE_ROWS = 20;
@@ -72,6 +73,11 @@ export function ReportsPage() {
   const rows = start && end && start <= end ? reportRows(data, start, end, type) : [];
   const totals = groupTotals(rows);
   const years = financialYearsWithData(data, today);
+  // A whole financial year chosen: its start, and its end or today while it's still running.
+  const fy = financialYearStart(start);
+  const range = financialYearRange(fy);
+  const wholeYear =
+    start === range.start && (end === range.end || (fy === thisFy && end === today));
 
   return (
     <div className={ui.page}>
@@ -131,6 +137,8 @@ export function ReportsPage() {
           The start date must be on or before the end date.
         </p>
       ) : null}
+
+      {wholeYear ? <YearAtGlance data={data} fy={fy} onError={report} today={today} /> : null}
 
       {totals.length > 0 ? (
         <section aria-label="Report summary" className={ui.metrics}>

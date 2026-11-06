@@ -1,7 +1,11 @@
 {
-  "version": "1.22.6",
+  "version": "1.23.0",
   "released": "2026-11-05",
   "notes": [
+    "Data health in Settings: what would make your figures wrong, with a fix for each",
+    "Cash flow spots expenses that repeat each month and offers to make them recurring",
+    "Year at a glance in Date range reports, with a PDF for tax time",
+    "Opens faster on a first visit, and every page passes accessibility checks",
     "Cash flow on phones: tap the month name to pick any month, in place of the dropdown at the top",
     "The month summary is shorter, so more of the page fits on screen",
     "Cash flow on phones: the month reads as a flow from income to balance, with one bar showing where it went",

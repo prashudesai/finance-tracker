@@ -1,6 +1,7 @@
 import {
   ChevronRight,
   DatabaseBackup,
+  HeartPulse,
   Info,
   MessageSquare,
   Palette,
@@ -11,6 +12,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
+import { DataHealth, useHealthSummary } from './DataHealth';
 import { addFamilyName } from '../../domain/options';
 import {
   APP_URL,
@@ -53,7 +55,15 @@ import { checkForUpdates, useAppUpdate, type UpdateCheck } from '../../ui/pwa';
 import ui from '../../ui/ui.module.css';
 
 type Panel =
-  'info' | 'account' | 'family' | 'appearance' | 'archived' | 'changes' | 'data' | 'updates';
+  | 'info'
+  | 'account'
+  | 'family'
+  | 'appearance'
+  | 'archived'
+  | 'changes'
+  | 'data'
+  | 'health'
+  | 'updates';
 
 const VERSION = release.version;
 
@@ -82,6 +92,12 @@ const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] =
     icon: DatabaseBackup,
     title: 'Data & backup',
     text: 'Export, import and recovery tools',
+  },
+  {
+    panel: 'health',
+    icon: HeartPulse,
+    title: 'Data health',
+    text: 'Checks that your figures add up',
   },
   {
     panel: 'updates',
@@ -1232,6 +1248,7 @@ export function SettingsPage({ account }: { account: Account }) {
       .finally(() => setSyncing(false));
   };
   const open = TILES.find((tile) => tile.panel === panel);
+  const healthSummary = useHealthSummary();
 
   return (
     <div className={ui.page}>
@@ -1267,7 +1284,7 @@ export function SettingsPage({ account }: { account: Account }) {
             </span>
             <span className={ui.settingText}>
               <strong style={{ display: 'block' }}>{title}</strong>
-              <span className={ui.caption}>{text}</span>
+              <span className={ui.caption}>{key === 'health' ? healthSummary : text}</span>
             </span>
             <ChevronRight aria-hidden="true" className={ui.settingArrow} size={16} />
           </button>
@@ -1333,6 +1350,7 @@ export function SettingsPage({ account }: { account: Account }) {
           {panel === 'family' ? <FamilyAccessPanel account={account} /> : null}
           {panel === 'appearance' ? <AppearanceChoice /> : null}
           {panel === 'data' ? <DataBackup /> : null}
+          {panel === 'health' ? <DataHealth onClose={() => setPanel(null)} /> : null}
           {panel === 'updates' ? <AppUpdates /> : null}
         </Modal>
       ) : null}

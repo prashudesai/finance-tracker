@@ -235,7 +235,10 @@ select:hover:not(:disabled) {
 
 select:focus-visible,
 input:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+/* A date field passes focus to its day, month and year parts, so it never matches the above. */
+input[type='date']:focus-within,
+input[type='month']:focus-within {
   border-color: var(--accent);
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-soft);

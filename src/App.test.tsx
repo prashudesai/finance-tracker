@@ -1445,6 +1445,32 @@ test('Cash flow shows what was invested from income and the balance after it', a
   expect(summary.getByText('₹50,000')).toBeDefined();
 });
 
+test('a payment that repeats each month can be made recurring in one tap', async () => {
+  const months = [4, 3, 2, 1].map((back) => {
+    let month = localDate().slice(0, 7);
+    for (let step = 0; step < back; step++) month = previousMonth(month);
+    return month;
+  });
+  renderApp('/cash-flow', {
+    expenses: months.map((month, index) => ({
+      id: `n${index}`,
+      date: `${month}-05`,
+      category: 'Subscriptions',
+      subcategory: 'Netflix',
+      isAnnual: false,
+      amount: 649,
+    })),
+  });
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Make Netflix recurring', hidden: true }),
+  );
+  await waitFor(() =>
+    expect(useTracker.getState().data.recurringRules).toContainEqual(
+      expect.objectContaining({ name: 'Netflix', kind: 'expense', amount: 649, day: 5 }),
+    ),
+  );
+});
+
 test('a gratuity estimate opens to edit its basic salary, or delete it', async () => {
   const account = { id: 'g', member: 'Alex Morgan', date: '2015-04-01', basicSalary: 50_000 };
   renderApp('/investments', { gratuityAccounts: [account] });
