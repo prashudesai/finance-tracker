@@ -1,7 +1,8 @@
 {
-  "version": "1.25.0",
-  "released": "2026-11-06",
+  "version": "1.26.0",
+  "released": "2026-11-07",
   "notes": [
+    "Yearly budget: a line can count spending in several categories, such as Grocery, Milk and Fruits together",
     "Budget vs actual, in Planning › Insights: pick a planned year and see what you spent against it, by month and by category, plus spending that isn't in the plan",
     "Yearly budget: use it for spending only, or add the income you expect (monthly or yearly) to see income vs budget and what's left to invest. Income recorded so far is no longer used",
     "Yearly budget, in Planning › Future: plan the financial year line by line, monthly, yearly, in chosen months or once",

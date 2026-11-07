@@ -31,8 +31,12 @@ export const GROUP_LABELS: Record<BudgetLine['group'], string> = {
 /** When a line is paid, in words: "Every month", "Jun", "Apr, Jul and Dec", "Once, in Oct". */
 export function scheduleText(line: BudgetLine) {
   if (line.every === 'month') return 'Every month';
-  const names = line.months.map((month) => MONTH_NAMES[month - 1] ?? '');
-  const list =
-    names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+  const list = listText(line.months.map((month) => MONTH_NAMES[month - 1] ?? ''));
   return line.every === 'once' ? `Once, in ${list}` : `Every year in ${list}`;
 }
+
+/** Names in a sentence: "Milk", "Milk and Fruits", "Grocery, Milk and Fruits". */
+export const listText = (names: string[]) =>
+  names.length > 1
+    ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+    : (names[0] ?? '');

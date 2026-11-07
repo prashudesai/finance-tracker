@@ -257,16 +257,27 @@ export const BUDGET_GROUPS = [
  * One line of a yearly budget. `amount` is one payment: a month's for monthly lines, and each
  * payment's for the rest. `months` are 1 to 12, the months it's paid in.
  */
-export const budgetLineSchema = z.object({
-  id,
-  name,
-  group: z.enum(BUDGET_GROUPS),
-  amount: money,
-  every: z.enum(['month', 'months', 'once']),
-  months: z.array(z.number().int().min(1).max(12)).max(12).default([]),
-  /** The expense category this line's spending is recorded under, to match plan with actual. */
-  category: z.string().max(100).default(''),
-});
+/** Lines saved before a line could count several categories had one, as `category`. */
+const oneCategoryToMany = (value: unknown) => {
+  if (!value || typeof value !== 'object' || !('category' in value)) return value;
+  if ((value as { categories?: unknown }).categories !== undefined) return value;
+  const { category, ...rest } = value as Record<string, unknown>;
+  return { ...rest, categories: typeof category === 'string' && category ? [category] : [] };
+};
+
+export const budgetLineSchema = z.preprocess(
+  oneCategoryToMany,
+  z.object({
+    id,
+    name,
+    group: z.enum(BUDGET_GROUPS),
+    amount: money,
+    every: z.enum(['month', 'months', 'once']),
+    months: z.array(z.number().int().min(1).max(12)).max(12).default([]),
+    /** Expense categories whose spending counts against this line, to match plan with actual. */
+    categories: z.array(z.string().min(1).max(100)).max(30).default([]),
+  }),
+);
 export type BudgetLine = z.infer<typeof budgetLineSchema>;
 
 /**

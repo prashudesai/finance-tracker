@@ -77,11 +77,20 @@ describe('Yearly budget', () => {
     expect(form.getByRole('alert', { hidden: true }).textContent).toBe('Give it a name.');
     fireEvent.change(form.getByLabelText('Name'), { target: { value: 'Swimming' } });
     fireEvent.click(form.getByRole('radio', { name: 'Yearly', hidden: true }));
+    // A line can count spending in more than one category.
+    fireEvent.click(form.getByRole('button', { name: 'Entertainment', hidden: true }));
+    fireEvent.click(form.getByRole('button', { name: 'Healthcare', hidden: true }));
+    expect(form.queryByRole('button', { name: 'EMI Payment', hidden: true })).toBeNull();
     fireEvent.change(form.getByLabelText('Amount'), { target: { value: '10000' } });
     fireEvent.click(form.getByRole('button', { name: 'Save', hidden: true }));
     await waitFor(() =>
       expect(saved()[0]?.lines.some((line) => line.name === 'Swimming')).toBe(true),
     );
+    expect(saved()[0]?.lines.find((line) => line.name === 'Swimming')?.categories).toEqual([
+      // In the list's order, whatever order they were picked in.
+      'Healthcare',
+      'Entertainment',
+    ]);
 
     fireEvent.click(await screen.findByRole('button', { name: /^Create FY/ }));
     await waitFor(() => expect(saved()).toHaveLength(2));
@@ -125,7 +134,7 @@ describe('Yearly budget', () => {
               amount: 1_000,
               every: 'month',
               months: [],
-              category: 'Groceries',
+              categories: ['Groceries'],
             },
           ],
         },

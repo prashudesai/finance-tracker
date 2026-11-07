@@ -161,7 +161,7 @@ export const kidLine = (index: number, category: string): BudgetLine => ({
   amount: 0,
   every: 'months',
   months: [4, 7, 12],
-  category,
+  categories: category ? [category] : [],
 });
 
 /**
@@ -192,7 +192,7 @@ export function starterBudget(
       group: starter.group,
       every: starter.every,
       months: starter.months,
-      category,
+      categories: category ? [category] : [],
       amount:
         starter.every === 'month'
           ? round(perMonth)
@@ -203,7 +203,7 @@ export function starterBudget(
     id: budgetId(fy),
     fy,
     kids: 0,
-    lines: lines.map((line) => ({ ...line, category: line.category || '' })),
+    lines,
     income: 0,
   };
 }
@@ -231,7 +231,7 @@ export interface LineStatus {
   yearly: number;
   /** Due by today: past months in full, and this month's monthly lines in part. */
   due: number;
-  /** Spent in its category so far this year, shared with any other line on that category. */
+  /** Spent in its categories so far this year, shared with any other line on those categories. */
   spent: number | null;
   /** Spending ahead of pace by this much, or 0. */
   over: number;
@@ -273,6 +273,37 @@ export function budgetSpending(budget: Budget, data: TrackerData, today: string)
   );
 }
 
+const lower = (category: string) => category.toLowerCase();
+
+/**
+ * Lines that share any category are judged together, as spending in a shared category can't
+ * be split between them. Each group has its lines and every category they count.
+ */
+export function lineGroups(lines: BudgetLine[]) {
+  const groups: { lines: BudgetLine[]; categories: string[] }[] = [];
+  for (const line of lines) {
+    if (line.categories.length === 0) continue;
+    const keys = new Set(line.categories.map(lower));
+    const touching = groups.filter((group) =>
+      group.categories.some((name) => keys.has(lower(name))),
+    );
+    const merged = {
+      lines: [...touching.flatMap((group) => group.lines), line],
+      categories: [...touching.flatMap((group) => group.categories), ...line.categories],
+    };
+    merged.categories = merged.categories.filter(
+      (name, index) =>
+        merged.categories.findIndex((other) => lower(other) === lower(name)) === index,
+    );
+    for (const group of touching) groups.splice(groups.indexOf(group), 1);
+    groups.push(merged);
+  }
+  // Back in the plan's order.
+  const order = (group: { lines: BudgetLine[] }) =>
+    Math.min(...group.lines.map((line) => lines.indexOf(line)));
+  return groups.sort((a, b) => order(a) - order(b));
+}
+
 /** How far through a month today is, from 0 to 1. */
 const monthShare = (today: string) => {
   const day = Number(today.slice(8, 10));
@@ -293,19 +324,14 @@ export function budgetProgress(budget: Budget, data: TrackerData, today: string)
   const spending = budgetSpending(budget, data, today);
   const byCategory = new Map<string, number>();
   for (const row of spending)
-    byCategory.set(
-      row.category.toLowerCase(),
-      (byCategory.get(row.category.toLowerCase()) ?? 0) + row.amount,
-    );
-  const covered = new Set(budget.lines.map((line) => line.category.toLowerCase()).filter(Boolean));
-  const spentIn = (category: string, month?: string) =>
-    spending
-      .filter(
-        (row) =>
-          row.category.toLowerCase() === category.toLowerCase() &&
-          (!month || row.date.startsWith(month)),
-      )
+    byCategory.set(lower(row.category), (byCategory.get(lower(row.category)) ?? 0) + row.amount);
+  const covered = new Set(budget.lines.flatMap((line) => line.categories.map(lower)));
+  const spentIn = (categories: string[], month?: string) => {
+    const keys = new Set(categories.map(lower));
+    return spending
+      .filter((row) => keys.has(lower(row.category)) && (!month || row.date.startsWith(month)))
       .reduce((sum, row) => sum + row.amount, 0);
+  };
 
   const lineDue = (line: BudgetLine) => {
     let due = 0;
@@ -323,26 +349,26 @@ export function budgetProgress(budget: Budget, data: TrackerData, today: string)
     return due;
   };
 
-  // A category's spending is shared by its lines, so pace is judged per category.
-  const categoryDue = new Map<string, number>();
-  for (const line of budget.lines) {
-    if (!line.category) continue;
-    const key = line.category.toLowerCase();
-    categoryDue.set(key, (categoryDue.get(key) ?? 0) + lineDue(line));
-  }
+  // Lines sharing a category are judged together, on everything their categories spent.
+  const groups = lineGroups(budget.lines).map((group) => ({
+    ...group,
+    due: group.lines.reduce((sum, line) => sum + lineDue(line), 0),
+    spent: group.categories.reduce((sum, name) => sum + (byCategory.get(lower(name)) ?? 0), 0),
+  }));
+  const groupOf = (line: BudgetLine) => groups.find((group) => group.lines.includes(line));
 
   const lines = budget.lines.map((line): LineStatus => {
-    const key = line.category.toLowerCase();
-    const spent = line.category ? roundMoney(byCategory.get(key) ?? 0) : null;
-    const dueAll = categoryDue.get(key) ?? 0;
+    const group = groupOf(line);
+    const spent = group ? roundMoney(group.spent) : null;
+    const dueAll = group?.due ?? 0;
     const ahead = spent === null ? 0 : spent - dueAll;
     let paid: LineStatus['paid'] = null;
-    if (line.every !== 'month' && line.category) {
+    if (line.every !== 'month' && line.categories.length > 0) {
       const dueMonths = months.filter(
         (month, index) => month <= current && line.months.includes(((index + 3) % 12) + 1),
       );
       const done = dueMonths.filter(
-        (month) => spentIn(line.category, month) >= line.amount * 0.9,
+        (month) => spentIn(line.categories, month) >= line.amount * 0.9,
       ).length;
       paid = { done, of: dueMonths.length };
     }
@@ -375,11 +401,11 @@ export function budgetProgress(budget: Budget, data: TrackerData, today: string)
 
   const next = nextMonth(current);
   const upcoming = budget.lines.flatMap((line) => {
-    if (line.every === 'month' || !line.category) return [];
+    if (line.every === 'month' || line.categories.length === 0) return [];
     return [current, next].flatMap((month) => {
       const calendarMonth = Number(month.slice(5, 7));
       if (!months.includes(month) || !line.months.includes(calendarMonth)) return [];
-      if (spentIn(line.category, month) >= line.amount * 0.9 || line.amount <= 0) return [];
+      if (spentIn(line.categories, month) >= line.amount * 0.9 || line.amount <= 0) return [];
       return [{ line, month, amount: line.amount }];
     });
   });
@@ -425,7 +451,9 @@ export function budgetReminders(data: TrackerData, today: string) {
 }
 
 export interface CategoryActual {
-  category: string;
+  /** The categories counted, joined for showing. */
+  label: string;
+  categories: string[];
   /** The plan's lines that count spending here. */
   lines: string[];
   yearly: number;
@@ -459,40 +487,34 @@ export function budgetActuals(budget: Budget, data: TrackerData, today: string):
   const current = today.slice(0, 7);
   const progress = budgetProgress(budget, data, today);
   const spending = budgetSpending(budget, data, today);
-  const covered = new Set(budget.lines.map((line) => line.category.toLowerCase()).filter(Boolean));
+  const covered = new Set(budget.lines.flatMap((line) => line.categories.map(lower)));
   const names = new Map<string, string>();
   const spentBy = new Map<string, number>();
   for (const row of spending) {
-    const key = row.category.toLowerCase();
+    const key = lower(row.category);
     if (!names.has(key)) names.set(key, row.category);
     spentBy.set(key, (spentBy.get(key) ?? 0) + row.amount);
   }
 
-  const groups = new Map<string, CategoryActual>();
-  for (const status of progress.lines) {
-    const { line } = status;
-    if (!line.category) continue;
-    const key = line.category.toLowerCase();
-    const group = groups.get(key) ?? {
-      category: line.category,
-      lines: [],
-      yearly: 0,
-      planned: 0,
-      spent: roundMoney(spentBy.get(key) ?? 0),
-      difference: 0,
-    };
-    group.lines.push(line.name);
-    group.yearly += status.yearly;
-    group.planned += status.due;
-    groups.set(key, group);
-  }
-  const categories = [...groups.values()]
-    .map((group) => ({
-      ...group,
-      yearly: roundMoney(group.yearly),
-      planned: roundMoney(group.planned),
-      difference: roundMoney(group.spent - group.planned),
-    }))
+  const status = new Map(progress.lines.map((row) => [row.line, row]));
+  const categories = lineGroups(budget.lines)
+    .map((group): CategoryActual => {
+      const yearly = group.lines.reduce((sum, line) => sum + (status.get(line)?.yearly ?? 0), 0);
+      const planned = group.lines.reduce((sum, line) => sum + (status.get(line)?.due ?? 0), 0);
+      const spent = group.categories.reduce(
+        (sum, name) => sum + (spentBy.get(lower(name)) ?? 0),
+        0,
+      );
+      return {
+        label: group.categories.join(', '),
+        categories: group.categories,
+        lines: group.lines.map((line) => line.name),
+        yearly: roundMoney(yearly),
+        planned: roundMoney(planned),
+        spent: roundMoney(spent),
+        difference: roundMoney(spent - planned),
+      };
+    })
     .sort((a, b) => b.difference - a.difference || b.spent - a.spent);
 
   const unplanned = [...spentBy]
@@ -507,7 +529,7 @@ export function budgetActuals(budget: Budget, data: TrackerData, today: string):
     let other = 0;
     for (const row of spending) {
       if (!row.date.startsWith(month)) continue;
-      if (covered.has(row.category.toLowerCase())) inPlan += row.amount;
+      if (covered.has(lower(row.category))) inPlan += row.amount;
       else other += row.amount;
     }
     return {
@@ -528,7 +550,7 @@ export function budgetActuals(budget: Budget, data: TrackerData, today: string):
     categories,
     unplanned,
     untracked: budget.lines
-      .filter((line) => !line.category && line.amount > 0)
+      .filter((line) => line.categories.length === 0 && line.amount > 0)
       .map((line) => ({ name: line.name, yearly: roundMoney(lineYearly(line)) })),
   };
 }

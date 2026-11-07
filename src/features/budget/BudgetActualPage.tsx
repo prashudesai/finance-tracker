@@ -222,9 +222,9 @@ export function BudgetActualPage() {
               {actuals.categories
                 .filter((row) => row.yearly > 0 || row.spent > 0)
                 .map((row) => (
-                  <li className={styles.actualRow} key={row.category}>
+                  <li className={styles.actualRow} key={row.label}>
                     <div className={styles.split}>
-                      <strong>{row.category}</strong>
+                      <strong>{row.label}</strong>
                       <span
                         className={
                           notDue(row) ? ui.badgeMuted : row.difference > 0 ? ui.badge : ui.badgeDone
@@ -244,7 +244,7 @@ export function BudgetActualPage() {
                         ? `${formatMoney(row.yearly)} for the year`
                         : `${formatMoney(row.spent)} of ${formatMoney(row.planned)}${row.planned < row.yearly ? ` · ${formatMoney(row.yearly)} for the year` : ''}`}
                     </span>
-                    {row.lines.length > 1 || row.lines[0] !== row.category ? (
+                    {row.lines.length > 1 || row.lines[0] !== row.label ? (
                       <span className={styles.lineDetail}>For {row.lines.join(', ')}</span>
                     ) : null}
                   </li>

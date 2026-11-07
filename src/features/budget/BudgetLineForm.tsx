@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { lineYearly } from '../../domain/budget';
 import { roundMoney } from '../../domain/calendar';
-import { BUDGET_GROUPS, budgetLineSchema, type BudgetLine } from '../../schema/records';
+import {
+  BUDGET_GROUPS,
+  budgetLineSchema,
+  EMI_CATEGORY,
+  type BudgetLine,
+} from '../../schema/records';
 import { Field } from '../../ui/Field';
 import { formatMoney } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
-import { FY_MONTHS, GROUP_LABELS, MONTH_NAMES } from './budgetText';
+import { FY_MONTHS, GROUP_LABELS, MONTH_NAMES, listText } from './budgetText';
 import styles from './Budget.module.css';
 
 type Often = 'month' | 'year' | 'months' | 'once';
@@ -46,7 +51,11 @@ export function BudgetLineForm({
   const [perYear, setPerYear] = useState(false);
   const [amount, setAmount] = useState(line && line.amount > 0 ? String(line.amount) : '');
   const [months, setMonths] = useState<number[]>(line?.months.length ? line.months : [4]);
-  const [category, setCategory] = useState(line?.category ?? '');
+  const [picked, setPicked] = useState<string[]>(line?.categories ?? []);
+  // EMIs are loans, never budget spending. A saved category since removed from the list still shows.
+  const choices = [...new Set([...categories.filter((name) => name !== EMI_CATEGORY), ...picked])];
+  const toggleCategory = (name: string) =>
+    setPicked((now) => (now.includes(name) ? now.filter((row) => row !== name) : [...now, name]));
 
   const entered = Number(amount || 0);
   const stored = often === 'month' && perYear ? roundMoney(entered / 12) : roundMoney(entered);
@@ -61,7 +70,7 @@ export function BudgetLineForm({
       often === 'month'
         ? []
         : [...chosen].sort((a, b) => FY_MONTHS.indexOf(a) - FY_MONTHS.indexOf(b)),
-    category,
+    categories: choices.filter((name) => picked.includes(name)),
   };
   const nameError = draft.name ? null : 'Give it a name.';
   const amountError =
@@ -209,19 +218,31 @@ export function BudgetLineForm({
           </select>
         </Field>
       )}
-      <Field label="Counts spending in">
-        <select onChange={(event) => setCategory(event.target.value)} value={category}>
-          <option value="">No category, plan only</option>
-          {categories.map((name) => (
-            <option key={name} value={name}>
+      <div className={ui.formWide}>
+        <span className={ui.label}>Counts spending in</span>
+        <div aria-label="Counts spending in" className={styles.categoryPicker} role="group">
+          {choices.map((name) => (
+            <button
+              aria-pressed={picked.includes(name)}
+              className={styles.categoryChip}
+              key={name}
+              onClick={() => toggleCategory(name)}
+              type="button"
+            >
               {name}
-            </option>
+            </button>
           ))}
-        </select>
-      </Field>
+        </div>
+        <span className={ui.caption}>
+          Pick every category this goes in, such as Grocery, Milk and Fruits. Pick none to plan it
+          without following spending.
+        </span>
+      </div>
       <p className={`${ui.caption} ${ui.formWide}`}>
         {formatMoney(lineYearly(draft))} over the year.
-        {category ? ` Spending in ${category} counts against it.` : ''}
+        {draft.categories.length > 0
+          ? ` Spending in ${listText(draft.categories)} counts against it.`
+          : ''}
       </p>
       {tried && error && !nameError && !amountError && !monthsError ? (
         <p className={`${ui.fieldError} ${ui.formWide}`} role="alert">

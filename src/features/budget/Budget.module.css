@@ -342,3 +342,14 @@
   display: grid;
   gap: 6px;
 }
+
+.categoryPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.categoryChip {
+  composes: monthChip;
+  padding: 0 14px;
+}

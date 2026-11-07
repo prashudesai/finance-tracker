@@ -1,8 +1,15 @@
 import { describe, expect, test } from 'vitest';
 import { emptyTrackerData, type TrackerData } from '../data/repository';
-import { EMI_CATEGORY, type Budget, type BudgetLine, type Expense } from '../schema/records';
+import {
+  budgetLineSchema,
+  EMI_CATEGORY,
+  type Budget,
+  type BudgetLine,
+  type Expense,
+} from '../schema/records';
 import {
   budgetActuals,
+  lineGroups,
   budgetProgress,
   budgetTotal,
   fyMonths,
@@ -20,7 +27,7 @@ const line = (overrides: Partial<BudgetLine>): BudgetLine => ({
   amount: 0,
   every: 'month',
   months: [],
-  category: '',
+  categories: [],
   ...overrides,
 });
 const budget = (lines: BudgetLine[]): Budget => ({
@@ -46,7 +53,7 @@ const data = (expenses: Expense[], extra: Partial<TrackerData> = {}): TrackerDat
 });
 
 describe('a yearly budget', () => {
-  const rent = line({ id: 'rent', name: 'Rent', amount: 30_000, category: 'House Rent' });
+  const rent = line({ id: 'rent', name: 'Rent', amount: 30_000, categories: ['House Rent'] });
   const fees = line({
     id: 'fees',
     name: 'School',
@@ -54,7 +61,7 @@ describe('a yearly budget', () => {
     amount: 50_000,
     every: 'months',
     months: [4, 7, 12],
-    category: 'Education',
+    categories: ['Education'],
   });
   const car = line({
     id: 'car',
@@ -63,7 +70,7 @@ describe('a yearly budget', () => {
     amount: 18_000,
     every: 'months',
     months: [12],
-    category: 'Insurance',
+    categories: ['Insurance'],
   });
   const plan = budget([rent, fees, car]);
 
@@ -133,10 +140,10 @@ describe('a first plan, and next year', () => {
     ]);
     const plan = starterBudget(2026, data(rows), TODAY, ['House Rent', 'Insurance', 'Education']);
     const rent = plan.lines.find((row) => row.name === 'Rent');
-    expect(rent).toMatchObject({ category: 'House Rent', amount: 30_000, every: 'month' });
+    expect(rent).toMatchObject({ categories: ['House Rent'], amount: 30_000, every: 'month' });
     // Four insurance lines share one category, so none can be filled in from it.
     expect(plan.lines.find((row) => row.name === 'Term insurance')).toMatchObject({
-      category: 'Insurance',
+      categories: ['Insurance'],
       amount: 0,
     });
   });
@@ -146,7 +153,7 @@ describe('a first plan, and next year', () => {
       'Education',
     ]);
     expect(plan.lines.map((row) => row.id)).toEqual(['rent', 'kid-1', 'kid-2', 'gym']);
-    expect(plan.lines[1]).toMatchObject({ name: 'Kid 1 · school fees', category: 'Education' });
+    expect(plan.lines[1]).toMatchObject({ name: 'Kid 1 · school fees', categories: ['Education'] });
     expect(withKids(plan, 1, []).lines.map((row) => row.id)).toEqual(['rent', 'kid-1', 'gym']);
   });
 
@@ -163,9 +170,9 @@ describe('a first plan, and next year', () => {
 
 describe('budget against what was spent', () => {
   const plan = budget([
-    line({ id: 'rent', name: 'Rent', amount: 30_000, category: 'House Rent' }),
-    line({ id: 'food', name: 'Groceries', amount: 10_000, category: 'Groceries' }),
-    line({ id: 'snacks', name: 'Snacks', amount: 2_000, category: 'Groceries' }),
+    line({ id: 'rent', name: 'Rent', amount: 30_000, categories: ['House Rent'] }),
+    line({ id: 'food', name: 'Groceries', amount: 10_000, categories: ['Groceries'] }),
+    line({ id: 'snacks', name: 'Snacks', amount: 2_000, categories: ['Groceries'] }),
     line({ id: 'gift', name: 'Gifts', amount: 5_000, every: 'once', months: [10] }),
   ]);
   const expenses = [
@@ -184,13 +191,13 @@ describe('budget against what was spent', () => {
     const [groceries, rent] = actuals.categories;
     // Two lines share Groceries, so they're judged together, whatever the case.
     expect(groceries).toMatchObject({
-      category: 'Groceries',
+      label: 'Groceries',
       lines: ['Groceries', 'Snacks'],
       planned: 1_44_000,
       spent: 23_000,
       difference: 23_000 - 1_44_000,
     });
-    expect(rent).toMatchObject({ category: 'House Rent', planned: 3_60_000, spent: 60_000 });
+    expect(rent).toMatchObject({ label: 'House Rent', planned: 3_60_000, spent: 60_000 });
     // EMIs aren't spending against a budget.
     expect(actuals.unplanned).toEqual([{ category: 'Dining', spent: 4_000 }]);
     expect(actuals.untracked).toEqual([{ name: 'Gifts', yearly: 5_000 }]);
@@ -208,6 +215,45 @@ describe('budget against what was spent', () => {
     // April and all of May for the monthly lines.
     expect(actuals.planned).toBe(2 * 42_000);
     expect(actuals.months[2]?.spent).toBeNull();
-    expect(actuals.categories[0]?.category).toBe('House Rent');
+    expect(actuals.categories[0]?.label).toBe('House Rent');
+  });
+});
+
+describe('a line counting several categories', () => {
+  const food = line({
+    id: 'food',
+    name: 'Groceries',
+    amount: 15_000,
+    categories: ['Grocery', 'Milk', 'Fruits'],
+  });
+  const treats = line({ id: 'treats', name: 'Treats', amount: 2_000, categories: ['fruits'] });
+  const rent = line({ id: 'rent', name: 'Rent', amount: 30_000, categories: ['House Rent'] });
+
+  test('spending in any of its categories counts against it', () => {
+    const expenses = [
+      spend('2026-04-03', 9_000, 'Grocery'),
+      spend('2026-04-05', 3_000, 'Milk'),
+      spend('2026-04-09', 2_000, 'Fruits'),
+      spend('2026-04-12', 1_000, 'Dining'),
+    ];
+    const actuals = budgetActuals(budget([food]), data(expenses), '2027-04-01');
+    expect(actuals.categories[0]).toMatchObject({ label: 'Grocery, Milk, Fruits', spent: 14_000 });
+    expect(actuals.unplanned).toEqual([{ category: 'Dining', spent: 1_000 }]);
+    expect(actuals.months[0]).toMatchObject({ spent: 14_000, outside: 1_000 });
+  });
+
+  test('lines sharing any category are judged together, others apart', () => {
+    const groups = lineGroups([food, rent, treats]);
+    expect(groups.map((group) => group.lines.map((row) => row.id))).toEqual([
+      ['food', 'treats'],
+      ['rent'],
+    ]);
+    expect(groups[0]?.categories).toEqual(['Grocery', 'Milk', 'Fruits']);
+  });
+
+  test('a line saved with one category reads back as a list of one', () => {
+    const saved = { ...food, categories: undefined, category: 'Groceries' };
+    expect(budgetLineSchema.parse(saved).categories).toEqual(['Groceries']);
+    expect(budgetLineSchema.parse({ ...saved, category: '' }).categories).toEqual([]);
   });
 });
