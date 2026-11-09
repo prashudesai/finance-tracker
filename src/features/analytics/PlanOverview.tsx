@@ -1,9 +1,13 @@
 import { ChevronRight, PiggyBank, Target, type LucideIcon } from 'lucide-react';
+import { Component, useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router';
+import { reportError } from '../../ui/errorSink';
 import { budgetProgress } from '../../domain/budget';
-import { financialYearLabel, financialYearStart } from '../../domain/calendar';
+import { addMonths, financialYearLabel, financialYearStart } from '../../domain/calendar';
+import { retirementNeed } from '../../domain/retirement';
+import { savedRetirementInputs } from '../goals/retirementInputs';
 import { goalPlan } from '../../domain/goals';
-import { useSpendingHousehold } from '../../store/tracker';
+import { useSettings, useSpendingHousehold } from '../../store/tracker';
 import { formatAmount, formatMoney, formatPercent, localDate } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 import { GOAL_ICONS, STATUS_LABELS, STATUS_TONES } from '../goals/goalText';
@@ -12,6 +16,23 @@ import { useProjection } from './useProjection';
 import type { ProjectionResult } from '../../domain/projection';
 import type { Goal } from '../../schema/records';
 import type { GoalPlan } from '../../domain/goals';
+
+/** One part of the overview that fails leaves the rest showing, and the problem is reported. */
+class Part extends Component<{ children: ReactNode }, { failed: boolean }> {
+  override state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  override componentDidCatch(error: unknown) {
+    reportError(error);
+  }
+
+  override render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 function Shortcut({
   to,
@@ -52,6 +73,20 @@ export function PlanOverview() {
     .filter((row) => row !== retirement)
     .sort((a, b) => a.plan.progress - b.plan.progress);
   const projection = useProjection();
+  const settings = useSettings();
+  const planner = useMemo(() => {
+    const inputs = savedRetirementInputs(data, settings, today);
+    if (!inputs) return null;
+    const need = retirementNeed(inputs);
+    const birth = settings.retirement?.birthDate ?? '';
+    const retireOn = settings.retirement?.retireDate || (birth ? addMonths(birth, 60 * 12) : '');
+    return {
+      needed: need.needed,
+      onCourse: need.onCourse,
+      gap: need.gap,
+      year: retireOn.slice(0, 4),
+    };
+  }, [data, settings, today]);
   const fy = financialYearStart(today);
   const budget = data.budgets.find((row) => row.fy === fy);
   const progress = budget ? budgetProgress(budget, data, today) : null;
@@ -59,7 +94,9 @@ export function PlanOverview() {
 
   return (
     <>
-      <RetirementCard retirement={retirement} />
+      <Part>
+        <RetirementCard planner={planner} retirement={retirement} />
+      </Part>
 
       <section aria-labelledby="plan-goals" className={styles.section}>
         <div className={styles.head}>
@@ -145,10 +182,12 @@ export function PlanOverview() {
       </section>
 
       {projection.results ? (
-        <GrowthPreview results={projection.results} years={projection.years} />
+        <Part>
+          <GrowthPreview results={projection.results} years={projection.years} />
+        </Part>
       ) : null}
 
-      <section aria-label="More plans" className={styles.shortcuts}>
+      <section aria-label="More plans" className={`${ui.card} ${styles.shortcuts}`}>
         <Shortcut
           icon={PiggyBank}
           text="This year's plan against what you actually spent"
@@ -169,9 +208,24 @@ export function PlanOverview() {
 /** Retirement as a ring: what the plan as it stands reaches, against what's needed. */
 function RetirementCard({
   retirement,
+  planner,
 }: {
   retirement: { goal: Goal; plan: GoalPlan } | undefined;
+  planner: { needed: number; onCourse: number; gap: number; year: string } | null;
 }) {
+  if (planner) {
+    const share = planner.needed > 0 ? planner.onCourse / planner.needed : 1;
+    const onCourse = planner.gap <= 0;
+    return (
+      <RetirementRing
+        label={`Retirement${planner.year ? ` in ${planner.year}` : ''}`}
+        share={share}
+        status={onCourse ? 'On course' : `${formatAmount(planner.gap)} short`}
+        sub={`${formatAmount(planner.onCourse)} on course · needs ${formatAmount(planner.needed)}`}
+        tone={onCourse ? 'good' : 'watch'}
+      />
+    );
+  }
   if (!retirement) {
     return (
       <Link className={`${ui.hero} ${styles.retire}`} to="/analytics/goals">
@@ -187,25 +241,44 @@ function RetirementCard({
   const { goal, plan } = retirement;
   const share = plan.needed > 0 ? plan.projected / plan.needed : 1;
   const onCourse = plan.status === 'reached' || plan.status === 'onTrack';
+  return (
+    <RetirementRing
+      label={`Retirement${goal.targetDate ? ` by ${goal.targetDate.slice(0, 4)}` : ''}`}
+      share={share}
+      status={onCourse ? 'On course' : STATUS_LABELS[plan.status]}
+      sub={`${formatAmount(plan.projected)} projected · needs ${formatAmount(plan.needed)}`}
+      tone={STATUS_TONES[plan.status]}
+    />
+  );
+}
+
+/** Retirement as a ring of what's on course against what's needed. */
+function RetirementRing({
+  label,
+  status,
+  sub,
+  share,
+  tone,
+}: {
+  label: string;
+  status: string;
+  sub: string;
+  share: number;
+  tone: 'good' | 'neutral' | 'watch';
+}) {
   const r = 34;
   const c = 2 * Math.PI * r;
   return (
     <Link
-      aria-label={`Retirement: ${onCourse ? 'on course' : STATUS_LABELS[plan.status]}, ${Math.round(share * 100)}% of what's needed. Open goal planning`}
+      aria-label={`${label}: ${status}, ${Math.round(share * 100)}% of what's needed. Open the retirement planner`}
       className={`${ui.hero} ${styles.retire}`}
-      data-tone={STATUS_TONES[plan.status]}
+      data-tone={tone}
       to="/analytics/goals"
     >
       <span className={styles.retireText}>
-        <span className={styles.retireLabel}>
-          Retirement{goal.targetDate ? ` by ${goal.targetDate.slice(0, 4)}` : ''}
-        </span>
-        <strong className={styles.retireStatus}>
-          {onCourse ? 'On course' : STATUS_LABELS[plan.status]}
-        </strong>
-        <span className={styles.retireSub}>
-          {formatAmount(plan.projected)} projected · needs {formatAmount(plan.needed)}
-        </span>
+        <span className={styles.retireLabel}>{label}</span>
+        <strong className={styles.retireStatus}>{status}</strong>
+        <span className={styles.retireSub}>{sub}</span>
       </span>
       <svg aria-hidden="true" className={styles.retireRing} viewBox="0 0 84 84">
         <circle className={styles.retireTrack} cx="42" cy="42" r={r} />

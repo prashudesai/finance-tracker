@@ -253,7 +253,6 @@
 }
 
 .segmentedSmall {
-  composes: segmented from '../../ui/ui.module.css';
 }
 
 .dotPlan,

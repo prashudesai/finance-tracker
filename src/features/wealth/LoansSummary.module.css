@@ -17,7 +17,7 @@
   font-size: 1.05rem;
 }
 
-.list {
+.list.list {
   gap: 0;
   margin: 0;
   padding: 4px 16px;

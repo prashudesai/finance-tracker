@@ -18,7 +18,6 @@ import {
   type RetirementInputs,
   type RetirementPart,
 } from '../../domain/retirement';
-import type { TrackerSettings } from '../../schema/records';
 import { useSaveSettings, useSettings, useSpendingHousehold } from '../../store/tracker';
 import { LineChart } from '../../ui/charts';
 import { Field } from '../../ui/Field';
@@ -27,90 +26,18 @@ import ui from '../../ui/ui.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
 import { useMedia } from '../../ui/useMedia';
 import styles from './Goals.module.css';
-
-type Assumptions = NonNullable<TrackerSettings['retirement']>;
-
-/** Ages come from the dates, which only the person can give. */
-/** Retirement is the 60th birthday unless another date is picked. */
-const RETIRE_AT = 60;
-
-const DEFAULTS: Omit<Assumptions, 'birthDate' | 'retireDate'> = {
-  untilAge: 85,
-  inflation: 6,
-  growthBefore: 10,
-  growthAfter: 10,
-  stepUp: 5,
-  contributions: true,
-  fund: 'all',
-};
-
-type After = NonNullable<Assumptions['after']>[string];
-
-/** One investment's behaviour after retiring, as typed, so fields can be mid-edit. */
-interface AfterDraft {
-  behaviour: After['behaviour'];
-  growth: string;
-  payout: string;
-  /** A payout as a percentage of the value a year, or a fixed amount a month. */
-  payoutIn: 'percent' | 'amount';
-  payoutAmount: string;
-  payoutEvery: Every;
-  sellable: boolean;
-  moving: boolean;
-  moveShare: string;
-  movePayout: string;
-}
-
-const BEHAVIOURS = [
-  ['growth', 'Grows'],
-  ['income', 'Income'],
-  ['both', 'Both'],
-] as const;
-
-const draftOf = (saved: After | undefined, growth: number): AfterDraft => ({
-  behaviour: saved?.behaviour ?? 'growth',
-  growth: String(saved?.growth ?? growth),
-  payout: String(saved?.payoutFixed ? 7 : (saved?.payout ?? 7)),
-  payoutIn: saved?.payoutFixed ? 'amount' : 'percent',
-  payoutAmount: saved?.payoutFixed ? String(saved.payoutFixed.amount) : '',
-  payoutEvery: saved?.payoutFixed?.every ?? 'month',
-  sellable: saved?.sellable ?? true,
-  moving: Boolean(saved?.move),
-  moveShare: String(Math.round((saved?.move?.share ?? 0.3) * 100)),
-  movePayout: String(saved?.move?.payout ?? 8),
-});
-
-/** What's saved for a draft, in the schema's order so saved and unsaved compare equal. */
-function afterOf(draft: AfterDraft): After {
-  const pays = draft.behaviour !== 'growth';
-  const grows = draft.behaviour !== 'income';
-  return {
-    behaviour: draft.behaviour,
-    growth: grows ? Number(draft.growth) : 0,
-    payout: pays && draft.payoutIn === 'percent' ? Number(draft.payout) : 0,
-    ...(pays && draft.payoutIn === 'amount'
-      ? { payoutFixed: { amount: Number(draft.payoutAmount), every: draft.payoutEvery } }
-      : {}),
-    sellable: pays ? draft.sellable : true,
-    ...(grows && draft.moving
-      ? { move: { share: Number(draft.moveShare) / 100, payout: Number(draft.movePayout) } }
-      : {}),
-  };
-}
-
-const MOVED = ' → income';
-
-type Every = 'month' | 'quarter' | 'year';
-
-const EVERY = [
-  ['month', 'Monthly'],
-  ['quarter', 'Quarterly'],
-  ['year', 'Yearly'],
-] as const;
-
-/** A fixed payout spread evenly over the months it covers, for the month-by-month plan. */
-const monthlyOf = ({ amount, every }: { amount: number; every: Every }) =>
-  amount / (every === 'month' ? 1 : every === 'quarter' ? 3 : 12);
+import {
+  afterOf,
+  BEHAVIOURS,
+  DEFAULTS,
+  draftOf,
+  EVERY,
+  monthlyOf,
+  MOVED,
+  RETIRE_AT,
+  type AfterDraft,
+  type Assumptions,
+} from './retirementInputs';
 
 /** A number field that keeps what's typed, even mid-edit, and reports a number. */
 function NumberField({

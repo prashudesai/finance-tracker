@@ -1,4 +1,4 @@
-import { Plus, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import {
@@ -23,7 +23,6 @@ import ui from '../../ui/ui.module.css';
 import styles from './CashFlowPage.module.css';
 import { Commitments } from './Commitments';
 import { MonthFlow } from './MonthFlow';
-import { MonthPills } from './MonthPills';
 import { MoneyFlowChart } from './MoneyFlowChart';
 import { moneyFlow } from '../../domain/moneyFlow';
 import { ExpenseForm, IncomeForm } from './EntryForms';
@@ -106,8 +105,7 @@ export function CashFlowPage() {
   const [adding, setAdding] = useState<'income' | 'expense' | null>(null);
   const [history, setHistory] = useState<'income' | 'expense'>('income');
   const [reviewOpen, setReviewOpen] = useState(false);
-  // Search and a category filter for the month's entries.
-  const [query, setQuery] = useState('');
+  // A category filter for the month's expenses.
   const [category, setCategory] = useState('');
   const phone = useIsPhone();
   const { state: quickAdd } = useLocation() as {
@@ -204,20 +202,13 @@ export function CashFlowPage() {
   const invested = investedFromIncome(data).get(month) ?? 0;
   // The expense list's total adds up the entries it shows.
   const listed = monthTotals(data).get(month)?.expenses ?? 0;
-  const words = query.trim().toLowerCase();
-  const matches = (...fields: (string | undefined)[]) =>
-    !words || fields.some((field) => field?.toLowerCase().includes(words));
   const loanType = (id: string | undefined) => data.loans.find((loan) => loan.id === id)?.type;
   const monthExpenses = data.expenses.filter(
     (row) => row.date.startsWith(month) && !isAnyHouseExpense(row),
   );
   const categories = [...new Set(monthExpenses.map((row) => row.category))].sort();
-  const incomeRows = data.income.filter((row) => matches(row.source, row.member, row.notes));
-  const expenseRows = data.expenses.filter(
-    (row) =>
-      (!category || row.category === category) &&
-      matches(row.category, row.subcategory, row.notes, row.member, loanType(row.loanId)),
-  );
+  const incomeRows = data.income;
+  const expenseRows = data.expenses.filter((row) => !category || row.category === category);
   const newest = <Row extends { date: string }>(rows: Row[]) =>
     rows.filter((row) => row.date.startsWith(month)).sort((a, b) => b.date.localeCompare(a.date));
   const months = Array.from({ length: MONTH_CHOICES }).reduce<string[]>(
@@ -261,14 +252,6 @@ export function CashFlowPage() {
           Review this month
         </button>
       ) : null}
-      {phone ? (
-        <MonthPills
-          current={current}
-          earliest={months.at(-1) ?? current}
-          month={month}
-          onMonth={setMonth}
-        />
-      ) : null}
       {/* One card: the balance, then where the month's money went. */}
       <MonthFlow
         current={current}
@@ -289,6 +272,7 @@ export function CashFlowPage() {
         onMonth={setMonth}
         repaid={repaid}
         spent={recordedSpending}
+        picker={phone}
         stepper={false}
         unrecorded={unrecorded}
       />
@@ -327,16 +311,6 @@ export function CashFlowPage() {
         </div>
       ) : null}
       <div className={styles.filters}>
-        <label className={styles.search}>
-          <Search aria-hidden="true" size={16} />
-          <input
-            aria-label="Search this month's entries"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search entries"
-            type="search"
-            value={query}
-          />
-        </label>
         {(!phone || history === 'expense') && categories.length > 1 ? (
           <div aria-label="Category" className={styles.chips} role="group">
             {['', ...categories].map((name) => (
@@ -378,9 +352,7 @@ export function CashFlowPage() {
                 </button>
               ) : undefined
             }
-            total={formatMoney(
-              words ? newest(incomeRows).reduce((sum, row) => sum + row.amount, 0) : totals.income,
-            )}
+            total={formatMoney(totals.income)}
           />
         ) : null}
         {!phone || history === 'expense' ? (
@@ -422,9 +394,7 @@ export function CashFlowPage() {
               ) : undefined
             }
             total={formatMoney(
-              words || category
-                ? newest(expenseRows).reduce((sum, row) => sum + row.amount, 0)
-                : listed,
+              category ? newest(expenseRows).reduce((sum, row) => sum + row.amount, 0) : listed,
             )}
           />
         ) : null}

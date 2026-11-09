@@ -3,6 +3,7 @@ import {
   gratuityAsset,
   projectionAssets,
   runProjection,
+  type ProjectionAsset,
   type ProjectionResult,
 } from '../../domain/projection';
 import { SCENARIOS, type Scenario } from '../../schema/records';
@@ -14,14 +15,20 @@ export function useProjection() {
   const data = useSpendingView();
   const settings = useSettings();
   const today = localDate();
-  const assets = projectionAssets(data.holdings, data, settings, data.projectionAdjustments, today);
-  const gratuityNow = totalGratuity(data.gratuityAccounts, today);
+  let error = '';
+  let assets: ProjectionAsset[] = [];
+  let gratuityNow = 0;
+  try {
+    assets = projectionAssets(data.holdings, data, settings, data.projectionAdjustments, today);
+    gratuityNow = totalGratuity(data.gratuityAccounts, today);
+  } catch (failure) {
+    error = failure instanceof Error ? failure.message : 'This projection could not be calculated.';
+  }
   const withGratuity =
     data.gratuityAccounts.length > 0 && settings.includeGratuity
       ? [...assets, gratuityAsset(gratuityNow)]
       : assets;
 
-  let error = '';
   const results = {} as Record<Scenario, ProjectionResult>;
   for (const item of SCENARIOS) {
     try {
@@ -44,7 +51,7 @@ export function useProjection() {
     withGratuity,
     gratuityNow,
     error,
-    results: SCENARIOS.every((item) => results[item]) ? results : null,
+    results: !error && SCENARIOS.every((item) => results[item]) ? results : null,
     years: settings.projectionYears,
   };
 }

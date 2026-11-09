@@ -28,6 +28,7 @@ export function MonthFlow({
   explainer,
   flow,
   stepper = true,
+  picker = false,
   month,
   current,
   earliest,
@@ -50,6 +51,8 @@ export function MonthFlow({
   flow?: (open: boolean) => ReactNode;
   /** The month arrows and picker; wide screens pick the month in the page header instead. */
   stepper?: boolean;
+  /** Just the month's name, tapped to pick one; swiping the card still moves a month. */
+  picker?: boolean;
 }) {
   const [flowOpen, setFlowOpen] = useState(false);
   const balance = income - spent - repaid - unrecorded - invested;
@@ -92,6 +95,26 @@ export function MonthFlow({
         start.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
       }}
     >
+      {picker && !stepper ? (
+        <div className={styles.pickRow}>
+          <label className={styles.pick}>
+            <strong aria-live="polite">{formatMonth(month)}</strong>
+            <ChevronDown aria-hidden="true" size={16} />
+            <input
+              aria-label="Month"
+              max={current}
+              min={earliest}
+              onChange={(event) => {
+                const picked = event.target.value;
+                if (picked && picked >= earliest && picked <= current) onMonth(picked);
+              }}
+              type="month"
+              value={month}
+            />
+          </label>
+          <span className={styles.swipeHint}>Swipe for other months</span>
+        </div>
+      ) : null}
       {stepper ? (
         <div className={styles.months}>
           <button

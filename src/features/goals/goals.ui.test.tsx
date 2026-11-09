@@ -322,3 +322,46 @@ describe('Goals', () => {
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Set a goal' })).toBeNull());
   });
 });
+
+describe('Plan overview and the retirement planner', () => {
+  test('the overview shows the same retirement figures as the planner, from its settings', async () => {
+    const retirement = {
+      birthDate: '1990-06-15',
+      retireDate: '2050-06-15',
+      untilAge: 85,
+      inflation: 6,
+      growthBefore: 10,
+      growthAfter: 8,
+      stepUp: 5,
+      contributions: true,
+      fund: 'all' as const,
+      monthlyExpense: 60_000,
+    };
+    const repository = createMemoryRepository({
+      holdings: [fund],
+      settings: [{ ...defaultSettings(), onboardingDone: true, retirement }],
+    });
+    render(
+      <MemoryRouter initialEntries={['/analytics/goals']}>
+        <Shell repository={repository} />
+      </MemoryRouter>,
+    );
+    const onCourse = (await screen.findByText('On course for')).nextElementSibling?.textContent;
+    const needed = (await screen.findByText(/^Needed at/)).nextElementSibling?.textContent;
+    cleanup();
+    render(
+      <MemoryRouter initialEntries={['/analytics/overview']}>
+        <Shell
+          repository={createMemoryRepository({
+            holdings: [fund],
+            settings: [{ ...defaultSettings(), onboardingDone: true, retirement }],
+          })}
+        />
+      </MemoryRouter>,
+    );
+    const card = await screen.findByRole('link', { name: /^Retirement in 2050/ });
+    expect(card.textContent).toContain(`${onCourse} on course`);
+    expect(card.textContent).toContain(`needs ${needed}`);
+    expect(card.textContent).not.toContain('Plan it');
+  });
+});

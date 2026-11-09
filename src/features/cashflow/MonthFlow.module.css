@@ -1,5 +1,5 @@
 /* The phone month summary: the balance first, then how income flowed out to reach it. */
-.flow {
+.flow.flow {
   gap: 10px;
   padding: 14px 16px;
   touch-action: pan-y;
@@ -244,4 +244,21 @@
 
 .moreIcon[data-open] {
   transform: rotate(90deg);
+}
+
+/* The month on its own: its name to tap, and a quiet hint that the card swipes. */
+.pickRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pickRow .pick {
+  justify-content: flex-start;
+}
+
+.swipeHint {
+  color: var(--muted);
+  font-size: 0.75rem;
 }

@@ -70,7 +70,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.recent {
+.recent.recent {
   gap: 0;
   margin: 0;
   padding: 4px 16px;
@@ -148,7 +148,7 @@
 }
 
 /* November so far: a ring with what's left, and the month's figures beside it. */
-.ring {
+.ring.ring {
   display: grid;
   grid-template-columns: 104px minmax(0, 1fr);
   gap: 16px;

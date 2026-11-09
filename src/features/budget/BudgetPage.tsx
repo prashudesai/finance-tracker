@@ -403,7 +403,11 @@ export function BudgetPage() {
         </div>
         <div className={styles.kids}>
           <span className={ui.label}>Kids in school</span>
-          <div aria-label="Kids in school" className={styles.segmentedSmall} role="radiogroup">
+          <div
+            aria-label="Kids in school"
+            className={`${ui.segmented} ${styles.segmentedSmall}`}
+            role="radiogroup"
+          >
             {[0, 1, 2, 3, 4].map((count) => (
               <button
                 aria-checked={budget.kids === count}
