@@ -1,0 +1,114 @@
+.hero {
+  gap: 4px;
+  align-content: start;
+  padding: 20px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.sub {
+  color: var(--muted);
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+
+.value {
+  font-size: clamp(2rem, 9vw, 2.6rem);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+  color: var(--gain);
+  font-size: 0.88rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.change[data-down] {
+  color: var(--warning-text);
+}
+
+.since {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.chart {
+  width: 100%;
+  min-width: 0;
+  min-height: 74px;
+  margin-top: 8px;
+}
+
+.chart svg {
+  display: block;
+  overflow: visible;
+}
+
+.line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.dot {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2.5;
+}
+
+.ranges {
+  display: flex;
+  gap: 6px;
+}
+
+.range {
+  min-height: 32px;
+  padding: 4px 12px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.range[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.split {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.split strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}

@@ -1,6 +1,5 @@
 import {
   ArrowUpDown,
-  CreditCard,
   Home,
   LineChart,
   Moon,
@@ -9,9 +8,11 @@ import {
   Eye,
   EyeOff,
   Wallet,
+  type LucideIcon,
 } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router';
+import { QuickAdd } from './features/dashboard/QuickAdd';
 import { Dashboard } from './features/dashboard/Dashboard';
 import type { TrackerRepository } from './data/repository';
 import { useSettings, useTracker } from './store/tracker';
@@ -61,6 +62,7 @@ const AnalyticsPage = named(() => import('./features/analytics/AnalyticsPage'), 
 const ProjectionPage = named(() => import('./features/analytics/ProjectionPage'), 'ProjectionPage');
 const ReportsPage = named(() => import('./features/analytics/ReportsPage'), 'ReportsPage');
 const IncomePage = named(() => import('./features/analytics/IncomePage'), 'IncomePage');
+const PlanOverview = named(() => import('./features/analytics/PlanOverview'), 'PlanOverview');
 const BudgetPage = named(() => import('./features/budget/BudgetPage'), 'BudgetPage');
 const BudgetActualPage = named(
   () => import('./features/budget/BudgetActualPage'),
@@ -74,12 +76,18 @@ const SettingsPage = lazy(() =>
   import('./features/settings/SettingsPage').then(({ SettingsPage: Page }) => ({ default: Page })),
 );
 
-const LINKS = [
-  { to: '/', label: 'Dashboard', short: 'Home', icon: Home },
-  { to: '/cash-flow', label: 'Income & Expense', short: 'Cash flow', icon: ArrowUpDown },
-  { to: '/investments', label: 'Investment', short: 'Investments', icon: Wallet },
-  { to: '/debts', label: 'Debts', short: 'Debts', icon: CreditCard },
-  { to: '/analytics', label: 'Analysis & Planning', short: 'Planning', icon: LineChart },
+/** The main sections. `also` keeps a tab lit on the pages it gathers, such as Wealth's loans. */
+const LINKS: { to: string; label: string; short: string; icon: LucideIcon; also?: string[] }[] = [
+  { to: '/', label: 'Home', short: 'Home', icon: Home },
+  { to: '/cash-flow', label: 'Money', short: 'Money', icon: ArrowUpDown },
+  { to: '/investments', label: 'Wealth', short: 'Wealth', icon: Wallet, also: ['/debts'] },
+  {
+    to: '/analytics/overview',
+    label: 'Plan',
+    short: 'Plan',
+    icon: LineChart,
+    also: ['/analytics'],
+  },
   { to: '/settings', label: 'Settings', short: 'Settings', icon: SlidersHorizontal },
 ];
 
@@ -280,20 +288,23 @@ export function Shell({
           )}
         </div>
         <nav aria-label="Main" className={styles.nav}>
-          {LINKS.map(({ to, label, short, icon: Icon }) => (
-            <NavLink
-              className={({ isActive }) =>
-                `${isActive ? styles.active : styles.link} ${to === '/settings' ? styles.desktopOnly : ''}`
-              }
-              end={to === '/'}
-              key={to}
-              to={to}
-              viewTransition
-            >
-              <Icon aria-hidden="true" size={20} />
-              <span className={styles.fullLabel}>{label}</span>
-              <span className={styles.shortLabel}>{short}</span>
-            </NavLink>
+          {LINKS.map(({ to, label, short, icon: Icon, also }, index) => (
+            <Fragment key={to}>
+              {/* The + sits in the middle of the phone's tab bar, between Money and Wealth. */}
+              {index === 2 ? <QuickAdd /> : null}
+              <NavLink
+                className={({ isActive }) =>
+                  `${isActive || also?.some((path) => pathname.startsWith(path)) ? styles.active : styles.link} ${to === '/settings' ? styles.desktopOnly : ''}`
+                }
+                end={to === '/'}
+                to={to}
+                viewTransition
+              >
+                <Icon aria-hidden="true" size={20} />
+                <span className={styles.fullLabel}>{label}</span>
+                <span className={styles.shortLabel}>{short}</span>
+              </NavLink>
+            </Fragment>
           ))}
         </nav>
         <div className={styles.tools}>
@@ -368,6 +379,7 @@ export function Shell({
                 <Route element={<ProjectionPage />} path="projection" />
                 <Route element={<GoalPlanningPage />} path="goals" />
                 <Route element={<ReportsPage />} path="reports" />
+                <Route element={<PlanOverview />} path="overview" />
                 <Route element={<BudgetPage />} path="budget" />
                 <Route element={<BudgetActualPage />} path="budget-actual" />
               </Route>

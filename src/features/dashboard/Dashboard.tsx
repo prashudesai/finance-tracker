@@ -1,10 +1,4 @@
-import {
-  BellRing,
-  ChevronRight,
-  CreditCard,
-  LineChart as TrendIcon,
-  TrendingUp,
-} from 'lucide-react';
+import { BellRing, ChevronRight, CreditCard, TrendingUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
@@ -17,8 +11,6 @@ import {
   overviewTrends,
   repaymentsByMonth,
   withoutRepayments,
-  netWorth,
-  netWorthHistory,
   portfolioCategories,
   type CategoryRow,
 } from '../../domain/analytics';
@@ -37,28 +29,26 @@ import {
   localDate,
   signedMoney,
 } from '../../ui/format';
-import { PageHeader } from '../../ui/PageHeader';
 import ui from '../../ui/ui.module.css';
 import styles from './Dashboard.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
 import { useMedia } from '../../ui/useMedia';
 import { EmptyState } from '../../ui/EmptyState';
-import { TrendLine } from '../../ui/TrendLine';
-import { useCountUp } from '../../ui/useCountUp';
 import { GoalsTile } from '../goals/GoalsTile';
-import { MonthOverview } from './MonthOverview';
+import { MonthRing } from './MonthRing';
+import homeStyles from './Home.module.css';
+import { NetWorthHero } from './NetWorthHero';
+import { QuickActions } from './QuickActions';
+import { ComingUp, RecentEntries } from './HomeLists';
 import { InsightsCard } from '../insights/InsightsCard';
 import { RecapCard } from '../insights/MonthRecap';
 import { InstallCard } from '../install/InstallPrompts';
 import { EmiActions, useHiddenEmis } from './EmiActions';
 import { GettingStarted } from './GettingStarted';
-import { QuickAdd } from './QuickAdd';
 import { TrendChart } from './TrendChart';
 
 /** Portfolio rows on the dashboard: more on wide screens, where it sits beside the taller chart. */
 const DASHBOARD_CATEGORIES = { narrow: 5, wide: 8 };
-const TREND_MONTHS = 12;
-const MIN_TREND_MONTHS = 3;
 /** The income chart shows the same six months on every screen. */
 const CHART_MONTHS = 6;
 type SortKey = 'size' | 'gain';
@@ -101,13 +91,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const month = today.slice(0, 7);
   const [sort, setSort] = useState<SortKey>('size');
 
-  const worth = netWorth(data, today);
-  const shownWorth = useCountUp(worth.netWorth);
-  const trendValues = useMemo(
-    () => netWorthHistory(data, today, TREND_MONTHS).map((row) => row.netWorth),
-    [data, today],
-  );
-  const trendUp = (trendValues.at(-1) ?? 0) >= (trendValues[0] ?? 0);
   // Spending figures count each closed month's house expense.
   const spending = useSpendingView();
   const overview = monthlyOverview(spending, month, today);
@@ -180,49 +163,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const splitIncome = spending.income.filter(inSplit).reduce((total, row) => total + row.amount, 0);
   const splitInvested = invested.get(splitMonth) ?? 0;
   const splitLeft = splitIncome - splitSpent - splitEmis - splitInvested;
-
-  const netWorthCard = (
-    <section aria-label="Net worth" className={ui.hero}>
-      <div className={ui.cardHeader} style={{ justifyContent: 'flex-start' }}>
-        <span aria-hidden="true" className={ui.tileIcon}>
-          <TrendIcon size={20} />
-        </span>
-        <div>
-          <div className={ui.caption}>Net Worth</div>
-          <div className={ui.subtleLine}>Assets after outstanding debts</div>
-        </div>
-      </div>
-      <div className={ui.valueRow}>
-        <div className={ui.value}>{formatMoney(Math.round(shownWorth))}</div>
-        {trendValues.length >= MIN_TREND_MONTHS ? (
-          <Link
-            aria-label={`Net worth ${trendUp ? 'up' : 'down'} over the last ${trendValues.length} months. Open history`}
-            to="/analytics"
-          >
-            <TrendLine values={trendValues} />
-          </Link>
-        ) : null}
-      </div>
-      <div className={ui.split}>
-        <div>
-          <div className={ui.label}>Total assets</div>
-          <strong>{formatMoney(worth.assets)}</strong>
-        </div>
-        <div className={ui.alignEnd}>
-          <div className={ui.label}>Total debts</div>
-          <strong className={ui.debt}>{formatMoney(worth.debts)}</strong>
-        </div>
-      </div>
-      <div className={ui.meter}>
-        <span className={ui.meterFill} style={{ width: `${worth.assetShare * 100}%` }} />
-        <span className={ui.meterDebt} style={{ flex: 1 }} />
-      </div>
-      <div className={ui.meterLegend}>
-        <span>Assets {formatPercent(worth.assetShare)}</span>
-        <span>Debts {formatPercent(worth.debts > 0 ? 1 - worth.assetShare : 0)}</span>
-      </div>
-    </section>
-  );
 
   const trendCard = (
     <section className={ui.card}>
@@ -321,29 +261,39 @@ export function Dashboard({ name = '' }: { name?: string }) {
         </details>
       ) : null}
 
-      <PageHeader eyebrow="Dashboard" title={greeting(new Date().getHours(), name)} />
+      <h1 className={homeStyles.greeting}>
+        <span>{greeting(new Date().getHours(), '').replace(/,\s*$/, '')}</span>
+        {greeting(0, name).includes(',') ? (
+          <strong>{greeting(0, name).split(', ')[1]}</strong>
+        ) : null}
+      </h1>
 
       <GettingStarted />
 
-      <div className={styles.top}>
-        {netWorthCard}
-
-        <MonthOverview
-          available={overview.close.available}
-          income={overview.close.income}
-          month={month}
-          opening={overview.close.opening}
-          savings={overview.savings}
-          spent={overview.spent}
-          trends={trends}
-        />
+      {/* One column on phones; on wide screens, net worth beside this month. */}
+      <div className={homeStyles.layout}>
+        <div className={homeStyles.column}>
+          <NetWorthHero data={data} today={today} />
+          <QuickActions />
+          <InsightsCard />
+        </div>
+        <div className={homeStyles.column}>
+          <MonthRing
+            income={overview.close.income}
+            invested={invested.get(month) ?? 0}
+            month={month}
+            repaid={overview.repaid}
+            spent={overview.spent}
+            spentChange={trends.expenses.change}
+          />
+          <ComingUp data={household} today={today} />
+          <RecentEntries data={data} />
+        </div>
       </div>
 
       {/* Prompts come after your own figures, never before them. */}
       <RecapCard />
       <InstallCard />
-
-      <InsightsCard />
       <GoalsTile />
 
       {/* Side by side on wide screens, half and half; one after the other on phones. */}
@@ -483,7 +433,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
           </div>
         )}
       </section>
-      <QuickAdd />
     </div>
   );
 }

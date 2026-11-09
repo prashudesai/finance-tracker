@@ -1,0 +1,70 @@
+.days {
+  display: grid;
+  gap: 12px;
+}
+
+.day {
+  display: grid;
+  gap: 2px;
+}
+
+.dayHead {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.entries {
+  margin: 0;
+  padding: 0 12px;
+  list-style: none;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-small);
+}
+
+.entries li + li {
+  border-top: 1px solid var(--border);
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.entryText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.entryTitle {
+  font-weight: 600;
+}
+
+.entryText small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry strong {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

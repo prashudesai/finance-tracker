@@ -99,7 +99,7 @@ test.each([
   expect(await screen.findByRole('heading', { level: 1 })).toBeDefined();
 });
 
-test('the navigation matches the old app', async () => {
+test('the navigation has Home, Money, Wealth and Plan, with the + in the middle', async () => {
   renderApp('/');
   const nav = await screen.findByRole('navigation', { name: 'Main' });
   const links = within(nav).getAllByRole('link');
@@ -107,24 +107,34 @@ test('the navigation matches the old app', async () => {
     '/',
     '/cash-flow',
     '/investments',
-    '/debts',
-    '/analytics',
+    '/analytics/overview',
     '/settings',
   ]);
+  expect(links.map((link) => link.textContent)).toEqual(
+    expect.arrayContaining([expect.stringMatching(/Money/), expect.stringMatching(/Wealth/)]),
+  );
+  expect(within(nav).getByRole('button', { name: 'Add record' })).toBeDefined();
+});
+
+test('Wealth stays lit on the loans page', async () => {
+  renderApp('/debts');
+  const nav = await screen.findByRole('navigation', { name: 'Main' });
+  const wealth = within(nav).getByRole('link', { name: /Wealth/ });
+  expect(wealth.className).toMatch(/active/);
 });
 
 test('the dashboard shows net worth from holdings less loans', async () => {
   renderApp('/', { holdings: [fund], loans: [loan] });
   const card = await screen.findByRole('region', { name: 'Net worth' });
+  // ₹1,50,000 in holdings less ₹5,00,000 owed.
   expect(within(card).getByText('-₹3,50,000')).toBeDefined();
-  expect(within(card).getByText('₹1,50,000')).toBeDefined();
 });
 
-test('the monthly overview reads this month', async () => {
+test('the month so far reads this month', async () => {
   renderApp('/', {
     income: [{ id: 'i', date: `${month}-01`, member: 'A', source: 'Salary', amount: 100_000 }],
   });
-  const region = await screen.findByRole('region', { name: 'This month' });
+  const region = await screen.findByRole('region', { name: / so far$/ });
   expect(within(region).getAllByText('₹1,00,000').length).toBeGreaterThan(0);
 });
 
@@ -335,7 +345,9 @@ test('the change log lists a deletion and can undo it', async () => {
     await screen.findByRole('button', { name: 'Undo Deleted income · Salary', hidden: true }),
   ).toHaveProperty('disabled', true);
   fireEvent.click(screen.getByRole('button', { name: 'Close', hidden: true }));
-  fireEvent.click(screen.getByRole('link', { name: /Income & Expense/ }));
+  fireEvent.click(
+    within(screen.getByRole('navigation', { name: 'Main' })).getByRole('link', { name: /Money/ }),
+  );
   expect(await screen.findByRole('button', { name: /^Open\s+Salary/ })).toBeDefined();
 });
 
@@ -672,7 +684,7 @@ test('checking for updates reports back in the app preview', async () => {
   );
 });
 
-test('the dashboard + opens the add menu and goes to the right entry', async () => {
+test('the + opens the add menu and goes to the right entry', async () => {
   renderApp('/', { settings: [{ ...defaultSettings(), onboardingDone: true }] });
   await screen.findByRole('button', { name: 'Add record' });
   for (const name of [
@@ -930,10 +942,10 @@ test('phone projection opens assumptions by group and keeps goals last', async (
   Reflect.deleteProperty(window, 'matchMedia');
 });
 
-test('the + stays on the dashboard', async () => {
+test('the + is on every page, in the tab bar', async () => {
   renderApp('/debts');
   await screen.findByRole('heading', { level: 1 });
-  expect(screen.queryByRole('button', { name: 'Add record' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Add record' })).toBeDefined();
 });
 
 test('history tables sort by a column, with no filter box', async () => {

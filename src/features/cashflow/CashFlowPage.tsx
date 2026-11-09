@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import {
@@ -6,6 +6,7 @@ import {
   isAnyHouseExpense,
   isMonthEnd,
   monthsToReview,
+  isRepayment,
   repaymentsByMonth,
 } from '../../domain/analytics';
 import { previousMonth } from '../../domain/calendar';
@@ -19,6 +20,7 @@ import { PageHeader } from '../../ui/PageHeader';
 import { scrollToSection } from '../../ui/scroll';
 import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
+import styles from './CashFlowPage.module.css';
 import { Commitments } from './Commitments';
 import { MonthFlow } from './MonthFlow';
 import { MoneyFlowChart } from './MoneyFlowChart';
@@ -103,6 +105,9 @@ export function CashFlowPage() {
   const [adding, setAdding] = useState<'income' | 'expense' | null>(null);
   const [history, setHistory] = useState<'income' | 'expense'>('income');
   const [reviewOpen, setReviewOpen] = useState(false);
+  // Search and a category filter for the month's entries.
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('');
   const phone = useIsPhone();
   const { state: quickAdd } = useLocation() as {
     state: {
@@ -198,6 +203,20 @@ export function CashFlowPage() {
   const invested = investedFromIncome(data).get(month) ?? 0;
   // The expense list's total adds up the entries it shows.
   const listed = monthTotals(data).get(month)?.expenses ?? 0;
+  const words = query.trim().toLowerCase();
+  const matches = (...fields: (string | undefined)[]) =>
+    !words || fields.some((field) => field?.toLowerCase().includes(words));
+  const loanType = (id: string | undefined) => data.loans.find((loan) => loan.id === id)?.type;
+  const monthExpenses = data.expenses.filter(
+    (row) => row.date.startsWith(month) && !isAnyHouseExpense(row),
+  );
+  const categories = [...new Set(monthExpenses.map((row) => row.category))].sort();
+  const incomeRows = data.income.filter((row) => matches(row.source, row.member, row.notes));
+  const expenseRows = data.expenses.filter(
+    (row) =>
+      (!category || row.category === category) &&
+      matches(row.category, row.subcategory, row.notes, row.member, loanType(row.loanId)),
+  );
   const newest = <Row extends { date: string }>(rows: Row[]) =>
     rows.filter((row) => row.date.startsWith(month)).sort((a, b) => b.date.localeCompare(a.date));
   const months = Array.from({ length: MONTH_CHOICES }).reduce<string[]>(
@@ -265,7 +284,7 @@ export function CashFlowPage() {
       />
       <Commitments open={quickAdd?.commitments === true} />
       {phone ? null : (
-        <div className={ui.twoColumn} id="history">
+        <div className={ui.twoColumn}>
           <section className={ui.card}>
             <div>
               <h2 style={{ fontSize: '1.2rem' }}>Add Income</h2>
@@ -297,7 +316,34 @@ export function CashFlowPage() {
           ))}
         </div>
       ) : null}
-      <div className={ui.twoColumn}>
+      <div className={styles.filters}>
+        <label className={styles.search}>
+          <Search aria-hidden="true" size={16} />
+          <input
+            aria-label="Search this month's entries"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search entries"
+            type="search"
+            value={query}
+          />
+        </label>
+        {(!phone || history === 'expense') && categories.length > 1 ? (
+          <div aria-label="Category" className={styles.chips} role="group">
+            {['', ...categories].map((name) => (
+              <button
+                aria-pressed={category === name}
+                className={styles.chip}
+                key={name || 'all'}
+                onClick={() => setCategory(name)}
+                type="button"
+              >
+                {name ? <CategoryLabel name={name} /> : 'All'}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <div className={ui.twoColumn} id="history">
         {!phone || history === 'income' ? (
           <HistoryTable
             columns={INCOME_COLUMNS}
@@ -306,7 +352,13 @@ export function CashFlowPage() {
             emptyText="No income this month."
             onDelete={(row) => commit([{ type: 'delete', collection: 'income', id: row.id }])}
             onEdit={setEditingIncome}
-            rows={newest(data.income)}
+            rows={newest(incomeRows)}
+            item={(row) => ({
+              date: row.date,
+              title: <CategoryLabel income name={row.source} />,
+              detail: row.member,
+              amount: row.amount,
+            })}
             openId={quickAdd?.found?.kind === 'income' ? quickAdd.found.id : null}
             title="Income history"
             action={
@@ -316,7 +368,9 @@ export function CashFlowPage() {
                 </button>
               ) : undefined
             }
-            total={formatMoney(totals.income)}
+            total={formatMoney(
+              words ? newest(incomeRows).reduce((sum, row) => sum + row.amount, 0) : totals.income,
+            )}
           />
         ) : null}
         {!phone || history === 'expense' ? (
@@ -330,7 +384,24 @@ export function CashFlowPage() {
             emptyText="No expenses this month."
             onDelete={(row) => commit([{ type: 'delete', collection: 'expenses', id: row.id }])}
             onEdit={setEditingExpense}
-            rows={newest(data.expenses)}
+            rows={newest(expenseRows)}
+            item={(row) => ({
+              date: row.date,
+              title: (
+                <CategoryLabel
+                  icon={row.category}
+                  name={
+                    row.loanId
+                      ? `${loanType(row.loanId) ?? 'Loan'} ${row.repaymentType === 'part-payment' ? 'part payment' : 'EMI'}`
+                      : row.subcategory || row.category
+                  }
+                />
+              ),
+              detail: isRepayment(row, data.loans)
+                ? 'Repays a loan'
+                : [row.member, row.notes].filter(Boolean).join(' · '),
+              amount: row.amount,
+            })}
             openId={quickAdd?.found?.kind === 'expense' ? quickAdd.found.id : null}
             title="Expense history"
             action={
@@ -340,7 +411,11 @@ export function CashFlowPage() {
                 </button>
               ) : undefined
             }
-            total={formatMoney(listed)}
+            total={formatMoney(
+              words || category
+                ? newest(expenseRows).reduce((sum, row) => sum + row.amount, 0)
+                : listed,
+            )}
           />
         ) : null}
       </div>

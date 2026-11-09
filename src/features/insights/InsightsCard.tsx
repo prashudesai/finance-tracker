@@ -1,4 +1,4 @@
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { dailyInsights, insights, type Insight } from '../../domain/insights';
@@ -9,25 +9,6 @@ import ui from '../../ui/ui.module.css';
 import { describeInsight } from './insightText';
 import { RecapView } from './MonthRecap';
 import styles from './Insights.module.css';
-
-const OPEN_KEY = 'insightsOpen';
-
-/** Whether the tile was left open on this device. Closed until someone opens it. */
-function savedOpen() {
-  try {
-    return localStorage.getItem(OPEN_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function saveOpen(open: boolean) {
-  try {
-    localStorage.setItem(OPEN_KEY, open ? '1' : '0');
-  } catch {
-    // Remembered for this visit only.
-  }
-}
 
 function InsightRow({ insight, onOpen }: { insight: Insight; onOpen?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -69,7 +50,64 @@ function InsightRow({ insight, onOpen }: { insight: Insight; onOpen?: () => void
   );
 }
 
-/** The most useful patterns in the records right now, worked out on this device. */
+/** A word or two naming each kind of insight, for the card's tag. */
+const TAGS: Partial<Record<Insight['kind'], string>> = {
+  milestone: 'Milestone',
+  quiet: 'Quiet month',
+  dueSoon: 'Due soon',
+  category: 'Spending',
+  savings: 'Saving',
+  emiLoad: 'EMIs',
+  prepay: 'Loans',
+  netWorthChange: 'Net worth',
+  allocation: 'Mix',
+  commitments: 'Bills',
+  weekend: 'Weekends',
+  invested: 'Investing',
+  principal: 'Loans',
+  pmsGain: 'PMS',
+  goalBehind: 'Goal',
+  goalReached: 'Goal',
+  goalEta: 'Goal',
+  incomeMix: 'Income',
+  salaryRaise: 'Raise',
+  incomeYoY: 'Income',
+  topEarner: 'Income',
+  incomeSteadiness: 'Income',
+  per100: 'Income',
+  biggest: 'Spending',
+  cushion: 'Cushion',
+  subscriptions: 'Subscriptions',
+  staleValues: 'Values',
+  savingsRange: 'Saving',
+  memberSpend: 'Family',
+  ppfRoom: 'PPF',
+  streak: 'Streak',
+  debtFree: 'Debt-free',
+  dailyPace: 'Pace',
+  noSpendDays: 'No-spend',
+  leftoverToRetirement: 'Retirement',
+};
+
+/** A short card: its tag and headline. Tapping it shows the detail and the numbers behind it. */
+function InsightCard({ insight, onOpen }: { insight: Insight; onOpen: () => void }) {
+  const { icon: Icon, title } = describeInsight(insight);
+  return (
+    <li>
+      <button className={styles.card} data-tone={insight.tone} onClick={onOpen} type="button">
+        <span className={styles.tag}>
+          <Icon aria-hidden="true" size={14} /> {TAGS[insight.kind] ?? 'Insight'}
+        </span>
+        <span className={styles.cardTitle}>{title}</span>
+      </button>
+    </li>
+  );
+}
+
+/**
+ * For you today: the most useful patterns in the records right now, worked out on this device,
+ * as short cards that swipe sideways. See all lists every one.
+ */
 export function InsightsCard() {
   const data = useSpendingView();
   const today = localDate();
@@ -78,54 +116,39 @@ export function InsightsCard() {
   const today10 = useMemo(() => dailyInsights(list, today), [list, today]);
   const [all, setAll] = useState(false);
   const [recap, setRecap] = useState(false);
-  const [open, setOpen] = useState(savedOpen);
+  const [open, setOpen] = useState<Insight | null>(null);
   if (list.length === 0) return null;
-  const top = today10[0];
-  const preview = top ? describeInsight(top).title : '';
 
   return (
-    <details
-      aria-label="Insights"
-      className={`${ui.card} ${ui.fold}`}
-      onToggle={(event) => {
-        const now = event.currentTarget.open;
-        setOpen(now);
-        saveOpen(now);
-      }}
-      open={open}
-    >
-      <summary className={styles.summary}>
-        <span className={styles.summaryTitle}>
-          <Sparkles aria-hidden="true" size={16} /> Today's insights · {today10.length}
-        </span>
-        {/* The headline, so the tile is useful even closed. Amber when it's a warning. */}
-        <span className={styles.preview} data-tone={top?.tone}>
-          {preview}
-        </span>
-      </summary>
-      <p className={ui.caption}>
-        {today10.length < list.length
-          ? `Picked for ${formatDay(today)} from ${list.length}, with anything needing action first. New picks each morning.`
-          : 'Anything needing action comes first.'}{' '}
-        Worked out on your phone, from your records only.
-      </p>
-      <ul className={styles.list}>
-        {today10.map((insight) => (
-          <InsightRow insight={insight} key={insight.id} />
-        ))}
-      </ul>
-      <div className={ui.actions}>
-        {list.length > today10.length ? (
-          <button className={ui.quiet} onClick={() => setAll(true)} type="button">
+    <section aria-labelledby="for-you" className={styles.today}>
+      <div className={styles.todayHead}>
+        <h2 id="for-you">For you today</h2>
+        <span className={styles.todayActions}>
+          <button className={ui.textButton} onClick={() => setRecap(true)} type="button">
+            Monthly recap
+          </button>
+          <button className={ui.textButton} onClick={() => setAll(true)} type="button">
             See all {list.length}
           </button>
-        ) : null}
-        <button className={ui.quiet} onClick={() => setRecap(true)} type="button">
-          Monthly recap
-        </button>
+        </span>
       </div>
+      <ul aria-label={`Picked for ${formatDay(today)}`} className={styles.strip}>
+        {today10.map((insight) => (
+          <InsightCard insight={insight} key={insight.id} onOpen={() => setOpen(insight)} />
+        ))}
+      </ul>
+      {open ? (
+        <Modal onClose={() => setOpen(null)} title={TAGS[open.kind] ?? 'Insight'}>
+          <ul className={styles.list}>
+            <InsightRow insight={open} onOpen={() => setOpen(null)} />
+          </ul>
+        </Modal>
+      ) : null}
       {all ? (
         <Modal onClose={() => setAll(false)} title="Insights">
+          <p className={ui.caption}>
+            Anything needing action comes first. Worked out on your phone, from your records only.
+          </p>
           <ul className={styles.list}>
             {list.map((insight) => (
               <InsightRow insight={insight} key={insight.id} onOpen={() => setAll(false)} />
@@ -134,6 +157,6 @@ export function InsightsCard() {
         </Modal>
       ) : null}
       {recap ? <RecapView onClose={() => setRecap(false)} /> : null}
-    </details>
+    </section>
   );
 }

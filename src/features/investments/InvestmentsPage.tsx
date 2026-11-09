@@ -34,6 +34,7 @@ import { EmptyState } from '../../ui/EmptyState';
 import { Modal } from '../../ui/Modal';
 import { AddValueDialog } from '../../ui/Select';
 import { PageHeader } from '../../ui/PageHeader';
+import { WealthNav } from '../wealth/WealthNav';
 import { Metric } from '../../ui/Stat';
 import { scrollToSection } from '../../ui/scroll';
 import { useIsPhone } from '../../ui/useIsPhone';
@@ -366,6 +367,7 @@ export function InvestmentsPage() {
         subtitle="Track your portfolio, retirement accounts, contributions and returns."
         title="Investments"
       />
+      <WealthNav />
       <div className={ui.twoColumn}>
         <section aria-label="Portfolio value" className={ui.hero}>
           <div className={ui.split}>

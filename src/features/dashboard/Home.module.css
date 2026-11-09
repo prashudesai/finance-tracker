@@ -1,0 +1,297 @@
+/* Quick actions: four round buttons under the net worth card. */
+.actions {
+  display: grid;
+  margin-block: 2px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.action {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.actionIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--card-edge);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  transition: transform 140ms ease;
+}
+
+.action:hover .actionIcon {
+  transform: translateY(-2px);
+}
+
+.section {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+}
+
+.sectionHead h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+/* Cards in a row that scrolls sideways, snapping to each card. */
+.strip {
+  display: grid;
+  grid-auto-columns: calc((100% - 20px) / 3);
+  grid-auto-flow: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0 0 4px;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.strip > li {
+  scroll-snap-align: start;
+}
+
+.bill {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  height: 84px;
+  padding: 10px 12px;
+  color: inherit;
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--card-edge);
+  border-radius: var(--radius-small);
+}
+
+.billWhen {
+  color: var(--warning-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.billName {
+  overflow: hidden;
+  font-size: 0.92rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.billAmount {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.recent {
+  gap: 0;
+  margin: 0;
+  padding: 4px 16px;
+  list-style: none;
+}
+
+.recent li + li {
+  border-top: 1px solid var(--border);
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.entryName {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* The category icon in its own rounded tile, as in the concept. */
+.entryName > span:first-child svg {
+  box-sizing: content-box;
+  padding: 9px;
+  color: var(--accent);
+  background: var(--surface-sunken);
+  border-radius: 12px;
+}
+
+.entryName > span:first-child {
+  gap: 12px;
+  font-size: 1rem;
+}
+
+.entryName small {
+  margin-top: -6px;
+  padding-left: 46px;
+}
+
+.entryName small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry strong {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The greeting: a small line, then the name. */
+.greeting {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.greeting span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.greeting strong {
+  font-size: 1.45rem;
+  letter-spacing: -0.01em;
+}
+
+/* November so far: a ring with what's left, and the month's figures beside it. */
+.ring {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.ringChart {
+  width: 104px;
+  height: 104px;
+}
+
+.ringTrack,
+.ringArc {
+  fill: none;
+  stroke-width: 11;
+}
+
+.ringTrack {
+  stroke: var(--surface-sunken);
+}
+
+.ringArc {
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 48px 48px;
+}
+
+.ringLabel {
+  fill: var(--muted);
+  font-size: 10px;
+  text-anchor: middle;
+}
+
+.ringValue {
+  fill: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.ringRows {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.ringRows div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ringRows dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+}
+
+.ringRows dt i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.ringRows dd {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ringRows small {
+  margin-left: 4px;
+  color: var(--warning-text);
+  font-size: 0.72rem;
+}
+
+.ringRows small[data-better] {
+  color: var(--gain);
+}
+
+.notYet {
+  color: var(--muted);
+}
+
+/* Phones stack everything in order; wide screens split into two columns. */
+.layout,
+.column {
+  display: contents;
+}
+
+@media (min-width: 1000px) {
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: var(--space);
+    align-items: start;
+  }
+
+  .column {
+    display: grid;
+    gap: var(--space);
+    min-width: 0;
+  }
+}

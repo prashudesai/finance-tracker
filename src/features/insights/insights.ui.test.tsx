@@ -70,34 +70,25 @@ afterEach(() => {
 });
 
 describe('Insights on the dashboard', () => {
-  test("shows today's ten at most, with the numbers behind each", async () => {
+  test("shows today's ten at most, each opening the numbers behind it", async () => {
     show(seed().data);
-    const card = within(await screen.findByRole('group', { name: 'Insights' }));
-    const dining = (await card.findAllByText(/Dining was ₹4,500/)).find((node) =>
-      node.closest('li'),
-    );
-    if (!dining) throw new Error('No dining insight in the list');
-    expect(dining.textContent).toMatch(/50% more than usual/);
+    const card = within(await screen.findByRole('region', { name: /For you today/ }));
     expect(card.getAllByRole('listitem').length).toBeLessThanOrEqual(10);
-    const row = within(dining.closest('li') as HTMLElement);
-    fireEvent.click(row.getByRole('button', { name: 'Why?' }));
-    expect(row.getByText('Difference')).toBeDefined();
-    expect(row.getByText('₹1,500')).toBeDefined();
+    fireEvent.click(await card.findByRole('button', { name: /Dining was ₹4,500/ }));
+    const open = within(await screen.findByRole('dialog', { hidden: true }));
+    expect(open.getByText(/50% more than usual/)).toBeDefined();
+    fireEvent.click(open.getByRole('button', { name: 'Why?', hidden: true }));
+    expect(open.getByText('Difference')).toBeDefined();
+    expect(open.getByText('₹1,500')).toBeDefined();
   });
 
-  test('the tile starts closed with the top insight as a preview, and remembers being opened', async () => {
-    localStorage.removeItem('insightsOpen');
+  test("today's cards swipe sideways, and See all lists every insight", async () => {
     show(seed().data);
-    const tile = (await screen.findByRole('group', { name: 'Insights' })) as HTMLDetailsElement;
-    expect(tile.open).toBe(false);
-    const summary = tile.querySelector('summary') as HTMLElement;
-    expect(summary.textContent).toMatch(/Today's insights · \d+/);
-    // The preview is the first insight's headline.
-    expect(summary.textContent).toContain(tile.querySelector('li strong')?.textContent ?? '');
-    tile.open = true;
-    fireEvent(tile, new Event('toggle'));
-    await waitFor(() => expect(localStorage.getItem('insightsOpen')).toBe('1'));
-    localStorage.removeItem('insightsOpen');
+    const card = within(await screen.findByRole('region', { name: /For you today/ }));
+    const shown = card.getAllByRole('listitem').length;
+    fireEvent.click(card.getByRole('button', { name: /^See all \d+/ }));
+    const all = within(await screen.findByRole('dialog', { name: 'Insights', hidden: true }));
+    expect(all.getAllByRole('listitem', { hidden: true }).length).toBeGreaterThanOrEqual(shown);
   });
 
   test('hiding amounts hides them in insights too', async () => {
@@ -110,7 +101,7 @@ describe('Insights on the dashboard', () => {
   test('the monthly recap opens on the latest month, and steps back', async () => {
     const { last } = seed();
     show(seed().data);
-    const card = within(await screen.findByRole('group', { name: 'Insights' }));
+    const card = within(await screen.findByRole('region', { name: /For you today/ }));
     fireEvent.click(card.getByRole('button', { name: 'Monthly recap' }));
     const recap = within(
       await screen.findByRole('dialog', { name: 'Monthly recap', hidden: true }),

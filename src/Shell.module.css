@@ -94,15 +94,18 @@
 .nav {
   view-transition-name: app-nav;
   position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  right: 10px;
+  bottom: calc(8px + var(--home-bar));
+  left: 10px;
   z-index: 2;
   display: flex;
-  padding: 6px 8px calc(6px + var(--home-bar));
-  /* Solid: the page scrolls under it, and on phones it reaches under the home bar. */
-  background: var(--surface);
-  border-top: 1px solid var(--glass-edge);
+  align-items: center;
+  padding: 6px;
+  /* A floating bar: the page scrolls under it, with the + raised in the middle. */
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--glass-edge);
+  border-radius: 24px;
+  box-shadow: var(--lift);
   backdrop-filter: var(--glass-blur);
 }
 
@@ -156,6 +159,8 @@
     padding: 0;
     background: none;
     border: 0;
+    border-radius: 0;
+    box-shadow: none;
     gap: 4px;
     backdrop-filter: none;
   }
@@ -205,7 +210,7 @@
 .searchVisible {
   position: fixed;
   left: 12px;
-  bottom: calc(72px + var(--home-bar));
+  bottom: calc(88px + var(--home-bar));
   z-index: 2;
   display: grid;
   place-items: center;
@@ -222,7 +227,7 @@
 .syncVisible {
   position: fixed;
   left: 50%;
-  bottom: calc(74px + var(--home-bar));
+  bottom: calc(86px + var(--home-bar));
   z-index: 2;
   max-width: calc(100vw - 170px);
   color: var(--muted);
@@ -245,20 +250,19 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
   pointer-events: none;
 }
 
+/* The + in the middle of the tab bar on phones; a round button at the corner on wide screens. */
 .quickAdd {
-  position: fixed;
-  right: 12px;
-  bottom: calc(72px + var(--home-bar));
-  z-index: 2;
   display: grid;
+  flex: none;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--accent);
+  width: 54px;
+  height: 54px;
+  margin: -26px 6px 0;
+  color: var(--accent-text);
+  background: var(--accent);
+  border: 0;
   border-radius: 50%;
-  box-shadow: var(--shadow);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 40%, transparent);
   cursor: pointer;
 }
 
@@ -276,8 +280,13 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
   }
 
   .quickAdd {
+    position: fixed;
     right: 20px;
     bottom: 20px;
+    z-index: 2;
+    width: 52px;
+    height: 52px;
+    margin: 0;
   }
 
   .searchRight {
@@ -285,7 +294,8 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
   }
 
   .quickMenu {
-    inset: auto 20px 76px auto;
+    inset: auto 20px 84px auto;
+    translate: none;
   }
 }
 
@@ -296,7 +306,8 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
 
 .quickMenu {
   position: fixed;
-  inset: auto 12px calc(124px + var(--home-bar)) auto;
+  inset: auto 50% calc(96px + var(--home-bar)) auto;
+  translate: 50% 0;
   width: min(260px, calc(100vw - 24px));
   margin: 0;
   padding: 6px;

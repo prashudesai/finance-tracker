@@ -19,6 +19,7 @@ import { formatMoney, formatPercent, formatShortMonthYear, localDate } from '../
 import { EmptyState } from '../../ui/EmptyState';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
+import { WealthNav } from '../wealth/WealthNav';
 import { Metric } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
@@ -189,6 +190,7 @@ export function DebtsPage() {
         subtitle="See what remains, monitor monthly commitments, and review repayments."
         title="Debt & EMI Tracker"
       />
+      <WealthNav />
       {outstanding > 0 ? (
         <section aria-label="Debt totals" className={ui.hero}>
           <div className={ui.caption}>Left to repay</div>

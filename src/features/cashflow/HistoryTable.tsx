@@ -1,10 +1,21 @@
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { Modal } from '../../ui/Modal';
+import { formatDay, formatMoney } from '../../ui/format';
+import { useIsPhone } from '../../ui/useIsPhone';
+import styles from './HistoryTable.module.css';
 import ui from '../../ui/ui.module.css';
 import { SortHeader, useSort, type SortValue } from '../../ui/useSort';
 
 const PAGE_SIZE = 8;
+
+/** How a record reads in the phone's list, grouped by day. */
+export interface DayItem {
+  date: string;
+  title: ReactNode;
+  detail: string;
+  amount: number;
+}
 
 export interface Column<Row> {
   header: string;
@@ -29,6 +40,7 @@ export function HistoryTable<Row extends { id: string }>({
   onEdit,
   onDelete,
   openId = null,
+  item,
 }: {
   title: string;
   action?: ReactNode;
@@ -43,7 +55,10 @@ export function HistoryTable<Row extends { id: string }>({
   onDelete: (row: Row) => void;
   /** A record to show straight away, such as one chosen in Search. */
   openId?: string | null;
+  /** On phones, records show as a list grouped by day instead of a table. */
+  item?: (row: Row) => DayItem;
 }) {
+  const phone = useIsPhone();
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(openId);
   useEffect(() => setSelectedId(openId), [openId]);
@@ -73,88 +88,98 @@ export function HistoryTable<Row extends { id: string }>({
         </span>
         <strong>{total}</strong>
       </div>
-      <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
-        <table className={ui.table}>
-          <thead>
-            <tr>
-              {columns.map((column) => (
-                <SortHeader
-                  className={column.secondary ? ui.hideOnPhone : undefined}
-                  column={column.header}
-                  key={column.header}
-                  label={column.header}
-                  numeric={column.numeric ?? false}
-                  onSort={toggle}
-                  sort={sort}
-                />
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((row) => (
-              <tr className={ui.clickableRow} key={row.id} onClick={() => setSelectedId(row.id)}>
-                {columns.map((column, index) => (
-                  <td
-                    className={`${column.numeric ? ui.numeric : ''} ${column.secondary ? ui.hideOnPhone : ''}`}
-                    key={column.header}
+      {phone && item ? (
+        <DayList item={item} onOpen={setSelectedId} rows={rows} emptyText={emptyText} />
+      ) : (
+        <>
+          <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
+            <table className={ui.table}>
+              <thead>
+                <tr>
+                  {columns.map((column) => (
+                    <SortHeader
+                      className={column.secondary ? ui.hideOnPhone : undefined}
+                      column={column.header}
+                      key={column.header}
+                      label={column.header}
+                      numeric={column.numeric ?? false}
+                      onSort={toggle}
+                      sort={sort}
+                    />
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((row) => (
+                  <tr
+                    className={ui.clickableRow}
+                    key={row.id}
+                    onClick={() => setSelectedId(row.id)}
                   >
-                    {index === 0 ? (
-                      <button
-                        className={ui.rowOpen}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSelectedId(row.id);
-                        }}
-                        type="button"
+                    {columns.map((column, index) => (
+                      <td
+                        className={`${column.numeric ? ui.numeric : ''} ${column.secondary ? ui.hideOnPhone : ''}`}
+                        key={column.header}
                       >
-                        <span className={ui.visuallyHidden}>Open {describe(row)}, </span>
-                        {column.cell(row)}
-                      </button>
-                    ) : (
-                      column.cell(row)
-                    )}
-                  </td>
+                        {index === 0 ? (
+                          <button
+                            className={ui.rowOpen}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setSelectedId(row.id);
+                            }}
+                            type="button"
+                          >
+                            <span className={ui.visuallyHidden}>Open {describe(row)}, </span>
+                            {column.cell(row)}
+                          </button>
+                        ) : (
+                          column.cell(row)
+                        )}
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-            {sorted.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} style={{ textAlign: 'center', padding: 32 }}>
-                  {emptyText}
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
-      <div className={ui.pager}>
-        <span>
-          Showing {sorted.length === 0 ? 0 : start + 1}–{start + visible.length} of {sorted.length}{' '}
-          entries
-        </span>
-        <div className={ui.actions}>
-          <button
-            aria-label="Previous page"
-            className={ui.smallIcon}
-            disabled={current === 0}
-            onClick={() => setPage(current - 1)}
-            type="button"
-            data-tip="Previous page"
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <button
-            aria-label="Next page"
-            className={ui.smallIcon}
-            disabled={current >= pages - 1}
-            onClick={() => setPage(current + 1)}
-            type="button"
-            data-tip="Next page"
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
-      </div>
+                {sorted.length === 0 ? (
+                  <tr>
+                    <td colSpan={columns.length} style={{ textAlign: 'center', padding: 32 }}>
+                      {emptyText}
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+          <div className={ui.pager}>
+            <span>
+              Showing {sorted.length === 0 ? 0 : start + 1}–{start + visible.length} of{' '}
+              {sorted.length} entries
+            </span>
+            <div className={ui.actions}>
+              <button
+                aria-label="Previous page"
+                className={ui.smallIcon}
+                disabled={current === 0}
+                onClick={() => setPage(current - 1)}
+                type="button"
+                data-tip="Previous page"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button
+                aria-label="Next page"
+                className={ui.smallIcon}
+                disabled={current >= pages - 1}
+                onClick={() => setPage(current + 1)}
+                type="button"
+                data-tip="Next page"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        </>
+      )}
       {selected ? (
         <Modal onClose={() => setSelectedId(null)} title={describe(selected)}>
           <div className={ui.page}>
@@ -198,5 +223,53 @@ export function HistoryTable<Row extends { id: string }>({
         </Modal>
       ) : null}
     </section>
+  );
+}
+
+/** A month's records, newest day first, each day with its total. */
+function DayList<Row extends { id: string }>({
+  rows,
+  item,
+  onOpen,
+  emptyText,
+}: {
+  rows: Row[];
+  item: (row: Row) => DayItem;
+  onOpen: (id: string) => void;
+  emptyText: string;
+}) {
+  if (rows.length === 0) return <p className={ui.empty}>{emptyText}</p>;
+  const items = rows
+    .map((row) => ({ row, ...item(row) }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const days = [...new Set(items.map((entry) => entry.date))];
+  return (
+    <div className={styles.days}>
+      {days.map((day) => {
+        const entries = items.filter((entry) => entry.date === day);
+        const total = entries.reduce((sum, entry) => sum + entry.amount, 0);
+        return (
+          <section aria-label={formatDay(day)} className={styles.day} key={day}>
+            <div className={styles.dayHead}>
+              <span>{formatDay(day)}</span>
+              <span>{formatMoney(total)}</span>
+            </div>
+            <ul className={styles.entries}>
+              {entries.map(({ row, title, detail, amount }) => (
+                <li key={row.id}>
+                  <button className={styles.entry} onClick={() => onOpen(row.id)} type="button">
+                    <span className={styles.entryText}>
+                      <span className={styles.entryTitle}>{title}</span>
+                      {detail ? <small>{detail}</small> : null}
+                    </span>
+                    <strong>{formatMoney(amount)}</strong>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
   );
 }

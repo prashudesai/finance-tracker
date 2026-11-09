@@ -8,6 +8,16 @@ import ui from '../../ui/ui.module.css';
  */
 const SECTIONS = [
   {
+    key: 'future',
+    label: 'Future',
+    tabs: [
+      { to: '/analytics/overview', label: 'Overview', end: false },
+      { to: '/analytics/projection', label: 'Growth projection', end: false },
+      { to: '/analytics/goals', label: 'Goal planning', end: false },
+      { to: '/analytics/budget', label: 'Yearly budget', end: false },
+    ],
+  },
+  {
     key: 'insights',
     label: 'Insights',
     tabs: [
@@ -15,15 +25,6 @@ const SECTIONS = [
       { to: '/analytics/income', label: 'Income', end: false },
       { to: '/analytics/budget-actual', label: 'Budget vs actual', end: false },
       { to: '/analytics/reports', label: 'Date range reports', end: false },
-    ],
-  },
-  {
-    key: 'future',
-    label: 'Future',
-    tabs: [
-      { to: '/analytics/projection', label: 'Growth projection', end: false },
-      { to: '/analytics/goals', label: 'Goal planning', end: false },
-      { to: '/analytics/budget', label: 'Yearly budget', end: false },
     ],
   },
 ] as const;
@@ -49,6 +50,11 @@ const HEADERS: Record<string, { eyebrow: string; title: string; subtitle: string
     eyebrow: 'Insights',
     title: 'Date range reports',
     subtitle: 'Every record for a period, with totals, a download, and a whole year at a glance.',
+  },
+  '/analytics/overview': {
+    eyebrow: 'Future',
+    title: 'Plan',
+    subtitle: "Your goals, this year's budget and where your money is heading, at a glance.",
   },
   '/analytics/projection': {
     eyebrow: 'Future',
