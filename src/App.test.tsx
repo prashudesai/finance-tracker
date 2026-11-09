@@ -547,7 +547,7 @@ test('icon buttons name themselves when pointed at or focused', async () => {
 
 test('the app tour walks the pages and changes nothing', async () => {
   renderApp('/settings');
-  fireEvent.click(await screen.findByRole('button', { name: /App info/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /Help & guide/ }));
   fireEvent.click(await screen.findByRole('button', { name: 'Start app tour', hidden: true }));
   const tour = await screen.findByRole('region', { name: 'App tour' });
   fireEvent.click(within(tour).getByRole('button', { name: 'Next' }));
@@ -556,7 +556,7 @@ test('the app tour walks the pages and changes nothing', async () => {
   expect(screen.queryByRole('region', { name: 'App tour' })).toBeNull();
 });
 
-test('feedback is sent from App info as a feature or a problem, and a failure says so', async () => {
+test('feedback is sent from Settings as a feature or a problem, and a failure says so', async () => {
   const sent: [string, string][] = [];
   let fail = true;
   const sendFeedback = (kind: string, text: string) => {
@@ -572,9 +572,8 @@ test('feedback is sent from App info as a feature or a problem, and a failure sa
       />
     </MemoryRouter>,
   );
-  fireEvent.click(await screen.findByRole('button', { name: /App info/ }));
-  const info = within(await screen.findByRole('dialog', { name: 'App info', hidden: true }));
-  fireEvent.click(info.getByRole('button', { name: 'Send feedback', hidden: true }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Send feedback/ }));
+  await screen.findByRole('dialog', { name: 'Send feedback', hidden: true });
   expect(screen.getByLabelText('What would you like the app to do?')).toBeDefined();
   fireEvent.click(screen.getByRole('button', { name: 'Report a problem', hidden: true }));
   const send = screen.getByRole('button', { name: 'Send', hidden: true });
@@ -1011,11 +1010,11 @@ test('the Add expense shortcut opens the expense form', async () => {
   expect(await screen.findByRole('dialog', { name: 'Add Expense', hidden: true })).toBeDefined();
 });
 
-test('App info offers Share the app', async () => {
+test('Settings offers Share the app', async () => {
   renderApp('/settings');
-  fireEvent.click(await screen.findByRole('button', { name: /App info/ }));
-  const info = within(await screen.findByRole('dialog', { name: 'App info', hidden: true }));
-  expect(info.getByRole('button', { name: /Share the app/, hidden: true })).toBeDefined();
+  fireEvent.click(await screen.findByRole('button', { name: /^Share the app/ }));
+  const share = within(await screen.findByRole('dialog', { name: 'Share the app', hidden: true }));
+  expect(share.getByRole('button', { name: /Share the app/, hidden: true })).toBeDefined();
 });
 
 test('a dashboard portfolio row opens that category', async () => {
@@ -1173,7 +1172,7 @@ test('Face ID is turned on with the passphrase, and says when a device lacks it'
       <Shell account={account} repository={createMemoryRepository()} />
     </MemoryRouter>,
   );
-  fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Security/ }));
   const toggle = await screen.findByRole('switch', {
     name: 'Face ID or fingerprint',
     hidden: true,
@@ -1198,7 +1197,7 @@ test('Face ID is turned on with the passphrase, and says when a device lacks it'
       <Shell account={account} repository={createMemoryRepository()} />
     </MemoryRouter>,
   );
-  fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Security/ }));
   expect(await screen.findByText(/doesn't support it yet/)).toBeDefined();
 });
 
@@ -1224,7 +1223,7 @@ test('passphrase settings stay compact until one is chosen', async () => {
       />
     </MemoryRouter>,
   );
-  fireEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Security/ }));
   const change = await screen.findByRole('button', { name: 'Change passphrase', hidden: true });
   expect(screen.queryByLabelText('Current passphrase')).toBeNull();
   fireEvent.click(change);
@@ -1354,7 +1353,7 @@ test('+ Add new saves a value and selects it, and the old custom values tile is 
   fireEvent.click(screen.getByRole('button', { name: 'Save and select', hidden: true }));
   await waitFor(() => expect((source as HTMLSelectElement).value).toBe('Freelance'));
   fireEvent.click(screen.getAllByRole('link', { name: /Settings/ })[0] as HTMLElement);
-  await screen.findByRole('button', { name: /App info/ });
+  await screen.findByRole('button', { name: /Help & guide/ });
   expect(screen.queryByRole('button', { name: /Custom values/ })).toBeNull();
 });
 
@@ -1632,27 +1631,24 @@ test('pull to refresh waits for a long enough pull', async () => {
   vi.unstubAllGlobals();
 });
 
-test('settings tiles match the old app, with family sections inside', async () => {
+test('settings are grouped, with family sections inside', async () => {
   renderApp('/settings');
-  await screen.findByRole('button', { name: /App info/ });
-  const tiles = screen
-    .getAllByRole('button')
-    .map((button) => button.textContent ?? '')
-    .filter((text) =>
-      /^(App info|Account|Family access|Appearance|Data & backup|App & updates)/.test(text),
-    )
-    .map(
-      (text) =>
-        text.match(/^(App info|Account|Family access|Appearance|Data & backup|App & updates)/)?.[0],
-    );
-  expect(tiles).toEqual([
-    'App info',
-    'Account',
-    'Family access',
-    'Appearance',
-    'Data & backup',
-    'App & updates',
+  await screen.findByRole('button', { name: /Help & guide/ });
+  expect(screen.getAllByRole('heading', { level: 2 }).map((row) => row.textContent)).toEqual([
+    'General',
+    'Family & security',
+    'Your data',
+    'Help',
+    'About',
   ]);
+  const general = within(screen.getByRole('region', { name: 'General' }));
+  expect(general.getByRole('button', { name: /^Appearance/ })).toBeDefined();
+  expect(general.getByRole('button', { name: /^Reminders/ })).toBeDefined();
+  expect(
+    within(screen.getByRole('region', { name: 'About' })).getByRole('button', {
+      name: /^App & updates.*v\d/,
+    }),
+  ).toBeDefined();
   fireEvent.click(screen.getByRole('button', { name: /Family access/ }));
   expect(
     await screen.findByRole('heading', { name: 'Family members', hidden: true }),

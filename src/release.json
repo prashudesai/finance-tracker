@@ -1,7 +1,8 @@
 {
-  "version": "1.27.0",
+  "version": "1.28.0",
   "released": "2026-11-09",
   "notes": [
+    "Settings redesigned: your profile on top, then grouped lists (General, Family & security, Your data, Help, About) with one tap to each setting, and Sign out at the end. Reminders, Security, Send feedback and Share the app now have rows of their own",
     "Dashboard: this month's income, expenses, savings and balance in one shorter card, each with a small six-month trend line and how it compares with last month. Spending compares with the same day last month. Tap a figure to open it",
     "Loan EMIs and part payments are no longer counted as spending: they repay debt, so Expenses, the charts and the month recap show them on their own. Mark a loan as a lifestyle EMI, such as a phone bought on EMI, and its EMIs count as spending. Balances still take them off",
     "Debts on phones: loan cards drop the Active label, and the summary header fits on one line",

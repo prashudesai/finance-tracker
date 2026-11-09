@@ -1,14 +1,16 @@
 import {
+  BellRing,
   ChevronRight,
   DatabaseBackup,
   HeartPulse,
-  Info,
+  LifeBuoy,
+  LogOut,
   MessageSquare,
   Palette,
   RefreshCw,
   Share2,
+  ShieldCheck,
   Smartphone,
-  User,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -22,7 +24,7 @@ import {
   shareStatus,
   type ShareMessage,
 } from '../../ui/share';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import release from '../../release.json';
 import { syncedRecently } from '../../domain/analytics';
@@ -35,6 +37,8 @@ import type { Account, AccountSecurity, FamilyMember, FeedbackKind } from '../..
 import { downloadText } from '../../ui/download';
 import { downloadTablePdf } from '../../ui/pdf';
 import { AppearanceChoice } from '../../ui/AppearanceChoice';
+import { useTheme } from '../../ui/theme';
+import { THEME_CHOICES } from '../../ui/themes';
 import { InstallHelp } from '../install/InstallPrompts';
 import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
@@ -53,10 +57,15 @@ import { Avatar } from '../../ui/Avatar';
 import { resizePhoto } from '../../ui/photo';
 import { checkForUpdates, useAppUpdate, type UpdateCheck } from '../../ui/pwa';
 import ui from '../../ui/ui.module.css';
+import styles from './Settings.module.css';
 
 type Panel =
-  | 'info'
+  | 'help'
   | 'account'
+  | 'reminders'
+  | 'security'
+  | 'feedback'
+  | 'share'
   | 'family'
   | 'appearance'
   | 'archived'
@@ -67,45 +76,83 @@ type Panel =
 
 const VERSION = release.version;
 
-const TILES: { panel: Panel; icon: LucideIcon; title: string; text: string }[] = [
-  { panel: 'info', icon: Info, title: 'App info', text: 'Features, calculations and PDF guide' },
-  {
-    panel: 'account',
-    icon: User,
-    title: 'Account',
-    text: 'Profile details, security and account deletion',
-  },
-  {
-    panel: 'family',
-    icon: Users,
-    title: 'Family access',
-    text: 'Invite members and manage permissions',
-  },
-  {
-    panel: 'appearance',
-    icon: Palette,
-    title: 'Appearance',
-    text: 'Choose colors and display preferences',
-  },
-  {
-    panel: 'data',
-    icon: DatabaseBackup,
-    title: 'Data & backup',
-    text: 'Export, import and recovery tools',
-  },
-  {
-    panel: 'health',
-    icon: HeartPulse,
-    title: 'Data health',
-    text: 'Checks that your figures add up',
-  },
-  {
-    panel: 'updates',
-    icon: Smartphone,
-    title: 'App & updates',
-    text: `Version ${VERSION} · Updates and release notes`,
-  },
-];
+/** Each panel's title, which its dialog shows too. */
+const TITLES: Record<Panel, string> = {
+  help: 'Help & guide',
+  account: 'Account',
+  reminders: 'Reminders',
+  security: 'Security',
+  feedback: 'Send feedback',
+  share: 'Share the app',
+  family: 'Family access',
+  appearance: 'Appearance',
+  archived: 'Archived',
+  changes: 'Changes',
+  data: 'Data & backup',
+  health: 'Data health',
+  updates: 'App & updates',
+};
+
+/** Colours for the row icons, from the theme's own palette. */
+type Hue = 'blue' | 'green' | 'amber' | 'pink' | 'mint' | 'orange' | 'red';
+
+function SettingRow({
+  icon: Icon,
+  hue,
+  title,
+  text,
+  value,
+  onClick,
+  to,
+  danger = false,
+  chevron = true,
+}: {
+  icon: LucideIcon;
+  hue: Hue;
+  title: string;
+  text?: string | undefined;
+  value?: string | undefined;
+  onClick?: () => void;
+  to?: string;
+  danger?: boolean;
+  chevron?: boolean;
+}) {
+  const body = (
+    <>
+      <span aria-hidden="true" className={styles.icon} data-hue={hue}>
+        <Icon size={18} />
+      </span>
+      <span className={styles.text}>
+        <span className={danger ? styles.dangerTitle : styles.title}>{title}</span>
+        {text ? <span className={styles.sub}>{text}</span> : null}
+      </span>
+      {value ? <span className={styles.value}>{value}</span> : null}
+      {chevron ? <ChevronRight aria-hidden="true" className={styles.chevron} size={18} /> : null}
+    </>
+  );
+  return (
+    <li>
+      {to ? (
+        <Link className={styles.row} to={to}>
+          {body}
+        </Link>
+      ) : (
+        <button className={styles.row} onClick={onClick} type="button">
+          {body}
+        </button>
+      )}
+    </li>
+  );
+}
+
+function SettingGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <section aria-label={label} className={styles.group}>
+      <h2 className={styles.groupLabel}>{label}</h2>
+      <ul className={styles.list}>{children}</ul>
+    </section>
+  );
+}
 
 function FamilyNames({ account, onInvited }: { account: Account; onInvited: () => void }) {
   const { family } = account;
@@ -1016,8 +1063,14 @@ const FEEDBACK_KINDS: Record<FeedbackKind, { label: string; prompt: string; than
   },
 };
 
-function SendFeedback({ send }: { send: (kind: FeedbackKind, text: string) => Promise<void> }) {
-  const [open, setOpen] = useState(false);
+function SendFeedback({
+  send,
+  startOpen = false,
+}: {
+  send: (kind: FeedbackKind, text: string) => Promise<void>;
+  startOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(startOpen);
   const [kind, setKind] = useState<FeedbackKind>('feature');
   const [text, setText] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
@@ -1154,17 +1207,7 @@ function AppUpdates() {
           <ReleaseNotes notes={release.notes} title={`Version ${VERSION}, ${release.released}`} />
         </details>
       </div>
-      <Reminders />
       <ErrorReports />
-      <div className={ui.metric}>
-        <strong>Privacy</strong>
-        <p className={ui.caption}>What is stored, and what nobody else can read.</p>
-        <div className={ui.actions}>
-          <Link className={ui.quiet} to="/privacy">
-            Read privacy page
-          </Link>
-        </div>
-      </div>
       <InstallHelp />
     </div>
   );
@@ -1231,6 +1274,7 @@ export function SettingsPage({ account }: { account: Account }) {
   const [panel, setPanel] = useState<Panel | null>(target?.panel ?? null);
   const setTourOpen = useTracker((state) => state.setTourOpen);
   const repository = useTracker((state) => state.repository);
+  const { theme, palette } = useTheme();
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState('');
 
@@ -1247,66 +1291,148 @@ export function SettingsPage({ account }: { account: Account }) {
       )
       .finally(() => setSyncing(false));
   };
-  const open = TILES.find((tile) => tile.panel === panel);
   const healthSummary = useHealthSummary();
+  const paletteName = THEME_CHOICES.find((choice) => choice.key === palette)?.label ?? '';
 
   return (
-    <div className={ui.page}>
-      <PageHeader
-        eyebrow="Personalize your tracker"
-        subtitle="Adjust the look, manage the values in your forms, and protect your backup."
-        title="Settings"
-      />
-      <section aria-label="Your account" className={ui.card}>
-        <div className={ui.cardHeader} style={{ flexWrap: 'wrap' }}>
-          <div className={ui.cardHeader} style={{ justifyContent: 'flex-start' }}>
-            <Avatar account={account} size={40} />
-            <div>
-              <strong>{account.name}</strong>
-              <div className={ui.caption}>{account.email}</div>
-            </div>
-          </div>
-          <button className={ui.quiet} disabled={syncing} onClick={syncNow} type="button">
-            <RefreshCw size={14} /> {syncing ? 'Syncing…' : 'Sync now'}
-          </button>
-        </div>
-        {syncStatus ? (
-          <p className={ui.caption} role="status" style={{ margin: 0 }}>
-            {syncStatus}
-          </p>
+    <div className={`${ui.page} ${styles.page}`}>
+      <PageHeader eyebrow="Preferences" title="Settings" />
+
+      <button
+        aria-label={`Account: ${account.name}, ${account.email}`}
+        className={styles.profile}
+        onClick={() => setPanel('account')}
+        type="button"
+      >
+        <Avatar account={account} size={56} />
+        <span className={styles.text}>
+          <strong className={styles.name}>{account.name}</strong>
+          <span className={styles.sub}>{account.email}</span>
+        </span>
+        <ChevronRight aria-hidden="true" className={styles.chevron} size={18} />
+      </button>
+
+      <SettingGroup label="General">
+        <SettingRow
+          hue="blue"
+          icon={Palette}
+          onClick={() => setPanel('appearance')}
+          text={`${theme === 'dark' ? 'Dark' : 'Light'}${paletteName ? ` · ${paletteName}` : ''}`}
+          title="Appearance"
+        />
+        <SettingRow
+          hue="amber"
+          icon={BellRing}
+          onClick={() => setPanel('reminders')}
+          text="EMI and month-end dates"
+          title="Reminders"
+        />
+      </SettingGroup>
+
+      <SettingGroup label="Family & security">
+        <SettingRow
+          hue="green"
+          icon={Users}
+          onClick={() => setPanel('family')}
+          text="Invite members and manage permissions"
+          title="Family access"
+        />
+        {account.security ? (
+          <SettingRow
+            hue="mint"
+            icon={ShieldCheck}
+            onClick={() => setPanel('security')}
+            text="Device unlock and your recovery key"
+            title="Security"
+          />
         ) : null}
-      </section>
-      <div className={ui.settingGrid}>
-        {TILES.map(({ panel: key, icon: Icon, title, text }) => (
-          <button className={ui.settingTile} key={key} onClick={() => setPanel(key)} type="button">
-            <span aria-hidden="true" className={ui.tileIcon}>
-              <Icon size={20} />
-            </span>
-            <span className={ui.settingText}>
-              <strong style={{ display: 'block' }}>{title}</strong>
-              <span className={ui.caption}>{key === 'health' ? healthSummary : text}</span>
-            </span>
-            <ChevronRight aria-hidden="true" className={ui.settingArrow} size={16} />
-          </button>
-        ))}
-      </div>
-      <section aria-label="Share and feedback" className={ui.card}>
-        <div>
-          <h2 style={{ fontSize: '1.1rem' }}>Enjoying Finance Tracker?</h2>
-          <div className={ui.caption}>
-            Share it with a family who'd find it useful, or tell us what to improve.
-          </div>
-        </div>
-        <ShareApp />
+      </SettingGroup>
+
+      <SettingGroup label="Your data">
+        <SettingRow
+          hue="blue"
+          icon={DatabaseBackup}
+          onClick={() => setPanel('data')}
+          text="Export, import and recovery"
+          title="Data & backup"
+        />
+        <SettingRow
+          hue="pink"
+          icon={HeartPulse}
+          onClick={() => setPanel('health')}
+          text={healthSummary}
+          title="Data health"
+        />
+        <SettingRow
+          chevron={false}
+          hue="mint"
+          icon={RefreshCw}
+          onClick={syncNow}
+          text={syncStatus || 'Save every change to the cloud now'}
+          title={syncing ? 'Syncing…' : 'Sync now'}
+        />
+      </SettingGroup>
+
+      <SettingGroup label="Help">
+        <SettingRow
+          hue="amber"
+          icon={LifeBuoy}
+          onClick={() => setPanel('help')}
+          text="Features, app tour and PDF guide"
+          title="Help & guide"
+        />
         {account.sendFeedback ? (
-          <button className={ui.quiet} onClick={() => setPanel('info')} type="button">
-            <MessageSquare aria-hidden="true" size={16} /> Send feedback
-          </button>
+          <SettingRow
+            hue="orange"
+            icon={MessageSquare}
+            onClick={() => setPanel('feedback')}
+            text="Suggest a feature or report a problem"
+            title="Send feedback"
+          />
         ) : null}
-      </section>
-      {open ? (
-        <Modal onClose={() => setPanel(null)} title={open.title}>
-          {panel === 'info' ? (
+        <SettingRow
+          hue="green"
+          icon={Share2}
+          onClick={() => setPanel('share')}
+          text="With a family who'd find it useful"
+          title="Share the app"
+        />
+      </SettingGroup>
+
+      <SettingGroup label="About">
+        <SettingRow
+          hue="mint"
+          icon={Smartphone}
+          onClick={() => setPanel('updates')}
+          text="Updates and release notes"
+          title="App & updates"
+          value={`v${VERSION}`}
+        />
+        <SettingRow
+          hue="blue"
+          icon={ShieldCheck}
+          text="What's stored and who can see it"
+          title="Privacy"
+          to="/privacy"
+        />
+      </SettingGroup>
+
+      {account.signOut ? (
+        <ul className={styles.list}>
+          <SettingRow
+            chevron={false}
+            danger
+            hue="red"
+            icon={LogOut}
+            onClick={account.signOut}
+            title="Sign out"
+          />
+        </ul>
+      ) : null}
+
+      {panel ? (
+        <Modal onClose={() => setPanel(null)} title={TITLES[panel]}>
+          {panel === 'help' ? (
             <div className={ui.page}>
               <p>
                 Track income, expenses, investments, retirement accounts and loans for your family.
@@ -1316,8 +1442,6 @@ export function SettingsPage({ account }: { account: Account }) {
               <Link className={ui.quiet} to="/features">
                 See all features
               </Link>
-              <ShareApp />
-              {account.sendFeedback ? <SendFeedback send={account.sendFeedback} /> : null}
               <button
                 className={ui.quiet}
                 onClick={() => {
@@ -1331,20 +1455,31 @@ export function SettingsPage({ account }: { account: Account }) {
               <GuideButton />
             </div>
           ) : null}
+          {panel === 'feedback' && account.sendFeedback ? (
+            <SendFeedback send={account.sendFeedback} startOpen />
+          ) : null}
+          {panel === 'share' ? (
+            <div className={ui.page}>
+              <p className={ui.caption}>
+                Send the app's link to a family who'd find it useful. Nothing of yours is shared.
+              </p>
+              <ShareApp />
+            </div>
+          ) : null}
+          {panel === 'reminders' ? <Reminders /> : null}
           {panel === 'account' ? (
             <div className={ui.page}>
               <p>
                 {account.name} · {account.email}
               </p>
-              {account.signOut ? (
-                <button className={ui.quiet} onClick={account.signOut} type="button">
-                  Sign out
-                </button>
-              ) : null}
               <ProfilePhoto account={account} />
-              {account.security ? <DeviceUnlock security={account.security} /> : null}
-              {account.security ? <SecurityPanel security={account.security} /> : null}
               <DeleteAccount account={account} />
+            </div>
+          ) : null}
+          {panel === 'security' && account.security ? (
+            <div className={ui.page}>
+              <DeviceUnlock security={account.security} />
+              <SecurityPanel security={account.security} />
             </div>
           ) : null}
           {panel === 'family' ? <FamilyAccessPanel account={account} /> : null}
