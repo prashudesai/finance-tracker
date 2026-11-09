@@ -4,8 +4,12 @@ import { formatCompactMoney, formatMoney, formatMonth, formatShortMonth } from '
 import ui from '../../ui/ui.module.css';
 import styles from './TrendChart.module.css';
 
-/** A month's income, and what went out: spending, with what was invested from it on top. */
+/**
+ * A month's income, and what went out: spending, then loan EMIs, then what was invested from
+ * it, stacked in that order.
+ */
 export interface TrendRow extends MonthTrend {
+  emis?: number;
   invested?: number;
 }
 
@@ -13,13 +17,15 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
   const [chosen, setChosen] = useState<string | null>(null);
   const detail = months.find((row) => row.month === chosen);
   const showInvested = months.some((row) => (row.invested ?? 0) > 0);
+  const showEmis = months.some((row) => (row.emis ?? 0) > 0);
   const peak = Math.max(
-    ...months.flatMap((row) => [row.income, row.expenses + (row.invested ?? 0)]),
+    ...months.flatMap((row) => [row.income, row.expenses + (row.emis ?? 0) + (row.invested ?? 0)]),
     1,
   );
   const summary = (row: TrendRow) => [
     `Income ${formatMoney(row.income)}`,
     `Expenses ${formatMoney(row.expenses)}`,
+    ...(showEmis ? [`EMIs ${formatMoney(row.emis ?? 0)}`] : []),
     ...(showInvested ? [`Invested from income ${formatMoney(row.invested ?? 0)}`] : []),
   ];
   const height = (value: number) => `${(value / peak) * 100}%`;
@@ -33,6 +39,11 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
         <span>
           <i className={styles.swatchExpense} /> Expenses
         </span>
+        {showEmis ? (
+          <span>
+            <i className={styles.swatchEmi} /> EMIs
+          </span>
+        ) : null}
         {showInvested ? (
           <span>
             <i className={styles.swatchInvested} /> Invested from income
@@ -46,10 +57,13 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
           <div className={styles.month} key={row.month} onClick={() => setChosen(row.month)}>
             <div className={styles.bars}>
               <span className={styles.barIncome} style={{ height: height(row.income) }} />
-              {/* Spending at the base, what was invested stacked on it. */}
+              {/* Spending at the base, then EMIs, then what was invested, stacked up. */}
               <span className={styles.stack}>
                 {row.invested ? (
                   <span className={styles.barInvested} style={{ height: height(row.invested) }} />
+                ) : null}
+                {row.emis ? (
+                  <span className={styles.barEmi} style={{ height: height(row.emis) }} />
                 ) : null}
                 <span className={styles.barExpense} style={{ height: height(row.expenses) }} />
               </span>
@@ -69,12 +83,13 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
       </p>
       <div className={ui.visuallyHidden}>
         <table>
-          <caption>Income, expenses and investing by month</caption>
+          <caption>Income, expenses, EMIs and investing by month</caption>
           <thead>
             <tr>
               <th scope="col">Month</th>
               <th scope="col">Income</th>
               <th scope="col">Expenses</th>
+              {showEmis ? <th scope="col">EMIs</th> : null}
               {showInvested ? <th scope="col">Invested from income</th> : null}
             </tr>
           </thead>
@@ -84,6 +99,7 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
                 <th scope="row">{formatMonth(row.month)}</th>
                 <td>{formatMoney(row.income)}</td>
                 <td>{formatMoney(row.expenses)}</td>
+                {showEmis ? <td>{formatMoney(row.emis ?? 0)}</td> : null}
                 {showInvested ? <td>{formatMoney(row.invested ?? 0)}</td> : null}
               </tr>
             ))}

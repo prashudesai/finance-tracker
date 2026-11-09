@@ -52,6 +52,11 @@ export const loanSchema = z.object({
   dailyInterestBasis: z.boolean().optional(),
   changes: z.array(loanChangeSchema).max(500),
   notes: notes.optional(),
+  /**
+   * Bought something on EMI, such as a phone: its EMIs are spending. Otherwise, as for a home
+   * or car loan, EMIs and part payments repay debt and aren't counted as spending.
+   */
+  lifestyle: z.boolean().optional(),
 });
 export type Loan = z.infer<typeof loanSchema>;
 

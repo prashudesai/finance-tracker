@@ -26,14 +26,14 @@ export function YearAtGlance({
   const label = financialYearLabel(fy);
   const running = year.to >= today.slice(0, 7);
   const change = year.netWorth ? year.netWorth.end - year.netWorth.start : null;
-  const kept = year.income - year.spent;
+  const kept = year.income - year.spent - year.emis;
 
   const lines: [string, string][] = [
     ['Income', pdfAmount(year.income)],
-    ['Spent, including unrecorded and EMIs', pdfAmount(year.spent)],
-    ['  of which EMIs', pdfAmount(year.emis)],
+    ['Spent, including unrecorded', pdfAmount(year.spent)],
+    ['Loan EMIs', pdfAmount(year.emis)],
     ['Invested from income', pdfAmount(year.invested)],
-    ['Kept after spending', pdfAmount(kept)],
+    ['Kept after spending and EMIs', pdfAmount(kept)],
     ['Savings rate', year.savingsRate === null ? '-' : formatPercent(year.savingsRate, 0)],
     ...(year.netWorth
       ? ([
@@ -86,7 +86,11 @@ export function YearAtGlance({
       </div>
       <div className={ui.metricsTwo}>
         <Metric label="Income" value={formatMoney(year.income)} />
-        <Metric label="Spent" value={formatMoney(year.spent)} />
+        <Metric
+          {...(year.emis > 0 ? { detail: `Plus ${formatMoney(year.emis)} of loan EMIs` } : {})}
+          label="Spent"
+          value={formatMoney(year.spent)}
+        />
         <Metric label="Invested from income" value={formatMoney(year.invested)} />
         <Metric
           label="Savings rate"

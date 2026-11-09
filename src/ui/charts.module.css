@@ -58,6 +58,24 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* On phones the ring sits on top and its key spreads below in two columns, so names don't wrap. */
+@media (max-width: 520px) {
+  .donut {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .donut .ring {
+    width: min(100%, 200px);
+  }
+
+  .donut .legend {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+  }
+}
+
 .columns {
   display: grid;
   gap: 6px;

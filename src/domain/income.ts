@@ -1,6 +1,6 @@
 import type { TrackerData } from '../data/repository';
 import type { Income } from '../schema/records';
-import { isEmi, trackingStart } from './analytics';
+import { isRepayment, trackingStart } from './analytics';
 import { financialYearRange, nextMonth, previousMonth, roundMoney } from './calendar';
 
 /**
@@ -254,7 +254,8 @@ export function whereIncomeGoes(data: TrackerData, fy: number, today: string) {
   const counted = new Set(months);
   const income = sum(data.income.filter((row) => counted.has(monthOf(row))));
   const expenses = data.expenses.filter((row) => counted.has(monthOf(row)));
-  const emis = sum(expenses.filter(isEmi));
+  // Lifestyle EMIs are spending; other EMIs and part payments repay loans.
+  const emis = sum(expenses.filter((row) => isRepayment(row, data.loans)));
   const spending = sum(expenses) - emis;
   const invested = sum(
     data.contributions.filter((row) => !row.skipped && counted.has(monthOf(row))),

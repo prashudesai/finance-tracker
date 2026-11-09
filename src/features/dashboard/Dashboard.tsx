@@ -1,10 +1,8 @@
 import {
-  Banknote,
   BellRing,
   ChevronRight,
   CreditCard,
   LineChart as TrendIcon,
-  RefreshCw,
   TrendingUp,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -13,16 +11,18 @@ import {
   attentionItems,
   trackingStart,
   investedFromIncome,
-  isEmi,
   holdingRows,
+  isRepayment,
   monthlyOverview,
+  overviewTrends,
+  repaymentsByMonth,
+  withoutRepayments,
   netWorth,
   netWorthHistory,
   portfolioCategories,
   type CategoryRow,
 } from '../../domain/analytics';
 import { budgetReminders } from '../../domain/budget';
-import { financialYearStart } from '../../domain/calendar';
 import { monthlyTrend } from '../../domain/cashflow';
 import { pendingOccurrences } from '../../domain/recurring';
 import { paidShare, summarizeLoans, totalOutstanding, greeting } from '../../domain/summary';
@@ -38,7 +38,6 @@ import {
   signedMoney,
 } from '../../ui/format';
 import { PageHeader } from '../../ui/PageHeader';
-import { Stat } from '../../ui/Stat';
 import ui from '../../ui/ui.module.css';
 import styles from './Dashboard.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
@@ -47,6 +46,7 @@ import { EmptyState } from '../../ui/EmptyState';
 import { TrendLine } from '../../ui/TrendLine';
 import { useCountUp } from '../../ui/useCountUp';
 import { GoalsTile } from '../goals/GoalsTile';
+import { MonthOverview } from './MonthOverview';
 import { InsightsCard } from '../insights/InsightsCard';
 import { RecapCard } from '../insights/MonthRecap';
 import { InstallCard } from '../install/InstallPrompts';
@@ -62,12 +62,6 @@ const MIN_TREND_MONTHS = 3;
 /** The income chart shows the same six months on every screen. */
 const CHART_MONTHS = 6;
 type SortKey = 'size' | 'gain';
-
-/** "FY 26–27", held together so a narrow tile never breaks it across lines. */
-function shortFy(month: string) {
-  const start = financialYearStart(month);
-  return `FY\u00a0${String(start % 100)}\u2060–\u2060${String((start + 1) % 100)}`;
-}
 
 function PortfolioRow({ row, peak, index }: { row: CategoryRow; peak: number; index: number }) {
   const scale = (value: number) => `${(Math.max(0, value) / peak) * 100}%`;
@@ -117,6 +111,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
   // Spending figures count each closed month's house expense.
   const spending = useSpendingView();
   const overview = monthlyOverview(spending, month, today);
+  const trends = useMemo(() => overviewTrends(spending, month, today), [spending, month, today]);
   const loans = summarizeLoans(data, today);
   const outstanding = totalOutstanding(loans);
 
@@ -164,10 +159,13 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const invested = investedFromIncome(data);
   // From when tracking began: months before it have no income or spending to compare.
   const since = trackingStart(data) ?? month;
-  const trend = monthlyTrend(spending, month, CHART_MONTHS)
+  // Spending without loan repayments, which show as their own part of each bar.
+  const repaid = repaymentsByMonth(spending);
+  const trend = monthlyTrend(withoutRepayments(spending), month, CHART_MONTHS)
     .filter((row) => row.month >= since)
     .map((row) => ({
       ...row,
+      emis: repaid.get(row.month) ?? 0,
       invested: invested.get(row.month) ?? 0,
     }));
   const firstTrend = trend[0]?.month ?? month;
@@ -175,7 +173,9 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const splitMonth = trend.length > 1 ? (trend.at(-2)?.month ?? month) : month;
   const inSplit = (row: { date: string }) => row.date.startsWith(splitMonth);
   const splitRows = spending.expenses.filter(inSplit);
-  const splitEmis = splitRows.filter(isEmi).reduce((total, row) => total + row.amount, 0);
+  const splitEmis = splitRows
+    .filter((row) => isRepayment(row, spending.loans))
+    .reduce((total, row) => total + row.amount, 0);
   const splitSpent = splitRows.reduce((total, row) => total + row.amount, 0) - splitEmis;
   const splitIncome = spending.income.filter(inSplit).reduce((total, row) => total + row.amount, 0);
   const splitInvested = invested.get(splitMonth) ?? 0;
@@ -328,46 +328,15 @@ export function Dashboard({ name = '' }: { name?: string }) {
       <div className={styles.top}>
         {netWorthCard}
 
-        <div className={styles.overview}>
-          <div className={ui.sectionLabel}>
-            Monthly overview <span>{formatMonth(month)}</span>
-          </div>
-          <section aria-label="This month" className={`${ui.statGrid} ${styles.stats}`}>
-            <Stat
-              detail={`Avg ${formatMoney(overview.averageIncome)} · ${shortFy(month)}`}
-              empty={overview.close.income === 0}
-              hue="income"
-              icon={TrendingUp}
-              label="Monthly Income"
-              value={formatMoney(overview.close.income)}
-            />
-            <Stat
-              detail={`Avg ${formatMoney(overview.averageExpenses)} · ${shortFy(month)}`}
-              empty={overview.spent === 0}
-              hue="expense"
-              icon={CreditCard}
-              label="Monthly Expenses"
-              value={formatMoney(overview.spent)}
-            />
-            <Stat
-              detail={`Avg ${formatMoney(overview.averageSavings)} · ${shortFy(month)}`}
-              empty={overview.savings === 0}
-              hue="savings"
-              icon={RefreshCw}
-              label="Savings contributions"
-              tone={ui.gain}
-              value={formatMoney(overview.savings)}
-            />
-            <Stat
-              detail={
-                overview.close.opening === null ? 'Opening not set' : 'After recorded activity'
-              }
-              icon={Banknote}
-              label="Available Balance"
-              value={formatMoney(overview.close.available)}
-            />
-          </section>
-        </div>
+        <MonthOverview
+          available={overview.close.available}
+          income={overview.close.income}
+          month={month}
+          opening={overview.close.opening}
+          savings={overview.savings}
+          spent={overview.spent}
+          trends={trends}
+        />
       </div>
 
       {/* Prompts come after your own figures, never before them. */}

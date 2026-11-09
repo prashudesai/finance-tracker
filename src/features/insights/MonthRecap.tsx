@@ -86,6 +86,13 @@ function RecapBody({ recap, running }: { recap: Recap; running: boolean }) {
           <i style={{ width: `${(recap.expenses / widest) * 100}%` }} />
           <b>{formatMoney(recap.expenses)}</b>
         </div>
+        {recap.repaid > 0 ? (
+          <div data-kind="emi">
+            <span>Loan EMIs</span>
+            <i style={{ width: `${(recap.repaid / widest) * 100}%` }} />
+            <b>{formatMoney(recap.repaid)}</b>
+          </div>
+        ) : null}
       </div>
 
       {recap.categories.length > 0 ? (

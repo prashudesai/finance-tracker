@@ -2,7 +2,7 @@ import type { TrackerData } from '../data/repository';
 import {
   investedFromIncome,
   isAnyHouseExpense,
-  isEmi,
+  isRepayment,
   netWorthHistory,
   trackingStart,
 } from './analytics';
@@ -51,11 +51,13 @@ export function yearSummary(data: TrackerData, fy: number, today: string): YearS
 
   const totals = monthTotals(data);
   const income = months.reduce((sum, month) => sum + (totals.get(month)?.income ?? 0), 0);
-  const spent = months.reduce((sum, month) => sum + (totals.get(month)?.expenses ?? 0), 0);
-  if (income === 0 && spent === 0) return null;
+  const outgoings = months.reduce((sum, month) => sum + (totals.get(month)?.expenses ?? 0), 0);
+  if (income === 0 && outgoings === 0) return null;
+  // Loan EMIs and part payments repay debt, so they're shown apart from spending.
   const emis = data.expenses
-    .filter((row) => inYear(row) && isEmi(row))
+    .filter((row) => inYear(row) && isRepayment(row, data.loans))
     .reduce((sum, row) => sum + row.amount, 0);
+  const spent = outgoings - emis;
   const investedByMonth = investedFromIncome(data);
   const invested = months.reduce((sum, month) => sum + (investedByMonth.get(month) ?? 0), 0);
 
@@ -73,7 +75,7 @@ export function yearSummary(data: TrackerData, fy: number, today: string): YearS
   const byCategory = new Map<string, number>();
   // Recorded categories: unrecorded spending has no category to show.
   for (const row of data.expenses.filter(
-    (row) => inYear(row) && !isEmi(row) && !isAnyHouseExpense(row),
+    (row) => inYear(row) && !isRepayment(row, data.loans) && !isAnyHouseExpense(row),
   )) {
     byCategory.set(row.category, (byCategory.get(row.category) ?? 0) + row.amount);
   }
@@ -107,7 +109,7 @@ export function yearSummary(data: TrackerData, fy: number, today: string): YearS
     spent: roundMoney(spent),
     emis: roundMoney(emis),
     invested: roundMoney(invested),
-    savingsRate: income > 0 ? (income - spent) / income : null,
+    savingsRate: income > 0 ? (income - spent - emis) / income : null,
     netWorth:
       startPoint && endPoint
         ? { start: roundMoney(startPoint.netWorth), end: roundMoney(endPoint.netWorth) }

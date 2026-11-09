@@ -54,9 +54,8 @@ function LoanCard({ summary, onOpen }: { summary: LoanSummary; onOpen: () => voi
           <div className={ui.caption}>{member}</div>
         </div>
         <span className={ui.tableActions} style={{ alignItems: 'center' }}>
-          <span className={active ? ui.badgeDone : ui.badgeMuted}>
-            {active ? 'Active' : 'Paid off'}
-          </span>
+          {/* Only a paid-off loan needs saying: every other loan here is running. */}
+          {active ? null : <span className={ui.badgeMuted}>Paid off</span>}
           <ChevronRight aria-hidden="true" size={16} />
         </span>
       </div>
@@ -226,11 +225,13 @@ export function DebtsPage() {
             </span>
             <div>
               <h2 style={{ fontSize: '1.2rem' }}>Loan summary</h2>
-              <div className={ui.caption}>Outstanding balances and recorded EMI history</div>
+              <div className={`${ui.caption} ${ui.hideOnPhone}`}>
+                Outstanding balances and recorded EMI history
+              </div>
             </div>
           </div>
           <button className={ui.button} onClick={() => setAdding(true)} type="button">
-            <Plus size={16} /> Add Loan
+            <Plus size={16} /> Add loan
           </button>
         </div>
         {summaries.length === 0 ? (
@@ -385,7 +386,7 @@ export function DebtsPage() {
         />
       ) : null}
       {adding ? (
-        <Modal onClose={() => setAdding(false)} title="Add Loan">
+        <Modal onClose={() => setAdding(false)} title="Add a loan">
           <LoanForm onDone={() => setAdding(false)} />
         </Modal>
       ) : null}

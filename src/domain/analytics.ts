@@ -5,12 +5,14 @@ import {
   PMS_TYPE,
   type Expense,
   type Holding,
+  type Loan,
   type TrackerSettings,
 } from '../schema/records';
 import {
   financialYearRange,
   financialYearStart,
   addDays,
+  daysInMonth,
   lastDayOfMonth,
   previousMonth,
   roundMoney,
@@ -408,14 +410,18 @@ export function monthlyOverview(data: TrackerData, month: string, today: string)
     const months = distinctMonths(rows);
     return months > 0 ? savings(rows, start, end) / months : 0;
   };
-  const totals = monthTotals(data);
+  // Spending leaves out loan repayments; the close still counts them, as they leave the bank.
+  const totals = monthTotals(withoutRepayments(data));
   const prior = totals.get(previous);
   const current = totals.get(month);
   return {
     close,
+    /** EMIs and part payments on loans this month, which aren't spending. */
+    repaid: repaymentsByMonth(data).get(month) ?? 0,
     /**
-     * Everything spent in the month, a saved house expense included. The close leaves that
-     * entry out, as it is the gap at month end rather than spending that explains it.
+     * Everything spent in the month, a saved house expense included and loan repayments left
+     * out. The close leaves the house expense out, as it's the gap at month end rather than
+     * spending that explains it.
      */
     spent: roundMoney(current?.expenses ?? 0),
     savings: sumAmount(contributions.filter((row) => inMonth(row.date, month))),
@@ -425,6 +431,100 @@ export function monthlyOverview(data: TrackerData, month: string, today: string)
     previous,
     spendingChange: current && prior ? current.expenses - prior.expenses : null,
     principalRepaid: principalRepaid(data, today, (date) => inMonth(date, month)),
+  };
+}
+
+/** A figure's change against last month, as a fraction, and whether that's good news. */
+export interface FigureChange {
+  change: number;
+  better: boolean;
+  /** What it's compared with: a whole month (YYYY-MM) or the same day of last month (YYYY-MM-DD). */
+  against: string;
+}
+
+export interface OverviewTrends {
+  /** Up to six months, oldest first, ending with the month shown. Empty with fewer than two. */
+  income: { series: number[]; change: FigureChange | null };
+  expenses: { series: number[]; change: FigureChange | null };
+  savings: { series: number[]; change: FigureChange | null };
+  /** The balance after recorded activity at each month's end, and how far it moved this month. */
+  balance: { series: number[]; moved: number | null };
+}
+
+/**
+ * The dashboard's monthly figures over recent months, and each one against last month. A month
+ * still running compares spending with the same day of last month, as a whole month would
+ * always look higher. Nothing is compared when either month has nothing recorded.
+ */
+export function overviewTrends(
+  data: TrackerData,
+  month: string,
+  today: string,
+  length = 6,
+): OverviewTrends {
+  const since = trackingStart(data) ?? month;
+  const months = [month];
+  while (months.length < length && (months[0] ?? month) > since) {
+    months.unshift(previousMonth(months[0] ?? month));
+  }
+  const series = (values: number[]) => (values.length >= 2 ? values.map(roundMoney) : []);
+  // Spending leaves out loan repayments; the balance below still counts them.
+  const spending = withoutRepayments(data);
+  const totals = monthTotals(spending);
+  const contributions = activeContributions(data);
+  const savedIn = (key: string) => sumAmount(contributions.filter((row) => inMonth(row.date, key)));
+  const closeOf = monthCloser(data);
+  const previous = previousMonth(month);
+
+  const compare = (now: number, before: number, higherIsBetter: boolean, against: string) => {
+    if (!(now > 0) || !(before > 0)) return null;
+    const change = (now - before) / before;
+    return { change, better: higherIsBetter ? change >= 0 : change <= 0, against };
+  };
+
+  // Spending so far against last month by the same day, while the month is still running.
+  const running = month === today.slice(0, 7);
+  const day = Math.min(
+    Number(today.slice(8, 10)),
+    daysInMonth(Number(previous.slice(0, 4)), Number(previous.slice(5, 7))),
+  );
+  const cutoff = `${previous}-${String(day).padStart(2, '0')}`;
+  const spentBefore = running
+    ? sumAmount(
+        spending.expenses.filter((row) => inMonth(row.date, previous) && row.date <= cutoff),
+      )
+    : (totals.get(previous)?.expenses ?? 0);
+  const spentNow = running
+    ? sumAmount(spending.expenses.filter((row) => inMonth(row.date, month) && row.date <= today))
+    : (totals.get(month)?.expenses ?? 0);
+
+  const closes = months.map((key) => closeOf(key));
+  const current = closes[closes.length - 1];
+  return {
+    income: {
+      series: series(months.map((key) => totals.get(key)?.income ?? 0)),
+      change: compare(
+        totals.get(month)?.income ?? 0,
+        totals.get(previous)?.income ?? 0,
+        true,
+        previous,
+      ),
+    },
+    expenses: {
+      series: series(months.map((key) => totals.get(key)?.expenses ?? 0)),
+      change: compare(spentNow, spentBefore, false, running ? cutoff : previous),
+    },
+    savings: {
+      series: series(months.map(savedIn)),
+      change: compare(savedIn(month), savedIn(previous), true, previous),
+    },
+    balance: {
+      series: series(closes.filter((row) => row.opening !== null).map((row) => row.available)),
+      moved:
+        current && current.opening !== null
+          ? roundMoney(current.available - current.opening)
+          : null,
+    },
   };
 }
 
@@ -778,5 +878,34 @@ export function attentionItems(
 }
 
 export const isEmi = (row: { category: string }) => row.category === EMI_CATEGORY;
+
+/**
+ * A loan repayment: an EMI or part payment, unless the loan was for lifestyle spending, such as
+ * a phone on EMI. It leaves the bank, so month closes count it, but it pays off debt rather than
+ * being spent, so spending figures leave it out.
+ */
+export const isRepayment = (
+  row: Pick<Expense, 'category' | 'loanId'>,
+  loans: Pick<Loan, 'id' | 'lifestyle'>[],
+) => isEmi(row) && !loans.some((loan) => loan.id === row.loanId && loan.lifestyle);
+
+/** The records with loan repayments taken out of expenses, for spending figures. */
+export function withoutRepayments<Data extends Pick<TrackerData, 'expenses' | 'loans'>>(
+  data: Data,
+): Data {
+  const spending = data.expenses.filter((row) => !isRepayment(row, data.loans));
+  return spending.length === data.expenses.length ? data : { ...data, expenses: spending };
+}
+
+/** Loan repayments made each month, keyed by YYYY-MM. */
+export function repaymentsByMonth(data: Pick<TrackerData, 'expenses' | 'loans'>) {
+  const totals = new Map<string, number>();
+  for (const row of data.expenses) {
+    if (!isRepayment(row, data.loans)) continue;
+    const month = row.date.slice(0, 7);
+    totals.set(month, roundMoney((totals.get(month) ?? 0) + row.amount));
+  }
+  return totals;
+}
 
 export const assumptionKeys = (settings: TrackerSettings) => Object.keys(settings.returns);

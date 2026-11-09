@@ -214,6 +214,10 @@ details[open] > .summary .preview {
   background: var(--series-expense);
 }
 
+.bars div[data-kind='emi'] i {
+  background: var(--loss);
+}
+
 .bars b {
   font-weight: 650;
   text-align: right;

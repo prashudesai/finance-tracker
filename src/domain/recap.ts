@@ -1,5 +1,11 @@
 import type { TrackerData } from '../data/repository';
-import { isEmi, netWorthHistory } from './analytics';
+import {
+  isEmi,
+  isRepayment,
+  netWorthHistory,
+  repaymentsByMonth,
+  withoutRepayments,
+} from './analytics';
 import { lastDayOfMonth, previousMonth, roundMoney } from './calendar';
 import { monthTotals } from './cashflow';
 
@@ -13,9 +19,13 @@ export interface RecapCategory {
 export interface MonthRecap {
   month: string;
   income: number;
+  /** Spending, loan repayments left out. */
   expenses: number;
+  /** Loan EMIs and part payments, which aren't spending. */
+  repaid: number;
+  /** Income less spending and loan repayments. */
   saved: number;
-  /** Share of income left after spending, or null without income. */
+  /** Share of income left after spending and repayments, or null without income. */
   savingsRate: number | null;
   previous: { income: number; expenses: number; savingsRate: number | null } | null;
   categories: RecapCategory[];
@@ -42,7 +52,11 @@ export function recapMonths(data: TrackerData, latest: string) {
 
 /** One month in numbers. Nothing is stored; it's worked out from records each time. */
 export function monthRecap(data: TrackerData, month: string, today: string): MonthRecap {
-  const totals = monthTotals(data);
+  // Spending leaves out loan repayments, shown on their own; what was kept takes both off.
+  const repaid = repaymentsByMonth(data);
+  const totals = monthTotals(withoutRepayments(data));
+  const repaidNow = repaid.get(month) ?? 0;
+  const repaidBefore = repaid.get(previousMonth(month)) ?? 0;
   const current = totals.get(month) ?? { income: 0, expenses: 0 };
   const before = totals.get(previousMonth(month));
   const inMonth = (date: string) => date.startsWith(month);
@@ -51,7 +65,8 @@ export function monthRecap(data: TrackerData, month: string, today: string): Mon
   const byCategory = (match: (date: string) => boolean) => {
     const map = new Map<string, number>();
     for (const row of data.expenses) {
-      if (match(row.date)) map.set(row.category, (map.get(row.category) ?? 0) + row.amount);
+      if (!match(row.date) || isRepayment(row, data.loans)) continue;
+      map.set(row.category, (map.get(row.category) ?? 0) + row.amount);
     }
     return map;
   };
@@ -87,13 +102,14 @@ export function monthRecap(data: TrackerData, month: string, today: string): Mon
     month,
     income: roundMoney(current.income),
     expenses: roundMoney(current.expenses),
-    saved: roundMoney(current.income - current.expenses),
-    savingsRate: rate(current.income, current.expenses),
+    repaid: roundMoney(repaidNow),
+    saved: roundMoney(current.income - current.expenses - repaidNow),
+    savingsRate: rate(current.income, current.expenses + repaidNow),
     previous: before
       ? {
           income: roundMoney(before.income),
           expenses: roundMoney(before.expenses),
-          savingsRate: rate(before.income, before.expenses),
+          savingsRate: rate(before.income, before.expenses + repaidBefore),
         }
       : null,
     categories,

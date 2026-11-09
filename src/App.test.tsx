@@ -1582,7 +1582,7 @@ test('insurance offers its expense types and defaults to annual', async () => {
 
 test('the loan form fills the EMI from the tenure until it is typed over', async () => {
   renderApp('/debts');
-  fireEvent.click(await screen.findByRole('button', { name: 'Add Loan' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Add loan' }));
   const field = (name: string) => screen.getByLabelText(name) as HTMLInputElement;
   await screen.findByLabelText('Tenure (Months)');
   fireEvent.change(field('Principal Amount (₹)'), { target: { value: '1200000' } });

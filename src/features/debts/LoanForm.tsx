@@ -53,6 +53,7 @@ const formSchema = z.object({
   principalPaidBeforeTracking: optional,
   interestPaidBeforeTracking: optional,
   dailyInterestBasis: z.boolean(),
+  lifestyle: z.boolean(),
   notes: z.string().max(500, 'Use 500 characters or fewer.'),
 });
 type FormInput = z.input<typeof formSchema>;
@@ -84,6 +85,7 @@ export function LoanForm({ initial, onDone }: { initial?: Loan; onDone: () => vo
       firstEmiExtraInterest: initial?.firstEmiExtraInterest,
       firstEmiInterestMethod: initial?.firstEmiInterestMethod ?? 'monthly',
       dailyInterestBasis: initial?.dailyInterestBasis ?? false,
+      lifestyle: initial?.lifestyle ?? false,
       notes: initial?.notes ?? '',
     },
   });
@@ -197,7 +199,7 @@ export function LoanForm({ initial, onDone }: { initial?: Loan; onDone: () => vo
   }, [daily, firstEmiDate, principal, rate, setValue, startDate]);
 
   const save = (form: FormValues) => {
-    const { firstEmiDate: first, notes, ...values } = form;
+    const { firstEmiDate: first, notes, lifestyle, ...values } = form;
     delete values.tenure;
     if (!showPaid) {
       delete values.principalPaidBeforeTracking;
@@ -210,6 +212,7 @@ export function LoanForm({ initial, onDone }: { initial?: Loan; onDone: () => vo
       changes: initial?.changes ?? [],
       ...(first ? { firstEmiDate: first } : {}),
       ...(notes ? { notes } : {}),
+      ...(lifestyle ? { lifestyle: true } : {}),
     };
     const check = rebuildLoan(value, loanPayments(expenses, id), { asOf: localDate() });
     if (isLoanFailure(check)) {
@@ -340,6 +343,10 @@ export function LoanForm({ initial, onDone }: { initial?: Loan; onDone: () => vo
       <label className={ui.check}>
         <input type="checkbox" {...register('dailyInterestBasis')} /> Interest charged on the daily
         balance
+      </label>
+      <label className={ui.check}>
+        <input type="checkbox" {...register('lifestyle')} /> Lifestyle EMI: something bought on EMI,
+        such as a phone, so its EMIs count as spending
       </label>
       <div className={ui.formActions}>
         <button className={ui.button} type="submit">

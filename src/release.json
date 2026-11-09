@@ -1,7 +1,11 @@
 {
-  "version": "1.26.0",
-  "released": "2026-11-07",
+  "version": "1.27.0",
+  "released": "2026-11-09",
   "notes": [
+    "Dashboard: this month's income, expenses, savings and balance in one shorter card, each with a small six-month trend line and how it compares with last month. Spending compares with the same day last month. Tap a figure to open it",
+    "Loan EMIs and part payments are no longer counted as spending: they repay debt, so Expenses, the charts and the month recap show them on their own. Mark a loan as a lifestyle EMI, such as a phone bought on EMI, and its EMIs count as spending. Balances still take them off",
+    "Debts on phones: loan cards drop the Active label, and the summary header fits on one line",
+    "Investments on phones: the allocation chart sits above a two-column key, so names don't wrap",
     "Yearly budget: a line can count spending in several categories, such as Grocery, Milk and Fruits together",
     "Budget vs actual, in Planning › Insights: pick a planned year and see what you spent against it, by month and by category, plus spending that isn't in the plan",
     "Yearly budget: use it for spending only, or add the income you expect (monthly or yearly) to see income vs budget and what's left to invest. Income recorded so far is no longer used",

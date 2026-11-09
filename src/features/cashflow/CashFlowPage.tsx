@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpFromLine, PiggyBank, Wallet } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Landmark, PiggyBank, Wallet } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
@@ -7,6 +7,7 @@ import {
   isAnyHouseExpense,
   isMonthEnd,
   monthsToReview,
+  repaymentsByMonth,
 } from '../../domain/analytics';
 import { previousMonth } from '../../domain/calendar';
 import { monthTotals } from '../../domain/cashflow';
@@ -67,11 +68,13 @@ function BalanceExplainer() {
     <details className={ui.fold}>
       <summary>How this balance is calculated</summary>
       <p className={ui.caption}>
-        Income recorded this month, less expenses recorded this month including EMIs, its unrecorded
-        house expense once the closing balance is in, and what was invested from the bank. PF and
-        NPS come out of salary before it's paid, so they aren't taken off. Opening bank balances
-        aren't included. Family members' personal income follows the selected profile, and household
-        expenses stay shared.
+        Income recorded this month, less expenses recorded this month, loan EMIs and part payments,
+        its unrecorded house expense once the closing balance is in, and what was invested from the
+        bank. Loan EMIs are shown apart from spending, as they pay off debt; EMIs for something
+        bought on EMI, marked as a lifestyle EMI on the loan, count as spending. PF and NPS come out
+        of salary before it's paid, so they aren't taken off. Opening bank balances aren't included.
+        Family members' personal income follows the selected profile, and household expenses stay
+        shared.
       </p>
     </details>
   );
@@ -95,6 +98,8 @@ export function CashFlowPage() {
       review?: string;
       commitments?: boolean;
       found?: { kind: 'income' | 'expense'; id: string; month: string };
+      /** From the dashboard's monthly figures: this month's income or expenses. */
+      show?: 'income' | 'expense';
     } | null;
   };
 
@@ -110,6 +115,10 @@ export function CashFlowPage() {
       scrollToSection('month-review');
     }
     if (quickAdd?.commitments) scrollToSection('commitments');
+    if (quickAdd?.show) {
+      setHistory(quickAdd.show);
+      scrollToSection('history');
+    }
     if (quickAdd?.found) {
       setMonth(quickAdd.found.month);
       setHistory(quickAdd.found.kind);
@@ -170,6 +179,9 @@ export function CashFlowPage() {
   const spent = monthTotals(spendingView).get(month)?.expenses ?? recorded.expenses;
   const unrecorded = Math.max(0, spent - recorded.expenses);
   const totals = { income: recorded.income, expenses: spent };
+  // Loan EMIs and part payments leave the bank but aren't spending, so they show on their own.
+  const repaid = repaymentsByMonth(data).get(month) ?? 0;
+  const recordedSpending = recorded.expenses - repaid;
   // Paid into investments from the bank this month; PF and NPS come out of salary first.
   const invested = investedFromIncome(data).get(month) ?? 0;
   const left = totals.income - totals.expenses - invested;
@@ -227,7 +239,8 @@ export function CashFlowPage() {
           onMonth={setMonth}
           income={totals.income}
           invested={invested}
-          spent={recorded.expenses}
+          repaid={repaid}
+          spent={recordedSpending}
           unrecorded={unrecorded}
         />
       ) : (
@@ -241,8 +254,16 @@ export function CashFlowPage() {
             <Stat
               icon={ArrowDownToLine}
               label="Expenses recorded"
-              value={formatMoney(recorded.expenses)}
+              value={formatMoney(recordedSpending)}
             />
+            {repaid > 0 ? (
+              <Stat
+                detail="Repaying loans, not spending"
+                icon={Landmark}
+                label="Loan EMIs"
+                value={formatMoney(repaid)}
+              />
+            ) : null}
             {unrecorded > 0 ? (
               <Stat
                 detail="House expense, from bank balances"
@@ -258,7 +279,7 @@ export function CashFlowPage() {
               value={formatMoney(invested)}
             />
             <Stat
-              detail="After spending and investing"
+              detail="After spending, EMIs and investing"
               icon={Wallet}
               label="Balance"
               value={formatMoney(left)}
@@ -269,7 +290,7 @@ export function CashFlowPage() {
       )}
       <Commitments open={quickAdd?.commitments === true} />
       {phone ? null : (
-        <div className={ui.twoColumn}>
+        <div className={ui.twoColumn} id="history">
           <section className={ui.card}>
             <div>
               <h2 style={{ fontSize: '1.2rem' }}>Add Income</h2>

@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { expect, test, vi } from 'vitest';
 import { MonthFlow } from './MonthFlow';
 
-const show = (month: string, onMonth = vi.fn()) => {
+const show = (month: string, onMonth = vi.fn(), repaid = 0) => {
   render(
     <MonthFlow
       current="2026-11"
@@ -12,6 +12,7 @@ const show = (month: string, onMonth = vi.fn()) => {
       invested={20_000}
       month={month}
       onMonth={onMonth}
+      repaid={repaid}
       spent={30_000}
       unrecorded={0}
     />,
@@ -30,6 +31,13 @@ test('the month adds up to the balance, with each part of income', () => {
   expect(screen.getByText('November 2026')).toBeDefined();
   expect(screen.getAllByText('₹50,000').length).toBe(2);
   expect(screen.getByText('30%')).toBeDefined();
+});
+
+test('loan EMIs show on their own line, between spending and investing, and still come off', () => {
+  show('2026-11', vi.fn(), 10_000);
+  expect(screen.getByText('Loan EMIs')).toBeDefined();
+  // ₹1,00,000 less ₹30,000 spent, ₹10,000 of EMIs and ₹20,000 invested.
+  expect(screen.getAllByText('₹40,000').length).toBe(2);
 });
 
 test('swiping or tapping moves a month, but never past the current one', () => {

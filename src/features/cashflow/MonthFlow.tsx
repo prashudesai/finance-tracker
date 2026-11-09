@@ -22,6 +22,7 @@ const SWIPE = 50;
 export function MonthFlow({
   income,
   spent,
+  repaid,
   unrecorded,
   invested,
   explainer,
@@ -36,18 +37,21 @@ export function MonthFlow({
   earliest: string;
   onMonth: (month: string) => void;
   income: number;
-  /** Recorded spending, EMIs included. */
+  /** Recorded spending, loan repayments left out. */
   spent: number;
+  /** Loan EMIs and part payments, which leave the bank but aren't spending. */
+  repaid: number;
   unrecorded: number;
   invested: number;
   explainer: ReactNode;
 }) {
-  const balance = income - spent - unrecorded - invested;
+  const balance = income - spent - repaid - unrecorded - invested;
   const outgoing: Part[] = [
     { label: 'Spent', amount: spent, color: 'var(--series-expense)' },
     ...(unrecorded > 0
       ? [{ label: 'Unrecorded spending', amount: unrecorded, color: 'var(--debt)' }]
       : []),
+    ...(repaid > 0 ? [{ label: 'Loan EMIs', amount: repaid, color: 'var(--loss)' }] : []),
     { label: 'Invested from income', amount: invested, color: 'var(--scenario-base)' },
   ];
   const parts: Part[] = [
@@ -56,7 +60,7 @@ export function MonthFlow({
   ];
   const share = (amount: number) => (income > 0 ? amount / income : 0);
   const percent = (amount: number) => `${Math.round(share(amount) * 100)}%`;
-  const total = Math.max(income, spent + unrecorded + invested, 1);
+  const total = Math.max(income, spent + repaid + unrecorded + invested, 1);
   const before = month > earliest ? previousMonth(month) : null;
   const after = month < current ? nextMonth(month) : null;
   const start = useRef<{ x: number; y: number } | null>(null);
@@ -127,7 +131,7 @@ export function MonthFlow({
         <span className={styles.sub}>
           {income > 0
             ? balance >= 0
-              ? `${percent(balance)} of ${formatMoney(income)} income left after spending and investing`
+              ? `${percent(balance)} of ${formatMoney(income)} income left after spending, EMIs and investing`
               : `${formatMoney(-balance)} more went out than came in`
             : 'No income recorded for this month yet'}
         </span>

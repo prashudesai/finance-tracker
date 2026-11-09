@@ -7,13 +7,19 @@
 
 .legend {
   display: flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 6px 16px;
   color: var(--muted);
   font-size: 0.82rem;
 }
 
+.legend span {
+  white-space: nowrap;
+}
+
 .swatchIncome,
 .swatchExpense,
+.swatchEmi,
 .swatchInvested {
   display: inline-block;
   width: 10px;
@@ -25,6 +31,10 @@
 
 .swatchExpense {
   background: var(--series-expense);
+}
+
+.swatchEmi {
+  background: var(--loss);
 }
 
 .swatchInvested {
@@ -96,6 +106,7 @@
 
 .barIncome,
 .barExpense,
+.barEmi,
 .barInvested {
   min-height: 0;
   /* Full colour at the top, fading a little towards the baseline. */
@@ -113,17 +124,24 @@
   );
 }
 
-/* The top of the stack carries the rounded end; the spending under it is square. */
+/* The top of the stack carries the rounded end; the parts under it are square. */
 .barExpense,
+.barEmi,
 .barInvested {
   flex: none;
+}
+
+.barEmi {
+  background: var(--loss);
 }
 
 .barInvested {
   background: var(--scenario-base);
 }
 
-.barInvested + .barExpense {
+.barInvested + .barEmi,
+.barInvested + .barExpense,
+.barEmi + .barExpense {
   border-radius: 0;
 }
 

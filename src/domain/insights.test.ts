@@ -337,7 +337,9 @@ describe('monthly recap', () => {
     const recap = monthRecap(book, '2026-10', TODAY);
     expect(recap).toMatchObject({
       income: 1_20_000,
-      expenses: 71_000,
+      // Loan EMIs aren't spending: ₹71,000 went out, ₹25,000 of it repaying the loan.
+      expenses: 46_000,
+      repaid: 25_000,
       saved: 49_000,
       emiPaid: 25_000,
       invested: 10_000,
