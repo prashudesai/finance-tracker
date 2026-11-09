@@ -60,3 +60,50 @@
   background: var(--accent);
   border-color: var(--accent);
 }
+
+/* Months as pills that scroll sideways, with a calendar to jump further back. */
+.pills {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pill,
+.pillPick {
+  flex: none;
+  min-height: 38px;
+  padding: 0 16px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--surface);
+  border: 1px solid var(--card-edge);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.pill[aria-pressed='true'] {
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.pillPick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0 12px;
+  color: var(--accent);
+}
+
+.pillPick input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}

@@ -87,6 +87,7 @@ export function MoneyFlowChart({
   month,
   bare = false,
   balanceNote,
+  collapsed = false,
 }: {
   flow: MoneyFlow;
   month: string;
@@ -94,6 +95,8 @@ export function MoneyFlowChart({
   bare?: boolean;
   /** How the balance is worked out, shown when its band is tapped. */
   balanceNote?: ReactNode;
+  /** Closed: only the table screen readers get, with every figure. */
+  collapsed?: boolean;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const ids = useId().replace(/:/g, '');
@@ -242,6 +245,25 @@ export function MoneyFlowChart({
     );
   };
 
+  const table = (
+    <table className={ui.visuallyHidden}>
+      <caption>Where the money went</caption>
+      <tbody>
+        {[...flow.sources, ...flow.outcomes, ...flow.categories].map((row) => (
+          <tr key={row.key}>
+            <th scope="row">
+              {row.key.startsWith('in-')
+                ? `From ${row.label}`
+                : row.key.startsWith('cat-')
+                  ? `Spending on ${row.label}`
+                  : (TABLE_LABELS[row.key] ?? row.label)}
+            </th>
+            <td>{formatMoney(row.amount)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
   const body = (
     <>
       <div className={styles.box} ref={box}>
@@ -341,25 +363,10 @@ export function MoneyFlowChart({
           ) : null}
         </div>
       ) : null}
-      <table className={ui.visuallyHidden}>
-        <caption>Where the money went</caption>
-        <tbody>
-          {[...flow.sources, ...flow.outcomes, ...flow.categories].map((row) => (
-            <tr key={row.key}>
-              <th scope="row">
-                {row.key.startsWith('in-')
-                  ? `From ${row.label}`
-                  : row.key.startsWith('cat-')
-                    ? `Spending on ${row.label}`
-                    : (TABLE_LABELS[row.key] ?? row.label)}
-              </th>
-              <td>{formatMoney(row.amount)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {table}
     </>
   );
+  if (collapsed) return table;
   if (bare) return <div className={styles.bare}>{body}</div>;
   return (
     <section aria-labelledby="money-flow" className={ui.card}>

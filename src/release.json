@@ -1,7 +1,9 @@
 {
-  "version": "1.30.0",
+  "version": "1.31.0",
   "released": "2026-11-09",
   "notes": [
+    "Money: months as pills you tap or swipe, the balance with one split bar, and See where it went for the full flow",
+    "Wealth: what you own after what you owe, your investment mix, and chips for investments, retirement and loans",
     "A new look: four tabs (Home, Money, Wealth, Plan) in a floating bar, with a big + in the middle for adding anything",
     "Home: net worth with a chart you can switch between 1M, 6M, 1Y and All, quick actions, swipeable For you today cards, this month as a ring, what's coming up and your latest entries",
     "Money: search the month's entries and filter by category; on phones entries are grouped by day, with icons for common categories",

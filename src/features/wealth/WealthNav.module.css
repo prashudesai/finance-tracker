@@ -1,38 +1,83 @@
 .card {
-  composes: card from '../../ui/ui.module.css';
-  gap: 10px;
-  padding: 16px;
-}
-
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px 12px;
+  gap: 6px;
 }
 
 .label {
   color: var(--muted);
   font-size: 0.88rem;
-  font-weight: 600;
 }
 
 .value {
-  font-size: 1.5rem;
+  font-size: clamp(1.9rem, 8vw, 2.4rem);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .legend {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  margin-top: 4px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
 }
 
 .legend strong {
   color: var(--text);
   font-variant-numeric: tabular-nums;
+}
+
+.mix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 4px 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  list-style: none;
+}
+
+.mix li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mix i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chip {
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-height: 38px;
+  padding: 0 16px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--card-edge);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip[aria-pressed='true'],
+.chip[aria-current='page'] {
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--accent);
 }

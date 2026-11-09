@@ -20,10 +20,8 @@
 
 .entries {
   margin: 0;
-  padding: 0 12px;
+  padding: 0;
   list-style: none;
-  background: var(--surface-sunken);
-  border-radius: var(--radius-small);
 }
 
 .entries li + li {
@@ -36,8 +34,8 @@
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  min-height: 56px;
-  padding: 10px 0;
+  min-height: 54px;
+  padding: 6px 0;
   color: inherit;
   font: inherit;
   text-align: left;
@@ -54,6 +52,24 @@
 
 .entryTitle {
   font-weight: 600;
+}
+
+/* The category icon in its own rounded tile. */
+.entryTitle > span svg {
+  box-sizing: content-box;
+  padding: 9px;
+  color: var(--accent);
+  background: var(--surface-sunken);
+  border-radius: 12px;
+}
+
+.entryTitle > span {
+  gap: 12px;
+}
+
+.entryText small {
+  margin-top: -6px;
+  padding-left: 46px;
 }
 
 .entryText small {

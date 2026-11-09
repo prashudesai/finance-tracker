@@ -45,11 +45,6 @@ import { HoldingForm } from './HoldingForm';
 type Section = 'investments' | 'retirement';
 
 const SECTIONS: Section[] = ['investments', 'retirement'];
-const SECTION_NAMES: Record<Section, string> = {
-  investments: 'Investments',
-  retirement: 'Retirement',
-};
-
 const SECTION_KEY = 'investmentSection';
 
 function savedSection(): Section {
@@ -59,45 +54,6 @@ function savedSection(): Section {
   } catch {
     return 'investments';
   }
-}
-
-/** Phones show one section at a time. The choice is remembered on the device. */
-function SectionTabs({
-  section,
-  onChange,
-}: {
-  section: Section;
-  onChange: (next: Section) => void;
-}) {
-  const choose = (next: Section) => {
-    onChange(next);
-    try {
-      localStorage.setItem(SECTION_KEY, next);
-    } catch {
-      // The choice still applies for this visit.
-    }
-  };
-  return (
-    <div aria-label="Investment sections" className={ui.segmented} role="tablist">
-      {SECTIONS.map((key, index) => (
-        <button
-          aria-selected={section === key}
-          className={section === key ? ui.segmentActive : ui.segment}
-          key={key}
-          onClick={() => choose(key)}
-          onKeyDown={(event) => {
-            const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-            if (step) choose(SECTIONS[(index + step + SECTIONS.length) % SECTIONS.length] ?? key);
-          }}
-          role="tab"
-          tabIndex={section === key ? 0 : -1}
-          type="button"
-        >
-          {SECTION_NAMES[key]}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 /** Adds a gratuity estimate, or edits one, as basic salary changes over the years. */
@@ -365,11 +321,18 @@ export function InvestmentsPage() {
       <PageHeader
         eyebrow="Investment overview"
         subtitle="Track your portfolio, retirement accounts, contributions and returns."
-        title="Investments"
+        title="Wealth"
       />
-      <WealthNav />
+      <WealthNav
+        onSection={(next) => {
+          setSection(next);
+          if (!phone)
+            scrollToSection(next === 'retirement' ? 'retirement-accounts' : 'investment-portfolio');
+        }}
+        section={section}
+      />
       <div className={ui.twoColumn}>
-        <section aria-label="Portfolio value" className={ui.hero}>
+        <section aria-label="Portfolio value" className={ui.card}>
           <div className={ui.split}>
             <span>Current portfolio value</span>
           </div>
@@ -383,25 +346,26 @@ export function InvestmentsPage() {
             <Metric label="Monthly savings" value={formatMoney(monthly)} />
           </div>
         </section>
-        <section className={ui.card}>
-          <div>
-            <h2>Asset allocation</h2>
-            <div className={ui.caption}>Current balances by asset type · excludes gratuity</div>
-          </div>
-          {categories.length === 0 ? (
-            <p className={ui.empty}>No holdings yet.</p>
-          ) : (
-            <Donut
-              centerLabel="Portfolio"
-              centerValue={formatMoney(current)}
-              segments={categories.map((row) => ({ label: row.name, value: row.current }))}
-              title="Asset allocation"
-            />
-          )}
-        </section>
+        {/* Phones have the mix in Wealth's header already; wide screens add the chart. */}
+        {phone ? null : (
+          <section className={ui.card}>
+            <div>
+              <h2>Asset allocation</h2>
+              <div className={ui.caption}>Current balances by asset type · excludes gratuity</div>
+            </div>
+            {categories.length === 0 ? (
+              <p className={ui.empty}>No holdings yet.</p>
+            ) : (
+              <Donut
+                centerLabel="Portfolio"
+                centerValue={formatMoney(current)}
+                segments={categories.map((row) => ({ label: row.name, value: row.current }))}
+                title="Asset allocation"
+              />
+            )}
+          </section>
+        )}
       </div>
-
-      {phone ? <SectionTabs onChange={setSection} section={section} /> : null}
 
       {showInvestments && pms.length > 0 ? (
         <section className={ui.card}>
@@ -482,7 +446,7 @@ export function InvestmentsPage() {
       ) : null}
 
       {showInvestments ? (
-        <section className={ui.card}>
+        <section className={ui.card} id="investment-portfolio">
           <div className={ui.cardHeader}>
             <div>
               <h2 style={{ fontSize: '1.2rem' }}>Investment portfolio</h2>
@@ -529,7 +493,7 @@ export function InvestmentsPage() {
       ) : null}
 
       {showRetirement ? (
-        <section className={ui.card}>
+        <section className={ui.card} id="retirement-accounts">
           <div className={ui.cardHeader}>
             <div>
               <h2 style={{ fontSize: '1.2rem' }}>Retirement accounts</h2>

@@ -188,9 +188,9 @@ export function DebtsPage() {
       <PageHeader
         eyebrow="Borrowing"
         subtitle="See what remains, monitor monthly commitments, and review repayments."
-        title="Debt & EMI Tracker"
+        title="Wealth"
       />
-      <WealthNav />
+      <WealthNav section="loans" />
       {outstanding > 0 ? (
         <section aria-label="Debt totals" className={ui.hero}>
           <div className={ui.caption}>Left to repay</div>

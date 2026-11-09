@@ -23,6 +23,7 @@ import ui from '../../ui/ui.module.css';
 import styles from './CashFlowPage.module.css';
 import { Commitments } from './Commitments';
 import { MonthFlow } from './MonthFlow';
+import { MonthPills } from './MonthPills';
 import { MoneyFlowChart } from './MoneyFlowChart';
 import { moneyFlow } from '../../domain/moneyFlow';
 import { ExpenseForm, IncomeForm } from './EntryForms';
@@ -246,7 +247,7 @@ export function CashFlowPage() {
         }
         eyebrow="Your money at a glance"
         subtitle="Income, spending and what remains"
-        title="Cash flow"
+        title="Money"
       />
       {needsReview ? (
         <button
@@ -260,26 +261,35 @@ export function CashFlowPage() {
           Review this month
         </button>
       ) : null}
+      {phone ? (
+        <MonthPills
+          current={current}
+          earliest={months.at(-1) ?? current}
+          month={month}
+          onMonth={setMonth}
+        />
+      ) : null}
       {/* One card: the balance, then where the month's money went. */}
       <MonthFlow
         current={current}
         earliest={months.at(-1) ?? current}
         explainer={<BalanceExplainer />}
-        flow={
+        flow={(open) => (
           <MoneyFlowChart
             balanceNote={<BalanceNote />}
             bare
+            collapsed={!open}
             flow={moneyFlow(data, month, { unrecorded, invested })}
             month={month}
           />
-        }
+        )}
         income={totals.income}
         invested={invested}
         month={month}
         onMonth={setMonth}
         repaid={repaid}
         spent={recordedSpending}
-        stepper={phone}
+        stepper={false}
         unrecorded={unrecorded}
       />
       <Commitments open={quickAdd?.commitments === true} />

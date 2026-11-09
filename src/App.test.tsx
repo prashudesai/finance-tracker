@@ -66,9 +66,9 @@ const fund: Holding = {
 
 test.each([
   ['/', /^Good (morning|afternoon|evening)/],
-  ['/cash-flow', 'Cash flow'],
-  ['/investments', 'Investments'],
-  ['/debts', 'Debt & EMI Tracker'],
+  ['/cash-flow', 'Money'],
+  ['/investments', 'Wealth'],
+  ['/debts', 'Wealth'],
   ['/analytics', 'Analytics'],
   ['/analytics/income', 'Income'],
   ['/analytics/projection', 'Growth projection'],
@@ -209,7 +209,7 @@ test('scheduled contributions post after loading, not while rendering', async ()
   renderApp('/investments', {
     holdings: [{ ...fund, monthly: 1000, autoContribute: true, autoStart: `${month}-01` }],
   });
-  await screen.findByRole('heading', { level: 1, name: 'Investments' });
+  await screen.findByRole('heading', { level: 1, name: 'Wealth' });
   expect((await screen.findAllByText('₹1,51,000')).length).toBeGreaterThan(0);
 });
 
@@ -278,7 +278,7 @@ test('search finds a record and opens its page', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'Search records' }));
   fireEvent.change(await screen.findByLabelText(/Search by name/), { target: { value: '25,000' } });
   fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
-  expect(await screen.findByRole('heading', { level: 1, name: 'Cash flow' })).toBeDefined();
+  expect(await screen.findByRole('heading', { level: 1, name: 'Money' })).toBeDefined();
 });
 
 test('a new account is walked through setup, and can skip it', async () => {
@@ -423,7 +423,7 @@ test('a running month shows no review until its last day', async () => {
   const today = localDate();
   const month = today.slice(0, 7);
   renderApp('/cash-flow', { monthlyBalances: [{ month, startBalance: 100 }] });
-  await screen.findByRole('heading', { level: 1, name: 'Cash flow' });
+  await screen.findByRole('heading', { level: 1, name: 'Money' });
   const monthEnd = isMonthEnd(today);
   expect(screen.queryAllByRole('button', { name: 'Review this month' })).toHaveLength(
     monthEnd ? 1 : 0,
@@ -563,7 +563,7 @@ test('the app tour walks the pages and changes nothing', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'Start app tour', hidden: true }));
   const tour = await screen.findByRole('region', { name: 'App tour' });
   fireEvent.click(within(tour).getByRole('button', { name: 'Next' }));
-  expect(await screen.findByRole('heading', { level: 1, name: 'Cash flow' })).toBeDefined();
+  expect(await screen.findByRole('heading', { level: 1, name: 'Money' })).toBeDefined();
   fireEvent.click(within(tour).getByRole('button', { name: 'Skip' }));
   expect(screen.queryByRole('region', { name: 'App tour' })).toBeNull();
 });
@@ -668,10 +668,10 @@ describe('on a phone', () => {
     renderApp('/investments', { holdings: [fund] });
     expect(await screen.findByRole('heading', { name: 'Investment portfolio' })).toBeDefined();
     expect(screen.queryByRole('heading', { name: 'Retirement accounts' })).toBeNull();
-    fireEvent.click(screen.getByRole('tab', { name: 'Retirement' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Retirement' }));
     expect(await screen.findByRole('heading', { name: 'Retirement accounts' })).toBeDefined();
     expect(screen.queryByRole('heading', { name: 'Investment portfolio' })).toBeNull();
-    fireEvent.click(screen.getByRole('tab', { name: 'Investments' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Investments' }));
   });
 });
 
@@ -696,7 +696,7 @@ test('the + opens the add menu and goes to the right entry', async () => {
     expect(await screen.findByRole('button', { name, hidden: true })).toBeDefined();
   }
   fireEvent.click(screen.getByRole('button', { name: 'Income', hidden: true }));
-  expect(await screen.findByRole('heading', { level: 1, name: 'Cash flow' })).toBeDefined();
+  expect(await screen.findByRole('heading', { level: 1, name: 'Money' })).toBeDefined();
   expect(await screen.findByRole('dialog', { name: 'Add Income', hidden: true })).toBeDefined();
 });
 
@@ -1381,7 +1381,7 @@ test('+ Add new refuses a duplicate', async () => {
 
 test('a single family member needs no dropdown, and records use them', async () => {
   renderApp('/cash-flow', { settings: [{ ...defaultSettings(), familyMembers: ['Sam'] }] });
-  await screen.findByRole('heading', { level: 1, name: 'Cash flow' });
+  await screen.findByRole('heading', { level: 1, name: 'Money' });
   expect(screen.queryByLabelText('Family profile')).toBeNull();
   expect(screen.queryByLabelText('Family Member')).toBeNull();
   fireEvent.change(screen.getAllByLabelText('Amount (₹)')[0] as HTMLElement, {

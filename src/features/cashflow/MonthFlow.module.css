@@ -197,3 +197,51 @@
 .flow details > summary {
   font-size: 0.85rem;
 }
+
+/* With the flow chart: a short key under the bar, and a link that opens the chart. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  list-style: none;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.more {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 2px;
+  padding: 2px 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.moreIcon {
+  transition: transform 160ms ease;
+}
+
+.moreIcon[data-open] {
+  transform: rotate(90deg);
+}

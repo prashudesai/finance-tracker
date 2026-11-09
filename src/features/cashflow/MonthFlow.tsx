@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRef, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { nextMonth, previousMonth } from '../../domain/calendar';
 import { formatMoney, formatMonth, formatShortMonth } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
@@ -46,11 +46,12 @@ export function MonthFlow({
   unrecorded: number;
   invested: number;
   explainer: ReactNode;
-  /** A chart of where the money went, shown in place of the bar and rows. */
-  flow?: ReactNode;
+  /** A chart of where the money went, in place of the rows; drawn when opened. */
+  flow?: (open: boolean) => ReactNode;
   /** The month arrows and picker; wide screens pick the month in the page header instead. */
   stepper?: boolean;
 }) {
+  const [flowOpen, setFlowOpen] = useState(false);
   const balance = income - spent - repaid - unrecorded - invested;
   const outgoing: Part[] = [
     { label: 'Spent', amount: spent, color: 'var(--series-expense)' },
@@ -131,27 +132,23 @@ export function MonthFlow({
           </button>
         </div>
       ) : null}
-      <div className={flow ? styles.headInline : styles.head}>
+      <div className={styles.head}>
         <span className={styles.label}>Balance</span>
         <strong className={styles.balance} data-negative={balance < 0 || undefined}>
           {formatMoney(balance)}
         </strong>
-        {/* With the chart, its Balance band shows the share; only a shortfall needs saying. */}
-        {flow && balance >= 0 && income > 0 ? null : (
+        {flow ? null : (
           <span className={styles.sub}>
             {income > 0
               ? balance >= 0
-                ? flow
-                  ? `${percent(balance)} of income left after spending, EMIs and investing`
-                  : `${percent(balance)} of ${formatMoney(income)} income left after spending, EMIs and investing`
+                ? `${percent(balance)} of ${formatMoney(income)} income left after spending, EMIs and investing`
                 : `${formatMoney(-balance)} more went out than came in`
               : 'No income recorded for this month yet'}
           </span>
         )}
       </div>
 
-      {flow ?? null}
-      {!flow && (income > 0 || spent > 0) ? (
+      {income > 0 || spent > 0 ? (
         <div aria-hidden="true" className={styles.bar}>
           {parts.map((part) =>
             part.amount > 0 ? (
@@ -164,7 +161,38 @@ export function MonthFlow({
         </div>
       ) : null}
 
-      {flow ? null : (
+      {flow ? (
+        <>
+          <ul className={styles.legend}>
+            {outgoing
+              .filter((part) => part.amount > 0)
+              .map((part) => (
+                <li key={part.label}>
+                  <i style={{ background: part.color }} />
+                  {part.label.replace(' from income', '').replace(' spending', '')}{' '}
+                  {formatMoney(part.amount)}
+                </li>
+              ))}
+          </ul>
+          {income > 0 || spent > 0 ? (
+            <button
+              aria-expanded={flowOpen}
+              className={styles.more}
+              onClick={() => setFlowOpen(!flowOpen)}
+              type="button"
+            >
+              {flowOpen ? 'Hide the flow' : 'See where it went'}{' '}
+              <ChevronRight
+                aria-hidden="true"
+                className={styles.moreIcon}
+                data-open={flowOpen || undefined}
+                size={16}
+              />
+            </button>
+          ) : null}
+          {flow(flowOpen)}
+        </>
+      ) : (
         <ol className={styles.rows}>
           <li className={styles.income}>
             <span className={styles.sign}>+</span>
