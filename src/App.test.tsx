@@ -149,7 +149,7 @@ test('posting a recurring item adds the record', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'Post' }));
   expect(await screen.findByText('Nothing is due.')).toBeDefined();
   const region = screen.getByRole('region', { name: 'Selected month' });
-  expect(within(region).getByText('₹32,000')).toBeDefined();
+  expect(within(region).getByRole('row', { name: 'Spent ₹32,000' })).toBeDefined();
 });
 
 test('a recurring item that cannot post explains why', async () => {
@@ -1438,11 +1438,10 @@ test('Cash flow shows what was invested from income and the balance after it', a
     ],
   });
   const summary = within(await screen.findByRole('region', { name: 'Selected month' }));
-  expect(summary.getByText('Invested from income')).toBeDefined();
-  expect(summary.getByText('₹20,000')).toBeDefined();
-  // ₹1,00,000 less ₹30,000 spent and ₹20,000 invested.
-  expect(summary.getByText('Balance')).toBeDefined();
-  expect(summary.getByText('₹50,000')).toBeDefined();
+  expect(summary.getByRole('row', { name: 'Invested from income ₹20,000' })).toBeDefined();
+  // ₹1,00,000 less ₹30,000 spent and ₹20,000 invested: the headline, and the chart's Balance.
+  expect(summary.getByRole('row', { name: 'Balance ₹50,000' })).toBeDefined();
+  expect(summary.getAllByText('₹50,000').length).toBeGreaterThan(0);
 });
 
 test('a payment that repeats each month can be made recurring in one tap', async () => {

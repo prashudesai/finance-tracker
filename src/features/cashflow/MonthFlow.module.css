@@ -1,7 +1,7 @@
 /* The phone month summary: the balance first, then how income flowed out to reach it. */
 .flow {
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 14px 16px;
   touch-action: pan-y;
 }
 
@@ -69,6 +69,22 @@
 .head {
   display: grid;
   gap: 2px;
+}
+
+/* With the chart below: "Balance ₹14,000" on one line. */
+.headInline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.headInline .sub {
+  flex-basis: 100%;
+}
+
+.headInline .balance {
+  font-size: clamp(1.6rem, 7vw, 2rem);
 }
 
 .label {

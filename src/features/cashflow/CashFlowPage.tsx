@@ -1,4 +1,3 @@
-import { ArrowDownToLine, ArrowUpFromLine, Landmark, PiggyBank, Wallet } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
@@ -17,12 +16,13 @@ import { formatDay, formatMoney, formatMonth, localDate } from '../../ui/format'
 import { CategoryLabel } from '../../ui/CategoryLabel';
 import { Modal } from '../../ui/Modal';
 import { PageHeader } from '../../ui/PageHeader';
-import { Stat } from '../../ui/Stat';
 import { scrollToSection } from '../../ui/scroll';
 import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
 import { Commitments } from './Commitments';
 import { MonthFlow } from './MonthFlow';
+import { MoneyFlowChart } from './MoneyFlowChart';
+import { moneyFlow } from '../../domain/moneyFlow';
 import { ExpenseForm, IncomeForm } from './EntryForms';
 import { HistoryTable, type Column } from './HistoryTable';
 import { MonthlyBalances } from './MonthlyBalances';
@@ -77,6 +77,18 @@ function BalanceExplainer() {
         shared.
       </p>
     </details>
+  );
+}
+
+/** The same explanation, shown when the chart's Balance band is tapped. */
+function BalanceNote() {
+  return (
+    <p className={ui.caption} style={{ margin: 0 }}>
+      Income recorded this month, less spending, loan EMIs and part payments, its unrecorded house
+      expense once the closing balance is in, and what was invested from the bank. PF and NPS come
+      out of salary before it's paid, so they aren't taken off. Opening bank balances aren't
+      included.
+    </p>
   );
 }
 
@@ -184,7 +196,6 @@ export function CashFlowPage() {
   const recordedSpending = recorded.expenses - repaid;
   // Paid into investments from the bank this month; PF and NPS come out of salary first.
   const invested = investedFromIncome(data).get(month) ?? 0;
-  const left = totals.income - totals.expenses - invested;
   // The expense list's total adds up the entries it shows.
   const listed = monthTotals(data).get(month)?.expenses ?? 0;
   const newest = <Row extends { date: string }>(rows: Row[]) =>
@@ -230,64 +241,28 @@ export function CashFlowPage() {
           Review this month
         </button>
       ) : null}
-      {phone ? (
-        <MonthFlow
-          current={current}
-          earliest={months.at(-1) ?? current}
-          explainer={<BalanceExplainer />}
-          month={month}
-          onMonth={setMonth}
-          income={totals.income}
-          invested={invested}
-          repaid={repaid}
-          spent={recordedSpending}
-          unrecorded={unrecorded}
-        />
-      ) : (
-        <>
-          <section aria-label="Selected month" className={ui.tiles}>
-            <Stat
-              icon={ArrowUpFromLine}
-              label="Income recorded"
-              value={formatMoney(totals.income)}
-            />
-            <Stat
-              icon={ArrowDownToLine}
-              label="Expenses recorded"
-              value={formatMoney(recordedSpending)}
-            />
-            {repaid > 0 ? (
-              <Stat
-                detail="Repaying loans, not spending"
-                icon={Landmark}
-                label="Loan EMIs"
-                value={formatMoney(repaid)}
-              />
-            ) : null}
-            {unrecorded > 0 ? (
-              <Stat
-                detail="House expense, from bank balances"
-                icon={ArrowDownToLine}
-                label="Unrecorded spending"
-                value={formatMoney(unrecorded)}
-              />
-            ) : null}
-            <Stat
-              detail="PF and NPS come from salary"
-              icon={PiggyBank}
-              label="Invested from income"
-              value={formatMoney(invested)}
-            />
-            <Stat
-              detail="After spending, EMIs and investing"
-              icon={Wallet}
-              label="Balance"
-              value={formatMoney(left)}
-            />
-          </section>
-          <BalanceExplainer />
-        </>
-      )}
+      {/* One card: the balance, then where the month's money went. */}
+      <MonthFlow
+        current={current}
+        earliest={months.at(-1) ?? current}
+        explainer={<BalanceExplainer />}
+        flow={
+          <MoneyFlowChart
+            balanceNote={<BalanceNote />}
+            bare
+            flow={moneyFlow(data, month, { unrecorded, invested })}
+            month={month}
+          />
+        }
+        income={totals.income}
+        invested={invested}
+        month={month}
+        onMonth={setMonth}
+        repaid={repaid}
+        spent={recordedSpending}
+        stepper={phone}
+        unrecorded={unrecorded}
+      />
       <Commitments open={quickAdd?.commitments === true} />
       {phone ? null : (
         <div className={ui.twoColumn} id="history">

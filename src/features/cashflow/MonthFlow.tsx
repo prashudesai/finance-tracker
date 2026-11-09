@@ -26,6 +26,8 @@ export function MonthFlow({
   unrecorded,
   invested,
   explainer,
+  flow,
+  stepper = true,
   month,
   current,
   earliest,
@@ -44,6 +46,10 @@ export function MonthFlow({
   unrecorded: number;
   invested: number;
   explainer: ReactNode;
+  /** A chart of where the money went, shown in place of the bar and rows. */
+  flow?: ReactNode;
+  /** The month arrows and picker; wide screens pick the month in the page header instead. */
+  stepper?: boolean;
 }) {
   const balance = income - spent - repaid - unrecorded - invested;
   const outgoing: Part[] = [
@@ -85,59 +91,67 @@ export function MonthFlow({
         start.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
       }}
     >
-      <div className={styles.months}>
-        <button
-          aria-label={before ? `Previous month, ${formatMonth(before)}` : 'No earlier month'}
-          className={styles.step}
-          disabled={!before}
-          onClick={() => before && onMonth(before)}
-          type="button"
-        >
-          <ChevronLeft aria-hidden="true" size={16} />
-          {before ? formatShortMonth(before) : ''}
-        </button>
-        {/* Tapping the month opens the phone's own month picker, to jump straight to one. */}
-        <label className={styles.pick}>
-          <strong aria-live="polite">{formatMonth(month)}</strong>
-          <ChevronDown aria-hidden="true" size={16} />
-          <input
-            aria-label="Month"
-            max={current}
-            min={earliest}
-            onChange={(event) => {
-              const picked = event.target.value;
-              if (picked && picked >= earliest && picked <= current) onMonth(picked);
-            }}
-            type="month"
-            value={month}
-          />
-        </label>
-        <button
-          aria-label={after ? `Next month, ${formatMonth(after)}` : 'No later month'}
-          className={styles.step}
-          disabled={!after}
-          onClick={() => after && onMonth(after)}
-          type="button"
-        >
-          {after ? formatShortMonth(after) : ''}
-          <ChevronRight aria-hidden="true" size={16} />
-        </button>
-      </div>
-      <div className={styles.head}>
+      {stepper ? (
+        <div className={styles.months}>
+          <button
+            aria-label={before ? `Previous month, ${formatMonth(before)}` : 'No earlier month'}
+            className={styles.step}
+            disabled={!before}
+            onClick={() => before && onMonth(before)}
+            type="button"
+          >
+            <ChevronLeft aria-hidden="true" size={16} />
+            {before ? formatShortMonth(before) : ''}
+          </button>
+          {/* Tapping the month opens the phone's own month picker, to jump straight to one. */}
+          <label className={styles.pick}>
+            <strong aria-live="polite">{formatMonth(month)}</strong>
+            <ChevronDown aria-hidden="true" size={16} />
+            <input
+              aria-label="Month"
+              max={current}
+              min={earliest}
+              onChange={(event) => {
+                const picked = event.target.value;
+                if (picked && picked >= earliest && picked <= current) onMonth(picked);
+              }}
+              type="month"
+              value={month}
+            />
+          </label>
+          <button
+            aria-label={after ? `Next month, ${formatMonth(after)}` : 'No later month'}
+            className={styles.step}
+            disabled={!after}
+            onClick={() => after && onMonth(after)}
+            type="button"
+          >
+            {after ? formatShortMonth(after) : ''}
+            <ChevronRight aria-hidden="true" size={16} />
+          </button>
+        </div>
+      ) : null}
+      <div className={flow ? styles.headInline : styles.head}>
         <span className={styles.label}>Balance</span>
         <strong className={styles.balance} data-negative={balance < 0 || undefined}>
           {formatMoney(balance)}
         </strong>
-        <span className={styles.sub}>
-          {income > 0
-            ? balance >= 0
-              ? `${percent(balance)} of ${formatMoney(income)} income left after spending, EMIs and investing`
-              : `${formatMoney(-balance)} more went out than came in`
-            : 'No income recorded for this month yet'}
-        </span>
+        {/* With the chart, its Balance band shows the share; only a shortfall needs saying. */}
+        {flow && balance >= 0 && income > 0 ? null : (
+          <span className={styles.sub}>
+            {income > 0
+              ? balance >= 0
+                ? flow
+                  ? `${percent(balance)} of income left after spending, EMIs and investing`
+                  : `${percent(balance)} of ${formatMoney(income)} income left after spending, EMIs and investing`
+                : `${formatMoney(-balance)} more went out than came in`
+              : 'No income recorded for this month yet'}
+          </span>
+        )}
       </div>
 
-      {income > 0 || spent > 0 ? (
+      {flow ?? null}
+      {!flow && (income > 0 || spent > 0) ? (
         <div aria-hidden="true" className={styles.bar}>
           {parts.map((part) =>
             part.amount > 0 ? (
@@ -150,33 +164,35 @@ export function MonthFlow({
         </div>
       ) : null}
 
-      <ol className={styles.rows}>
-        <li className={styles.income}>
-          <span className={styles.sign}>+</span>
-          <span className={styles.name}>Income recorded</span>
-          <span className={styles.amount}>{formatMoney(income)}</span>
-        </li>
-        {outgoing.map((part) => (
-          <li key={part.label}>
-            <span className={styles.sign} style={{ background: part.color }}>
-              −
-            </span>
-            <span className={styles.name}>
-              {part.label}
-              {income > 0 ? <small>{percent(part.amount)}</small> : null}
-            </span>
-            <span className={styles.amount}>{formatMoney(part.amount)}</span>
+      {flow ? null : (
+        <ol className={styles.rows}>
+          <li className={styles.income}>
+            <span className={styles.sign}>+</span>
+            <span className={styles.name}>Income recorded</span>
+            <span className={styles.amount}>{formatMoney(income)}</span>
           </li>
-        ))}
-        <li className={styles.total}>
-          <span className={styles.sign} style={{ background: 'var(--series-income)' }}>
-            =
-          </span>
-          <span className={styles.name}>Balance</span>
-          <span className={styles.amount}>{formatMoney(balance)}</span>
-        </li>
-      </ol>
-      {explainer}
+          {outgoing.map((part) => (
+            <li key={part.label}>
+              <span className={styles.sign} style={{ background: part.color }}>
+                −
+              </span>
+              <span className={styles.name}>
+                {part.label}
+                {income > 0 ? <small>{percent(part.amount)}</small> : null}
+              </span>
+              <span className={styles.amount}>{formatMoney(part.amount)}</span>
+            </li>
+          ))}
+          <li className={styles.total}>
+            <span className={styles.sign} style={{ background: 'var(--series-income)' }}>
+              =
+            </span>
+            <span className={styles.name}>Balance</span>
+            <span className={styles.amount}>{formatMoney(balance)}</span>
+          </li>
+        </ol>
+      )}
+      {flow ? null : explainer}
     </section>
   );
 }
