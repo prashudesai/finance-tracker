@@ -1,5 +1,39 @@
 .card {
-  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.half {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.half + .half {
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+}
+
+.up,
+.down,
+.note {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.up {
+  color: var(--gain);
+  font-weight: 650;
+}
+
+.down {
+  color: var(--loss);
+  font-weight: 650;
+}
+
+.note {
+  color: var(--muted);
 }
 
 .label {
@@ -8,7 +42,7 @@
 }
 
 .value {
-  font-size: clamp(1.9rem, 8vw, 2.4rem);
+  font-size: clamp(1.5rem, 6.5vw, 2rem);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
   line-height: 1.15;

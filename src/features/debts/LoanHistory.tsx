@@ -16,9 +16,9 @@ import { Modal } from '../../ui/Modal';
 import { downloadTablePdf, pdfAmount } from '../../ui/pdf';
 import ui from '../../ui/ui.module.css';
 
-type Entry = 'payment' | 'part-payment' | 'rate' | 'topup' | 'emi';
+export type Entry = 'payment' | 'part-payment' | 'rate' | 'topup' | 'emi';
 
-const ENTRY_LABELS: Record<Entry, string> = {
+export const ENTRY_LABELS: Record<Entry, string> = {
   payment: 'EMI payment',
   'part-payment': 'Part payment',
   rate: 'Rate change',
@@ -26,10 +26,18 @@ const ENTRY_LABELS: Record<Entry, string> = {
   emi: 'Revised EMI',
 };
 
-function EntryForm({ loan, onDone }: { loan: Loan; onDone: () => void }) {
+function EntryForm({
+  loan,
+  onDone,
+  start = 'payment',
+}: {
+  loan: Loan;
+  onDone: () => void;
+  start?: Entry;
+}) {
   const expenses = useTracker((state) => state.data.expenses);
   const commit = useTracker((state) => state.commit);
-  const [entry, setEntry] = useState<Entry>('payment');
+  const [entry, setEntry] = useState<Entry>(start);
   const [date, setDate] = useState(localDate());
   const [amount, setAmount] = useState('');
   const [choice, setChoice] = useState<'tenure' | 'emi'>('tenure');
@@ -239,7 +247,16 @@ function SplitCorrection({
   );
 }
 
-export function LoanHistory({ loan, onClose }: { loan: Loan; onClose: () => void }) {
+export function LoanHistory({
+  loan,
+  onClose,
+  start = 'payment',
+}: {
+  loan: Loan;
+  onClose: () => void;
+  /** The kind of entry the form opens on, such as a rate change. */
+  start?: Entry;
+}) {
   const expenses = useTracker((state) => state.data.expenses);
   const commit = useTracker((state) => state.commit);
   const report = useTracker((state) => state.report);
@@ -256,11 +273,15 @@ export function LoanHistory({ loan, onClose }: { loan: Loan; onClose: () => void
   const newest = [...payments].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
-    <Modal onClose={onClose} title={`${loan.type} history`}>
+    <Modal
+      onClose={onClose}
+      title={start === 'payment' ? `${loan.type} history` : `${loan.type}: ${ENTRY_LABELS[start]}`}
+    >
       <div className={ui.page}>
         <EntryForm
           key={payments.length + loan.changes.length}
           loan={loan}
+          start={start}
           onDone={() => undefined}
         />
         {newest.length > 0 ? (

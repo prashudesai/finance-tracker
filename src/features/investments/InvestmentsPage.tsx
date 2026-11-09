@@ -5,7 +5,6 @@ import { optionLists } from '../../domain/options';
 import {
   holdingLabel,
   holdingRows,
-  isPms,
   portfolioCategories,
   valuationAge,
   type CategoryRow,
@@ -18,7 +17,6 @@ import {
   growthType,
   monthlyContribution,
 } from '../../domain/holdings';
-import { cagr } from '../../domain/returns';
 import {
   gratuityAccountSchema,
   PMS_TYPE,
@@ -34,7 +32,9 @@ import { EmptyState } from '../../ui/EmptyState';
 import { Modal } from '../../ui/Modal';
 import { AddValueDialog } from '../../ui/Select';
 import { PageHeader } from '../../ui/PageHeader';
-import { WealthNav } from '../wealth/WealthNav';
+import { WealthChips, WealthNav } from '../wealth/WealthNav';
+import { HoldingList } from '../wealth/HoldingList';
+import { LoansSummary } from '../wealth/LoansSummary';
 import { Metric } from '../../ui/Stat';
 import { scrollToSection } from '../../ui/scroll';
 import { useIsPhone } from '../../ui/useIsPhone';
@@ -289,12 +289,8 @@ export function InvestmentsPage() {
   const categories = portfolioCategories(rows);
   const current = rows.reduce((sum, row) => sum + row.position.current, 0);
   const invested = rows.reduce((sum, row) => sum + row.position.invested, 0);
-  const gain = current - invested;
   const monthly = rows.reduce((sum, row) => sum + monthlyContribution(row.holding), 0);
-  const pms = rows.filter((row) => isPms(row.holding));
-  const general = categories.filter(
-    (row) => row.rows[0]?.holding.kind === 'investment' && !isPms(row.rows[0].holding),
-  );
+  const general = categories.filter((row) => row.rows[0]?.holding.kind === 'investment');
   const retirement = categories.filter((row) => row.rows[0]?.holding.kind !== 'investment');
   const open = categories.find((row) => row.name === openName) ?? null;
   const gratuity = totalGratuity(data.gratuityAccounts, today);
@@ -323,7 +319,26 @@ export function InvestmentsPage() {
         subtitle="Track your portfolio, retirement accounts, contributions and returns."
         title="Wealth"
       />
-      <WealthNav
+      <WealthNav chips={false} section={section} />
+      <section className={ui.card}>
+        <div>
+          <h2>Asset allocation</h2>
+          <div className={ui.caption}>
+            {formatMoney(invested)} invested · {formatMoney(monthly)} a month · excludes gratuity
+          </div>
+        </div>
+        {categories.length === 0 ? (
+          <p className={ui.empty}>No holdings yet.</p>
+        ) : (
+          <Donut
+            centerLabel="Portfolio"
+            centerValue={formatMoney(current)}
+            segments={categories.map((row) => ({ label: row.name, value: row.current }))}
+            title="Asset allocation"
+          />
+        )}
+      </section>
+      <WealthChips
         onSection={(next) => {
           setSection(next);
           if (!phone)
@@ -331,96 +346,6 @@ export function InvestmentsPage() {
         }}
         section={section}
       />
-      <div className={ui.twoColumn}>
-        <section aria-label="Portfolio value" className={ui.card}>
-          <div className={ui.split}>
-            <span>Current portfolio value</span>
-          </div>
-          <div className={ui.value}>{formatMoney(current)}</div>
-          <div className={`${ui.heroGain} ${gain < 0 ? ui.loss : ui.gain}`}>
-            {signedMoney(gain)} · {formatPercent(invested > 0 ? gain / invested : null)} return
-          </div>
-          <div className={ui.caption}>Across investment and retirement accounts</div>
-          <div className={ui.metrics}>
-            <Metric label="Total invested" value={formatMoney(invested)} />
-            <Metric label="Monthly savings" value={formatMoney(monthly)} />
-          </div>
-        </section>
-        {/* Phones have the mix in Wealth's header already; wide screens add the chart. */}
-        {phone ? null : (
-          <section className={ui.card}>
-            <div>
-              <h2>Asset allocation</h2>
-              <div className={ui.caption}>Current balances by asset type · excludes gratuity</div>
-            </div>
-            {categories.length === 0 ? (
-              <p className={ui.empty}>No holdings yet.</p>
-            ) : (
-              <Donut
-                centerLabel="Portfolio"
-                centerValue={formatMoney(current)}
-                segments={categories.map((row) => ({ label: row.name, value: row.current }))}
-                title="Asset allocation"
-              />
-            )}
-          </section>
-        )}
-      </div>
-
-      {showInvestments && pms.length > 0 ? (
-        <section className={ui.card}>
-          <h2 style={{ fontSize: '1.2rem' }}>Stallion PMS</h2>
-          {pms.map(({ holding, position }) => (
-            <div className={ui.metric} key={holding.id}>
-              <button
-                className={ui.split}
-                onClick={() => setOpenName(holding.type)}
-                style={{
-                  width: '100%',
-                  padding: 0,
-                  color: 'inherit',
-                  font: 'inherit',
-                  background: 'none',
-                  border: 0,
-                  cursor: 'pointer',
-                }}
-                type="button"
-              >
-                <span style={{ textAlign: 'left' }}>
-                  <strong>{holding.name}</strong>
-                  <span className={ui.caption} style={{ display: 'block' }}>
-                    {holding.member}
-                  </span>
-                </span>
-                <ChevronRight aria-hidden="true" size={16} />
-              </button>
-              <div className={ui.compact} style={{ marginTop: 8 }}>
-                <Metric label="Current value" value={formatMoney(position.current)} />
-                <Metric label="Invested" value={formatMoney(position.invested)} />
-                <Metric
-                  label="Gain / loss"
-                  tone={position.gain < 0 ? ui.loss : ui.gain}
-                  value={signedMoney(position.gain)}
-                />
-                <Metric
-                  label="Absolute return"
-                  tone={ui.gain}
-                  value={formatPercent(position.absolute, 2)}
-                />
-                <Metric
-                  label="CAGR"
-                  tone={ui.gain}
-                  value={formatPercent(
-                    cagr(position.invested, position.current, holding.date, today),
-                    2,
-                  )}
-                />
-                <Metric label="XIRR" tone={ui.gain} value={formatPercent(position.xirr, 2)} />
-              </div>
-            </div>
-          ))}
-        </section>
-      ) : null}
 
       {booked.length > 0 ? (
         <section aria-label="Booked profit" className={ui.card}>
@@ -477,6 +402,8 @@ export function InvestmentsPage() {
               text="Add a fund, deposit or bond to track its value and returns."
               title="No investments recorded yet."
             />
+          ) : phone ? (
+            <HoldingList categories={general} data={data} onOpen={setOpenName} today={today} />
           ) : (
             <div className={ui.threeColumn}>
               {general.map((category) => (
@@ -491,6 +418,8 @@ export function InvestmentsPage() {
           )}
         </section>
       ) : null}
+
+      {showInvestments ? <LoansSummary data={data} today={today} /> : null}
 
       {showRetirement ? (
         <section className={ui.card} id="retirement-accounts">
@@ -524,8 +453,11 @@ export function InvestmentsPage() {
               </div>
             </div>
           ) : null}
+          {phone ? (
+            <HoldingList categories={retirement} data={data} onOpen={setOpenName} today={today} />
+          ) : null}
           <div className={ui.threeColumn}>
-            {retirement.map((category) => (
+            {(phone ? [] : retirement).map((category) => (
               <CategoryCard
                 category={category}
                 key={category.name}

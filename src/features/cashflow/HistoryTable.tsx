@@ -226,7 +226,7 @@ export function HistoryTable<Row extends { id: string }>({
   );
 }
 
-/** A month's records, newest day first, each day with its total. */
+/** A month's records as one list, newest first, each with its date on the second line. */
 function DayList<Row extends { id: string }>({
   rows,
   item,
@@ -242,34 +242,19 @@ function DayList<Row extends { id: string }>({
   const items = rows
     .map((row) => ({ row, ...item(row) }))
     .sort((a, b) => b.date.localeCompare(a.date));
-  const days = [...new Set(items.map((entry) => entry.date))];
   return (
-    <div className={styles.days}>
-      {days.map((day) => {
-        const entries = items.filter((entry) => entry.date === day);
-        const total = entries.reduce((sum, entry) => sum + entry.amount, 0);
-        return (
-          <section aria-label={formatDay(day)} className={styles.day} key={day}>
-            <div className={styles.dayHead}>
-              <span>{formatDay(day)}</span>
-              <span>{formatMoney(total)}</span>
-            </div>
-            <ul className={styles.entries}>
-              {entries.map(({ row, title, detail, amount }) => (
-                <li key={row.id}>
-                  <button className={styles.entry} onClick={() => onOpen(row.id)} type="button">
-                    <span className={styles.entryText}>
-                      <span className={styles.entryTitle}>{title}</span>
-                      {detail ? <small>{detail}</small> : null}
-                    </span>
-                    <strong>{formatMoney(amount)}</strong>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        );
-      })}
-    </div>
+    <ul className={styles.entries}>
+      {items.map(({ row, date, title, detail, amount }) => (
+        <li key={row.id}>
+          <button className={styles.entry} onClick={() => onOpen(row.id)} type="button">
+            <span className={styles.entryText}>
+              <span className={styles.entryTitle}>{title}</span>
+              <small>{[formatDay(date), detail].filter(Boolean).join(' · ')}</small>
+            </span>
+            <strong>{formatMoney(amount)}</strong>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }

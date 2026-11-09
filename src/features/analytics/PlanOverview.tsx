@@ -1,13 +1,17 @@
-import { ChevronRight, LineChart, PiggyBank, Sunset, Target, type LucideIcon } from 'lucide-react';
+import { ChevronRight, PiggyBank, Target, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { budgetProgress } from '../../domain/budget';
 import { financialYearLabel, financialYearStart } from '../../domain/calendar';
 import { goalPlan } from '../../domain/goals';
 import { useSpendingHousehold } from '../../store/tracker';
-import { formatMoney, formatPercent, localDate } from '../../ui/format';
+import { formatAmount, formatMoney, formatPercent, localDate } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 import { GOAL_ICONS, STATUS_LABELS, STATUS_TONES } from '../goals/goalText';
 import styles from './PlanOverview.module.css';
+import { useProjection } from './useProjection';
+import type { ProjectionResult } from '../../domain/projection';
+import type { Goal } from '../../schema/records';
+import type { GoalPlan } from '../../domain/goals';
 
 function Shortcut({
   to,
@@ -41,9 +45,13 @@ function Shortcut({
 export function PlanOverview() {
   const data = useSpendingHousehold();
   const today = localDate();
-  const goals = data.goals
-    .map((goal) => ({ goal, plan: goalPlan(goal, data, today) }))
+  const planned = data.goals.map((goal) => ({ goal, plan: goalPlan(goal, data, today) }));
+  // Retirement leads the page on its own, so the tiles show the rest.
+  const retirement = planned.find(({ goal }) => goal.kind === 'retirement');
+  const goals = planned
+    .filter((row) => row !== retirement)
     .sort((a, b) => a.plan.progress - b.plan.progress);
+  const projection = useProjection();
   const fy = financialYearStart(today);
   const budget = data.budgets.find((row) => row.fy === fy);
   const progress = budget ? budgetProgress(budget, data, today) : null;
@@ -51,18 +59,20 @@ export function PlanOverview() {
 
   return (
     <>
+      <RetirementCard retirement={retirement} />
+
       <section aria-labelledby="plan-goals" className={styles.section}>
         <div className={styles.head}>
           <h2 id="plan-goals">Goals</h2>
           <Link className={ui.textLink} to="/analytics/goals">
-            {goals.length > 0 ? `All ${goals.length} ›` : 'Set a goal ›'}
+            {planned.length > 0 ? `All ${planned.length} ›` : 'Set a goal ›'}
           </Link>
         </div>
-        {goals.length === 0 ? (
+        {goals.length === 0 && !retirement ? (
           <p className={ui.caption}>
             Save for college, a house or retirement, and see whether you're on track.
           </p>
-        ) : (
+        ) : goals.length === 0 ? null : (
           <ul className={styles.tiles}>
             {goals.slice(0, 4).map(({ goal, plan }) => {
               const Icon = GOAL_ICONS[goal.kind];
@@ -134,19 +144,11 @@ export function PlanOverview() {
         )}
       </section>
 
+      {projection.results ? (
+        <GrowthPreview results={projection.results} years={projection.years} />
+      ) : null}
+
       <section aria-label="More plans" className={styles.shortcuts}>
-        <Shortcut
-          icon={Sunset}
-          text="When you can stop working, and what it takes"
-          title="Retirement planner"
-          to="/analytics/goals"
-        />
-        <Shortcut
-          icon={LineChart}
-          text="Where your investments could be, in good years and tough ones"
-          title="Growth projection"
-          to="/analytics/projection"
-        />
         <Shortcut
           icon={PiggyBank}
           text="This year's plan against what you actually spent"
@@ -161,5 +163,130 @@ export function PlanOverview() {
         />
       </section>
     </>
+  );
+}
+
+/** Retirement as a ring: what the plan as it stands reaches, against what's needed. */
+function RetirementCard({
+  retirement,
+}: {
+  retirement: { goal: Goal; plan: GoalPlan } | undefined;
+}) {
+  if (!retirement) {
+    return (
+      <Link className={`${ui.hero} ${styles.retire}`} to="/analytics/goals">
+        <span className={styles.retireText}>
+          <span className={styles.retireLabel}>Retirement</span>
+          <strong className={styles.retireStatus}>Plan it</strong>
+          <span className={styles.retireSub}>When you can stop working, and what it takes</span>
+        </span>
+        <ChevronRight aria-hidden="true" size={22} />
+      </Link>
+    );
+  }
+  const { goal, plan } = retirement;
+  const share = plan.needed > 0 ? plan.projected / plan.needed : 1;
+  const onCourse = plan.status === 'reached' || plan.status === 'onTrack';
+  const r = 34;
+  const c = 2 * Math.PI * r;
+  return (
+    <Link
+      aria-label={`Retirement: ${onCourse ? 'on course' : STATUS_LABELS[plan.status]}, ${Math.round(share * 100)}% of what's needed. Open goal planning`}
+      className={`${ui.hero} ${styles.retire}`}
+      data-tone={STATUS_TONES[plan.status]}
+      to="/analytics/goals"
+    >
+      <span className={styles.retireText}>
+        <span className={styles.retireLabel}>
+          Retirement{goal.targetDate ? ` by ${goal.targetDate.slice(0, 4)}` : ''}
+        </span>
+        <strong className={styles.retireStatus}>
+          {onCourse ? 'On course' : STATUS_LABELS[plan.status]}
+        </strong>
+        <span className={styles.retireSub}>
+          {formatAmount(plan.projected)} projected · needs {formatAmount(plan.needed)}
+        </span>
+      </span>
+      <svg aria-hidden="true" className={styles.retireRing} viewBox="0 0 84 84">
+        <circle className={styles.retireTrack} cx="42" cy="42" r={r} />
+        <circle
+          className={styles.retireArc}
+          cx="42"
+          cy="42"
+          r={r}
+          style={{ strokeDasharray: `${Math.min(share, 1) * c} ${c}` }}
+        />
+        <text className={styles.retirePercent} x="42" y="47">
+          {Math.round(share * 100)}%
+        </text>
+      </svg>
+    </Link>
+  );
+}
+
+const PATHS = [
+  { key: 'optimistic', label: 'Good', className: 'pathGood' },
+  { key: 'base', label: 'Expected', className: 'pathBase' },
+  { key: 'stress', label: 'Tough', className: 'pathTough' },
+] as const;
+
+/** Where investments could be, in good years, as expected and in tough ones. */
+function GrowthPreview({
+  results,
+  years,
+}: {
+  results: Record<'stress' | 'base' | 'optimistic', ProjectionResult>;
+  years: number;
+}) {
+  const W = 320;
+  const H = 90;
+  const lines = PATHS.map((path) => ({
+    ...path,
+    values: [
+      results[path.key].rows[0]?.opening ?? 0,
+      ...results[path.key].rows.map((row) => row.closing),
+    ],
+  }));
+  const peak = Math.max(1, ...lines.flatMap((line) => line.values));
+  const points = (values: number[]) =>
+    values
+      .map(
+        (value, index) =>
+          `${(index / Math.max(1, values.length - 1)) * W},${H - 4 - (value / peak) * (H - 8)}`,
+      )
+      .join(' ');
+  return (
+    <section aria-labelledby="plan-growth" className={styles.section}>
+      <div className={styles.head}>
+        <h2 id="plan-growth">Growth projection</h2>
+        <Link className={ui.textLink} to="/analytics/projection">
+          {years} years ›
+        </Link>
+      </div>
+      <Link className={`${ui.card} ${styles.growth}`} to="/analytics/projection">
+        <svg
+          aria-hidden="true"
+          className={styles.growthChart}
+          preserveAspectRatio="none"
+          viewBox={`0 0 ${W} ${H}`}
+        >
+          {lines.map((line) => (
+            <polyline
+              className={styles[line.className]}
+              key={line.key}
+              points={points(line.values)}
+            />
+          ))}
+        </svg>
+        <ul className={styles.paths}>
+          {lines.map((line) => (
+            <li key={line.key}>
+              <i className={styles[`${line.className}Dot`]} />
+              {line.label} {formatAmount(line.values.at(-1) ?? 0)}
+            </li>
+          ))}
+        </ul>
+      </Link>
+    </section>
   );
 }

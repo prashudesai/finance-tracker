@@ -25,7 +25,7 @@ import ui from '../../ui/ui.module.css';
 import { useIsPhone } from '../../ui/useIsPhone';
 import { SortHeader, useSort } from '../../ui/useSort';
 import { LoanForm } from './LoanForm';
-import { LoanHistory } from './LoanHistory';
+import { ENTRY_LABELS, LoanHistory, type Entry } from './LoanHistory';
 
 type LoanColumn = 'type' | 'borrowed' | 'rate' | 'emi' | 'remaining' | 'emis' | 'status';
 
@@ -89,7 +89,7 @@ function LoanDetails({
 }: {
   summary: LoanSummary;
   onClose: () => void;
-  onHistory: () => void;
+  onHistory: (start?: Entry) => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -107,8 +107,25 @@ function LoanDetails({
             <Metric label="Interest paid" value={formatMoney(ledger.interestPaid)} />
           </div>
         ) : null}
+        {ledger && ledger.remaining > 0 ? (
+          <div className={ui.formWide}>
+            <span className={ui.label}>Record</span>
+            <div aria-label="Record for this loan" className={ui.actions} role="group">
+              {(['payment', 'part-payment', 'rate', 'topup', 'emi'] as const).map((key) => (
+                <button
+                  className={key === 'payment' ? ui.button : ui.quiet}
+                  key={key}
+                  onClick={() => onHistory(key)}
+                  type="button"
+                >
+                  {ENTRY_LABELS[key]}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <div className={ui.actions}>
-          <button className={ui.quiet} onClick={onHistory} type="button">
+          <button className={ui.quiet} onClick={() => onHistory()} type="button">
             <History size={14} /> History
           </button>
           <button className={ui.quiet} onClick={onEdit} type="button">
@@ -135,6 +152,7 @@ export function DebtsPage() {
   const phone = useIsPhone();
   const chosen = quickAdd?.loan ?? null;
   const [historyId, setHistoryId] = useState<string | null>(phone ? null : chosen);
+  const [historyStart, setHistoryStart] = useState<Entry>('payment');
   const [detailsId, setDetailsId] = useState<string | null>(phone ? chosen : null);
   const summaries = summarizeLoans(data, today);
   const outstanding = totalOutstanding(summaries);
@@ -380,8 +398,9 @@ export function DebtsPage() {
             setDetailsId(null);
             setEditingId(details.id);
           }}
-          onHistory={() => {
+          onHistory={(start = 'payment') => {
             setDetailsId(null);
+            setHistoryStart(start);
             setHistoryId(details.id);
           }}
           summary={details}
@@ -397,7 +416,16 @@ export function DebtsPage() {
           <LoanForm initial={editing} onDone={() => setEditingId(null)} />
         </Modal>
       ) : null}
-      {history ? <LoanHistory loan={history} onClose={() => setHistoryId(null)} /> : null}
+      {history ? (
+        <LoanHistory
+          loan={history}
+          onClose={() => {
+            setHistoryId(null);
+            setHistoryStart('payment');
+          }}
+          start={historyStart}
+        />
+      ) : null}
     </div>
   );
 }

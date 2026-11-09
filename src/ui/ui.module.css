@@ -1938,3 +1938,10 @@ a.segmentActive {
 }
 
 /* The dashboard's hello, under its title. */
+
+/* Phones: a little less padding inside cards, to match their wider edges. */
+@media (max-width: 600px) {
+  .card {
+    padding: 16px 14px;
+  }
+}

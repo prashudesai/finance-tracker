@@ -1,8 +1,14 @@
 import { Link, useLocation } from 'react-router';
-import { holdingRows, netWorth, portfolioCategories } from '../../domain/analytics';
+import { holdingRows, netWorth } from '../../domain/analytics';
+import { debtFreeMonth, summarizeLoans } from '../../domain/summary';
 import { useView } from '../../store/tracker';
-import { chartColor } from '../../ui/charts';
-import { formatAmount, formatMoney, localDate } from '../../ui/format';
+import {
+  formatAmount,
+  formatPercent,
+  formatShortMonthYear,
+  localDate,
+  signedMoney,
+} from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 import styles from './WealthNav.module.css';
 
@@ -14,27 +20,69 @@ const NAMES: Record<WealthSection, string> = {
   loans: 'Loans',
 };
 const KEY = 'investmentSection';
-const SHOWN = 4;
 
 /**
- * Wealth's top: what's owned after what's owed, the split between them, what the investments
- * are made of, and chips for investments, retirement accounts and loans.
+ * Wealth's top: what's owned and its return, what's owed and when it ends, then chips for
+ * investments, retirement accounts and loans. Net worth itself leads Home.
  */
 export function WealthNav({
   section,
   onSection,
+  chips = true,
 }: {
   section: WealthSection;
   /** On the investments page, picks which of its parts to show. */
   onSection?: (next: 'investments' | 'retirement') => void;
+  /** Off where the page places the chips itself, such as under the asset pie. */
+  chips?: boolean;
 }) {
   const data = useView();
   const today = localDate();
-  const { pathname } = useLocation();
   const worth = netWorth(data, today);
-  const categories = portfolioCategories(holdingRows(data, today)).filter((row) => row.current > 0);
-  const total = categories.reduce((sum, row) => sum + row.current, 0);
+  const rows = holdingRows(data, today);
+  const owned = rows.reduce((sum, row) => sum + row.position.current, 0);
+  const invested = rows.reduce((sum, row) => sum + row.position.invested, 0);
+  const gain = owned - invested;
+  const freeBy = debtFreeMonth(summarizeLoans(data, today), today.slice(0, 7));
 
+  return (
+    <>
+      <section aria-label="Wealth" className={`${ui.hero} ${styles.card}`}>
+        <div className={styles.half}>
+          <span className={styles.label}>You own</span>
+          <strong className={styles.value}>{formatAmount(owned)}</strong>
+          {invested > 0 ? (
+            <span className={gain < 0 ? styles.down : styles.up}>
+              {signedMoney(gain)} · {formatPercent(gain / invested)} return
+            </span>
+          ) : null}
+        </div>
+        <div className={styles.half}>
+          <span className={styles.label}>You owe</span>
+          <strong className={`${styles.value} ${ui.debt}`}>{formatAmount(worth.debts)}</strong>
+          <span className={styles.note}>
+            {freeBy
+              ? `Debt-free by ${formatShortMonthYear(freeBy)}`
+              : worth.debts > 0
+                ? 'Across your loans'
+                : 'No loans'}
+          </span>
+        </div>
+      </section>
+      {chips ? <WealthChips section={section} {...(onSection ? { onSection } : {})} /> : null}
+    </>
+  );
+}
+
+/** Chips for Wealth's parts: investments and retirement accounts on one page, loans on another. */
+export function WealthChips({
+  section,
+  onSection,
+}: {
+  section: WealthSection;
+  onSection?: (next: 'investments' | 'retirement') => void;
+}) {
+  const { pathname } = useLocation();
   const pick = (next: 'investments' | 'retirement') => {
     onSection?.(next);
     try {
@@ -43,62 +91,32 @@ export function WealthNav({
       // The choice still applies for this visit.
     }
   };
-
   return (
-    <>
-      <section aria-label="Wealth" className={`${ui.hero} ${styles.card}`}>
-        <span className={styles.label}>What you own, after what you owe</span>
-        <strong className={styles.value}>{formatMoney(worth.netWorth)}</strong>
-        <div className={styles.legend}>
-          <span>
-            Assets <strong>{formatAmount(worth.assets)}</strong>
-          </span>
-          <span>
-            Debts <strong className={ui.debt}>{formatAmount(worth.debts)}</strong>
-          </span>
-        </div>
-        <div className={ui.meter}>
-          <span className={ui.meterFill} style={{ width: `${worth.assetShare * 100}%` }} />
-          <span className={ui.meterDebt} style={{ flex: 1 }} />
-        </div>
-        {total > 0 ? (
-          <ul aria-label="What your investments are made of" className={styles.mix}>
-            {categories.slice(0, SHOWN).map((row, index) => (
-              <li key={row.name}>
-                <i style={{ background: chartColor(index) }} />
-                {row.name} {Math.round((row.current / total) * 100)}%
-              </li>
-            ))}
-            {categories.length > SHOWN ? <li>+{categories.length - SHOWN} more</li> : null}
-          </ul>
-        ) : null}
-      </section>
-      <nav aria-label="Wealth sections" className={styles.chips}>
-        {(['investments', 'retirement'] as const).map((key) =>
-          onSection ? (
-            <button
-              aria-pressed={section === key}
-              className={styles.chip}
-              key={key}
-              onClick={() => pick(key)}
-              type="button"
-            >
-              {NAMES[key]}
-            </button>
-          ) : (
-            <Link className={styles.chip} key={key} onClick={() => pick(key)} to="/investments">
-              {NAMES[key]}
-            </Link>
-          ),
-        )}
-        <Link
-          aria-current={pathname.startsWith('/debts') ? 'page' : undefined}
-          className={styles.chip}
-          to="/debts"
-        >
-          {NAMES.loans}
-        </Link>
-      </nav>
-    </>
+    <nav aria-label="Wealth sections" className={styles.chips}>
+      {(['investments', 'retirement'] as const).map((key) =>
+        onSection ? (
+          <button
+            aria-pressed={section === key}
+            className={styles.chip}
+            key={key}
+            onClick={() => pick(key)}
+            type="button"
+          >
+            {NAMES[key]}
+          </button>
+        ) : (
+          <Link className={styles.chip} key={key} onClick={() => pick(key)} to="/investments">
+            {NAMES[key]}
+          </Link>
+        ),
+      )}
+      <Link
+        aria-current={pathname.startsWith('/debts') ? 'page' : undefined}
+        className={styles.chip}
+        to="/debts"
+      >
+        {NAMES.loans}
+      </Link>
+    </nav>
   );
 }

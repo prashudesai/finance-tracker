@@ -23,7 +23,7 @@ export function QuickActions() {
       {actions.map(({ label, icon: Icon, to, state }) => (
         <Link className={styles.action} key={label} state={state} to={to}>
           <span aria-hidden="true" className={styles.actionIcon}>
-            <Icon size={20} />
+            <Icon size={18} />
           </span>
           {label}
         </Link>

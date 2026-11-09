@@ -275,7 +275,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
         <div className={homeStyles.column}>
           <NetWorthHero data={data} today={today} />
           <QuickActions />
-          <InsightsCard />
         </div>
         <div className={homeStyles.column}>
           <MonthRing
@@ -286,6 +285,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
             spent={overview.spent}
             spentChange={trends.expenses.change}
           />
+          <InsightsCard />
           <ComingUp data={household} today={today} />
           <RecentEntries data={data} />
         </div>

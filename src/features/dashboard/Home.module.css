@@ -9,9 +9,9 @@
 .action {
   display: grid;
   justify-items: center;
-  gap: 6px;
+  gap: 4px;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 600;
   text-decoration: none;
 }
@@ -19,12 +19,12 @@
 .actionIcon {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   color: var(--accent);
   background: var(--surface);
   border: 1px solid var(--card-edge);
-  border-radius: 18px;
+  border-radius: 14px;
   box-shadow: var(--shadow);
   transition: transform 140ms ease;
 }
@@ -147,7 +147,7 @@
 }
 
 .entryName small {
-  margin-top: -6px;
+  margin-top: -10px;
   padding-left: 46px;
 }
 

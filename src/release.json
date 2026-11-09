@@ -1,7 +1,13 @@
 {
-  "version": "1.31.0",
+  "version": "1.32.0",
   "released": "2026-11-09",
   "notes": [
+    "Wealth: You own (with your return) beside You owe (with your debt-free date), the asset pie on phones, chips under it, and Stallion PMS in the investment list",
+    "Holdings show as compact rows with a six-month trend line, and loans with their progress, under Wealth",
+    "Each loan's details have buttons for EMI payment, part payment, rate change, top-up and revised EMI, each opening its form",
+    "Plan opens with retirement as a ring, your other goals as tiles, and a growth projection preview",
+    "Home: wider cards on phones, For you today below the month with shorter cards, and smaller quick actions",
+    "Money lists entries without daily totals, each with its date, so more fit on screen",
     "Money: months as pills you tap or swipe, the balance with one split bar, and See where it went for the full flow",
     "Wealth: what you own after what you owe, your investment mix, and chips for investments, retirement and loans",
     "A new look: four tabs (Home, Money, Wealth, Plan) in a floating bar, with a big + in the middle for adding anything",
