@@ -38,7 +38,6 @@ import { GoalsTile } from '../goals/GoalsTile';
 import { MonthRing } from './MonthRing';
 import homeStyles from './Home.module.css';
 import { NetWorthHero } from './NetWorthHero';
-import { QuickActions } from './QuickActions';
 import { ComingUp, RecentEntries } from './HomeLists';
 import { InsightsCard } from '../insights/InsightsCard';
 import { RecapCard } from '../insights/MonthRecap';
@@ -274,7 +273,6 @@ export function Dashboard({ name = '' }: { name?: string }) {
       <div className={homeStyles.layout}>
         <div className={homeStyles.column}>
           <NetWorthHero data={data} today={today} />
-          <QuickActions />
         </div>
         <div className={homeStyles.column}>
           <MonthRing

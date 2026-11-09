@@ -58,21 +58,24 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* On phones the ring sits on top and its key spreads below in two columns, so names don't wrap. */
+/* On phones a smaller ring sits beside a compact key, so the card stays short. */
 @media (max-width: 520px) {
   .donut {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-  }
-
-  .donut .ring {
-    width: min(100%, 200px);
+    grid-template-columns: 124px minmax(0, 1fr);
+    gap: 14px;
   }
 
   .donut .legend {
-    width: 100%;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px 16px;
+    gap: 3px;
+    font-size: 0.78rem;
+  }
+
+  .donut .center {
+    font-size: 0.62rem;
+  }
+
+  .donut .center strong {
+    font-size: 0.72rem;
   }
 }
 

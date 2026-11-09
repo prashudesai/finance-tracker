@@ -1,7 +1,8 @@
 {
-  "version": "1.32.0",
+  "version": "1.32.1",
   "released": "2026-11-09",
   "notes": [
+    "Home drops the quick actions row, as the + in the tab bar does the same, and the asset allocation card on Wealth is shorter on phones",
     "Wealth: You own (with your return) beside You owe (with your debt-free date), the asset pie on phones, chips under it, and Stallion PMS in the investment list",
     "Holdings show as compact rows with a six-month trend line, and loans with their progress, under Wealth",
     "Each loan's details have buttons for EMI payment, part payment, rate change, top-up and revised EMI, each opening its form",
