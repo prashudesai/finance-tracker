@@ -1,4 +1,15 @@
-import { Landmark, SlidersHorizontal, Sunset, TrendingUp, Wallet } from 'lucide-react';
+import {
+  Banknote,
+  CalendarClock,
+  Landmark,
+  Layers,
+  Pencil,
+  PiggyBank,
+  SlidersHorizontal,
+  Sunset,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react';
 import { Fragment, useMemo, useRef, useState } from 'react';
 import { averageContributions, holdingGroups, netWorth } from '../../domain/analytics';
 import {
@@ -68,6 +79,53 @@ function NumberField({
  * Follows the fund year by year: growing with savings contributions until retirement, then
  * paying expenses that rise with inflation, while what's left keeps growing.
  */
+/** Life in three stretches: working, retired on the fund, and any years it doesn't cover. */
+function Timeline({
+  age,
+  retireAge,
+  endAge,
+  untilAge,
+}: {
+  age: number;
+  retireAge: number;
+  endAge: number;
+  untilAge: number;
+}) {
+  const span = Math.max(1, untilAge - age);
+  const share = (years: number) => `${(Math.max(0, years) / span) * 100}%`;
+  const funded = Math.min(endAge, untilAge) - retireAge;
+  const short = untilAge - Math.max(endAge, retireAge);
+  return (
+    <div className={styles.timeline}>
+      <div aria-hidden="true" className={styles.timelineBar}>
+        <span className={styles.working} style={{ width: share(retireAge - age) }} />
+        <span className={styles.funded} style={{ width: share(funded) }} />
+        {short > 0 ? <span className={styles.short} style={{ width: share(short) }} /> : null}
+      </div>
+      <ul className={styles.timelineKey}>
+        <li>
+          <i className={styles.working} /> Working, {age} to {retireAge}
+        </li>
+        <li>
+          <i className={styles.funded} /> Retired on your fund
+          {short > 0 ? `, to ${endAge}` : `, past ${untilAge}`}
+        </li>
+        {short > 0 ? (
+          <li>
+            <i className={styles.short} /> Not covered, {endAge} to {untilAge}
+          </li>
+        ) : null}
+      </ul>
+    </div>
+  );
+}
+
+const BEHAVIOUR_HINTS = {
+  growth: 'Keeps growing after you retire, and is sold bit by bit when spending needs it.',
+  income: 'Pays you regularly, like an FD or SCSS, and its value stays the same.',
+  both: 'Keeps growing and pays you as well, like a dividend fund or a rented flat.',
+} as const;
+
 export function RetirementPlanner() {
   const data = useSpendingHousehold();
   const settings = useSettings();
@@ -108,6 +166,9 @@ export function RetirementPlanner() {
   const [contributions, setContributions] = useState(saved.contributions);
   const [fundKind, setFundKind] = useState(saved.fund);
   const [picked, setPicked] = useState<number | null>(null);
+  const [chart, setChart] = useState<'fund' | 'spending'>('fund');
+  // The investment open for editing after retiring; the rest show what they do.
+  const [editingAfter, setEditingAfter] = useState<string | null>(null);
   const [spendPicked, setSpendPicked] = useState(0);
   // Opened by hand or by an error, the assumptions stay open until closed by hand.
   const [assumptionsOpen, setAssumptionsOpen] = useState(false);
@@ -365,23 +426,39 @@ export function RetirementPlanner() {
       </div>
 
       {plan ? (
-        <div className={styles.retireHead}>
-          <div>
-            <span className={ui.caption}>
-              At {retireAge}, in {formatShortMonthYear(retireOn.slice(0, 7))}
-            </span>
-            <strong className={styles.percent}>{formatAmount(plan.fundAtRetirement)}</strong>
-            <small>Your fund then</small>
+        <div className={styles.journey} data-tone={plan.runsOutMonth === null ? 'good' : 'watch'}>
+          <div className={styles.verdict}>
+            <span>{plan.runsOutMonth === null ? 'Your money lasts' : 'Your money runs out'}</span>
+            <strong>
+              {plan.runsOutMonth === null ? `Past ${untilAge}` : `At ${ageAt(plan.runsOutMonth)}`}
+            </strong>
           </div>
-          <div>
-            <span className={ui.caption}>Spending then</span>
-            <strong className={styles.percent}>{formatAmount(plan.monthlyAtRetirement)}</strong>
-            <small>A month, after inflation</small>
-          </div>
+          {Number.isFinite(age) && Number.isFinite(retireAge) && untilAge > age ? (
+            <Timeline
+              age={age}
+              endAge={plan.runsOutMonth === null ? untilAge : ageAt(plan.runsOutMonth)}
+              retireAge={retireAge}
+              untilAge={untilAge}
+            />
+          ) : null}
+          <dl className={styles.journeyFacts}>
+            <div>
+              <dt>Fund at {retireAge}</dt>
+              <dd>{formatAmount(plan.fundAtRetirement)}</dd>
+            </div>
+            <div>
+              <dt>Spending then</dt>
+              <dd>{formatAmount(plan.monthlyAtRetirement)} a month</dd>
+            </div>
+            <div>
+              <dt>Retiring</dt>
+              <dd>{formatShortMonthYear(retireOn.slice(0, 7))}</dd>
+            </div>
+          </dl>
         </div>
       ) : null}
       {plan ? (
-        <p className={styles.fix} data-tone={plan.runsOutAt === null ? 'good' : 'watch'}>
+        <p className={styles.journeyNote}>
           {plan.runsOutMonth === null
             ? `Your money lasts past ${untilAge}, with ${formatAmount(plan.leftOver)} left.`
             : `Your money runs out in ${monthLabel(plan.runsOutMonth)}, at ${ageAt(plan.runsOutMonth)}, ${Math.max(0, untilAge - ageAt(plan.runsOutMonth))} year${untilAge - ageAt(plan.runsOutMonth) === 1 ? '' : 's'} short of ${untilAge}.`}
@@ -401,10 +478,10 @@ export function RetirementPlanner() {
       {fixes ? (
         <div>
           <h3 className={ui.label}>To make it last until {untilAge}</h3>
-          <ul className={styles.story}>
+          <ul className={styles.options}>
             {fixes.extraMonthly !== null ? (
               <li>
-                <span aria-hidden="true">•</span>
+                <PiggyBank aria-hidden="true" size={18} />
                 <span>
                   Invest <strong>{formatAmount(fixes.extraMonthly)}</strong> more a month until you
                   retire
@@ -413,7 +490,7 @@ export function RetirementPlanner() {
             ) : null}
             {fixes.retireAt !== null ? (
               <li>
-                <span aria-hidden="true">•</span>
+                <CalendarClock aria-hidden="true" size={18} />
                 <span>
                   Or retire at <strong>{fixes.retireAt}</strong>, in {turns(fixes.retireAt)}
                 </span>
@@ -421,7 +498,7 @@ export function RetirementPlanner() {
             ) : null}
             {fixes.affordableMonthly !== null ? (
               <li>
-                <span aria-hidden="true">•</span>
+                <Wallet aria-hidden="true" size={18} />
                 <span>
                   Or plan to spend <strong>{formatAmount(fixes.affordableMonthly)}</strong> a month
                   in today's rupees
@@ -444,6 +521,17 @@ export function RetirementPlanner() {
                   ? `${need.rates.growthBefore}% growth`
                   : `${need.rates.growthBefore}% growth before retiring, ${need.rates.growthAfter}% after`}
             </span>
+          </div>
+          <div
+            aria-hidden="true"
+            className={styles.needMeter}
+            data-tone={need.gap > 0 ? 'watch' : 'good'}
+          >
+            <i
+              style={{
+                width: `${Math.min(100, need.needed > 0 ? (need.onCourse / need.needed) * 100 : 100)}%`,
+              }}
+            />
           </div>
           <div className={styles.needFigures}>
             <div>
@@ -499,10 +587,29 @@ export function RetirementPlanner() {
         </section>
       ) : null}
 
+      {plan && retiredAges.length > 1 ? (
+        <div aria-label="Chart" className={styles.chartTabs} role="group">
+          {(
+            [
+              ['fund', 'Fund by age'],
+              ['spending', 'Spending after retiring'],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              aria-pressed={chart === key}
+              className={styles.chartTab}
+              key={key}
+              onClick={() => setChart(key)}
+              type="button"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className={styles.retireCharts}>
-        {plan && ages.length > 1 ? (
+        {plan && ages.length > 1 && (chart === 'fund' || retiredAges.length <= 1) ? (
           <div className={styles.retireChart}>
-            <h3 className={ui.label}>Your fund by age</h3>
             <LineChart
               fromZero
               narrow={phone || paired}
@@ -538,9 +645,8 @@ export function RetirementPlanner() {
           </div>
         ) : null}
 
-        {plan && retiredAges.length > 1 ? (
+        {plan && retiredAges.length > 1 && chart === 'spending' ? (
           <div className={styles.retireChart}>
-            <h3 className={ui.label}>Yearly spending after you retire</h3>
             <LineChart
               fromZero
               narrow={phone || paired}
@@ -667,121 +773,150 @@ export function RetirementPlanner() {
         onToggle={(event) => setAssumptionsOpen(event.currentTarget.open)}
         open={assumptionsOpen || Boolean(error)}
       >
-        <summary>Your assumptions</summary>
-        <div className={ui.page}>
-          <div className={styles.modeGroup}>
-            <h3 className={ui.label}>Your fund</h3>
-            <div aria-label="Fund" className={styles.modes} role="radiogroup">
-              {(
-                [
-                  ['all', 'All investments', allFund, Wallet],
-                  ['retirement', 'Retirement accounts', retirementFund, Landmark],
-                ] as const
-              ).map(([key, label, value, Icon]) => (
-                <button
-                  aria-checked={fundKind === key}
-                  className={styles.mode}
-                  key={key}
-                  onClick={() => setFundKind(key)}
-                  role="radio"
-                  type="button"
-                >
-                  <span aria-hidden="true" className={styles.modeIcon}>
-                    <Icon size={18} />
-                  </span>
-                  <strong>{label}</strong>
-                  <small>{formatAmount(Math.round(value))} today</small>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.assumptions}>
-            <NumberField
-              label="Monthly spending today (₹)"
-              onChange={set('monthlyExpense')}
-              value={values.monthlyExpense}
-            />
-            <NumberField
-              label="Plan until age"
-              onChange={set('untilAge')}
-              value={values.untilAge}
-            />
-            <Field label="Date of birth">
-              <input
-                max={today}
-                onChange={(event) => {
-                  // A retirement date that was simply the 60th birthday moves with the birth date.
-                  if (birthDate && retireDate === addMonths(birthDate, RETIRE_AT * 12)) {
-                    setRetireDate('');
-                  }
-                  setBirthDate(event.target.value);
-                }}
-                type="date"
-                value={birthDate}
-              />
-              <span className={ui.caption}>
-                {birthDate && age >= 0 ? `You're ${age}` : 'Your age comes from this'}
-              </span>
-            </Field>
-            <Field label="Retire on">
-              <input
-                min={birthDate || undefined}
-                onChange={(event) => setRetireDate(event.target.value)}
-                type="date"
-                value={retireOn}
-              />
-              <span className={ui.caption}>
-                {retireOn && retireAge >= 0
-                  ? `You'll be ${retireAge}`
-                  : 'Your 60th birthday, unless you pick a date'}
-              </span>
-            </Field>
-            <NumberField
-              label="Prices rise each year (%)"
-              onChange={set('inflation')}
-              step={0.5}
-              value={values.inflation}
-            />
-            <NumberField
-              label="Growth before retiring (%)"
-              onChange={set('growthBefore')}
-              step={0.5}
-              value={values.growthBefore}
-            />
-            <NumberField
-              label="Contributions rise a year (%)"
-              onChange={set('stepUp')}
-              step={1}
-              value={values.stepUp}
-            />
-            {each ? null : (
-              <NumberField
-                label="Growth after retiring (%)"
-                onChange={set('growthAfter')}
-                step={0.5}
-                value={values.growthAfter}
-              />
-            )}
-          </div>
-          <label className={ui.check}>
-            <input
-              checked={contributions}
-              onChange={(event) => setContributions(event.target.checked)}
-              type="checkbox"
-            />
-            Keep investing{' '}
-            {formatAmount(
-              Math.round(fundKind === 'retirement' ? retirementContributions : allContributions),
-            )}{' '}
-            a month until I retire
-          </label>
-          <span className={ui.caption}>
-            Spending starts from your recorded average of {formatAmount(recordedSpend)} a month.
-            Contributions are your savings contributions average, and stop when you retire.
+        <summary>
+          Your assumptions
+          <span className={styles.assumeSummary}>
+            {values.inflation}% inflation · {values.growthBefore}% growth
+            {Number.isFinite(retireAge) ? ` · retire at ${retireAge}` : ''}
           </span>
+        </summary>
+        <div className={ui.page}>
+          <section className={styles.assumeGroup}>
+            <h3>
+              <CalendarClock aria-hidden="true" size={16} /> You
+            </h3>
+            <div className={styles.assumptions}>
+              <Field label="Date of birth">
+                <input
+                  max={today}
+                  onChange={(event) => {
+                    // A retirement date that was simply the 60th birthday moves with the birth date.
+                    if (birthDate && retireDate === addMonths(birthDate, RETIRE_AT * 12)) {
+                      setRetireDate('');
+                    }
+                    setBirthDate(event.target.value);
+                  }}
+                  type="date"
+                  value={birthDate}
+                />
+                <span className={ui.caption}>
+                  {birthDate && age >= 0 ? `You're ${age}` : 'Your age comes from this'}
+                </span>
+              </Field>
+              <Field label="Retire on">
+                <input
+                  min={birthDate || undefined}
+                  onChange={(event) => setRetireDate(event.target.value)}
+                  type="date"
+                  value={retireOn}
+                />
+                <span className={ui.caption}>
+                  {retireOn && retireAge >= 0
+                    ? `You'll be ${retireAge}`
+                    : 'Your 60th birthday, unless you pick a date'}
+                </span>
+              </Field>
+              <NumberField
+                label="Plan until age"
+                onChange={set('untilAge')}
+                value={values.untilAge}
+              />
+            </div>
+          </section>
 
-          <div className={styles.modeGroup}>
-            <h3 className={ui.label}>After you retire</h3>
+          <section className={styles.assumeGroup}>
+            <h3>
+              <Wallet aria-hidden="true" size={16} /> Spending
+            </h3>
+            <div className={styles.assumptions}>
+              <NumberField
+                label="Monthly spending today (₹)"
+                onChange={set('monthlyExpense')}
+                value={values.monthlyExpense}
+              />
+              <NumberField
+                label="Prices rise each year (%)"
+                onChange={set('inflation')}
+                step={0.5}
+                value={values.inflation}
+              />
+            </div>
+            <span className={ui.caption}>
+              Spending starts from your recorded average of {formatAmount(recordedSpend)} a month.
+              Contributions are your savings contributions average, and stop when you retire.
+            </span>
+          </section>
+
+          <section className={styles.assumeGroup}>
+            <h3>
+              <PiggyBank aria-hidden="true" size={16} /> Investing until you retire
+            </h3>
+            <div className={styles.modeGroup}>
+              <h4 className={styles.groupLabel}>Which money counts</h4>
+              <div aria-label="Fund" className={styles.modes} role="radiogroup">
+                {(
+                  [
+                    ['all', 'All investments', allFund, Wallet],
+                    ['retirement', 'Retirement accounts', retirementFund, Landmark],
+                  ] as const
+                ).map(([key, label, value, Icon]) => (
+                  <button
+                    aria-checked={fundKind === key}
+                    className={styles.mode}
+                    key={key}
+                    onClick={() => setFundKind(key)}
+                    role="radio"
+                    type="button"
+                  >
+                    <span aria-hidden="true" className={styles.modeIcon}>
+                      <Icon size={18} />
+                    </span>
+                    <strong>{label}</strong>
+                    <small>{formatAmount(Math.round(value))} today</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className={styles.assumptions}>
+              <NumberField
+                label="Growth before retiring (%)"
+                onChange={set('growthBefore')}
+                step={0.5}
+                value={values.growthBefore}
+              />
+              <NumberField
+                label="Contributions rise a year (%)"
+                onChange={set('stepUp')}
+                step={1}
+                value={values.stepUp}
+              />
+              {each ? null : (
+                <NumberField
+                  label="Growth after retiring (%)"
+                  onChange={set('growthAfter')}
+                  step={0.5}
+                  value={values.growthAfter}
+                />
+              )}
+            </div>
+            <label className={styles.assumeToggle}>
+              <input
+                checked={contributions}
+                onChange={(event) => setContributions(event.target.checked)}
+                type="checkbox"
+              />
+              Keep investing{' '}
+              {formatAmount(
+                Math.round(fundKind === 'retirement' ? retirementContributions : allContributions),
+              )}{' '}
+              a month until I retire
+            </label>
+          </section>
+
+          <div className={`${styles.modeGroup} ${styles.assumeGroup}`}>
+            <h3>
+              <Sunset aria-hidden="true" size={16} /> After you retire
+            </h3>
             <div aria-label="After you retire" className={styles.modes} role="radiogroup">
               {(
                 [
@@ -820,160 +955,215 @@ export function RetirementPlanner() {
                 );
                 const monthly = (part: RetirementPart | undefined, payout: number) =>
                   formatAmount(Math.round(((part?.value ?? 0) * payout) / 1200));
+                const pays =
+                  draft.payoutIn === 'amount'
+                    ? Number(draft.payoutAmount) > 0
+                      ? `pays ${formatAmount(Number(draft.payoutAmount))} a ${draft.payoutEvery}`
+                      : 'pays an amount not set yet'
+                    : `pays ${draft.payout || 0}% of its value a year`;
+                const does =
+                  draft.behaviour === 'growth'
+                    ? `Grows ${draft.growth || 0}% a year`
+                    : draft.behaviour === 'income'
+                      ? `Income: ${pays}`
+                      : `Grows ${draft.growth || 0}% and ${pays}`;
+                const extra = [
+                  draft.behaviour !== 'income' && draft.moving
+                    ? `moves ${draft.moveShare || 0}% into income`
+                    : '',
+                  draft.behaviour !== 'growth' && draft.sellable ? 'can be sold' : '',
+                ].filter(Boolean);
+                const open = editingAfter === group.key;
+                const Icon =
+                  draft.behaviour === 'growth'
+                    ? TrendingUp
+                    : draft.behaviour === 'income'
+                      ? Banknote
+                      : Layers;
                 return (
-                  <li className={styles.afterRow} key={group.key}>
-                    <div className={styles.afterHead}>
-                      <strong>{group.label}</strong>
-                      <span className={ui.caption}>
-                        {formatAmount(Math.round(group.value))} today
-                        {group.holdings.length > 1 ? ` · ${group.holdings.length} accounts` : ''}
-                      </span>
-                    </div>
-                    <div
-                      aria-label={`${group.label} after retiring`}
-                      className={styles.behaviours}
-                      role="radiogroup"
+                  <li className={styles.afterRow} data-open={open || undefined} key={group.key}>
+                    <button
+                      aria-expanded={open}
+                      aria-label={`${group.label}: ${does}. ${open ? 'Close' : 'Edit'}`}
+                      className={styles.afterTile}
+                      onClick={() => setEditingAfter(open ? null : group.key)}
+                      type="button"
                     >
-                      {BEHAVIOURS.map(([key, label]) => (
-                        <button
-                          aria-checked={draft.behaviour === key}
-                          className={styles.behaviour}
-                          key={key}
-                          onClick={() => setDraft(group.key, { behaviour: key })}
-                          role="radio"
-                          type="button"
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className={styles.afterFields}>
-                      {draft.behaviour !== 'income' ? (
-                        <NumberField
-                          label="Grows a year (%)"
-                          onChange={(value) => setDraft(group.key, { growth: value })}
-                          step={0.5}
-                          value={draft.growth}
-                        />
-                      ) : null}
-                      {draft.behaviour !== 'growth' ? (
-                        draft.payoutIn === 'amount' ? (
-                          <NumberField
-                            label="Pays (₹)"
-                            onChange={(value) => setDraft(group.key, { payoutAmount: value })}
-                            step={500}
-                            value={draft.payoutAmount}
-                          />
-                        ) : (
-                          <NumberField
-                            label="Pays a year (%)"
-                            onChange={(value) => setDraft(group.key, { payout: value })}
-                            step={0.1}
-                            value={draft.payout}
-                          />
-                        )
-                      ) : null}
-                    </div>
-                    {draft.behaviour !== 'growth' ? (
-                      <div
-                        aria-label={`How ${group.label} pays`}
-                        className={styles.payIn}
-                        role="radiogroup"
+                      <span
+                        aria-hidden="true"
+                        className={styles.afterIcon}
+                        data-kind={draft.behaviour}
                       >
-                        {(
-                          [
-                            ['amount', '₹ amount'],
-                            ['percent', '% a year'],
-                          ] as const
-                        ).map(([key, label]) => (
-                          <button
-                            aria-checked={draft.payoutIn === key}
-                            className={styles.behaviour}
-                            key={key}
-                            onClick={() => setDraft(group.key, { payoutIn: key })}
-                            role="radio"
-                            type="button"
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                    {draft.behaviour !== 'growth' && draft.payoutIn === 'amount' ? (
-                      <div
-                        aria-label={`How often ${group.label} pays`}
-                        className={styles.every}
-                        role="radiogroup"
-                      >
-                        {EVERY.map(([key, label]) => (
-                          <button
-                            aria-checked={draft.payoutEvery === key}
-                            className={styles.behaviour}
-                            key={key}
-                            onClick={() => setDraft(group.key, { payoutEvery: key })}
-                            role="radio"
-                            type="button"
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                    {draft.behaviour !== 'growth' && atRetirement ? (
-                      <span className={ui.caption}>
-                        {after.payoutFixed
-                          ? `${formatAmount(after.payoutFixed.amount)} a ${after.payoutFixed.every} from when you retire${after.payoutFixed.every === 'month' ? '' : `, about ${formatAmount(Math.round(monthlyOf(after.payoutFixed)))} a month`}${atRetirement.value > 0 ? `, or ${((monthlyOf(after.payoutFixed) * 1200) / atRetirement.value).toFixed(1)}% a year of ${formatAmount(atRetirement.value)}` : ''}`
-                          : `About ${monthly(atRetirement, after.payout)} a month when you retire, on ${formatAmount(atRetirement.value)}`}
-                        {draft.behaviour === 'income' ? ', which stays the same' : ''}.
+                        <Icon size={18} />
                       </span>
-                    ) : null}
-                    {draft.behaviour !== 'growth' ? (
-                      <label className={ui.check}>
-                        <input
-                          checked={draft.sellable}
-                          onChange={(event) =>
-                            setDraft(group.key, { sellable: event.target.checked })
-                          }
-                          type="checkbox"
-                        />
-                        Can be sold if the rest runs out
-                      </label>
-                    ) : null}
-                    {draft.behaviour !== 'income' ? (
-                      <label className={ui.check}>
-                        <input
-                          checked={draft.moving}
-                          onChange={(event) =>
-                            setDraft(group.key, { moving: event.target.checked })
-                          }
-                          type="checkbox"
-                        />
-                        Move part into income at retirement
-                      </label>
-                    ) : null}
-                    {draft.behaviour !== 'income' && draft.moving ? (
-                      <>
-                        <div className={styles.afterFields}>
-                          <NumberField
-                            label="Share to move (%)"
-                            onChange={(value) => setDraft(group.key, { moveShare: value })}
-                            step={5}
-                            value={draft.moveShare}
-                          />
-                          <NumberField
-                            label="It pays a year (%)"
-                            onChange={(value) => setDraft(group.key, { movePayout: value })}
-                            step={0.1}
-                            value={draft.movePayout}
-                          />
+                      <span className={styles.afterText}>
+                        <strong>{group.label}</strong>
+                        <small>
+                          {formatAmount(Math.round(group.value))} today
+                          {group.holdings.length > 1 ? ` · ${group.holdings.length} accounts` : ''}
+                        </small>
+                        <span className={styles.afterDoes}>
+                          {does}
+                          {extra.length > 0 ? ` · ${extra.join(' · ')}` : ''}
+                        </span>
+                      </span>
+                      <span className={styles.afterEdit}>
+                        {open ? 'Done' : <Pencil aria-hidden="true" size={15} />}
+                      </span>
+                    </button>
+                    {open ? (
+                      <div className={styles.afterEditor}>
+                        <div
+                          aria-label={`${group.label} after retiring`}
+                          className={styles.behaviours}
+                          role="radiogroup"
+                        >
+                          {BEHAVIOURS.map(([key, label]) => (
+                            <button
+                              aria-checked={draft.behaviour === key}
+                              className={styles.behaviour}
+                              key={key}
+                              onClick={() => setDraft(group.key, { behaviour: key })}
+                              role="radio"
+                              type="button"
+                            >
+                              {label}
+                            </button>
+                          ))}
                         </div>
-                        {moved && after.move ? (
+                        <p className={styles.afterHint}>{BEHAVIOUR_HINTS[draft.behaviour]}</p>
+                        {draft.behaviour !== 'income' ? (
+                          <div className={styles.afterFields}>
+                            <NumberField
+                              label="Grows a year (%)"
+                              onChange={(value) => setDraft(group.key, { growth: value })}
+                              step={0.5}
+                              value={draft.growth}
+                            />
+                          </div>
+                        ) : null}
+                        {draft.behaviour !== 'growth' ? (
+                          <div className={styles.afterStep}>
+                            <span className={styles.afterStepLabel}>How does it pay you?</span>
+                            <div
+                              aria-label={`How ${group.label} pays`}
+                              className={styles.payIn}
+                              role="radiogroup"
+                            >
+                              {(
+                                [
+                                  ['amount', '₹ amount'],
+                                  ['percent', '% a year'],
+                                ] as const
+                              ).map(([key, label]) => (
+                                <button
+                                  aria-checked={draft.payoutIn === key}
+                                  className={styles.behaviour}
+                                  key={key}
+                                  onClick={() => setDraft(group.key, { payoutIn: key })}
+                                  role="radio"
+                                  type="button"
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                            {draft.payoutIn === 'amount' ? (
+                              <div
+                                aria-label={`How often ${group.label} pays`}
+                                className={styles.every}
+                                role="radiogroup"
+                              >
+                                {EVERY.map(([key, label]) => (
+                                  <button
+                                    aria-checked={draft.payoutEvery === key}
+                                    className={styles.behaviour}
+                                    key={key}
+                                    onClick={() => setDraft(group.key, { payoutEvery: key })}
+                                    role="radio"
+                                    type="button"
+                                  >
+                                    {label}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                            <div className={styles.afterFields}>
+                              {draft.payoutIn === 'amount' ? (
+                                <NumberField
+                                  label={`Amount each ${draft.payoutEvery} (₹)`}
+                                  onChange={(value) => setDraft(group.key, { payoutAmount: value })}
+                                  step={500}
+                                  value={draft.payoutAmount}
+                                />
+                              ) : (
+                                <NumberField
+                                  label="Share of its value paid a year (%)"
+                                  onChange={(value) => setDraft(group.key, { payout: value })}
+                                  step={0.1}
+                                  value={draft.payout}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
+                        {draft.behaviour !== 'growth' && atRetirement ? (
                           <span className={ui.caption}>
-                            {formatAmount(moved.value)} moved, such as into SCSS or an annuity,
-                            paying about {monthly(moved, after.move.payout)} a month.
+                            {after.payoutFixed
+                              ? `${formatAmount(after.payoutFixed.amount)} a ${after.payoutFixed.every} from when you retire${after.payoutFixed.every === 'month' ? '' : `, about ${formatAmount(Math.round(monthlyOf(after.payoutFixed)))} a month`}${atRetirement.value > 0 ? `, or ${((monthlyOf(after.payoutFixed) * 1200) / atRetirement.value).toFixed(1)}% a year of ${formatAmount(atRetirement.value)}` : ''}`
+                              : `About ${monthly(atRetirement, after.payout)} a month when you retire, on ${formatAmount(atRetirement.value)}`}
+                            {draft.behaviour === 'income' ? ', which stays the same' : ''}.
                           </span>
                         ) : null}
-                      </>
+                        {draft.behaviour !== 'growth' ? (
+                          <label className={ui.check}>
+                            <input
+                              checked={draft.sellable}
+                              onChange={(event) =>
+                                setDraft(group.key, { sellable: event.target.checked })
+                              }
+                              type="checkbox"
+                            />
+                            If other money runs out, this can be sold too
+                          </label>
+                        ) : null}
+                        {draft.behaviour !== 'income' ? (
+                          <label className={ui.check}>
+                            <input
+                              checked={draft.moving}
+                              onChange={(event) =>
+                                setDraft(group.key, { moving: event.target.checked })
+                              }
+                              type="checkbox"
+                            />
+                            At retirement, move part of it into something that pays income
+                          </label>
+                        ) : null}
+                        {draft.behaviour !== 'income' && draft.moving ? (
+                          <>
+                            <div className={styles.afterFields}>
+                              <NumberField
+                                label="Share to move (%)"
+                                onChange={(value) => setDraft(group.key, { moveShare: value })}
+                                step={5}
+                                value={draft.moveShare}
+                              />
+                              <NumberField
+                                label="It pays a year (%)"
+                                onChange={(value) => setDraft(group.key, { movePayout: value })}
+                                step={0.1}
+                                value={draft.movePayout}
+                              />
+                            </div>
+                            {moved && after.move ? (
+                              <span className={ui.caption}>
+                                {formatAmount(moved.value)} moved, such as into SCSS or an annuity,
+                                paying about {monthly(moved, after.move.payout)} a month.
+                              </span>
+                            ) : null}
+                          </>
+                        ) : null}
+                      </div>
                     ) : null}
                   </li>
                 );

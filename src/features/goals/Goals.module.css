@@ -672,3 +672,582 @@
 .assumptions input {
   padding: 8px 10px;
 }
+
+/* Goal planning's summary: where every plan stands, before choosing one to look at. */
+.planHero.planHero {
+  display: grid;
+  gap: 4px;
+  padding: 20px;
+}
+
+.planLabel {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.planHeadline {
+  font-size: clamp(1.6rem, 7vw, 2.1rem);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.planSub {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.planFacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--hero-edge, var(--border));
+}
+
+.planFacts div {
+  min-width: 0;
+}
+
+.planFacts dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.planFacts dd {
+  margin: 2px 0 0;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.planFacts dd[data-tone='good'] {
+  color: var(--gain);
+}
+
+.planFacts dd[data-tone='watch'] {
+  color: var(--warning-text);
+}
+
+.tabIcon {
+  vertical-align: -2px;
+}
+
+/* A goal as a card: what it is, how far along, by when, and what to do. */
+.goalCard {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.goalCard:hover {
+  border-color: var(--card-edge);
+  transform: translateY(-1px);
+}
+
+.goalHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.goalIcon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 12px;
+}
+
+.goalName {
+  display: grid;
+  min-width: 0;
+}
+
+.goalName strong {
+  overflow-wrap: anywhere;
+}
+
+.goalName small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.goalAmounts {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.goalAmounts strong {
+  font-size: 1.25rem;
+}
+
+.goalAmounts span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.goalBar {
+  height: 8px;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: 999px;
+}
+
+.goalBar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.goalBar[data-tone='neutral'] i {
+  background: var(--series-expense);
+}
+
+.goalBar[data-tone='watch'] i {
+  background: var(--warning-text);
+}
+
+.goalNext {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.addCard {
+  display: grid;
+  gap: 6px;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  padding: 16px;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  background: none;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.addCard:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Retirement at a glance: the verdict, life as three stretches, and the key figures. */
+.journey {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gain);
+  border-radius: var(--radius-small);
+}
+
+.journey[data-tone='watch'] {
+  border-left-color: var(--warning-text);
+}
+
+.verdict {
+  display: grid;
+  gap: 2px;
+}
+
+.verdict span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.verdict strong {
+  font-size: clamp(1.8rem, 8vw, 2.4rem);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--gain);
+}
+
+.journey[data-tone='watch'] .verdict strong {
+  color: var(--warning-text);
+}
+
+.timeline {
+  display: grid;
+  gap: 8px;
+}
+
+.timelineBar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.working {
+  background: var(--accent);
+}
+
+.funded {
+  background: color-mix(in srgb, var(--accent) 45%, var(--surface));
+}
+
+.short {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--warning-text) 0 4px,
+    color-mix(in srgb, var(--warning-text) 45%, transparent) 4px 8px
+  );
+}
+
+.timelineKey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  list-style: none;
+}
+
+.timelineKey i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  vertical-align: -1px;
+  border-radius: 3px;
+}
+
+.journeyFacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.journeyFacts dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.journeyFacts dd {
+  margin: 2px 0 0;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.journeyNote {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Ways to close a gap, as cards rather than a list of bullets. */
+.options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.options li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.options svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.options strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.needMeter {
+  height: 10px;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: 999px;
+}
+
+.needMeter i {
+  display: block;
+  height: 100%;
+  background: var(--gain);
+  border-radius: 999px;
+}
+
+.needMeter[data-tone='watch'] i {
+  background: var(--warning-text);
+}
+
+.chartTabs {
+  display: flex;
+  gap: 4px;
+}
+
+.chartTab {
+  min-height: 34px;
+  padding: 4px 14px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chartTab[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* A goal's own view: progress in a hero, then each figure as a card. */
+.detailHero.detailHero {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+}
+
+.storyCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.storyCards li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px;
+  font-size: 0.9rem;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.storyCards li > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.storyCards li > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.storyCards strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.storyCards small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* Assumptions in groups, each a card with its own heading. */
+.assumeSummary {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.assumeGroup {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.assumeGroup > h3 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.assumeGroup > h3 svg {
+  color: var(--accent);
+}
+
+.groupLabel {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.assumeToggle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.assumeToggle input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+/* Narrow phones: the icon sits above the words, so a long label never breaks mid-word. */
+.mode strong {
+  overflow-wrap: normal;
+}
+
+@media (max-width: 420px) {
+  .mode {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+
+  .modeIcon {
+    grid-row: auto;
+    margin-bottom: 6px;
+  }
+
+  .mode small {
+    grid-column: 1;
+  }
+}
+
+/* Each investment after retiring: a tile saying what it does, which opens to edit. */
+.afterTile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.afterIcon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 12px;
+}
+
+.afterIcon[data-kind='income'] {
+  color: var(--series-expense);
+  background: color-mix(in srgb, var(--series-expense) 16%, transparent);
+}
+
+.afterText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.afterText small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.afterDoes {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.afterEdit {
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.afterEditor {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.afterRow[data-open] {
+  border-color: var(--accent);
+}
+
+.afterHint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.afterStep {
+  display: grid;
+  gap: 10px;
+}
+
+.afterStepLabel {
+  font-size: 0.85rem;
+  font-weight: 650;
+}

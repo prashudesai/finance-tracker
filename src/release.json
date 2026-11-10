@@ -1,7 +1,13 @@
 {
-  "version": "1.34.0",
+  "version": "1.35.0",
   "released": "2026-11-10",
   "notes": [
+    "Goal planning opens with your plan at a glance: the extra needed a month, goals on track, what's set aside and retirement, then tabs for Goals and Retirement",
+    "Goals show as cards with a progress bar and the next step, and each goal's details open full screen with its figures as cards",
+    "Retirement leads with when your money runs out, a timeline of working, retired and any years not covered, ways to close a gap as cards, and one chart at a time",
+    "Your assumptions are grouped into You, Spending, Investing and After you retire, with the key numbers shown when folded",
+    "Set each investment: each shows what it does after you retire, and opens to edit with a plain explanation, how it pays, then the amount",
+    "The bottom tab bar is solid, and content fades out above it instead of showing through",
     "Payouts that vary, such as a profit share or dividends, can be set up with just how often they come; Home asks for the amount each time, and it's added to income and counted in returns",
     "Any investment can now pay out to your bank, and the category page shows Payouts received",
     "Tapping an investment category opens its own page: value and gain first, a growth chart of value against invested (6M, 1Y, 3Y, All), the split by holding, each holding with its actions, and recent activity",

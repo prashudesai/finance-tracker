@@ -287,6 +287,7 @@ export function Shell({
             <span>My finances</span>
           )}
         </div>
+        <div aria-hidden="true" className={styles.navFade} />
         <nav aria-label="Main" className={styles.nav}>
           {LINKS.map(({ to, label, short, icon: Icon, also }, index) => (
             <Fragment key={to}>

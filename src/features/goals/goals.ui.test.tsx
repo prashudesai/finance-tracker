@@ -97,7 +97,7 @@ describe('Goals', () => {
     fireEvent.click(form.getByRole('button', { name: 'Add goal', hidden: true }));
     const card = await section.findByRole('button', { name: /^Car: \d+% saved/ });
     // A quarter of ₹4,00,000.
-    expect(card.textContent).toContain('₹1L of');
+    expect(card.textContent).toMatch(/₹1L\s*of/);
   });
 
   test('PF accounts are one row, named PF, and a share covers each account', async () => {
@@ -169,7 +169,7 @@ describe('Goals', () => {
   });
 
   test('a retirement date left at the 60th birthday moves with the birth date', async () => {
-    show('/analytics/goals');
+    show('/analytics/goals?view=retirement');
     const planner = within(await screen.findByRole('region', { name: 'Retirement planner' }));
     fireEvent.click(planner.getByText('Your assumptions'));
     fireEvent.change(planner.getByLabelText(/^Date of birth/), {
@@ -184,7 +184,7 @@ describe('Goals', () => {
   });
 
   test('the retirement planner follows the fund to retirement and says how long it lasts', async () => {
-    show('/analytics/goals');
+    show('/analytics/goals?view=retirement');
     const planner = within(await screen.findByRole('region', { name: 'Retirement planner' }));
     fireEvent.click(planner.getByText('Your assumptions'));
     fireEvent.change(planner.getByLabelText('Monthly spending today (₹)'), {
@@ -240,7 +240,7 @@ describe('Goals', () => {
   });
 
   test('each investment can grow, pay income or both after retiring', async () => {
-    show('/analytics/goals');
+    show('/analytics/goals?view=retirement');
     const planner = within(await screen.findByRole('region', { name: 'Retirement planner' }));
     fireEvent.click(planner.getByText('Your assumptions'));
     fireEvent.change(planner.getByLabelText(/^Date of birth/), {
@@ -254,21 +254,31 @@ describe('Goals', () => {
     expect(planner.queryByLabelText('Growth after retiring (%)')).toBeNull();
     const rows = within(planner.getByRole('list', { name: 'Each investment after retiring' }));
     const first = within(rows.getAllByRole('listitem')[0] as HTMLElement);
+    // Each investment shows what it does, and opens to edit.
+    expect(first.getByRole('button', { name: /Grows [\d.]+% a year\. Edit/ })).toBeDefined();
+    fireEvent.click(first.getByRole('button', { name: /Edit$/ }));
     fireEvent.click(first.getByRole('radio', { name: 'Income' }));
+    expect(first.getByRole('button', { name: /Income: pays/ })).toBeDefined();
     expect(first.getByText(/a month when you retire, on ₹.*, which stays the same/)).toBeDefined();
     expect(planner.getByText(/Payouts cover ₹/)).toBeDefined();
     // A rate left blank asks for one, rather than counting as 0%.
-    fireEvent.change(first.getByLabelText('Pays a year (%)'), { target: { value: '' } });
+    fireEvent.change(first.getByLabelText('Share of its value paid a year (%)'), {
+      target: { value: '' },
+    });
     expect(planner.getByRole('alert').textContent).toMatch(/^Enter how much .+ pays a year/);
-    fireEvent.change(first.getByLabelText('Pays a year (%)'), { target: { value: '7' } });
+    fireEvent.change(first.getByLabelText('Share of its value paid a year (%)'), {
+      target: { value: '7' },
+    });
     // A payout can be a fixed amount instead, paid monthly, quarterly or yearly.
     fireEvent.click(first.getByRole('radio', { name: '₹ amount' }));
     expect(planner.getByRole('alert').textContent).toMatch(/pays each month, in rupees/);
-    fireEvent.change(first.getByLabelText('Pays (₹)'), { target: { value: '25000' } });
+    fireEvent.change(first.getByLabelText('Amount each month (₹)'), { target: { value: '25000' } });
     expect(planner.queryByRole('alert')).toBeNull();
     expect(first.getByText(/₹25,000 a month from when you retire/)).toBeDefined();
     fireEvent.click(first.getByRole('radio', { name: 'Quarterly' }));
-    fireEvent.change(first.getByLabelText('Pays (₹)'), { target: { value: '75000' } });
+    fireEvent.change(first.getByLabelText('Amount each quarter (₹)'), {
+      target: { value: '75000' },
+    });
     expect(
       first.getByText(/₹75,000 a quarter from when you retire, about ₹25,000 a month/),
     ).toBeDefined();
@@ -285,7 +295,7 @@ describe('Goals', () => {
   });
 
   test('Save and close at the end of the assumptions saves them', async () => {
-    show('/analytics/goals');
+    show('/analytics/goals?view=retirement');
     const planner = within(await screen.findByRole('region', { name: 'Retirement planner' }));
     fireEvent.click(planner.getByText('Your assumptions'));
     // Nothing to save until the plan can be worked out.
@@ -342,7 +352,7 @@ describe('Plan overview and the retirement planner', () => {
       settings: [{ ...defaultSettings(), onboardingDone: true, retirement }],
     });
     render(
-      <MemoryRouter initialEntries={['/analytics/goals']}>
+      <MemoryRouter initialEntries={['/analytics/goals?view=retirement']}>
         <Shell repository={repository} />
       </MemoryRouter>,
     );

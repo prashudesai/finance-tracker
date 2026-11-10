@@ -4,7 +4,6 @@ import {
   PiggyBank,
   Plus,
   RotateCcw,
-  Target,
   Trash2,
   TrendingUp,
   Wallet,
@@ -32,7 +31,7 @@ import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
 import { GoalForm } from './GoalForm';
 import { GoalRing } from './GoalRing';
-import { STATUS_LABELS, STATUS_TONES } from './goalText';
+import { GOAL_ICONS, STATUS_LABELS, STATUS_TONES } from './goalText';
 import styles from './Goals.module.css';
 import { timeFrom } from '../insights/insightText';
 
@@ -122,7 +121,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
 
   return (
     <div className={ui.page}>
-      <div className={styles.detailHead}>
+      <div className={`${ui.hero} ${styles.detailHero}`}>
         <GoalRing kind={goal.kind} progress={plan.progress} tone={tone} />
         <div>
           <div className={styles.percent}>{percent(plan.progress)}</div>
@@ -134,7 +133,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
       </div>
 
       {portfolio ? (
-        <ul className={styles.story}>
+        <ul className={styles.storyCards}>
           <li>
             <Wallet aria-hidden="true" size={18} />
             <span>
@@ -178,7 +177,7 @@ function GoalDetail({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
           </li>
         </ul>
       ) : (
-        <ul className={styles.story}>
+        <ul className={styles.storyCards}>
           <li>
             <CalendarClock aria-hidden="true" size={18} />
             <span>
@@ -375,17 +374,12 @@ export function GoalsSection() {
   return (
     <section aria-label="Goals" className={ui.card} id="goals">
       <div className={ui.cardHeader}>
-        <div className={ui.cardHeader} style={{ justifyContent: 'flex-start' }}>
-          <span aria-hidden="true" className={ui.tileIcon}>
-            <Target size={20} />
-          </span>
-          <div>
-            <h2 style={{ fontSize: '1.2rem' }}>Goals</h2>
-            <div className={ui.caption}>
-              {goals.length === 0
-                ? 'Save for what matters, from your real investments'
-                : `${onTrack.length} of ${goals.length} on track`}
-            </div>
+        <div>
+          <h2 style={{ fontSize: '1.2rem' }}>Goals</h2>
+          <div className={ui.caption}>
+            {goals.length === 0
+              ? 'Save for what matters, from your real investments'
+              : `${onTrack.length} of ${goals.length} on track · tap one for its plan`}
           </div>
         </div>
         <button className={ui.button} onClick={() => setAdding(true)} type="button">
@@ -406,50 +400,66 @@ export function GoalsSection() {
         />
       ) : (
         <ul className={styles.list}>
-          {goals.map(({ goal, plan }) => (
-            <li key={goal.id}>
-              <button
-                aria-label={`${goal.name}: ${percent(plan.progress)} saved, ${STATUS_LABELS[plan.status]}`}
-                className={styles.goal}
-                onClick={() => setOpenId(goal.id)}
-                type="button"
-              >
-                <GoalRing
-                  kind={goal.kind}
-                  progress={plan.progress}
-                  tone={STATUS_TONES[plan.status]}
-                />
-                <span className={styles.goalBody}>
-                  <span className={styles.goalTop}>
-                    <strong>{goal.name}</strong>
+          {goals.map(({ goal, plan }) => {
+            const Icon = GOAL_ICONS[goal.kind];
+            const tone = STATUS_TONES[plan.status];
+            return (
+              <li key={goal.id}>
+                <button
+                  aria-label={`${goal.name}: ${percent(plan.progress)} saved, ${STATUS_LABELS[plan.status]}`}
+                  className={styles.goalCard}
+                  onClick={() => setOpenId(goal.id)}
+                  type="button"
+                >
+                  <span className={styles.goalHead}>
+                    <span aria-hidden="true" className={styles.goalIcon}>
+                      <Icon size={18} />
+                    </span>
+                    <span className={styles.goalName}>
+                      <strong>{goal.name}</strong>
+                      <small>
+                        {goal.targetDate
+                          ? `By ${monthOf(goal.targetDate)}`
+                          : plan.reachedBy
+                            ? `Around ${formatShortMonthYear(plan.reachedBy)}`
+                            : 'No date set'}
+                        {goal.member ? ` · ${goal.member}` : ''}
+                      </small>
+                    </span>
                     <StatusChip status={plan.status} />
                   </span>
-                  <span className={styles.goalLine}>
-                    {formatAmount(plan.saved)} of {formatAmount(plan.needed)} ·{' '}
-                    {goal.targetDate
-                      ? monthOf(goal.targetDate)
-                      : plan.reachedBy
-                        ? `by ${formatShortMonthYear(plan.reachedBy)}`
-                        : 'not within 50 years'}
+                  <span className={styles.goalAmounts}>
+                    <strong>{formatAmount(plan.saved)}</strong>
+                    <span>
+                      of {formatAmount(plan.needed)} · {percent(plan.progress)}
+                    </span>
                   </span>
-                  <span className={styles.goalLine}>
+                  <span aria-hidden="true" className={styles.goalBar} data-tone={tone}>
+                    <i style={{ width: `${Math.min(100, Math.round(plan.progress * 100))}%` }} />
+                  </span>
+                  <span className={styles.goalNext}>
                     {plan.status === 'reached'
                       ? goal.kind === 'portfolio'
                         ? 'Target reached'
                         : 'Fully funded'
                       : !goal.targetDate
                         ? plan.reachedBy
-                          ? `In ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))}, with ${formatAmount(plan.monthly)} a month in savings contributions`
+                          ? `In ${timeFrom(monthsUntil(today, `${plan.reachedBy}-01`))} at ${formatAmount(plan.monthly)} a month`
                           : 'Invest more each month to get there'
                         : plan.extraMonthly
-                          ? `Add ${formatAmount(plan.extraMonthly)} a month`
+                          ? `Add ${formatAmount(plan.extraMonthly)} a month to stay on time`
                           : `${formatAmount(plan.monthly)} a month keeps it on track`}
-                    {goal.member ? ` · ${goal.member}` : ''}
                   </span>
-                </span>
-              </button>
-            </li>
-          ))}
+                </button>
+              </li>
+            );
+          })}
+          <li>
+            <button className={styles.addCard} onClick={() => setAdding(true)} type="button">
+              <Plus aria-hidden="true" size={20} />
+              Add a goal
+            </button>
+          </li>
         </ul>
       )}
 
@@ -480,7 +490,7 @@ export function GoalsSection() {
         </Modal>
       ) : null}
       {open && !editing ? (
-        <Modal onClose={() => setOpenId(null)} title={open.name}>
+        <Modal fullScreenOnPhone onClose={() => setOpenId(null)} title={open.name} wide>
           <GoalDetail
             goal={open}
             onEdit={() => {

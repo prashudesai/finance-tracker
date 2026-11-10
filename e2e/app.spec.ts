@@ -56,17 +56,18 @@ test('an income is added and shows in the history', async ({ page, isMobile }) =
 test('a retirement payout can be a fixed amount each quarter, and the settings stay open while typing', async ({
   page,
 }) => {
-  await open(page, '/analytics/goals');
+  await open(page, '/analytics/goals?view=retirement');
   const planner = page.getByRole('region', { name: 'Retirement planner' });
   await planner.getByText('Your assumptions').click();
   await planner.getByRole('radio', { name: /Set each investment/ }).click();
   const list = planner.getByRole('list', { name: 'Each investment after retiring' });
   const first = list.getByRole('listitem').first();
+  await first.getByRole('button', { name: /Edit$/ }).click();
   await first.getByRole('radio', { name: 'Income' }).click();
   await first.getByRole('radio', { name: '₹ amount' }).click();
   await first.getByRole('radio', { name: 'Quarterly' }).click();
   // A blank amount shows an error; typing one clears it without closing the settings.
-  await first.getByLabel('Pays (₹)').fill('75000');
+  await first.getByLabel('Amount each quarter (₹)').fill('75000');
   await expect(list).toBeVisible();
   await expect(
     first.getByText(/₹75,000 a quarter from when you retire, about ₹25,000 a month/),

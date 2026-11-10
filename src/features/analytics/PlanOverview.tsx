@@ -1,13 +1,12 @@
 import { ChevronRight, PiggyBank, Target, type LucideIcon } from 'lucide-react';
-import { Component, useMemo, type ReactNode } from 'react';
+import { Component, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { reportError } from '../../ui/errorSink';
 import { budgetProgress } from '../../domain/budget';
-import { addMonths, financialYearLabel, financialYearStart } from '../../domain/calendar';
-import { retirementNeed } from '../../domain/retirement';
-import { savedRetirementInputs } from '../goals/retirementInputs';
+import { financialYearLabel, financialYearStart } from '../../domain/calendar';
+import { useRetirementSummary } from '../goals/useRetirementSummary';
 import { goalPlan } from '../../domain/goals';
-import { useSettings, useSpendingHousehold } from '../../store/tracker';
+import { useSpendingHousehold } from '../../store/tracker';
 import { formatAmount, formatMoney, formatPercent, localDate } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 import { GOAL_ICONS, STATUS_LABELS, STATUS_TONES } from '../goals/goalText';
@@ -73,20 +72,7 @@ export function PlanOverview() {
     .filter((row) => row !== retirement)
     .sort((a, b) => a.plan.progress - b.plan.progress);
   const projection = useProjection();
-  const settings = useSettings();
-  const planner = useMemo(() => {
-    const inputs = savedRetirementInputs(data, settings, today);
-    if (!inputs) return null;
-    const need = retirementNeed(inputs);
-    const birth = settings.retirement?.birthDate ?? '';
-    const retireOn = settings.retirement?.retireDate || (birth ? addMonths(birth, 60 * 12) : '');
-    return {
-      needed: need.needed,
-      onCourse: need.onCourse,
-      gap: need.gap,
-      year: retireOn.slice(0, 4),
-    };
-  }, [data, settings, today]);
+  const planner = useRetirementSummary();
   const fy = financialYearStart(today);
   const budget = data.budgets.find((row) => row.fy === fy);
   const progress = budget ? budgetProgress(budget, data, today) : null;
@@ -273,7 +259,7 @@ function RetirementRing({
       aria-label={`${label}: ${status}, ${Math.round(share * 100)}% of what's needed. Open the retirement planner`}
       className={`${ui.hero} ${styles.retire}`}
       data-tone={tone}
-      to="/analytics/goals"
+      to="/analytics/goals?view=retirement"
     >
       <span className={styles.retireText}>
         <span className={styles.retireLabel}>{label}</span>
