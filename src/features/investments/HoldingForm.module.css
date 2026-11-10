@@ -1,0 +1,75 @@
+/* The add and edit investment form, in short titled steps. */
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.step {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.form > .step:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.stepTitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+  gap: 12px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.toggle input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.toggle span {
+  display: grid;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.toggle small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.actions button {
+  min-width: 180px;
+}
+
+@media (max-width: 520px) {
+  .actions button {
+    width: 100%;
+  }
+}

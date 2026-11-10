@@ -6,6 +6,7 @@ import {
   type Expense,
   type Holding,
   type Loan,
+  type Payout,
   type TrackerSettings,
 } from '../schema/records';
 import {
@@ -26,6 +27,7 @@ import {
   holdingPosition,
   latestValuation,
   type HoldingPosition,
+  duePayouts,
 } from './holdings';
 import { isLoanFailure } from './loan';
 import { summarizeLoans, totalOutstanding } from './summary';
@@ -107,12 +109,13 @@ export function portfolioCategories(rows: PositionRow[]): CategoryRow[] {
     .map(([name, items]) => {
       const current = items.reduce((sum, row) => sum + row.position.current, 0);
       const invested = items.reduce((sum, row) => sum + row.position.invested, 0);
+      const gain = items.reduce((sum, row) => sum + row.position.gain, 0);
       return {
         name,
         current,
         invested,
-        gain: current - invested,
-        absolute: invested > 0 ? (current - invested) / invested : null,
+        gain,
+        absolute: invested > 0 ? gain / invested : null,
         share: total > 0 ? current / total : 0,
         count: items.length,
         rows: items,
@@ -744,6 +747,8 @@ export interface AttentionItem {
   state: AttentionTarget;
   /** An EMI that can be marked as paid here: due soon, or missed and so not to be hidden. */
   emi?: { loanId: string; date: string; missed: boolean };
+  /** Interest due from a holding, which can be marked as received here. */
+  payout?: Payout;
 }
 
 const MONTH_NAMES = [
@@ -845,6 +850,16 @@ export function attentionItems(
       label: `Update ${PMS_TYPE} current value`,
       path: '/investments',
       state: { open: PMS_TYPE },
+    });
+  }
+  for (const payout of duePayouts(view.holdings, view.payouts, today)) {
+    const holding = view.holdings.find((row) => row.id === payout.holdingId);
+    if (!holding) continue;
+    items.push({
+      label: `${holding.name} interest of ₹${Math.round(payout.amount).toLocaleString('en-IN')} due ${Number(payout.date.slice(8))} ${MONTH_NAMES[Number(payout.date.slice(5, 7)) - 1]?.slice(0, 3) ?? ''}`,
+      path: '/investments',
+      state: { open: categoryOf(holding) },
+      payout,
     });
   }
   const backup = backupStatus(household, today, syncedOn);

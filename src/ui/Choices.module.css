@@ -1,0 +1,105 @@
+.field {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(150px, 46%), 1fr));
+  gap: 8px;
+}
+
+.chip,
+.tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.chip {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.tile {
+  min-height: 56px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-weight: 650;
+  border-radius: var(--radius-small);
+}
+
+.tile svg {
+  flex: none;
+  color: var(--accent);
+}
+
+.tile span,
+.chip span {
+  display: grid;
+  min-width: 0;
+}
+
+.tile small,
+.chip small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.chip:hover,
+.tile:hover {
+  border-color: var(--card-edge);
+}
+
+.chip[aria-checked='true'],
+.tile[aria-checked='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.chip[aria-checked='true'] {
+  color: var(--accent);
+}
+
+.chip:focus-visible,
+.tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.extra {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.error {
+  color: var(--loss);
+  font-size: 0.82rem;
+}

@@ -1,0 +1,427 @@
+/* One category's own page, opened from Wealth. */
+.page {
+  display: grid;
+  gap: 14px;
+  padding-bottom: 12px;
+}
+
+.hero.hero {
+  display: grid;
+  gap: 4px;
+  padding: 20px;
+}
+
+.heroLabel {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.heroValue {
+  font-size: clamp(2rem, 9vw, 2.6rem);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.heroGain,
+.heroLoss {
+  font-size: 0.9rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.heroGain {
+  color: var(--gain);
+}
+
+.heroLoss {
+  color: var(--loss);
+}
+
+.heroNote {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.heroFacts,
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+.heroFacts div,
+.facts div {
+  min-width: 0;
+}
+
+.heroFacts dt,
+.facts dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.heroFacts dd,
+.facts dd {
+  margin: 2px 0 0;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.panel.panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.panel h3,
+.sectionTitle {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.panelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.panelHead small {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.ranges {
+  display: flex;
+  gap: 4px;
+}
+
+.range {
+  min-height: 32px;
+  padding: 4px 11px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.range[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Growth chart */
+.chartBox {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chart {
+  display: block;
+  max-width: 100%;
+  overflow: visible;
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.readout strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.readout > span:first-child {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.keyValue,
+.keyInvested {
+  display: inline-block;
+  width: 12px;
+  margin-right: 2px;
+  vertical-align: middle;
+}
+
+.keyValue {
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.keyInvested {
+  height: 0;
+  border-top: 2px dashed var(--muted);
+}
+
+.grid {
+  stroke: var(--border);
+}
+
+.tick {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.value {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.invested {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.cursor {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.dot {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2.5;
+}
+
+.chartEmpty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Split by holding */
+.split {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.split span {
+  min-width: 3px;
+}
+
+.splitLegend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.splitLegend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.splitLegend i {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.splitLegend span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.splitLegend strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Holdings */
+.holdingsSection {
+  display: grid;
+  gap: 10px;
+}
+
+.holdings {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.holding {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-small);
+}
+
+.holdingTop {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.holdingName,
+.holdingValue {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.holdingName small,
+.activityText small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.holdingValue {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.holdingValue small {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.holdingTrend {
+  display: flex;
+}
+
+.facts {
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.action:hover {
+  border-color: var(--accent);
+}
+
+.danger {
+  margin-left: auto;
+  color: var(--loss);
+}
+
+/* Recent activity */
+.activity {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.activity li + li {
+  border-top: 1px solid var(--border);
+}
+
+.activityIcon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 50%;
+}
+
+.activityIcon[data-kind='Withdrew'] {
+  color: var(--warning-text);
+  background: var(--surface-sunken);
+}
+
+.activityText {
+  display: grid;
+  min-width: 0;
+  font-size: 0.88rem;
+}
+
+.activityAmount {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 420px) {
+  .holdingTrend {
+    display: none;
+  }
+}
+
+.payoutPlan {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.activityIcon[data-kind='Due'] {
+  color: var(--warning-text);
+  background: var(--surface-sunken);
+}

@@ -43,6 +43,7 @@ import { InsightsCard } from '../insights/InsightsCard';
 import { RecapCard } from '../insights/MonthRecap';
 import { InstallCard } from '../install/InstallPrompts';
 import { EmiActions, useHiddenEmis } from './EmiActions';
+import { PayoutActions } from '../investments/PayoutActions';
 import { GettingStarted } from './GettingStarted';
 import { TrendChart } from './TrendChart';
 
@@ -136,7 +137,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
   const peak = Math.max(...categories.map((row) => Math.max(row.invested, row.current)), 1);
   const portfolioCurrent = rows.reduce((sum, row) => sum + row.position.current, 0);
   const portfolioInvested = rows.reduce((sum, row) => sum + row.position.invested, 0);
-  const portfolioGain = portfolioCurrent - portfolioInvested;
+  const portfolioGain = rows.reduce((sum, row) => sum + row.position.gain, 0);
 
   const invested = investedFromIncome(data);
   // From when tracking began: months before it have no income or spending to compare.
@@ -238,10 +239,13 @@ export function Dashboard({ name = '' }: { name?: string }) {
                 </Link>
               );
               const emi = 'emi' in item ? item.emi : undefined;
+              const payout = 'payout' in item ? item.payout : undefined;
               return (
                 <li className={ui.row} key={item.label}>
                   <span className={ui.rowMain}>{item.label}</span>
-                  {emi ? (
+                  {payout ? (
+                    <PayoutActions fallback={review} label={item.label} payout={payout} />
+                  ) : emi ? (
                     <EmiActions
                       date={emi.date}
                       fallback={review}

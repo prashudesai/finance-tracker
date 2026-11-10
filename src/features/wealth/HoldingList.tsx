@@ -18,7 +18,7 @@ import styles from './HoldingList.module.css';
 
 const MONTHS = 6;
 
-const iconFor = (name: string): LucideIcon =>
+export const iconFor = (name: string): LucideIcon =>
   /PF|PPF|EPF/.test(name)
     ? Landmark
     : /NPS/.test(name)

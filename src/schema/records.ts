@@ -148,6 +148,9 @@ export const PMS_TYPE = 'Stallion PMS';
  * Opening position only. Invested and current values are always derived from the
  * holding's contributions and valuations, so they cannot drift.
  */
+export const PAYOUT_EVERY = ['month', 'quarter', 'half-year', 'year'] as const;
+export type PayoutEvery = (typeof PAYOUT_EVERY)[number];
+
 export const holdingSchema = z.object({
   id,
   kind: z.enum(['investment', 'pf', 'ppf', 'nps']),
@@ -174,6 +177,17 @@ export const holdingSchema = z.object({
   uan: z.string().max(40).optional(),
   /** NPS scheme, such as Active Choice. */
   scheme: z.string().max(60).optional(),
+  /**
+   * Interest paid out to the bank rather than added to the value, as with a payout FD or a
+   * bond's coupon: each payout's amount, how often, and the first payout's date.
+   */
+  payout: z
+    .object({
+      every: z.enum(PAYOUT_EVERY),
+      amount: positiveMoney,
+      start: date,
+    })
+    .optional(),
 });
 export type Holding = z.infer<typeof holdingSchema>;
 
@@ -323,6 +337,21 @@ export const interestCreditSchema = z.object({
   amount: money,
 });
 export type InterestCredit = z.infer<typeof interestCreditSchema>;
+
+/**
+ * Interest paid out by a holding on one date. Its id is fixed per holding and payout month,
+ * so the schedule never asks twice. Received payouts are also saved as income, `incomeId`.
+ */
+export const payoutSchema = z.object({
+  id,
+  holdingId: id,
+  date,
+  amount: money,
+  incomeId: id.optional(),
+  /** Not received, kept so the schedule doesn't ask for it again. */
+  skipped: z.boolean().optional(),
+});
+export type Payout = z.infer<typeof payoutSchema>;
 
 /** A correction to a PF account's EPS balance. Signed, as it can go either way. */
 export const epsUpdateSchema = z.object({

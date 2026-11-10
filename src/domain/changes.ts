@@ -25,6 +25,7 @@ const LABELS: Partial<Record<CollectionName, string>> = {
   projectionAdjustments: 'planned change',
   interestCredits: 'interest credit',
   epsUpdates: 'EPS correction',
+  payouts: 'interest payout',
   goals: 'goal',
   budgets: 'budget',
 };

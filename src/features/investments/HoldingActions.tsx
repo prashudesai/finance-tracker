@@ -1,19 +1,22 @@
-import { ArrowDownToLine, History, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowDownToLine, History, Landmark, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { CategoryRow, PositionRow } from '../../domain/analytics';
 import type { RecordWrite } from '../../data/repository';
-import { returnMeasure } from '../../domain/holdings';
+import { returnMeasure, valueHistory } from '../../domain/holdings';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
 import { formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
-import { Metric } from '../../ui/Stat';
+import { TrendLine } from '../../ui/TrendLine';
 import ui from '../../ui/ui.module.css';
+import { CategoryDetail } from './CategoryDetail';
+import styles from './CategoryDetail.module.css';
 import { HoldingForm } from './HoldingForm';
 import { HoldingHistory } from './HoldingHistory';
+import { receivedWrites } from './payouts';
 import { WithdrawForm } from './WithdrawForm';
 
-type Action = 'value' | 'contribution' | 'withdraw' | 'history' | 'edit';
+type Action = 'value' | 'contribution' | 'withdraw' | 'history' | 'edit' | 'payout';
 
 function AmountForm({
   label,
@@ -63,7 +66,17 @@ function AmountForm({
   );
 }
 
-function HoldingCard({ row }: { row: PositionRow }) {
+function HoldingCard({
+  row,
+  color,
+  portfolioShare,
+  today,
+}: {
+  row: PositionRow;
+  color: string;
+  portfolioShare: number | null;
+  today: string;
+}) {
   const data = useTracker((state) => state.data);
   const commit = useTracker((state) => state.commit);
   const [action, setAction] = useState<Action | null>(null);
@@ -97,114 +110,175 @@ function HoldingCard({ row }: { row: PositionRow }) {
       ...data.epsUpdates
         .filter((item) => item.holdingId === holding.id)
         .map((item): RecordWrite => ({ type: 'delete', collection: 'epsUpdates', id: item.id })),
+      // Interest already received stays in income, as the money did arrive.
+      ...data.payouts
+        .filter((item) => item.holdingId === holding.id)
+        .map((item): RecordWrite => ({ type: 'delete', collection: 'payouts', id: item.id })),
     ];
     commit(writes);
   };
 
+  const history = valueHistory([holding], data, today, 13).map((point) => point.value);
+  const ret =
+    measure === 'rate'
+      ? holding.rate === undefined
+        ? null
+        : `${holding.rate.toFixed(2)}% p.a.`
+      : measure === 'absolute'
+        ? position.absolute === null
+          ? null
+          : formatPercent(position.absolute, 2)
+        : position.xirr === null
+          ? null
+          : formatPercent(position.xirr, 2);
+  const actions = [
+    {
+      key: 'value',
+      label: 'Update',
+      tip: 'Update value',
+      aria: `Update value of ${holding.name}`,
+      Icon: RefreshCw,
+    },
+    {
+      key: 'contribution',
+      label: 'Add',
+      tip: 'Add contribution',
+      aria: `Add contribution to ${holding.name}`,
+      Icon: Plus,
+    },
+    {
+      key: 'withdraw',
+      label: 'Withdraw',
+      tip: 'Withdraw or book profit',
+      aria: `Withdraw from ${holding.name}`,
+      Icon: ArrowDownToLine,
+    },
+    ...(holding.kind === 'investment'
+      ? ([
+          {
+            key: 'payout',
+            label: 'Interest',
+            tip: 'Record interest paid out',
+            aria: `Record interest paid out by ${holding.name}`,
+            Icon: Landmark,
+          },
+        ] as const)
+      : []),
+    {
+      key: 'history',
+      label: 'History',
+      tip: 'View history',
+      aria: `Contribution history of ${holding.name}`,
+      Icon: History,
+    },
+    { key: 'edit', label: 'Edit', tip: 'Edit', aria: `Edit ${holding.name}`, Icon: Pencil },
+  ] as const;
+
   return (
-    <li className={ui.loan}>
-      <div className={ui.loanTop}>
-        <div className={ui.rowMain}>
-          <div className={ui.rowTitle}>{holding.name}</div>
-          <div className={ui.rowDetail}>
+    <li className={styles.holding} style={{ borderLeftColor: color }}>
+      <div className={styles.holdingTop}>
+        <div className={styles.holdingName}>
+          <strong>{holding.name}</strong>
+          <small>
             {holding.member}
             {closed ? ' · Closed' : ''}
-            {holding.rate === undefined ? '' : ` · ${holding.rate}% a year`}
             {holding.uan ? ` · UAN ${holding.uan}` : ''}
             {holding.scheme ? ` · ${holding.scheme}` : ''}
             {holding.kind === 'pf'
               ? ` · Employee ${formatMoney(holding.employee ?? 0)} · Employer ${formatMoney(holding.employer ?? 0)}`
               : ''}
-          </div>
+          </small>
         </div>
-        <div className={ui.iconActions}>
-          <button
-            aria-label={`Update value of ${holding.name}`}
-            className={ui.labelledIcon}
-            onClick={() => setAction('value')}
-            type="button"
-            data-tip="Update value"
-          >
-            <RefreshCw size={14} />
-            <span>Update</span>
-          </button>
-          <button
-            aria-label={`Add contribution to ${holding.name}`}
-            className={ui.labelledIcon}
-            onClick={() => setAction('contribution')}
-            type="button"
-            data-tip="Add contribution"
-          >
-            <Plus size={14} />
-            <span>Add</span>
-          </button>
-          <button
-            aria-label={`Withdraw from ${holding.name}`}
-            className={ui.labelledIcon}
-            onClick={() => setAction('withdraw')}
-            type="button"
-            data-tip="Withdraw or book profit"
-          >
-            <ArrowDownToLine size={14} />
-            <span>Withdraw</span>
-          </button>
-          <button
-            aria-label={`Contribution history of ${holding.name}`}
-            className={ui.labelledIcon}
-            onClick={() => setAction('history')}
-            type="button"
-            data-tip="View history"
-          >
-            <History size={14} />
-            <span>History</span>
-          </button>
-          <button
-            aria-label={`Edit ${holding.name}`}
-            className={ui.labelledIcon}
-            onClick={() => setAction('edit')}
-            type="button"
-            data-tip="Edit"
-          >
-            <Pencil size={14} />
-            <span>Edit</span>
-          </button>
-          <button
-            aria-label={`Delete ${holding.name}`}
-            className={ui.labelledIcon}
-            onClick={remove}
-            type="button"
-            data-tip="Delete"
-          >
-            <Trash2 size={14} />
-            <span>Delete</span>
-          </button>
+        {history.length >= 2 ? (
+          <span className={styles.holdingTrend}>
+            <TrendLine
+              area
+              color={position.gain < 0 ? 'var(--loss)' : 'var(--accent)'}
+              height={30}
+              values={history}
+              width={72}
+            />
+          </span>
+        ) : null}
+        <div className={styles.holdingValue}>
+          <strong>{formatMoney(position.current)}</strong>
+          <small className={position.gain < 0 ? ui.loss : ui.gain}>
+            {signedMoney(position.gain)}
+            {position.absolute === null ? '' : ` · ${formatPercent(position.absolute)}`}
+          </small>
         </div>
       </div>
-      <div className={ui.metrics}>
-        <Metric label="Current" value={formatMoney(position.current)} />
-        <Metric label="Invested" value={formatMoney(position.invested)} />
-        <Metric
-          label="Gain / loss"
-          tone={position.gain < 0 ? ui.loss : ui.gain}
-          value={signedMoney(position.gain)}
-        />
-        {measure === 'rate' ? (
-          <Metric
-            label="Interest rate"
-            value={holding.rate === undefined ? '—' : `${holding.rate.toFixed(2)}% p.a.`}
-          />
-        ) : measure === 'absolute' ? (
-          <Metric label="Absolute return" value={formatPercent(position.absolute, 2)} />
-        ) : (
-          <Metric label="XIRR" value={formatPercent(position.xirr, 2)} />
-        )}
-        {hasWithdrawals ? (
-          <Metric
-            label="Booked profit"
-            tone={position.booked < 0 ? ui.loss : ui.gain}
-            value={signedMoney(position.booked)}
-          />
+      <dl className={styles.facts}>
+        <div>
+          <dt>Invested</dt>
+          <dd>{formatMoney(position.invested)}</dd>
+        </div>
+        <div>
+          <dt>
+            {measure === 'rate'
+              ? 'Interest rate'
+              : measure === 'absolute'
+                ? 'Absolute return'
+                : 'XIRR'}
+          </dt>
+          <dd>{ret ?? '—'}</dd>
+        </div>
+        {measure === 'xirr' ? (
+          <>
+            <div>
+              <dt>Absolute return</dt>
+              <dd>{formatPercent(position.absolute, 2)}</dd>
+            </div>
+            <div>
+              <dt>CAGR</dt>
+              <dd>{formatPercent(position.cagr, 2)}</dd>
+            </div>
+          </>
         ) : null}
+        {position.paidOut > 0 ? (
+          <div>
+            <dt>Interest received</dt>
+            <dd className={ui.gain}>{formatMoney(position.paidOut)}</dd>
+          </div>
+        ) : null}
+        {hasWithdrawals ? (
+          <div>
+            <dt>Booked profit</dt>
+            <dd className={position.booked < 0 ? ui.loss : ui.gain}>
+              {signedMoney(position.booked)}
+            </dd>
+          </div>
+        ) : null}
+        {portfolioShare === null ? null : (
+          <div>
+            <dt>Share here</dt>
+            <dd>{formatPercent(portfolioShare)}</dd>
+          </div>
+        )}
+      </dl>
+      <div className={styles.actions}>
+        {actions.map(({ key, label, tip, aria, Icon }) => (
+          <button
+            aria-label={aria}
+            className={styles.action}
+            data-tip={tip}
+            key={key}
+            onClick={() => setAction(key)}
+            type="button"
+          >
+            <Icon aria-hidden="true" size={14} />
+            <span>{label}</span>
+          </button>
+        ))}
+        <button
+          aria-label={`Delete ${holding.name}`}
+          className={`${styles.action} ${styles.danger}`}
+          data-tip="Delete"
+          onClick={remove}
+          type="button"
+        >
+          <Trash2 aria-hidden="true" size={14} />
+        </button>
       </div>
       {action === 'value' ? (
         <Modal onClose={close} title={`Update ${holding.name}`}>
@@ -247,6 +321,28 @@ function HoldingCard({ row }: { row: PositionRow }) {
           />
         </Modal>
       ) : null}
+      {action === 'payout' ? (
+        <Modal onClose={close} title={`Interest from ${holding.name}`}>
+          <AmountForm
+            button="Save interest"
+            initial={holding.payout?.amount}
+            label="Interest received (₹)"
+            onSave={(date, amount) => {
+              if (amount > 0) {
+                commit(
+                  receivedWrites(
+                    holding,
+                    { id: crypto.randomUUID(), holdingId: holding.id, date, amount },
+                    amount,
+                  ),
+                );
+              }
+              close();
+            }}
+          />
+          <p className={ui.caption}>It's also added to your income in Money.</p>
+        </Modal>
+      ) : null}
       {action === 'withdraw' ? (
         <Modal onClose={close} title={`Withdraw from ${holding.name}`}>
           <WithdrawForm holding={holding} onDone={close} />
@@ -274,12 +370,19 @@ export function CategoryDialog({
   onClose: () => void;
 }) {
   return (
-    <Modal onClose={onClose} title={category.name}>
-      <ul className={ui.list}>
-        {category.rows.map((row) => (
-          <HoldingCard key={row.holding.id} row={row} />
-        ))}
-      </ul>
+    <Modal fullScreenOnPhone onClose={onClose} title={category.name} wide>
+      <CategoryDetail
+        category={category}
+        renderHolding={(row, color, share, today) => (
+          <HoldingCard
+            color={color}
+            key={row.holding.id}
+            portfolioShare={share}
+            row={row}
+            today={today}
+          />
+        )}
+      />
     </Modal>
   );
 }

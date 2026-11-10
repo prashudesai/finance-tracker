@@ -700,30 +700,41 @@ test('the + opens the add menu and goes to the right entry', async () => {
   expect(await screen.findByRole('dialog', { name: 'Add Income', hidden: true })).toBeDefined();
 });
 
-test('+ Add under Investment portfolio lists the types and opens the chosen one', async () => {
+test('+ Add under Investment portfolio opens the form with each type as a choice', async () => {
   renderApp('/investments', {
     settings: [{ ...defaultSettings(), investmentTypes: ['Gold'] }],
   });
   const heading = await screen.findByRole('heading', { name: 'Investment portfolio' });
   const section = heading.closest('section');
   if (!section) throw new Error('Portfolio section not found');
+  fireEvent.click(within(section).getByRole('button', { name: 'Add', hidden: true }));
+  const dialog = await screen.findByRole('dialog', { name: 'Add investment', hidden: true });
   for (const name of ['Mutual Funds', 'Bonds', 'Fixed Deposits', 'Stallion PMS', 'Gold']) {
-    expect(within(section).getByRole('button', { name, hidden: true })).toBeDefined();
+    expect(
+      within(dialog).getByRole('radio', { name: new RegExp(name), hidden: true }),
+    ).toBeDefined();
   }
-  expect(within(section).queryByRole('button', { name: 'Investment', hidden: true })).toBeNull();
-  fireEvent.click(within(section).getByRole('button', { name: 'Bonds', hidden: true }));
-  const dialog = await screen.findByRole('dialog', { name: 'Add Bonds', hidden: true });
-  expect((within(dialog).getByLabelText('Investment Type') as HTMLSelectElement).value).toBe(
-    'Bonds',
-  );
+  const bonds = within(dialog).getByRole('radio', { name: /^Bonds/, hidden: true });
+  fireEvent.click(bonds);
+  expect(bonds.getAttribute('aria-checked')).toBe('true');
+  // Bonds can pay interest out; market-linked funds can't.
+  expect(
+    within(dialog).getByRole('radiogroup', { name: /Interest paid out/, hidden: true }),
+  ).toBeDefined();
+  fireEvent.click(within(dialog).getByRole('radio', { name: /^Mutual Funds/, hidden: true }));
+  expect(
+    within(dialog).queryByRole('radiogroup', { name: /Interest paid out/, hidden: true }),
+  ).toBeNull();
 });
 
-test('+ Add new in the investment menu saves the type and opens it', async () => {
+test('+ New type in the add form saves the type and chooses it', async () => {
   renderApp('/investments');
   const heading = await screen.findByRole('heading', { name: 'Investment portfolio' });
   const section = heading.closest('section');
   if (!section) throw new Error('Portfolio section not found');
-  fireEvent.click(within(section).getByRole('button', { name: '+ Add new…', hidden: true }));
+  fireEvent.click(within(section).getByRole('button', { name: 'Add', hidden: true }));
+  const form = await screen.findByRole('dialog', { name: 'Add investment', hidden: true });
+  fireEvent.click(within(form).getByRole('button', { name: '+ New type', hidden: true }));
   const dialog = await screen.findByRole('dialog', {
     name: 'Add investment type',
     hidden: true,
@@ -733,8 +744,31 @@ test('+ Add new in the investment menu saves the type and opens it', async () =>
     target: { value: 'market' },
   });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Save and select', hidden: true }));
-  const form = await screen.findByRole('dialog', { name: 'Add Gold', hidden: true });
-  expect((within(form).getByLabelText('Investment Type') as HTMLSelectElement).value).toBe('Gold');
+  const gold = await within(form).findByRole('radio', { name: /^Gold/, hidden: true });
+  expect(gold.getAttribute('aria-checked')).toBe('true');
+});
+
+test('a deposit paying interest quarterly saves the payout, suggested from the rate', async () => {
+  renderApp('/investments');
+  const heading = await screen.findByRole('heading', { name: 'Investment portfolio' });
+  const section = heading.closest('section');
+  if (!section) throw new Error('Portfolio section not found');
+  fireEvent.click(within(section).getByRole('button', { name: 'Add', hidden: true }));
+  const form = await screen.findByRole('dialog', { name: 'Add investment', hidden: true });
+  fireEvent.click(within(form).getByRole('radio', { name: /^Fixed Deposits/, hidden: true }));
+  const field = (label: string) => within(form).getByLabelText(label);
+  fireEvent.change(field('Investment Name'), { target: { value: 'Payout FD' } });
+  fireEvent.change(field('Invested Amount (₹)'), { target: { value: '400000' } });
+  fireEvent.change(field('Current Value (₹)'), { target: { value: '400000' } });
+  fireEvent.change(field('Interest Rate (% p.a.)'), { target: { value: '7.5' } });
+  fireEvent.click(within(form).getByRole('radio', { name: 'Quarterly', hidden: true }));
+  fireEvent.change(field('First payout on'), { target: { value: '2026-12-31' } });
+  fireEvent.click(within(form).getByRole('button', { name: 'Save investment', hidden: true }));
+  await waitFor(() =>
+    expect(
+      useTracker.getState().data.holdings.find((row) => row.name === 'Payout FD')?.payout,
+    ).toEqual({ every: 'quarter', amount: 7500, start: '2026-12-31' }),
+  );
 });
 
 describe('needs attention', () => {

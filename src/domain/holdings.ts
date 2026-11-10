@@ -4,11 +4,19 @@ import {
   type EpsUpdate,
   type Holding,
   type InterestCredit,
+  type Payout,
+  type PayoutEvery,
   type TrackerSettings,
   type Valuation,
   type Withdrawal,
 } from '../schema/records';
-import { addMonths, financialYearStart, roundMoney } from './calendar';
+import {
+  addMonths,
+  financialYearStart,
+  lastDayOfMonth,
+  previousMonth,
+  roundMoney,
+} from './calendar';
 import { absoluteReturn, cagr, calculateXirr, type Cashflow } from './returns';
 
 export type GrowthType = 'market' | 'fixed' | 'no-return';
@@ -47,6 +55,7 @@ export interface HoldingData {
   interestCredits?: InterestCredit[];
   epsUpdates?: EpsUpdate[];
   withdrawals?: Withdrawal[];
+  payouts?: Payout[];
 }
 
 const indexes = new WeakMap<object, Map<string, unknown[]>>();
@@ -95,6 +104,8 @@ export interface HoldingPosition {
   booked: number;
   /** Pension balance held alongside PF. */
   eps: number;
+  /** Interest paid out to the bank, which counts towards the gain. */
+  paidOut: number;
   gain: number;
   absolute: number | null;
   cagr: number | null;
@@ -207,6 +218,9 @@ export function holdingPosition(
   }
   for (const row of rows) if (row.amount > 0) flows.push({ date: row.date, amount: -row.amount });
   for (const row of entries) flows.push({ date: row.date, amount: row.amount });
+  const payouts = receivedPayouts(holding.id, data.payouts).filter((row) => row.date <= asOf);
+  for (const row of payouts) flows.push({ date: row.date, amount: row.amount });
+  const paidOut = roundMoney(payouts.reduce((sum, row) => sum + row.amount, 0));
   flows.push({ date: asOf, amount: current });
 
   return {
@@ -214,9 +228,10 @@ export function holdingPosition(
     current,
     booked: roundMoney(entries.reduce((sum, row) => sum + row.profit, 0)),
     eps,
-    gain: current - invested,
-    absolute: absoluteReturn(invested, current),
-    cagr: cagr(invested, current, holding.date, asOf),
+    paidOut,
+    gain: current + paidOut - invested,
+    absolute: absoluteReturn(invested, current + paidOut),
+    cagr: cagr(invested, current + paidOut, holding.date, asOf),
     xirr: current > 0 ? calculateXirr(flows) : null,
   };
 }
@@ -262,6 +277,49 @@ export function dueContributions(
   return due;
 }
 
+/** Payouts received by one holding, skipped ones left out, oldest first. */
+export const receivedPayouts = (holdingId: string, payouts: Payout[] = []) =>
+  rowsOfHolding(holdingId, payouts)
+    .filter((row) => !row.skipped)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+export const PAYOUT_MONTHS: Record<PayoutEvery, number> = {
+  month: 1,
+  quarter: 3,
+  'half-year': 6,
+  year: 12,
+};
+
+/** One payout's interest on `value` at `rate`% a year, as a suggestion for the form. */
+export const suggestedPayout = (value: number, rate: number, every: PayoutEvery) =>
+  Math.round((value * rate) / 100 / (12 / PAYOUT_MONTHS[every]));
+
+/**
+ * Scheduled payouts due by `today` that have no record yet, oldest first. IDs are fixed per
+ * holding and payout month, so a payout is never asked for twice.
+ */
+export function duePayouts(holdings: Holding[], payouts: Payout[], today: string): Payout[] {
+  const recorded = new Set(payouts.map((row) => row.id));
+  const due: Payout[] = [];
+  for (const holding of holdings) {
+    const plan = holding.payout;
+    if (!plan) continue;
+    const anchor = Number(plan.start.slice(-2));
+    const step = PAYOUT_MONTHS[plan.every];
+    for (let index = 0; index * step < MAX_SCHEDULED_MONTHS; index++) {
+      const date = addMonths(plan.start, index * step, anchor);
+      if (date > today) break;
+      const id = payoutId(holding.id, date);
+      if (date < holding.date || recorded.has(id)) continue;
+      due.push({ id, holdingId: holding.id, date, amount: plan.amount });
+    }
+  }
+  return due.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export const payoutId = (holdingId: string, date: string) =>
+  `payout_${holdingId}_${date.slice(0, 7).replace('-', '')}`;
+
 /** Combined return of several holdings, or null when any of them has no valid history. */
 export function groupXirr(holdings: Holding[], data: HoldingData, asOf: string) {
   if (holdings.length === 0) return null;
@@ -275,6 +333,9 @@ export function groupXirr(holdings: Holding[], data: HoldingData, asOf: string) 
       if (row.date <= asOf && row.amount > 0) flows.push({ date: row.date, amount: -row.amount });
     }
     for (const row of holdingWithdrawals(holding.id, data.withdrawals)) {
+      if (row.date <= asOf) flows.push({ date: row.date, amount: row.amount });
+    }
+    for (const row of receivedPayouts(holding.id, data.payouts)) {
       if (row.date <= asOf) flows.push({ date: row.date, amount: row.amount });
     }
     const { current } = holdingPosition(holding, data, asOf);
@@ -319,3 +380,39 @@ export function epsLedger(holding: Holding, data: HoldingData): EpsEntry[] {
 
 export const interestCreditId = (holdingId: string, year: number) =>
   `interest_${holdingId}_${year}`;
+
+export interface ValuePoint {
+  month: string;
+  value: number;
+  invested: number;
+}
+
+/**
+ * Month-end value and invested amount for a set of holdings, from the month the first one
+ * started up to today, at most `limit` months. The current month is valued on `today`.
+ */
+export function valueHistory(
+  holdings: Holding[],
+  data: HoldingData,
+  today: string,
+  limit = 600,
+): ValuePoint[] {
+  const first = holdings.map((row) => row.date.slice(0, 7)).sort()[0];
+  const current = today.slice(0, 7);
+  if (!first || first > current) return [];
+  const months = [current];
+  while (months.length < limit && (months[0] ?? current) > first) {
+    months.unshift(previousMonth(months[0] ?? current));
+  }
+  return months.map((month) => {
+    const date = month === current ? today : lastDayOfMonth(month);
+    const active = holdings.filter((row) => row.date <= date);
+    return {
+      month,
+      value: roundMoney(active.reduce((sum, row) => sum + holdingValue(row, data, date), 0)),
+      invested: roundMoney(
+        active.reduce((sum, row) => sum + withdrawalLedger(row, data, date).invested, 0),
+      ),
+    };
+  });
+}

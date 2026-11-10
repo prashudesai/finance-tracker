@@ -1,7 +1,12 @@
 {
-  "version": "1.32.3",
+  "version": "1.33.0",
   "released": "2026-11-10",
   "notes": [
+    "Tapping an investment category opens its own page: value and gain first, a growth chart of value against invested (6M, 1Y, 3Y, All), the split by holding, each holding with its actions, and recent activity",
+    "Market-linked holdings show absolute return and CAGR beside XIRR",
+    "Deposits, bonds and similar can pay interest out monthly, quarterly, half-yearly or yearly; each payout shows on Home to mark as received, is added to income, and counts towards returns",
+    "Each category shows interest received, all time and this financial year, and holdings have an Interest button for payouts off the schedule",
+    "Adding an investment opens one form with the type, owner and payout as tappable choices instead of dropdowns, in short sections",
     "Fixed deposits, bonds, PF and PPF show their interest rate, and no-return holdings their absolute return, instead of XIRR, in each holding's details and on Analytics",
     "Home's cards no longer change shape after visiting Plan",
     "Plan's overview shows your retirement planner's result: on course or how much short, with on course against needed",

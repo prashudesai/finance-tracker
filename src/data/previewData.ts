@@ -102,6 +102,7 @@ const holdings = (today: string): Holding[] => [
     359_000,
     {
       rate: 7.4,
+      payout: { every: 'half-year', amount: 11_840, start: '2025-11-01' },
     },
   ),
   holding('fd', 'investment', 'Fixed Deposits', 'Bank FD 2027', 0, '2024-07-01', 400_000, 443_000, {
@@ -244,6 +245,10 @@ export function previewData(): Partial<TrackerData> {
     contributions,
     valuations,
     monthlyBalances,
+    payouts: [
+      { id: 'payout_bond_202511', holdingId: 'bond', date: '2025-11-01', amount: 11_840 },
+      { id: 'payout_bond_202605', holdingId: 'bond', date: '2026-05-01', amount: 11_840 },
+    ],
     interestCredits: [
       {
         id: 'interest_pf_2025',

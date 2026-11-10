@@ -1,7 +1,6 @@
 import { ChevronRight, Pencil, PiggyBank, Plus, Trash2, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { optionLists } from '../../domain/options';
 import {
   holdingLabel,
   holdingRows,
@@ -30,7 +29,6 @@ import { MemberField, useDefaultMember } from '../../ui/MemberField';
 import { formatDay, formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
 import { EmptyState } from '../../ui/EmptyState';
 import { Modal } from '../../ui/Modal';
-import { AddValueDialog } from '../../ui/Select';
 import { PageHeader } from '../../ui/PageHeader';
 import { WealthChips, WealthNav } from '../wealth/WealthNav';
 import { HoldingList } from '../wealth/HoldingList';
@@ -101,8 +99,6 @@ function GratuityForm({ onDone, initial }: { onDone: () => void; initial?: Gratu
     </form>
   );
 }
-
-const ADD_NEW_TYPE = '__add_new__';
 
 function AddButton({
   onPick,
@@ -213,18 +209,9 @@ export function InvestmentsPage() {
   const [adding, setAdding] = useState<Holding['kind'] | 'gratuity' | null>(null);
   const [gratuityOpen, setGratuityOpen] = useState(false);
   const [editingGratuity, setEditingGratuity] = useState<GratuityAccount | null>(null);
-  const [addingType, setAddingType] = useState<string | null>(null);
   const [openName, setOpenName] = useState<string | null>(null);
-  const [addingNewType, setAddingNewType] = useState(false);
-  const canEdit = useTracker((state) => state.canEdit);
-  const { investmentTypes } = optionLists(settings);
-  const addInvestment = (type: string) => {
-    setAddingType(type);
-    setAdding('investment');
-  };
   const finishAdding = () => {
     setAdding(null);
-    setAddingType(null);
   };
   const [section, setSection] = useState<Section>(savedSection);
   const phone = useIsPhone();
@@ -378,19 +365,9 @@ export function InvestmentsPage() {
               <h2 style={{ fontSize: '1.2rem' }}>Investment portfolio</h2>
               <div className={ui.caption}>Stocks, mutual funds, ETFs and other holdings</div>
             </div>
-            <AddButton
-              kinds={[
-                ...investmentTypes.map((type): [string, string] => [type, type]),
-                ...(canEdit ? [[ADD_NEW_TYPE, '+ Add new…'] as [string, string]] : []),
-              ]}
-              onPick={(type) => {
-                if (type === ADD_NEW_TYPE) {
-                  setAddingNewType(true);
-                  return;
-                }
-                addInvestment(type);
-              }}
-            />
+            <button className={ui.button} onClick={() => setAdding('investment')} type="button">
+              <Plus size={16} /> Add
+            </button>
           </div>
           {general.length === 0 ? (
             <EmptyState
@@ -612,25 +589,10 @@ export function InvestmentsPage() {
       {adding && adding !== 'gratuity' ? (
         <Modal
           onClose={finishAdding}
-          title={`Add ${adding === 'investment' ? (addingType ?? 'investment') : adding.toUpperCase()}`}
+          title={`Add ${adding === 'investment' ? 'investment' : adding.toUpperCase()}`}
         >
-          <HoldingForm
-            kind={adding}
-            onDone={finishAdding}
-            {...(addingType ? { type: addingType } : {})}
-          />
+          <HoldingForm kind={adding} onDone={finishAdding} />
         </Modal>
-      ) : null}
-      {addingNewType ? (
-        <AddValueDialog
-          existing={investmentTypes}
-          list="investmentTypes"
-          onCancel={() => setAddingNewType(false)}
-          onSaved={(type) => {
-            setAddingNewType(false);
-            addInvestment(type);
-          }}
-        />
       ) : null}
       {open ? <CategoryDialog category={open} onClose={() => setOpenName(null)} /> : null}
     </div>

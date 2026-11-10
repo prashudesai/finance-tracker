@@ -2,14 +2,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { addMonths, isValidDate } from '../../domain/calendar';
-import { growthType } from '../../domain/holdings';
+import { growthType, suggestedPayout } from '../../domain/holdings';
 import { NPS_SCHEMES, optionLists } from '../../domain/options';
-import type { Holding } from '../../schema/records';
+import { PAYOUT_EVERY, type Holding } from '../../schema/records';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
-import { MemberField, useDefaultMember } from '../../ui/MemberField';
-import { Select } from '../../ui/Select';
+import { useState } from 'react';
+import { Choices } from '../../ui/Choices';
+import { useDefaultMember } from '../../ui/MemberField';
+import { AddValueDialog } from '../../ui/Select';
+import { iconFor } from '../wealth/HoldingList';
+import styles from './HoldingForm.module.css';
 import ui from '../../ui/ui.module.css';
 
 const SAVE_LABELS: Record<Holding['kind'], string> = {
@@ -43,9 +47,20 @@ const formSchema = z.object({
   uan: z.string().max(40),
   scheme: z.string().max(60),
   notes: z.string().max(500, 'Use 500 characters or fewer.'),
+  payoutEvery: z.enum(['none', ...PAYOUT_EVERY]),
+  payoutAmount: optionalAmount,
+  payoutStart: z.string(),
 });
 type FormInput = z.input<typeof formSchema>;
 type FormValues = z.output<typeof formSchema>;
+
+const PAYOUT_LABELS = {
+  none: 'No, it stays invested',
+  month: 'Monthly',
+  quarter: 'Quarterly',
+  'half-year': 'Half-yearly',
+  year: 'Yearly',
+} as const;
 
 const nextMonthStart = (today: string) => `${addMonths(today, 1).slice(0, 7)}-01`;
 
@@ -72,9 +87,12 @@ export function HoldingForm({
   const settings = useSettings();
   const options = optionLists(settings);
   const defaultMember = useDefaultMember();
+  const members = settings.familyMembers;
+  const canEdit = useTracker((state) => state.canEdit);
+  const [addingType, setAddingType] = useState(false);
   const today = localDate();
   const fixedType = kind === 'investment' ? '' : kind.toUpperCase();
-  const { register, handleSubmit, watch, setError, formState } = useForm<
+  const { register, handleSubmit, watch, setError, setValue, formState } = useForm<
     FormInput,
     unknown,
     FormValues
@@ -98,20 +116,53 @@ export function HoldingForm({
       uan: initial?.uan ?? '',
       scheme: initial?.scheme ?? '',
       notes: initial?.notes ?? '',
+      payoutEvery: initial?.payout?.every ?? 'none',
+      payoutAmount: initial?.payout?.amount,
+      payoutStart: initial?.payout?.start ?? nextMonthStart(today),
     },
   });
   const { errors } = formState;
   const type = watch('type');
   const auto = watch('autoContribute');
+  const payoutEvery = watch('payoutEvery');
+  // Funds and shares grow in value; deposits, bonds and the like can pay interest out.
+  const paysInterest = kind === 'investment' && growthType(type, settings) !== 'market';
+  // Interest is paid on what was put in, the principal.
+  const watchedValue = watch('openingInvested') || watch('openingValue');
+  const watchedRate = watch('rate');
+  const suggestion =
+    payoutEvery !== 'none' && Number(watchedRate) > 0 && Number(watchedValue) > 0
+      ? suggestedPayout(Number(watchedValue), Number(watchedRate), payoutEvery)
+      : null;
   const showsRate =
     kind === 'pf' ||
     kind === 'ppf' ||
     (kind === 'investment' && growthType(type, settings) === 'fixed');
 
-  const save = ({ autoStart, uan, scheme, name, notes, ...values }: FormValues) => {
+  const save = ({
+    autoStart,
+    uan,
+    scheme,
+    name,
+    notes,
+    payoutEvery: every,
+    payoutAmount,
+    payoutStart,
+    ...values
+  }: FormValues) => {
     const account = kind === 'pf' ? uan : name;
     if (kind === 'investment' && !name) {
       setError('name', { message: 'This field is required.' });
+      return;
+    }
+    const paidOut = paysInterest && every !== 'none';
+    const perPayout = payoutAmount ?? (paidOut ? suggestion : null);
+    if (paidOut && !(perPayout && perPayout > 0)) {
+      setError('payoutAmount', { message: 'Enter the interest paid each time.' });
+      return;
+    }
+    if (paidOut && !isValidDate(payoutStart)) {
+      setError('payoutStart', { message: 'Enter a valid date.' });
       return;
     }
     const id = initial?.id ?? crypto.randomUUID();
@@ -129,7 +180,9 @@ export function HoldingForm({
       ...(kind === 'pf' && uan ? { uan } : {}),
       ...(kind === 'nps' && scheme ? { scheme } : {}),
       ...(notes ? { notes } : {}),
+      ...(paidOut && perPayout ? { payout: { every, amount: perPayout, start: payoutStart } } : {}),
     };
+    if (!paidOut) delete value.payout;
     // `initial` must not bring back what was just cleared. A leftover start date kept a PF
     // account's pension share posting each month after its schedule was turned off.
     if (!values.autoContribute) delete value.autoStart;
@@ -150,23 +203,36 @@ export function HoldingForm({
       />
     </Field>
   );
+  const choose = (field: 'type' | 'member' | 'payoutEvery' | 'scheme', value: string) =>
+    setValue(field, value as never, { shouldDirty: true, shouldValidate: formState.isSubmitted });
+  const member = watch('member');
+  const scheme = watch('scheme');
+  const growthHint = { market: 'Market-linked', fixed: 'Fixed return', 'no-return': 'No return' };
 
   return (
-    <form className={ui.form} onSubmit={(event) => void handleSubmit(save)(event)}>
-      <MemberField error={errors.member?.message} {...register('member')} />
+    <form className={styles.form} onSubmit={(event) => void handleSubmit(save)(event)}>
       {kind === 'investment' ? (
-        <>
-          <Field label="Investment Type" error={errors.type?.message}>
-            <Select
-              addTo="investmentTypes"
-              options={options.investmentTypes}
-              {...register('type')}
-            />
-          </Field>
+        <section className={styles.step}>
+          <Choices
+            error={errors.type?.message}
+            extra={
+              canEdit ? { label: '+ New type', onClick: () => setAddingType(true) } : undefined
+            }
+            label="What kind of investment?"
+            large
+            onChange={(value) => choose('type', value)}
+            options={options.investmentTypes.map((option) => ({
+              value: option,
+              label: option,
+              hint: growthHint[growthType(option, settings)],
+              icon: iconFor(option),
+            }))}
+            value={type}
+          />
           <Field label="Investment Name" error={errors.name?.message}>
-            <input {...register('name')} />
+            <input placeholder="For example, HDFC FD 2027" {...register('name')} />
           </Field>
-        </>
+        </section>
       ) : null}
       {kind === 'pf' ? (
         <Field label="Account Number (UAN)">
@@ -178,64 +244,144 @@ export function HoldingForm({
           <input {...register('name')} />
         </Field>
       ) : null}
-      {kind === 'pf' ? (
-        <>
-          {number('Employee Contribution (₹)', 'employee', errors.employee?.message)}
-          {number('Employer Contribution — total (₹)', 'employer', errors.employer?.message)}
-          {number(
-            'Employer portion to EPS per month (₹)',
-            'epsMonthly',
-            errors.epsMonthly?.message,
+      {members.length > 1 ? (
+        <Choices
+          error={errors.member?.message}
+          label="Whose is it?"
+          onChange={(value) => choose('member', value)}
+          options={[...members, ...(members.includes('Household') ? [] : ['Household'])].map(
+            (name) => ({ value: name, label: name }),
           )}
-          {number('Current EPS balance (₹)', 'epsOpening', errors.epsOpening?.message)}
-          {number('Current PF Balance (₹)', 'openingValue', errors.openingValue?.message)}
-        </>
+          value={member}
+        />
       ) : null}
-      {kind === 'ppf' ? (
-        <>
-          {number('Total Invested (₹)', 'openingInvested', errors.openingInvested?.message)}
-          {number('Current Balance (₹)', 'openingValue', errors.openingValue?.message)}
-        </>
-      ) : null}
-      {kind === 'investment' || kind === 'nps' ? (
-        <>
-          {number('Invested Amount (₹)', 'openingInvested', errors.openingInvested?.message)}
-          {number('Current Value (₹)', 'openingValue', errors.openingValue?.message)}
-        </>
-      ) : null}
-      <Field label={DATE_LABELS[kind]} error={errors.date?.message}>
-        <input type="date" {...register('date')} />
-      </Field>
-      {kind === 'nps' ? (
-        <Field label="Scheme Type">
-          <Select options={NPS_SCHEMES} placeholder="-- Select scheme --" {...register('scheme')} />
-        </Field>
-      ) : null}
-      {showsRate ? number('Interest Rate (% p.a.)', 'rate', errors.rate?.message) : null}
-      {kind === 'pf'
-        ? null
-        : number('Monthly Contribution (₹)', 'monthly', errors.monthly?.message)}
-      <label className={ui.check}>
-        <input type="checkbox" {...register('autoContribute')} /> Add contributions automatically
-      </label>
-      {auto ? (
-        <div>
-          <Field label="Contribution starts on">
-            <input type="date" {...register('autoStart')} />
+
+      <section className={styles.step}>
+        <h3 className={styles.stepTitle}>Amounts</h3>
+        <div className={styles.pair}>
+          {kind === 'pf' ? (
+            <>
+              {number('Employee Contribution (₹)', 'employee', errors.employee?.message)}
+              {number('Employer Contribution — total (₹)', 'employer', errors.employer?.message)}
+              {number(
+                'Employer portion to EPS per month (₹)',
+                'epsMonthly',
+                errors.epsMonthly?.message,
+              )}
+              {number('Current EPS balance (₹)', 'epsOpening', errors.epsOpening?.message)}
+              {number('Current PF Balance (₹)', 'openingValue', errors.openingValue?.message)}
+            </>
+          ) : null}
+          {kind === 'ppf' ? (
+            <>
+              {number('Total Invested (₹)', 'openingInvested', errors.openingInvested?.message)}
+              {number('Current Balance (₹)', 'openingValue', errors.openingValue?.message)}
+            </>
+          ) : null}
+          {kind === 'investment' || kind === 'nps' ? (
+            <>
+              {number('Invested Amount (₹)', 'openingInvested', errors.openingInvested?.message)}
+              {number('Current Value (₹)', 'openingValue', errors.openingValue?.message)}
+            </>
+          ) : null}
+          <Field label={DATE_LABELS[kind]} error={errors.date?.message}>
+            <input type="date" {...register('date')} />
           </Field>
-          <p className={ui.caption}>Repeats on this day every month.</p>
+          {showsRate ? number('Interest Rate (% p.a.)', 'rate', errors.rate?.message) : null}
         </div>
+      </section>
+
+      {kind === 'nps' ? (
+        <Choices
+          label="Scheme Type"
+          onChange={(value) => choose('scheme', value)}
+          options={NPS_SCHEMES.map((option) => ({ value: option, label: option }))}
+          value={scheme}
+        />
       ) : null}
+
+      <section className={styles.step}>
+        <h3 className={styles.stepTitle}>{kind === 'pf' ? 'Monthly PF' : 'Regular investing'}</h3>
+        <div className={styles.pair}>
+          {kind === 'pf'
+            ? null
+            : number('Monthly Contribution (₹)', 'monthly', errors.monthly?.message)}
+          {auto ? (
+            <Field label="Contribution starts on">
+              <input type="date" {...register('autoStart')} />
+            </Field>
+          ) : null}
+        </div>
+        <label className={styles.toggle}>
+          <input type="checkbox" {...register('autoContribute')} />
+          <span>
+            Add contributions automatically
+            <small>
+              {auto ? 'Repeats on this day every month.' : 'Each month, on the same day.'}
+            </small>
+          </span>
+        </label>
+      </section>
+
+      {paysInterest ? (
+        <section className={styles.step}>
+          <Choices
+            label="Interest paid out to your bank"
+            onChange={(value) => choose('payoutEvery', value)}
+            options={(['none', ...PAYOUT_EVERY] as const).map((key) => ({
+              value: key,
+              label: PAYOUT_LABELS[key],
+            }))}
+            value={payoutEvery}
+          />
+          {payoutEvery !== 'none' ? (
+            <>
+              <div className={styles.pair}>
+                <Field error={errors.payoutAmount?.message} label="Interest each time (₹)">
+                  <input
+                    inputMode="decimal"
+                    placeholder={suggestion ? String(suggestion) : ''}
+                    step="0.01"
+                    type="number"
+                    {...register('payoutAmount', { valueAsNumber: true })}
+                  />
+                </Field>
+                <Field error={errors.payoutStart?.message} label="First payout on">
+                  <input type="date" {...register('payoutStart')} />
+                </Field>
+              </div>
+              <p className={ui.caption}>
+                {suggestion
+                  ? `Left blank, it's ₹${suggestion.toLocaleString('en-IN')} from the rate and amount invested. `
+                  : ''}
+                Each payout shows on Home to confirm, and is added to your income.
+              </p>
+            </>
+          ) : null}
+        </section>
+      ) : null}
+
       {kind === 'investment' ? (
         <Field label="Notes" error={errors.notes?.message}>
-          <input {...register('notes')} />
+          <input placeholder="Optional" {...register('notes')} />
         </Field>
       ) : null}
-      <div className={ui.formActions}>
+      <div className={styles.actions}>
         <button className={ui.button} type="submit">
           Save {SAVE_LABELS[kind]}
         </button>
       </div>
+      {addingType ? (
+        <AddValueDialog
+          existing={options.investmentTypes}
+          list="investmentTypes"
+          onCancel={() => setAddingType(false)}
+          onSaved={(value) => {
+            setAddingType(false);
+            choose('type', value);
+          }}
+        />
+      ) : null}
     </form>
   );
 }
