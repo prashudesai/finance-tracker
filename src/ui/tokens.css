@@ -8,8 +8,6 @@
   color-scheme: dark;
   --bg: #0b1f1d;
   --bg-glow: rgb(52 190 150 / 42%);
-  /* How strongly each tab tints the glow at the top of the page; see [data-tab] below. */
-  --tab-strength: 40%;
   /* Category colours, for icons in lists: fixed per category so each is learned at a glance. */
   --cat-amber: #e0a13a;
   --cat-rose: #ec8f99;
@@ -66,7 +64,6 @@
   color-scheme: light;
   --bg: #eef5f2;
   --bg-glow: rgb(14 159 126 / 24%);
-  --tab-strength: 30%;
   --cat-amber: #9a5f00;
   --cat-rose: #b03a50;
   --cat-green: #3b7a28;
@@ -110,7 +107,6 @@
     color-scheme: light;
     --bg: #eef5f2;
     --bg-glow: rgb(14 159 126 / 24%);
-    --tab-strength: 30%;
     --cat-amber: #9a5f00;
     --cat-rose: #b03a50;
     --cat-green: #3b7a28;
@@ -150,22 +146,6 @@
   }
 }
 
-/*
- * Each tab tints the glow at the top in its own colour, in every theme: Money the amber of
- * spending, Wealth emerald, Plan blue. Home keeps the theme's own glow.
- */
-:root[data-tab='money'] {
-  --tab-glow: color-mix(in srgb, #e0a13a var(--tab-strength), transparent);
-}
-
-:root[data-tab='wealth'] {
-  --tab-glow: color-mix(in srgb, #22c58b calc(var(--tab-strength) + 8%), transparent);
-}
-
-:root[data-tab='plan'] {
-  --tab-glow: color-mix(in srgb, #3f86d6 calc(var(--tab-strength) - 8%), transparent);
-}
-
 /* Sizes are in rem, so this scales phones as a whole, to near the older app's density. */
 @media (max-width: 700px) {
   html {
@@ -184,7 +164,7 @@ body {
   color: var(--text);
   /* A faint aurora: mint from the top, a deeper glow rising from the bottom corner. */
   background:
-    radial-gradient(900px 560px at 85% 2%, var(--tab-glow, var(--bg-glow)), transparent 68%),
+    radial-gradient(900px 560px at 85% 2%, var(--bg-glow), transparent 68%),
     radial-gradient(820px 620px at -12% 110%, var(--bg-glow-low, var(--bg-glow)), transparent 70%),
     radial-gradient(
       600px 400px at 110% 55%,

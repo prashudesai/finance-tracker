@@ -235,17 +235,6 @@ export function Shell({
   // A new title is how screen readers know the page changed.
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
-  // Each tab tints the page's glow; see [data-tab] in tokens.css.
-  useEffect(() => {
-    const tab = pathname.startsWith('/cash-flow')
-      ? 'money'
-      : pathname.startsWith('/investments') || pathname.startsWith('/debts')
-        ? 'wealth'
-        : pathname.startsWith('/analytics')
-          ? 'plan'
-          : 'home';
-    document.documentElement.dataset.tab = tab;
-  }, [pathname]);
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       // The dashboard's heading is a greeting, so its title uses the page name instead.

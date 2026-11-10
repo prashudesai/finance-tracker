@@ -1,7 +1,9 @@
 {
-  "version": "1.41.0",
+  "version": "1.42.0",
   "released": "2026-11-10",
   "notes": [
+    "A shorter net worth card, with its range beside the title, so For you today shows on Home's first screen",
+    "Every page uses the same glow as Home, for a consistent look",
     "Home on wide screens is a balanced grid that follows your Arrange Home order, with related sections side by side",
     "Home greets you with today's date, shows what needs attention under it, and splits net worth into what you own and owe",
     "For you today shows as a full grid on wide screens; Coming up is a card with its total, and Recent shows five",
@@ -11,8 +13,6 @@
     "Each category has its own colour in history and recent entries",
     "Drag along the net worth line or across the income bars to read each month",
     "Pop-ups on phones open part way and snap to full height from the handle, a drag up or scrolling",
-    "Sections rise in as a page opens, and Wealth's category cards grow into their page",
-    "Arrange Home: hide sections and, on phones, reorder them, from the button beside the greeting",
-    "Each tab's colour glow now works in every theme"
+    "Sections rise in as a page opens, and Wealth's category cards grow into their page"
   ]
 }

@@ -43,13 +43,13 @@
   inset: 0;
   z-index: -1;
   /*
-   * Solid, so scrolled content never shows through, with a hint of the tab's glow over it so
+   * Solid, so scrolled content never shows through, with a hint of the page's glow over it so
    * the header and the page beneath it read as one surface rather than meeting at a seam.
    */
   background:
     linear-gradient(
-      color-mix(in srgb, var(--tab-glow, var(--bg-glow)) 40%, transparent),
-      color-mix(in srgb, var(--tab-glow, var(--bg-glow)) 40%, transparent)
+      color-mix(in srgb, var(--bg-glow) 40%, transparent),
+      color-mix(in srgb, var(--bg-glow) 40%, transparent)
     ),
     var(--bg);
 }

@@ -54,8 +54,16 @@
 .chart {
   width: 100%;
   min-width: 0;
-  min-height: 74px;
-  margin-top: 8px;
+  min-height: 52px;
+  margin-top: 6px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -6px -8px 0 0;
 }
 
 .chart svg {
@@ -78,12 +86,12 @@
 
 .ranges {
   display: flex;
-  gap: 6px;
+  gap: 2px;
 }
 
 .range {
-  min-height: 32px;
-  padding: 4px 12px;
+  min-height: 30px;
+  padding: 4px 10px;
   color: var(--muted);
   font: inherit;
   font-size: 0.8rem;
@@ -146,4 +154,10 @@
   margin-left: 4px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  .hero.hero {
+    padding: 16px;
+  }
 }

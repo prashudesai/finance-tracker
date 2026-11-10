@@ -25,7 +25,9 @@ function savedRange(): RangeKey {
   }
 }
 
-const HEIGHT = 74;
+/** The chart's height; shorter on a phone, where Home's first screen is precious. */
+const TALL = 74;
+const SHORT = 52;
 const PAD = 5;
 
 /**
@@ -71,6 +73,7 @@ export function NetWorthHero({ data, today }: { data: TrackerData; today: string
   const low = Math.min(...values);
   const span = Math.max(...values) - low || 1;
   const x = (index: number) => PAD + (index / Math.max(1, values.length - 1)) * (width - PAD * 2);
+  const HEIGHT = width < 520 ? SHORT : TALL;
   const y = (value: number) => HEIGHT - PAD - ((value - low) / span) * (HEIGHT - PAD * 2);
   // A smooth curve through each month, so the line reads as a trend rather than steps.
   const line = values
@@ -95,7 +98,23 @@ export function NetWorthHero({ data, today }: { data: TrackerData; today: string
 
   return (
     <section aria-label="Net worth" className={`${ui.hero} ${styles.hero}`}>
-      <span className={styles.label}>Net worth</span>
+      {/* The label with the range beside it, so the card stays short on a phone. */}
+      <div className={styles.top}>
+        <span className={styles.label}>Net worth</span>
+        <div aria-label="Net worth range" className={styles.ranges} role="group">
+          {RANGES.map((row) => (
+            <button
+              aria-pressed={range === row.key}
+              className={styles.range}
+              key={row.key}
+              onClick={() => choose(row.key)}
+              type="button"
+            >
+              {row.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <div aria-live="polite" className={styles.value}>
         {point ? formatMoney(point.netWorth) : formatMoney(Math.round(shown))}
       </div>
@@ -188,19 +207,6 @@ export function NetWorthHero({ data, today }: { data: TrackerData; today: string
             </svg>
           </Link>
         ) : null}
-      </div>
-      <div aria-label="Net worth range" className={styles.ranges} role="group">
-        {RANGES.map((row) => (
-          <button
-            aria-pressed={range === row.key}
-            className={styles.range}
-            key={row.key}
-            onClick={() => choose(row.key)}
-            type="button"
-          >
-            {row.label}
-          </button>
-        ))}
       </div>
     </section>
   );
