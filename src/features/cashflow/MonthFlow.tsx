@@ -4,6 +4,7 @@ import { nextMonth, previousMonth } from '../../domain/calendar';
 import { formatMoney, formatMonth, formatShortMonth } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 import styles from './MonthFlow.module.css';
+import { CountUp } from '../../ui/CountUp';
 
 interface Part {
   label: string;
@@ -178,7 +179,7 @@ export function MonthFlow({
       <div className={styles.head}>
         <span className={styles.label}>Balance</span>
         <strong className={styles.balance} data-negative={balance < 0 || undefined}>
-          {formatMoney(balance)}
+          <CountUp format={formatMoney} value={balance} />
         </strong>
         {flow ? null : (
           <span className={styles.sub}>

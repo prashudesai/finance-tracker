@@ -10,6 +10,15 @@
   --bg-glow: rgb(52 190 150 / 42%);
   /* How strongly each tab tints the glow at the top of the page; see [data-tab] below. */
   --tab-strength: 40%;
+  /* Category colours, for icons in lists: fixed per category so each is learned at a glance. */
+  --cat-amber: #e0a13a;
+  --cat-rose: #ec8f99;
+  --cat-green: #86cc72;
+  --cat-violet: #bb93e6;
+  --cat-blue: #86aef6;
+  --cat-cyan: #5cc3d8;
+  --cat-mint: #69d6bb;
+  --cat-gold: #d9c65e;
   --bg-glow-low: rgb(40 130 170 / 34%);
   --surface: #183532;
   --surface-raised: #1f403c;
@@ -58,6 +67,14 @@
   --bg: #eef5f2;
   --bg-glow: rgb(14 159 126 / 24%);
   --tab-strength: 30%;
+  --cat-amber: #9a5f00;
+  --cat-rose: #b03a50;
+  --cat-green: #3b7a28;
+  --cat-violet: #7347b0;
+  --cat-blue: #2a60bf;
+  --cat-cyan: #0f6f83;
+  --cat-mint: #07664f;
+  --cat-gold: #786400;
   --bg-glow-low: rgb(40 140 180 / 16%);
   --scenario-stress: #c8493f;
   --scenario-base: #1f78c8;
@@ -94,6 +111,14 @@
     --bg: #eef5f2;
     --bg-glow: rgb(14 159 126 / 24%);
     --tab-strength: 30%;
+    --cat-amber: #9a5f00;
+    --cat-rose: #b03a50;
+    --cat-green: #3b7a28;
+    --cat-violet: #7347b0;
+    --cat-blue: #2a60bf;
+    --cat-cyan: #0f6f83;
+    --cat-mint: #07664f;
+    --cat-gold: #786400;
     --bg-glow-low: rgb(40 140 180 / 16%);
     --scenario-stress: #c8493f;
     --scenario-base: #1f78c8;
@@ -126,18 +151,18 @@
 }
 
 /*
- * Each tab tints the glow at the top in its own colour, in the default theme only: Money the
- * amber of spending, Wealth emerald, Plan blue. Home keeps the mint.
+ * Each tab tints the glow at the top in its own colour, in every theme: Money the amber of
+ * spending, Wealth emerald, Plan blue. Home keeps the theme's own glow.
  */
-:root[data-palette='modern'][data-tab='money'] {
+:root[data-tab='money'] {
   --tab-glow: color-mix(in srgb, #e0a13a var(--tab-strength), transparent);
 }
 
-:root[data-palette='modern'][data-tab='wealth'] {
+:root[data-tab='wealth'] {
   --tab-glow: color-mix(in srgb, #22c58b calc(var(--tab-strength) + 8%), transparent);
 }
 
-:root[data-palette='modern'][data-tab='plan'] {
+:root[data-tab='plan'] {
   --tab-glow: color-mix(in srgb, #3f86d6 calc(var(--tab-strength) - 8%), transparent);
 }
 
@@ -363,6 +388,57 @@ option {
   ::view-transition-old(*),
   ::view-transition-new(*) {
     animation: none;
+  }
+}
+
+/* A card growing into its page: only the card moves, the page behind stays put. */
+:root[data-transition='expand']::view-transition-old(root),
+:root[data-transition='expand']::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(expand-card) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+::view-transition-old(expand-card),
+::view-transition-new(expand-card) {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A page's sections rise in one after another as it opens. */
+@media (prefers-reduced-motion: no-preference) {
+  main > div > * {
+    animation: section-rise 300ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+
+  main > div > :nth-child(2) {
+    animation-delay: 40ms;
+  }
+
+  main > div > :nth-child(3) {
+    animation-delay: 80ms;
+  }
+
+  main > div > :nth-child(4) {
+    animation-delay: 120ms;
+  }
+
+  main > div > :nth-child(5) {
+    animation-delay: 160ms;
+  }
+
+  main > div > :nth-child(n + 6) {
+    animation-delay: 200ms;
+  }
+}
+
+@keyframes section-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 

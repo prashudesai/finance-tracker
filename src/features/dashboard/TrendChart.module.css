@@ -49,6 +49,14 @@
   gap: 8px;
   height: 200px;
   padding-left: 44px;
+  /* Up and down scroll the page; a sideways drag reads the months. */
+  touch-action: pan-y;
+}
+
+/* While a month is chosen, the others step back. */
+.month[data-dimmed] .bars {
+  opacity: 0.4;
+  transition: opacity 140ms ease;
 }
 
 .gridTop,

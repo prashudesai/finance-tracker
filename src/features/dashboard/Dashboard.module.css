@@ -62,3 +62,54 @@
   padding-top: 14px;
   border-top: 1px solid var(--border);
 }
+
+/* Arrange Home sits beside the greeting, so it takes no room of its own. */
+.greetingRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.arrangeList {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.arrangeList li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 4px 10px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.arrangeList li[data-hidden] .arrangeName {
+  color: var(--muted);
+}
+
+.arrangeName {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.arrangeMoves {
+  display: flex;
+  gap: 2px;
+}
+
+.arrangeMoves button {
+  width: 34px;
+  height: 34px;
+  border-color: transparent;
+}

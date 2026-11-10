@@ -3,6 +3,7 @@ import type { FigureChange } from '../../domain/analytics';
 import { formatAmount, formatMoney, formatMonth } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 import styles from './Home.module.css';
+import { CountUp } from '../../ui/CountUp';
 
 const R = 38;
 const C = 2 * Math.PI * R;
@@ -79,7 +80,7 @@ export function MonthRing({
             {left < 0 ? 'short' : 'left'}
           </text>
           <text className={styles.ringValue} x="48" y="61">
-            {formatAmount(Math.abs(left))}
+            <CountUp format={formatAmount} value={Math.abs(left)} />
           </text>
         </svg>
         <dl className={styles.ringRows}>

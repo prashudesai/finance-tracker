@@ -9,6 +9,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'retain-on-failure',
+    // Figures that count up would be read part way; with reduced motion they show at once.
+    contextOptions: { reducedMotion: 'reduce' },
   },
   projects: [
     {

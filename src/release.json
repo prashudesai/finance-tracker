@@ -1,18 +1,18 @@
 {
-  "version": "1.39.0",
+  "version": "1.40.0",
   "released": "2026-11-10",
   "notes": [
+    "Headline figures count up when shown and roll to their new value after a change",
+    "On phones, slide a Money history row left to edit or delete it",
+    "Each category has its own colour in history and recent entries",
+    "Drag along the net worth line or across the income bars to read each month",
+    "Pop-ups on phones open part way and snap to full height from the handle, a drag up or scrolling",
+    "Sections rise in as a page opens, and Wealth's category cards grow into their page",
+    "Arrange Home: hide sections and, on phones, reorder them, from the button beside the greeting",
+    "Each tab's colour glow now works in every theme",
     "A deeper teal background, so cards stand out more",
     "Each tab has its own glow in the Modern theme: amber on Money, emerald on Wealth, blue on Plan and mint on Home",
     "The top bar takes a hint of the tab's colour, so it blends with the page beneath it",
-    "The top bar is solid, so nothing shows through behind it as you scroll",
-    "Home shows your three largest investments with a link to see all on Wealth",
-    "Money has arrows to move between months, as well as swiping",
-    "Plan offers to set up this year's budget, and shows the growth projection as a range from tough to good years",
-    "Each kind of investment has its own icon, and search is a smaller button on the right",
-    "Import a bank statement from Money, as CSV or PDF, including password-locked PDFs, read on your phone and never uploaded",
-    "Every row is read or listed with the reason it couldn't be, and amounts are checked against the statement's running balance",
-    "Anything already recorded is left out, and card bills, loan EMIs, investments, own transfers, cash withdrawals and refunds are left out to begin with, with the reason shown",
-    "Categories follow what you chose for the same payee before; choosing one for a payee sets the rest from them"
+    "The top bar is solid, so nothing shows through behind it as you scroll"
   ]
 }

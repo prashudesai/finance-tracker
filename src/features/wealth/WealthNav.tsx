@@ -11,6 +11,7 @@ import {
 } from '../../ui/format';
 import ui from '../../ui/ui.module.css';
 import styles from './WealthNav.module.css';
+import { CountUp } from '../../ui/CountUp';
 
 export type WealthSection = 'investments' | 'retirement' | 'loans';
 
@@ -50,7 +51,9 @@ export function WealthNav({
       <section aria-label="Wealth" className={`${ui.hero} ${styles.card}`}>
         <div className={styles.half}>
           <span className={styles.label}>You own</span>
-          <strong className={styles.value}>{formatAmount(owned)}</strong>
+          <strong className={styles.value}>
+            <CountUp format={formatAmount} value={owned} />
+          </strong>
           {invested > 0 ? (
             <span className={gain < 0 ? styles.down : styles.up}>
               {signedMoney(gain)} · {formatPercent(gain / invested)} return
@@ -59,7 +62,9 @@ export function WealthNav({
         </div>
         <div className={styles.half}>
           <span className={styles.label}>You owe</span>
-          <strong className={`${styles.value} ${ui.debt}`}>{formatAmount(worth.debts)}</strong>
+          <strong className={`${styles.value} ${ui.debt}`}>
+            <CountUp format={formatAmount} value={worth.debts} />
+          </strong>
           <span className={styles.note}>
             {freeBy
               ? `Debt-free by ${formatShortMonthYear(freeBy)}`

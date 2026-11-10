@@ -46,6 +46,7 @@ import { EmiActions, useHiddenEmis } from './EmiActions';
 import { PayoutActions } from '../investments/PayoutActions';
 import { GettingStarted } from './GettingStarted';
 import { TrendChart } from './TrendChart';
+import { HomeSections } from './HomeSections';
 
 /** Portfolio rows on the dashboard: more on wide screens, where it sits beside the taller chart. */
 /** Home shows the largest few; Wealth has them all. */
@@ -215,6 +216,141 @@ export function Dashboard({ name = '' }: { name?: string }) {
     </section>
   );
 
+  const portfolioCard = (
+    <section className={ui.card}>
+      {/* On phones the sort stays beside the title, with shorter words, not on a line of its own. */}
+      <div className={ui.cardHeader} style={phone ? undefined : { flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0 }}>
+          <h2 className={ui.cardTitle}>Investment portfolio</h2>
+          <div className={ui.caption}>Value and returns</div>
+        </div>
+        <label className={`${ui.caption} ${ui.inlineSort}`}>
+          <span className={phone ? ui.visuallyHidden : undefined}>Sort by</span>
+          <select
+            className={ui.fieldSelect}
+            onChange={(event) => setSort(event.target.value as SortKey)}
+            value={sort}
+          >
+            <option value="size">{phone ? 'By size' : 'Portfolio size'}</option>
+            <option value="gain">{phone ? 'By gain' : 'Gain'}</option>
+          </select>
+        </label>
+      </div>
+      <div className={ui.metric}>
+        <div className={ui.metricsThree}>
+          <div>
+            <div className={ui.label}>Current value</div>
+            <div className={ui.metricValue}>{formatCompactMoney(portfolioCurrent)}</div>
+          </div>
+          <div>
+            <div className={ui.label}>Invested</div>
+            <div className={ui.metricValue}>{formatCompactMoney(portfolioInvested)}</div>
+          </div>
+          <div>
+            <div className={ui.label}>Total gain</div>
+            <div className={`${ui.metricValue} ${portfolioGain < 0 ? ui.loss : ui.gain}`}>
+              {signedMoney(portfolioGain)}
+            </div>
+            <div className={`${ui.caption} ${portfolioGain < 0 ? ui.loss : ui.gain}`}>
+              {formatPercent(portfolioInvested > 0 ? portfolioGain / portfolioInvested : null)}
+            </div>
+          </div>
+        </div>
+        <div className={ui.legendRow}>
+          <span>
+            <i className={ui.stackInvested} /> Invested
+          </span>
+          <span>
+            <i className={ui.stackGain} /> Gain
+          </span>
+        </div>
+      </div>
+      {shown.length === 0 ? (
+        <EmptyState
+          action={
+            <Link className={ui.quiet} state={{ add: 'investment' }} to="/investments">
+              Add your first investment
+            </Link>
+          }
+          icon={TrendingUp}
+          text="See their value and returns here."
+          title="No investments recorded yet."
+        />
+      ) : (
+        <div className={ui.barList}>
+          {shown.map((row, index) => (
+            <PortfolioRow index={index} key={row.name} peak={peak} row={row} />
+          ))}
+        </div>
+      )}
+      {categories.length > 0 ? (
+        <Link className={ui.textLinkCenter} to="/investments">
+          {categories.length > shown.length
+            ? `See all ${categories.length} on Wealth ›`
+            : 'Open Wealth ›'}
+        </Link>
+      ) : null}
+    </section>
+  );
+
+  const debtCard = (
+    <section className={ui.card}>
+      <div className={ui.cardHeader}>
+        <h2 className={ui.cardTitle}>Debt summary</h2>
+        <div className={ui.alignEnd}>
+          <div className={ui.label}>Total outstanding</div>
+          <strong>{formatMoney(outstanding)}</strong>
+        </div>
+      </div>
+      {loans.length === 0 ? (
+        <EmptyState
+          action={
+            <Link className={ui.quiet} state={{ add: true }} to="/debts">
+              Add your first loan
+            </Link>
+          }
+          icon={CreditCard}
+          text="Track what's left and how much you've paid."
+          title="No loans recorded yet."
+        />
+      ) : (
+        <div className={ui.twoColumn}>
+          {loans.map(({ id, type, ledger, error }, index) => (
+            <Link className={ui.linkCard} key={id} to="/debts">
+              <div className={ui.split}>
+                <strong>
+                  <i className={ui.dot} style={{ background: chartColor(index) }} />
+                  {type}
+                </strong>
+                <span className={ui.chip}>
+                  {formatPercent(outstanding > 0 ? (ledger?.remaining ?? 0) / outstanding : 0)} of
+                  total debt
+                </span>
+              </div>
+              <div className={ui.metricValue}>{ledger ? formatMoney(ledger.remaining) : error}</div>
+              {ledger ? (
+                <>
+                  <div className={ui.meter} style={{ height: 5, margin: '8px 0 4px' }}>
+                    <span
+                      className={ui.meterFill}
+                      style={{ width: `${paidShare(ledger) * 100}%` }}
+                    />
+                  </div>
+                  <div className={ui.meterLegend}>
+                    <span>Paid: {formatPercent(paidShare(ledger))}</span>
+                    <span className={ui.textLink}>
+                      View details <ChevronRight size={12} />
+                    </span>
+                  </div>
+                </>
+              ) : null}
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+
   return (
     <div className={ui.page}>
       {attention.length > 0 ? (
@@ -265,177 +401,44 @@ export function Dashboard({ name = '' }: { name?: string }) {
         </details>
       ) : null}
 
-      <h1 className={homeStyles.greeting}>
-        <span>{greeting(new Date().getHours(), '').replace(/,\s*$/, '')}</span>
-        {greeting(0, name).includes(',') ? (
-          <strong>{greeting(0, name).split(', ')[1]}</strong>
-        ) : null}
-      </h1>
-
-      <GettingStarted />
-
-      {/* One column on phones; on wide screens, net worth beside this month. */}
-      <div className={homeStyles.layout}>
-        <div className={homeStyles.column}>
-          <NetWorthHero data={data} today={today} />
-        </div>
-        <div className={homeStyles.column}>
-          <MonthRing
-            income={overview.close.income}
-            invested={invested.get(month) ?? 0}
-            month={month}
-            repaid={overview.repaid}
-            spent={overview.spent}
-            spentChange={trends.expenses.change}
-          />
-          <InsightsCard />
-          <ComingUp data={household} today={today} />
-          <RecentEntries data={data} />
-        </div>
-      </div>
-
-      {/* Prompts come after your own figures, never before them. */}
-      <RecapCard />
-      <InstallCard />
-      <GoalsTile />
-
-      {/* Side by side on wide screens, half and half; one after the other on phones. */}
-      <div className={styles.pair}>
-        {trendCard}
-
-        <section className={ui.card}>
-          {/* On phones the sort stays beside the title, with shorter words, not on a line of its own. */}
-          <div className={ui.cardHeader} style={phone ? undefined : { flexWrap: 'wrap' }}>
-            <div style={{ minWidth: 0 }}>
-              <h2 className={ui.cardTitle}>Investment portfolio</h2>
-              <div className={ui.caption}>Value and returns</div>
-            </div>
-            <label className={`${ui.caption} ${ui.inlineSort}`}>
-              <span className={phone ? ui.visuallyHidden : undefined}>Sort by</span>
-              <select
-                className={ui.fieldSelect}
-                onChange={(event) => setSort(event.target.value as SortKey)}
-                value={sort}
-              >
-                <option value="size">{phone ? 'By size' : 'Portfolio size'}</option>
-                <option value="gain">{phone ? 'By gain' : 'Gain'}</option>
-              </select>
-            </label>
-          </div>
-          <div className={ui.metric}>
-            <div className={ui.metricsThree}>
-              <div>
-                <div className={ui.label}>Current value</div>
-                <div className={ui.metricValue}>{formatCompactMoney(portfolioCurrent)}</div>
-              </div>
-              <div>
-                <div className={ui.label}>Invested</div>
-                <div className={ui.metricValue}>{formatCompactMoney(portfolioInvested)}</div>
-              </div>
-              <div>
-                <div className={ui.label}>Total gain</div>
-                <div className={`${ui.metricValue} ${portfolioGain < 0 ? ui.loss : ui.gain}`}>
-                  {signedMoney(portfolioGain)}
-                </div>
-                <div className={`${ui.caption} ${portfolioGain < 0 ? ui.loss : ui.gain}`}>
-                  {formatPercent(portfolioInvested > 0 ? portfolioGain / portfolioInvested : null)}
-                </div>
-              </div>
-            </div>
-            <div className={ui.legendRow}>
-              <span>
-                <i className={ui.stackInvested} /> Invested
-              </span>
-              <span>
-                <i className={ui.stackGain} /> Gain
-              </span>
-            </div>
-          </div>
-          {shown.length === 0 ? (
-            <EmptyState
-              action={
-                <Link className={ui.quiet} state={{ add: 'investment' }} to="/investments">
-                  Add your first investment
-                </Link>
-              }
-              icon={TrendingUp}
-              text="See their value and returns here."
-              title="No investments recorded yet."
+      <HomeSections
+        greeting={
+          <h1 className={homeStyles.greeting}>
+            <span>{greeting(new Date().getHours(), '').replace(/,\s*$/, '')}</span>
+            {greeting(0, name).includes(',') ? (
+              <strong>{greeting(0, name).split(', ')[1]}</strong>
+            ) : null}
+          </h1>
+        }
+        intro={<GettingStarted />}
+        phone={phone}
+        prompts={
+          <>
+            <RecapCard />
+            <InstallCard />
+          </>
+        }
+        sections={{
+          netWorth: <NetWorthHero data={data} today={today} />,
+          month: (
+            <MonthRing
+              income={overview.close.income}
+              invested={invested.get(month) ?? 0}
+              month={month}
+              repaid={overview.repaid}
+              spent={overview.spent}
+              spentChange={trends.expenses.change}
             />
-          ) : (
-            <div className={ui.barList}>
-              {shown.map((row, index) => (
-                <PortfolioRow index={index} key={row.name} peak={peak} row={row} />
-              ))}
-            </div>
-          )}
-          {categories.length > 0 ? (
-            <Link className={ui.textLinkCenter} to="/investments">
-              {categories.length > shown.length
-                ? `See all ${categories.length} on Wealth ›`
-                : 'Open Wealth ›'}
-            </Link>
-          ) : null}
-        </section>
-      </div>
-
-      <section className={ui.card}>
-        <div className={ui.cardHeader}>
-          <h2 className={ui.cardTitle}>Debt summary</h2>
-          <div className={ui.alignEnd}>
-            <div className={ui.label}>Total outstanding</div>
-            <strong>{formatMoney(outstanding)}</strong>
-          </div>
-        </div>
-        {loans.length === 0 ? (
-          <EmptyState
-            action={
-              <Link className={ui.quiet} state={{ add: true }} to="/debts">
-                Add your first loan
-              </Link>
-            }
-            icon={CreditCard}
-            text="Track what's left and how much you've paid."
-            title="No loans recorded yet."
-          />
-        ) : (
-          <div className={ui.twoColumn}>
-            {loans.map(({ id, type, ledger, error }, index) => (
-              <Link className={ui.linkCard} key={id} to="/debts">
-                <div className={ui.split}>
-                  <strong>
-                    <i className={ui.dot} style={{ background: chartColor(index) }} />
-                    {type}
-                  </strong>
-                  <span className={ui.chip}>
-                    {formatPercent(outstanding > 0 ? (ledger?.remaining ?? 0) / outstanding : 0)} of
-                    total debt
-                  </span>
-                </div>
-                <div className={ui.metricValue}>
-                  {ledger ? formatMoney(ledger.remaining) : error}
-                </div>
-                {ledger ? (
-                  <>
-                    <div className={ui.meter} style={{ height: 5, margin: '8px 0 4px' }}>
-                      <span
-                        className={ui.meterFill}
-                        style={{ width: `${paidShare(ledger) * 100}%` }}
-                      />
-                    </div>
-                    <div className={ui.meterLegend}>
-                      <span>Paid: {formatPercent(paidShare(ledger))}</span>
-                      <span className={ui.textLink}>
-                        View details <ChevronRight size={12} />
-                      </span>
-                    </div>
-                  </>
-                ) : null}
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+          ),
+          insights: <InsightsCard />,
+          comingUp: <ComingUp data={household} today={today} />,
+          recent: <RecentEntries data={data} />,
+          goals: <GoalsTile />,
+          income: trendCard,
+          portfolio: portfolioCard,
+          debts: debtCard,
+        }}
+      />
     </div>
   );
 }

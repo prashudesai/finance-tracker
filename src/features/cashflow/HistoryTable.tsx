@@ -6,6 +6,7 @@ import { useIsPhone } from '../../ui/useIsPhone';
 import styles from './HistoryTable.module.css';
 import ui from '../../ui/ui.module.css';
 import { SortHeader, useSort, type SortValue } from '../../ui/useSort';
+import { SwipeRow } from '../../ui/SwipeRow';
 
 const PAGE_SIZE = 8;
 
@@ -89,7 +90,15 @@ export function HistoryTable<Row extends { id: string }>({
         <strong>{total}</strong>
       </div>
       {phone && item ? (
-        <DayList item={item} onOpen={setSelectedId} rows={rows} emptyText={emptyText} />
+        <DayList
+          describe={describe}
+          emptyText={emptyText}
+          item={item}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          onOpen={setSelectedId}
+          rows={rows}
+        />
       ) : (
         <>
           <div aria-label="Scrollable table" className={ui.tableWrap} role="group" tabIndex={0}>
@@ -226,18 +235,29 @@ export function HistoryTable<Row extends { id: string }>({
   );
 }
 
-/** A month's records as one list, newest first, each with its date on the second line. */
+/**
+ * A month's records as one list, newest first, each with its date on the second line. Each
+ * slides left to show Edit and Delete.
+ */
 function DayList<Row extends { id: string }>({
   rows,
   item,
   onOpen,
+  onEdit,
+  onDelete,
+  describe,
   emptyText,
 }: {
   rows: Row[];
   item: (row: Row) => DayItem;
   onOpen: (id: string) => void;
+  onEdit: (row: Row) => void;
+  onDelete: (row: Row) => void;
+  describe: (row: Row) => string;
   emptyText: string;
 }) {
+  // One row open at a time, as in phone lists.
+  const [swiped, setSwiped] = useState<string | null>(null);
   if (rows.length === 0) return <p className={ui.empty}>{emptyText}</p>;
   const items = rows
     .map((row) => ({ row, ...item(row) }))
@@ -246,13 +266,21 @@ function DayList<Row extends { id: string }>({
     <ul className={styles.entries}>
       {items.map(({ row, date, title, detail, amount }) => (
         <li key={row.id}>
-          <button className={styles.entry} onClick={() => onOpen(row.id)} type="button">
+          <SwipeRow
+            className={styles.entry}
+            label={describe(row)}
+            onDelete={() => onDelete(row)}
+            onEdit={() => onEdit(row)}
+            onOpenChange={(open) => setSwiped(open ? row.id : null)}
+            onTap={() => onOpen(row.id)}
+            open={swiped === row.id}
+          >
             <span className={styles.entryText}>
               <span className={styles.entryTitle}>{title}</span>
               <small>{[formatDay(date), detail].filter(Boolean).join(' · ')}</small>
             </span>
             <strong>{formatMoney(amount)}</strong>
-          </button>
+          </SwipeRow>
         </li>
       ))}
     </ul>

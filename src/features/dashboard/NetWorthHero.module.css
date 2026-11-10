@@ -112,3 +112,14 @@
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
+
+/* Up and down scroll the page; a sideways drag reads the line. */
+.scrub {
+  touch-action: pan-y;
+}
+
+.cursor {
+  stroke: color-mix(in srgb, var(--text) 45%, transparent);
+  stroke-dasharray: 3 3;
+  stroke-width: 1;
+}

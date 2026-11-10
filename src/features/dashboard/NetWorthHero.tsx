@@ -45,6 +45,9 @@ export function NetWorthHero({ data, today }: { data: TrackerData; today: string
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(320);
   const fade = useId();
+  // The month under a finger or pointer, read out in place of today's figure.
+  const [picked, setPicked] = useState<number | null>(null);
+  const dragged = useRef(false);
 
   useEffect(() => {
     const element = box.current;
@@ -83,12 +86,27 @@ export function NetWorthHero({ data, today }: { data: TrackerData; today: string
   const lastY = y(values.at(-1) ?? 0);
   const up = change >= 0;
   const since = history[0]?.month;
+  const point = picked === null ? null : history[picked];
+  const pick = (clientX: number, element: Element) => {
+    const rect = element.getBoundingClientRect();
+    const ratio = (clientX - rect.left - PAD) / Math.max(1, rect.width - PAD * 2);
+    setPicked(Math.min(values.length - 1, Math.max(0, Math.round(ratio * (values.length - 1)))));
+  };
 
   return (
     <section aria-label="Net worth" className={`${ui.hero} ${styles.hero}`}>
       <span className={styles.label}>Net worth</span>
-      <div className={styles.value}>{formatMoney(Math.round(shown))}</div>
-      {values.length >= 2 ? (
+      <div aria-live="polite" className={styles.value}>
+        {point ? formatMoney(point.netWorth) : formatMoney(Math.round(shown))}
+      </div>
+      {point ? (
+        <div className={styles.change}>
+          <span className={styles.since}>
+            End of {formatMonth(point.month)}
+            {point.estimated ? ' · estimate' : ''}
+          </span>
+        </div>
+      ) : values.length >= 2 ? (
         <div className={styles.change} data-down={up ? undefined : true}>
           <span aria-hidden="true">{up ? '▲' : '▼'}</span>
           <span className={ui.visuallyHidden}>{up ? 'Up' : 'Down'}</span>{' '}
@@ -102,10 +120,32 @@ export function NetWorthHero({ data, today }: { data: TrackerData; today: string
       ) : null}
       <div className={styles.chart} ref={box}>
         {values.length >= 2 ? (
-          <Link aria-label="Open net worth history" to="/analytics">
+          <Link
+            aria-label="Open net worth history"
+            onClick={(event) => {
+              // A drag along the line reads it; only a tap opens the history.
+              if (dragged.current) event.preventDefault();
+              dragged.current = false;
+            }}
+            to="/analytics"
+          >
             <svg
               aria-hidden="true"
+              className={styles.scrub}
               height={HEIGHT}
+              onPointerDown={(event) => {
+                dragged.current = false;
+                if (event.pointerType !== 'mouse') pick(event.clientX, event.currentTarget);
+              }}
+              onPointerLeave={() => setPicked(null)}
+              onPointerMove={(event) => {
+                if (event.pointerType !== 'mouse' && event.buttons === 0) return;
+                if (event.pointerType !== 'mouse') dragged.current = true;
+                pick(event.clientX, event.currentTarget);
+              }}
+              onPointerUp={(event) => {
+                if (event.pointerType !== 'mouse') setPicked(null);
+              }}
               viewBox={`0 0 ${width} ${HEIGHT}`}
               width={width}
             >
@@ -120,7 +160,21 @@ export function NetWorthHero({ data, today }: { data: TrackerData; today: string
                 style={{ fill: `url(#${fade})` }}
               />
               <path className={styles.line} d={line} />
-              <circle className={styles.dot} cx={lastX} cy={lastY} r="4.5" />
+              {picked !== null ? (
+                <line
+                  className={styles.cursor}
+                  x1={x(picked)}
+                  x2={x(picked)}
+                  y1={PAD}
+                  y2={HEIGHT}
+                />
+              ) : null}
+              <circle
+                className={styles.dot}
+                cx={picked === null ? lastX : x(picked)}
+                cy={picked === null ? lastY : y(values[picked] ?? 0)}
+                r="4.5"
+              />
             </svg>
           </Link>
         ) : null}

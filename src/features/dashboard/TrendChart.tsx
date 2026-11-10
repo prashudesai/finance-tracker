@@ -13,6 +13,9 @@ export interface TrendRow extends MonthTrend {
   invested?: number;
 }
 
+/** The width of the axis labels before the first bar. */
+const AXIS = 44;
+
 export function TrendChart({ months }: { months: TrendRow[] }) {
   const [chosen, setChosen] = useState<string | null>(null);
   const detail = months.find((row) => row.month === chosen);
@@ -50,11 +53,30 @@ export function TrendChart({ months }: { months: TrendRow[] }) {
           </span>
         ) : null}
       </figcaption>
-      <div aria-hidden="true" className={styles.plot}>
+      <div
+        aria-hidden="true"
+        className={styles.plot}
+        // A finger dragged across the bars reads each month in turn.
+        onPointerMove={(event) => {
+          if (event.pointerType === 'mouse' || event.buttons === 0) return;
+          // The bars start after the axis labels' 44px, as in the stylesheet.
+          const rect = event.currentTarget.getBoundingClientRect();
+          const ratio = (event.clientX - rect.left - AXIS) / Math.max(1, rect.width - AXIS);
+          const index = Math.floor(ratio * months.length);
+          const row = months[Math.min(months.length - 1, Math.max(0, index))];
+          if (row) setChosen(row.month);
+        }}
+      >
         <span className={styles.gridTop}>{formatCompactMoney(peak)}</span>
         <span className={styles.gridMiddle}>{formatCompactMoney(peak / 2)}</span>
         {months.map((row) => (
-          <div className={styles.month} key={row.month} onClick={() => setChosen(row.month)}>
+          <div
+            className={styles.month}
+            data-chosen={chosen === row.month || undefined}
+            data-dimmed={(chosen !== null && chosen !== row.month) || undefined}
+            key={row.month}
+            onClick={() => setChosen(row.month)}
+          >
             <div className={styles.bars}>
               <span className={styles.barIncome} style={{ height: height(row.income) }} />
               {/* Spending at the base, then EMIs, then what was invested, stacked up. */}

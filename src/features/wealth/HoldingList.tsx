@@ -21,6 +21,7 @@ import { holdingValue } from '../../domain/holdings';
 import type { TrackerData } from '../../data/repository';
 import { formatAmount, formatPercent } from '../../ui/format';
 import { TrendLine } from '../../ui/TrendLine';
+import { expandFrom } from '../../ui/expand';
 import styles from './HoldingList.module.css';
 
 const MONTHS = 6;
@@ -84,7 +85,10 @@ export function HoldingList({
             <button
               aria-label={`${category.name}: ${formatAmount(category.current)}. Open details`}
               className={styles.row}
-              onClick={() => onOpen(category.name)}
+              onClick={(event) => {
+                const card = event.currentTarget;
+                expandFrom(card, () => onOpen(category.name));
+              }}
               type="button"
             >
               <span aria-hidden="true" className={styles.icon}>

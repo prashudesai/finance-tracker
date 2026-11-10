@@ -107,13 +107,6 @@ test('quick setup opens a form and moves on once it is saved', async ({ page }) 
   await expect(setup.getByText('Add your income')).toBeVisible();
 });
 
-test('the privacy animation plays through to the family step', async ({ page }) => {
-  await page.goto('/privacy');
-  const current = page.locator('[aria-current="step"] strong');
-  await expect(current).toHaveText('You type it');
-  await expect(current).toHaveText('Only family can open it', { timeout: 12_000 });
-});
-
 test('first login answers who can read the records, with real encryption', async ({ page }) => {
   await page.goto('/setup');
   await expect(page.getByRole('heading', { name: "We know what you're thinking." })).toBeVisible();
@@ -128,14 +121,25 @@ test('first login answers who can read the records, with real encryption', async
   expect(await fitsTheScreen(page)).toBe(true);
 });
 
-test('Settings shows how to install, and the guide plays', async ({ page }) => {
-  await open(page, '/settings');
-  await page.getByRole('button', { name: /App & updates/ }).click();
-  await page.getByRole('button', { name: 'How to install' }).click();
-  const guide = page.getByRole('dialog', { name: 'How to install' });
-  const current = guide.locator('[aria-current="step"] strong');
-  await expect(current).not.toHaveText(/^$/);
-  const first = await current.textContent();
-  await expect(current).not.toHaveText(first ?? '', { timeout: 5000 });
-  expect(await fitsTheScreen(page)).toBe(true);
+// These check animations, so they run with motion on, unlike the rest.
+test.describe('animations', () => {
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } });
+
+  test('the privacy animation plays through to the family step', async ({ page }) => {
+    await page.goto('/privacy');
+    const current = page.locator('[aria-current="step"] strong');
+    await expect(current).toHaveText('You type it');
+    await expect(current).toHaveText('Only family can open it', { timeout: 12_000 });
+  });
+  test('Settings shows how to install, and the guide plays', async ({ page }) => {
+    await open(page, '/settings');
+    await page.getByRole('button', { name: /App & updates/ }).click();
+    await page.getByRole('button', { name: 'How to install' }).click();
+    const guide = page.getByRole('dialog', { name: 'How to install' });
+    const current = guide.locator('[aria-current="step"] strong');
+    await expect(current).not.toHaveText(/^$/);
+    const first = await current.textContent();
+    await expect(current).not.toHaveText(first ?? '', { timeout: 5000 });
+    expect(await fitsTheScreen(page)).toBe(true);
+  });
 });

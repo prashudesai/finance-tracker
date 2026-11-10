@@ -1,9 +1,11 @@
 import { X } from 'lucide-react';
-import { useEffect, useRef, type ReactNode, type TouchEvent } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react';
 import { useTracker } from '../store/tracker';
 import ui from './ui.module.css';
 
 const SWIPE_TO_CLOSE = 90;
+/** Dragging the header up this far snaps a phone sheet to full height. */
+const SWIPE_TO_EXPAND = 40;
 
 /** A native dialog, which traps focus and restores it when closed. */
 export function Modal({
@@ -21,8 +23,10 @@ export function Modal({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const swipeStart = useRef<number | null>(null);
+  // On phones a sheet opens part way up; dragging up, the handle or scrolling it snaps it full.
+  const [expanded, setExpanded] = useState(false);
 
-  // Dragging the header down dismisses a phone sheet. The form below scrolls as normal.
+  // Dragging the header down shrinks a full sheet, then dismisses it. The content scrolls as normal.
   const drag = (distance: number) => {
     if (dialog.current)
       dialog.current.style.transform = distance > 0 ? `translateY(${distance}px)` : '';
@@ -40,7 +44,11 @@ export function Modal({
       const moved = swipeStart.current === null ? 0 : end - swipeStart.current;
       swipeStart.current = null;
       drag(0);
-      if (moved > SWIPE_TO_CLOSE) onClose();
+      if (moved < -SWIPE_TO_EXPAND) setExpanded(true);
+      else if (moved > SWIPE_TO_CLOSE) {
+        if (expanded) setExpanded(false);
+        else onClose();
+      }
     },
   };
 
@@ -56,9 +64,21 @@ export function Modal({
     <dialog
       aria-label={title}
       className={`${fullScreenOnPhone ? ui.dialogFull : ui.dialog} ${wide ? ui.dialogWide : ''}`}
+      data-expanded={expanded || undefined}
       onClose={onClose}
+      onScroll={(event) => {
+        if (!expanded && event.currentTarget.scrollTop > 24) setExpanded(true);
+      }}
       ref={dialog}
     >
+      {fullScreenOnPhone ? null : (
+        <button
+          aria-label={expanded ? 'Shrink' : 'Expand'}
+          className={ui.sheetHandle}
+          onClick={() => setExpanded((open) => !open)}
+          type="button"
+        />
+      )}
       <div className={ui.dialogHeader} {...swipeHandlers}>
         <h2>{title}</h2>
         <button

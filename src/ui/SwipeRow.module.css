@@ -1,0 +1,86 @@
+.row {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-small);
+}
+
+.actions {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  width: 136px;
+  visibility: hidden;
+}
+
+/* The actions and an opaque row only while the row is dragged or open, so a resting row
+   keeps the card's own background. */
+.row[data-active] .actions {
+  visibility: visible;
+}
+
+.row[data-active] .front.front {
+  background: var(--surface);
+}
+
+.edit,
+.delete {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  padding: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 650;
+  border: 0;
+  cursor: pointer;
+}
+
+.edit {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+.delete {
+  color: #fff;
+  background: var(--danger-strong, #b3261e);
+}
+
+.front {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 54px;
+  padding: 6px 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  border: 0;
+  cursor: pointer;
+  /* Up and down scroll the page; sideways belongs to the row. */
+  touch-action: pan-y;
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.front[data-dragging] {
+  transition: none;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .front {
+    transition: none;
+  }
+}

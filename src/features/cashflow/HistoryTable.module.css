@@ -38,8 +38,8 @@
 .entryTitle > span svg {
   box-sizing: content-box;
   padding: 9px;
-  color: var(--accent);
-  background: var(--surface-sunken);
+  color: var(--cat, var(--accent));
+  background: color-mix(in srgb, var(--cat, var(--accent)) 16%, var(--surface-sunken));
   border-radius: 12px;
 }
 
