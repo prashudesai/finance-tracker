@@ -37,6 +37,7 @@ import { Metric } from '../../ui/Stat';
 import { scrollToSection } from '../../ui/scroll';
 import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
+import styles from './InvestmentsPage.module.css';
 import { MixNudge } from '../mix/MixNudge';
 import { CategoryDialog } from './HoldingActions';
 import { HoldingForm } from './HoldingForm';
@@ -308,26 +309,36 @@ export function InvestmentsPage() {
         subtitle="Track your portfolio, retirement accounts, contributions and returns."
         title="Wealth"
       />
-      <WealthNav chips={false} section={section} />
-      <section className={ui.card}>
-        <div>
-          <h2>Asset allocation</h2>
-          <div className={ui.caption}>
-            {formatMoney(invested)} invested · {formatMoney(monthly)} a month · excludes gratuity
-          </div>
+      {/* On wide screens: allocation on the left, what you own and the mix tips beside it. */}
+      <div className={styles.top}>
+        <div className={styles.hero}>
+          <WealthNav chips={false} section={section} />
         </div>
-        {categories.length === 0 ? (
-          <p className={ui.empty}>No holdings yet.</p>
-        ) : (
-          <Donut
-            centerLabel="Portfolio"
-            centerValue={formatMoney(current)}
-            segments={categories.map((row) => ({ label: row.name, value: row.current }))}
-            title="Asset allocation"
-          />
-        )}
-      </section>
-      <MixNudge />
+        <div className={styles.allocation}>
+          <section className={ui.card}>
+            <div>
+              <h2>Asset allocation</h2>
+              <div className={ui.caption}>
+                {formatMoney(invested)} invested · {formatMoney(monthly)} a month · excludes
+                gratuity
+              </div>
+            </div>
+            {categories.length === 0 ? (
+              <p className={ui.empty}>No holdings yet.</p>
+            ) : (
+              <Donut
+                centerLabel="Portfolio"
+                centerValue={formatMoney(current)}
+                segments={categories.map((row) => ({ label: row.name, value: row.current }))}
+                title="Asset allocation"
+              />
+            )}
+          </section>
+        </div>
+        <div className={styles.nudge}>
+          <MixNudge />
+        </div>
+      </div>
       <WealthChips
         onSection={(next) => {
           setSection(next);

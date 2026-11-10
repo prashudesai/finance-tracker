@@ -19,7 +19,7 @@
 
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 10px;
   margin: 0;
   padding: 0;
@@ -326,4 +326,38 @@
 .setupText span {
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.pair {
+  display: contents;
+}
+
+@media (min-width: 1000px) {
+  .pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space);
+    align-items: stretch;
+  }
+
+  /* Each half fills its row: heading, then its card taking the rest. */
+  .pair > section {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .pair > section > :last-child {
+    height: 100%;
+  }
+}
+
+/* Wide screens: the shortcuts side by side rather than stacked. */
+@media (min-width: 1000px) {
+  .shortcuts.shortcuts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
+  }
+
+  .shortcuts .shortcut {
+    border-top: 0;
+  }
 }

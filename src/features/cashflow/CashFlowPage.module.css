@@ -79,3 +79,25 @@
   color: var(--muted);
   font-size: 0.88rem;
 }
+
+/* The balance beside what is coming up and the statement import, on wide screens. */
+.top,
+.side {
+  display: contents;
+}
+
+@media (min-width: 1000px) {
+  .top {
+    display: grid;
+    grid-template-columns: minmax(0, 8fr) minmax(0, 5fr);
+    gap: var(--space);
+    align-items: stretch;
+  }
+
+  .side {
+    display: grid;
+    gap: var(--space);
+    align-content: start;
+    min-width: 0;
+  }
+}

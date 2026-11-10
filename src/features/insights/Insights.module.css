@@ -323,6 +323,7 @@ details[open] > .summary .preview {
   display: grid;
   gap: 10px;
   min-width: 0;
+  container-type: inline-size;
 }
 
 .todayHead {
@@ -408,4 +409,14 @@ details[open] > .summary .preview {
   line-height: 1.3;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
+
+/* With room, today's picks lay out as a grid, five across, rather than a strip cut off at
+   the edge. */
+@container (min-width: 820px) {
+  .strip {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: visible;
+  }
 }

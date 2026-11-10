@@ -84,8 +84,10 @@ export function MixPage() {
 
   return (
     <div className={styles.page}>
-      <MixHero review={review} />
-      <MixBars review={review} />
+      <div className={styles.top}>
+        <MixHero review={review} />
+        <MixBars review={review} />
+      </div>
 
       <section aria-labelledby="mix-tips" className={styles.section}>
         <h2 className={styles.heading} id="mix-tips">

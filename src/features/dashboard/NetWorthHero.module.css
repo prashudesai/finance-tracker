@@ -123,3 +123,27 @@
   stroke-dasharray: 3 3;
   stroke-width: 1;
 }
+
+/* What net worth is made of: owned on one side, owed on the other. */
+.split {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+.split a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.split a:hover {
+  color: var(--text);
+}
+
+.split strong {
+  margin-left: 4px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}

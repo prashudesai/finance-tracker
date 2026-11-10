@@ -253,41 +253,46 @@ export function CashFlowPage() {
           Review this month
         </button>
       ) : null}
-      {/* One card: the balance, then where the month's money went. */}
-      <MonthFlow
-        current={current}
-        earliest={months.at(-1) ?? current}
-        explainer={<BalanceExplainer />}
-        flow={(open) => (
-          <MoneyFlowChart
-            balanceNote={<BalanceNote />}
-            bare
-            collapsed={!open}
-            flow={moneyFlow(data, month, { unrecorded, invested })}
-            month={month}
-          />
-        )}
-        income={totals.income}
-        invested={invested}
-        month={month}
-        onMonth={setMonth}
-        repaid={repaid}
-        spent={recordedSpending}
-        picker={phone}
-        stepper={false}
-        unrecorded={unrecorded}
-      />
-      <Commitments open={quickAdd?.commitments === true} />
-      <button className={styles.importCard} onClick={() => setAdding('import')} type="button">
-        <span aria-hidden="true" className={styles.importIcon}>
-          <FileUp size={18} />
-        </span>
-        <span className={styles.importText}>
-          <strong>Import a bank statement</strong>
-          <span>CSV or PDF, sorted into income and spending for you to check</span>
-        </span>
-        <ChevronRight aria-hidden="true" size={18} />
-      </button>
+      {/* On wide screens the balance sits beside what is coming up and the statement import. */}
+      <div className={styles.top}>
+        {/* One card: the balance, then where the month's money went. */}
+        <MonthFlow
+          current={current}
+          earliest={months.at(-1) ?? current}
+          explainer={<BalanceExplainer />}
+          flow={(open) => (
+            <MoneyFlowChart
+              balanceNote={<BalanceNote />}
+              bare
+              collapsed={!open}
+              flow={moneyFlow(data, month, { unrecorded, invested })}
+              month={month}
+            />
+          )}
+          income={totals.income}
+          invested={invested}
+          month={month}
+          onMonth={setMonth}
+          repaid={repaid}
+          spent={recordedSpending}
+          picker={phone}
+          stepper={false}
+          unrecorded={unrecorded}
+        />
+        <div className={styles.side}>
+          <Commitments open={quickAdd?.commitments === true} />
+          <button className={styles.importCard} onClick={() => setAdding('import')} type="button">
+            <span aria-hidden="true" className={styles.importIcon}>
+              <FileUp size={18} />
+            </span>
+            <span className={styles.importText}>
+              <strong>Import a bank statement</strong>
+              <span>CSV or PDF, sorted into income and spending for you to check</span>
+            </span>
+            <ChevronRight aria-hidden="true" size={18} />
+          </button>
+        </div>
+      </div>
       {phone ? null : (
         <div className={ui.twoColumn}>
           <section className={ui.card}>

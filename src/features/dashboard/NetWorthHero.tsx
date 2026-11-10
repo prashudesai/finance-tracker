@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { netWorth, netWorthHistory } from '../../domain/analytics';
 import type { TrackerData } from '../../data/repository';
-import { formatMoney, formatMonth, formatPercent } from '../../ui/format';
+import { formatAmount, formatMoney, formatMonth, formatPercent } from '../../ui/format';
 import { useCountUp } from '../../ui/useCountUp';
 import ui from '../../ui/ui.module.css';
 import styles from './NetWorthHero.module.css';
@@ -118,6 +118,16 @@ export function NetWorthHero({ data, today }: { data: TrackerData; today: string
           </span>
         </div>
       ) : null}
+      {point ? null : (
+        <div className={styles.split}>
+          <Link to="/investments">
+            You own <strong>{formatAmount(worth.assets)}</strong>
+          </Link>
+          <Link to="/debts">
+            You owe <strong>{formatAmount(worth.debts)}</strong>
+          </Link>
+        </div>
+      )}
       <div className={styles.chart} ref={box}>
         {values.length >= 2 ? (
           <Link

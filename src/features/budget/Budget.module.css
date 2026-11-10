@@ -352,3 +352,26 @@
   composes: monthChip;
   padding: 0 14px;
 }
+
+/* The total beside the starter plan and what's due soon, on wide screens. */
+.top,
+.topAlone,
+.side {
+  display: contents;
+}
+
+@media (min-width: 1000px) {
+  .top {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: var(--space);
+    align-items: stretch;
+  }
+
+  .side {
+    display: grid;
+    gap: var(--space);
+    align-content: start;
+    min-width: 0;
+  }
+}

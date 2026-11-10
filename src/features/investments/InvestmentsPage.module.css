@@ -1,0 +1,39 @@
+/* Wealth's top: one column on phones; allocation beside what you own and the mix tips on wide screens. */
+.top,
+.hero,
+.allocation,
+.nudge {
+  display: contents;
+}
+
+@media (min-width: 1000px) {
+  .top {
+    display: grid;
+    grid-template-areas:
+      'allocation hero'
+      'allocation nudge';
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-rows: auto 1fr;
+    gap: var(--space);
+  }
+
+  .hero,
+  .allocation,
+  .nudge {
+    display: grid;
+    min-width: 0;
+  }
+
+  .hero {
+    grid-area: hero;
+  }
+
+  .allocation {
+    grid-area: allocation;
+  }
+
+  .nudge {
+    grid-area: nudge;
+    align-content: start;
+  }
+}

@@ -113,3 +113,44 @@
   height: 34px;
   border-color: transparent;
 }
+
+/* Home's sections: one column on phones, a 12-column grid on wide screens. */
+.homeGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space);
+  min-width: 0;
+}
+
+.cell {
+  display: grid;
+  gap: var(--space);
+  min-width: 0;
+}
+
+/* A cell's card fills its row, so side-by-side cards line up top and bottom. */
+.cell > * {
+  min-width: 0;
+}
+
+@media (min-width: 1000px) {
+  .homeGrid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .cell {
+    grid-column: span var(--span, 12);
+  }
+
+  /* Side by side, a section fills its row: its heading, then its card taking the rest. */
+  .cell > section {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
+  }
+
+  .cell > section > :last-child {
+    height: 100%;
+  }
+}

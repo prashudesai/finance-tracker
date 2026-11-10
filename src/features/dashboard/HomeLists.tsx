@@ -51,24 +51,30 @@ export function ComingUp({ data, today }: { data: TrackerData; today: string }) 
     .slice(0, SHOWN);
   if (rows.length === 0) return null;
   return (
-    <section aria-labelledby="coming-up" className={styles.section}>
+    <section aria-labelledby="coming-up" className={`${styles.section} ${styles.comingUp}`}>
       <div className={styles.sectionHead}>
         <h2 id="coming-up">Coming up</h2>
         <Link className={ui.textLink} state={{ commitments: true }} to="/cash-flow">
           Next 30 days ›
         </Link>
       </div>
-      <ul className={styles.strip}>
-        {rows.map((row) => (
-          <li key={row.key}>
-            <Link className={styles.bill} state={row.state} to={row.to}>
-              <span className={styles.billWhen}>{row.when}</span>
-              <strong className={styles.billName}>{row.name}</strong>
-              <span className={styles.billAmount}>{formatMoney(row.amount)}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <div className={styles.billCard}>
+        <ul className={styles.strip}>
+          {rows.map((row) => (
+            <li key={row.key}>
+              <Link className={styles.bill} state={row.state} to={row.to}>
+                <span className={styles.billWhen}>{row.when}</span>
+                <strong className={styles.billName}>{row.name}</strong>
+                <span className={styles.billAmount}>{formatMoney(row.amount)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p className={styles.billTotal}>
+          <span>{rows.length} due in the next 30 days</span>
+          <strong>{formatMoney(rows.reduce((sum, row) => sum + row.amount, 0))}</strong>
+        </p>
+      </div>
     </section>
   );
 }
@@ -103,10 +109,11 @@ export function RecentEntries({ data }: { data: TrackerData }) {
       })),
   ]
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
-    .slice(0, 3);
+    // Five, of which phones show three; wide screens have room for all five.
+    .slice(0, 5);
   if (rows.length === 0) return null;
   return (
-    <section aria-labelledby="recent" className={styles.section}>
+    <section aria-labelledby="recent" className={`${styles.section} ${styles.recentSection}`}>
       <div className={styles.sectionHead}>
         <h2 id="recent">Recent</h2>
         <Link className={ui.textLink} to="/cash-flow">

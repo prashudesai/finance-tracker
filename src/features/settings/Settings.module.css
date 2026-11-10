@@ -167,3 +167,17 @@ li + li .row::before {
 .chevron {
   color: var(--muted);
 }
+
+/* Wide screens: the groups in two columns, with the heading, profile and sign out across both. */
+@media (min-width: 1000px) {
+  .page.page {
+    max-width: 1040px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .page > :not(.group) {
+    grid-column: 1 / -1;
+  }
+}

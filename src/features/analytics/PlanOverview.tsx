@@ -129,56 +129,59 @@ export function PlanOverview() {
         )}
       </section>
 
-      <section aria-labelledby="plan-budget" className={styles.section}>
-        <div className={styles.head}>
-          <h2 id="plan-budget">Yearly budget</h2>
-          <Link className={ui.textLink} to="/analytics/budget">
-            {financialYearLabel(fy)} ›
-          </Link>
-        </div>
-        {progress ? (
-          <Link className={`${ui.card} ${styles.budget}`} to="/analytics/budget">
-            <span className={styles.budgetLine}>
-              <span>
-                {formatMoney(progress.spent)} of {formatMoney(progress.due)} due so far
+      {/* Side by side on wide screens: this year's budget and where investments are heading. */}
+      <div className={styles.pair}>
+        <section aria-labelledby="plan-budget" className={styles.section}>
+          <div className={styles.head}>
+            <h2 id="plan-budget">Yearly budget</h2>
+            <Link className={ui.textLink} to="/analytics/budget">
+              {financialYearLabel(fy)} ›
+            </Link>
+          </div>
+          {progress ? (
+            <Link className={`${ui.card} ${styles.budget}`} to="/analytics/budget">
+              <span className={styles.budgetLine}>
+                <span>
+                  {formatMoney(progress.spent)} of {formatMoney(progress.due)} due so far
+                </span>
+                <strong data-over={pace > 0 || undefined}>
+                  {pace > 0 ? `${formatMoney(pace)} over` : pace < 0 ? 'Under plan' : 'On plan'}
+                </strong>
               </span>
-              <strong data-over={pace > 0 || undefined}>
-                {pace > 0 ? `${formatMoney(pace)} over` : pace < 0 ? 'Under plan' : 'On plan'}
-              </strong>
-            </span>
-            <span className={styles.bar}>
-              <i
-                data-over={pace > 0 || undefined}
-                style={{
-                  width: `${progress.due > 0 ? Math.min(1, progress.spent / progress.due) * 100 : 0}%`,
-                }}
-              />
-            </span>
-            {progress.upcoming.length > 0 ? (
-              <small className={ui.caption}>
-                Next: {progress.upcoming.map((row) => row.line.name).join(', ')}
-              </small>
-            ) : null}
-          </Link>
-        ) : (
-          <Link className={styles.setup} to="/analytics/budget">
-            <span aria-hidden="true" className={styles.setupIcon}>
-              <PiggyBank size={18} />
-            </span>
-            <span className={styles.setupText}>
-              <strong>Set up this year's budget</strong>
-              <span>From rent to school fees, filled in from your last 12 months</span>
-            </span>
-            <ChevronRight aria-hidden="true" size={18} />
-          </Link>
-        )}
-      </section>
+              <span className={styles.bar}>
+                <i
+                  data-over={pace > 0 || undefined}
+                  style={{
+                    width: `${progress.due > 0 ? Math.min(1, progress.spent / progress.due) * 100 : 0}%`,
+                  }}
+                />
+              </span>
+              {progress.upcoming.length > 0 ? (
+                <small className={ui.caption}>
+                  Next: {progress.upcoming.map((row) => row.line.name).join(', ')}
+                </small>
+              ) : null}
+            </Link>
+          ) : (
+            <Link className={styles.setup} to="/analytics/budget">
+              <span aria-hidden="true" className={styles.setupIcon}>
+                <PiggyBank size={18} />
+              </span>
+              <span className={styles.setupText}>
+                <strong>Set up this year's budget</strong>
+                <span>From rent to school fees, filled in from your last 12 months</span>
+              </span>
+              <ChevronRight aria-hidden="true" size={18} />
+            </Link>
+          )}
+        </section>
 
-      {projection.results ? (
-        <Part>
-          <GrowthPreview results={projection.results} years={projection.years} />
-        </Part>
-      ) : null}
+        {projection.results ? (
+          <Part>
+            <GrowthPreview results={projection.results} years={projection.years} />
+          </Part>
+        ) : null}
+      </div>
 
       <section aria-label="More plans" className={`${ui.card} ${styles.shortcuts}`}>
         <Shortcut

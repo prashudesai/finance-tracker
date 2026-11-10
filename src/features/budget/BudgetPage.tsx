@@ -119,117 +119,124 @@ export function BudgetPage() {
   const percentOf = (amount: number) =>
     progress.income > 0 ? `${Math.round((amount / progress.income) * 100)}%` : '';
 
+  // A side column beside the total on wide screens, when there's something to put in it.
+  const hasSide = !saved || progress.upcoming.length > 0;
+
   return (
     <>
-      <section aria-labelledby="budget-total" className={ui.hero}>
-        <div className={styles.heroTop}>
-          <span className={ui.eyebrow} id="budget-total">
-            Planned for {financialYearLabel(fy)}
-          </span>
-          <select
-            aria-label="Financial year"
-            onChange={(event) => {
-              setFy(Number(event.target.value));
-              setMonth(null);
-            }}
-            value={fy}
-          >
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {financialYearLabel(year)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <p className={ui.heroValue}>{formatMoney(progress.total)}</p>
-        <p className={styles.heroLine}>
-          Set aside <strong>{formatMoney(progress.setAside)}</strong> a month to cover it.
-        </p>
-        {current || fy < thisYear ? (
-          <>
-            <div className={styles.pace}>
-              <div
-                aria-label={`Spent ${formatMoney(progress.spent)} of ${formatMoney(progress.total)}`}
-                className={ui.meter}
-                role="img"
-              >
-                <div
-                  className={ui.meterFill}
-                  style={{ width: share(progress.spent, progress.total) }}
-                />
-              </div>
-              {current ? (
-                <span
-                  aria-hidden="true"
-                  className={styles.paceMark}
-                  style={{ left: share(progress.due, progress.total) }}
-                />
-              ) : null}
-            </div>
-            <div className={ui.meterLegend}>
-              <span>Spent {formatMoney(progress.spent)}</span>
-              {current ? <span>Due by now {formatMoney(progress.due)}</span> : null}
-            </div>
-            {current && progress.due > 0 ? (
-              <p className={`${styles.paceText} ${pace > 0 ? styles.over : ''}`}>
-                {pace > 0
-                  ? `${formatMoney(pace)} ahead of plan so far.`
-                  : pace < 0
-                    ? `${formatMoney(-pace)} under plan so far.`
-                    : 'Right on plan so far.'}
-              </p>
-            ) : null}
-          </>
-        ) : null}
-        {progress.outside > 0 ? (
-          <p className={ui.caption}>
-            {formatMoney(progress.outside)} spent this year in categories no line counts.
-          </p>
-        ) : null}
-      </section>
-
       {error ? (
         <p className={ui.notice} role="alert">
           {error}
         </p>
       ) : null}
 
-      {saved ? null : (
-        <section className={ui.card}>
-          <div className={ui.cardHeader}>
-            <h2 className={ui.cardTitle}>
-              <Sparkles aria-hidden="true" size={18} /> A plan to start from
-            </h2>
+      <div className={hasSide ? styles.top : styles.topAlone}>
+        <section aria-labelledby="budget-total" className={ui.hero}>
+          <div className={styles.heroTop}>
+            <span className={ui.eyebrow} id="budget-total">
+              Planned for {financialYearLabel(fy)}
+            </span>
+            <select
+              aria-label="Financial year"
+              onChange={(event) => {
+                setFy(Number(event.target.value));
+                setMonth(null);
+              }}
+              value={fy}
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {financialYearLabel(year)}
+                </option>
+              ))}
+            </select>
           </div>
-          <p className={ui.caption}>
-            Amounts come from your last twelve months of spending, where a category belongs to one
-            line. Change anything below, or keep it as it is.
+          <p className={ui.heroValue}>{formatMoney(progress.total)}</p>
+          <p className={styles.heroLine}>
+            Set aside <strong>{formatMoney(progress.setAside)}</strong> a month to cover it.
           </p>
-          <div className={ui.actions}>
-            <button className={ui.button} onClick={() => save(budget)} type="button">
-              Save this plan
-            </button>
-          </div>
+          {current || fy < thisYear ? (
+            <>
+              <div className={styles.pace}>
+                <div
+                  aria-label={`Spent ${formatMoney(progress.spent)} of ${formatMoney(progress.total)}`}
+                  className={ui.meter}
+                  role="img"
+                >
+                  <div
+                    className={ui.meterFill}
+                    style={{ width: share(progress.spent, progress.total) }}
+                  />
+                </div>
+                {current ? (
+                  <span
+                    aria-hidden="true"
+                    className={styles.paceMark}
+                    style={{ left: share(progress.due, progress.total) }}
+                  />
+                ) : null}
+              </div>
+              <div className={ui.meterLegend}>
+                <span>Spent {formatMoney(progress.spent)}</span>
+                {current ? <span>Due by now {formatMoney(progress.due)}</span> : null}
+              </div>
+              {current && progress.due > 0 ? (
+                <p className={`${styles.paceText} ${pace > 0 ? styles.over : ''}`}>
+                  {pace > 0
+                    ? `${formatMoney(pace)} ahead of plan so far.`
+                    : pace < 0
+                      ? `${formatMoney(-pace)} under plan so far.`
+                      : 'Right on plan so far.'}
+                </p>
+              ) : null}
+            </>
+          ) : null}
+          {progress.outside > 0 ? (
+            <p className={ui.caption}>
+              {formatMoney(progress.outside)} spent this year in categories no line counts.
+            </p>
+          ) : null}
         </section>
-      )}
 
-      {progress.upcoming.length > 0 ? (
-        <section aria-labelledby="budget-soon" className={ui.card}>
-          <h2 className={ui.cardTitle} id="budget-soon">
-            <CalendarClock aria-hidden="true" size={18} /> Due soon
-          </h2>
-          <ul className={styles.upcoming}>
-            {progress.upcoming.map((row) => (
-              <li key={`${row.line.id}-${row.month}`}>
-                <span>
-                  {row.line.name}, {formatMonth(row.month)}
-                </span>
-                <strong>{formatMoney(row.amount)}</strong>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+        <div className={styles.side}>
+          {saved ? null : (
+            <section className={ui.card}>
+              <div className={ui.cardHeader}>
+                <h2 className={ui.cardTitle}>
+                  <Sparkles aria-hidden="true" size={18} /> A plan to start from
+                </h2>
+              </div>
+              <p className={ui.caption}>
+                Amounts come from your last twelve months of spending, where a category belongs to
+                one line. Change anything below, or keep it as it is.
+              </p>
+              <div className={ui.actions}>
+                <button className={ui.button} onClick={() => save(budget)} type="button">
+                  Save this plan
+                </button>
+              </div>
+            </section>
+          )}
+
+          {progress.upcoming.length > 0 ? (
+            <section aria-labelledby="budget-soon" className={ui.card}>
+              <h2 className={ui.cardTitle} id="budget-soon">
+                <CalendarClock aria-hidden="true" size={18} /> Due soon
+              </h2>
+              <ul className={styles.upcoming}>
+                {progress.upcoming.map((row) => (
+                  <li key={`${row.line.id}-${row.month}`}>
+                    <span>
+                      {row.line.name}, {formatMonth(row.month)}
+                    </span>
+                    <strong>{formatMoney(row.amount)}</strong>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </div>
+      </div>
 
       <div className={ui.columns}>
         <section aria-labelledby="budget-months" className={ui.card}>

@@ -1,9 +1,8 @@
 import { ArrowDown, ArrowUp, LayoutGrid } from 'lucide-react';
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
 import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
 import styles from './Dashboard.module.css';
-import homeStyles from './Home.module.css';
 
 export const HOME_SECTIONS = [
   'netWorth',
@@ -32,6 +31,36 @@ const LABELS: Record<HomeSection, string> = {
 
 const KEY = 'homeSections';
 
+/**
+ * Sections that sit side by side on wide screens when they come one after the other, and the
+ * share of 12 columns each takes. Anything else spans the full width.
+ */
+const PAIRS: [HomeSection, number, HomeSection, number][] = [
+  ['netWorth', 7, 'month', 5],
+  ['comingUp', 5, 'recent', 7],
+  ['income', 6, 'portfolio', 6],
+  ['insights', 7, 'goals', 5],
+];
+
+function gridSpans(visible: HomeSection[]) {
+  const spans = new Map<HomeSection, number>();
+  for (let index = 0; index < visible.length; index++) {
+    const key = visible[index];
+    const next = visible[index + 1];
+    if (!key) continue;
+    const pair = next
+      ? PAIRS.find(([a, , b]) => (a === key && b === next) || (b === key && a === next))
+      : undefined;
+    if (pair && next) {
+      const [a, aSpan, , bSpan] = pair;
+      spans.set(key, key === a ? aSpan : bSpan);
+      spans.set(next, next === a ? aSpan : bSpan);
+      index += 1;
+    } else spans.set(key, 12);
+  }
+  return spans;
+}
+
 interface Layout {
   order: HomeSection[];
   hidden: HomeSection[];
@@ -58,29 +87,29 @@ function savedLayout(): Layout {
 }
 
 /**
- * Home's sections in the order each person chooses, with any hidden, kept on this device. On
- * phones they follow the chosen order; wide screens keep their two columns and hide the ones
- * switched off. Prompts such as the monthly recap come after the first two of your own figures.
+ * Home's sections in the order each person chooses, with any hidden, kept on this device. One
+ * column on phones; on wide screens a 12-column grid where neighbours that belong together
+ * share a row. Prompts such as the monthly recap come after the first row of your own figures.
  */
 export function HomeSections({
   greeting,
+  attention,
   intro,
   sections,
   prompts,
-  phone,
 }: {
   /** The page's heading, with Arrange Home beside it. */
   greeting: ReactNode;
+  /** What needs attention, under the heading. */
+  attention: ReactNode;
   /** Shown under the heading before any section, such as quick setup. */
   intro: ReactNode;
   sections: Record<HomeSection, ReactNode>;
   prompts: ReactNode;
-  phone: boolean;
 }) {
   const [layout, setLayout] = useState(savedLayout);
   const [arranging, setArranging] = useState(false);
   const shown = (key: HomeSection) => !layout.hidden.includes(key);
-  const pick = (key: HomeSection) => (shown(key) ? sections[key] : null);
 
   const save = (next: Layout) => {
     setLayout(next);
@@ -104,37 +133,24 @@ export function HomeSections({
     });
 
   const visible = layout.order.filter(shown);
-  const content = phone ? (
-    visible.map((key, index) => (
-      <Fragment key={key}>
-        {sections[key]}
-        {index === Math.min(1, visible.length - 1) ? prompts : null}
-      </Fragment>
-    ))
-  ) : (
-    <>
-      {/* One column on phones; on wide screens, net worth beside this month. */}
-      <div className={homeStyles.layout}>
-        {shown('netWorth') ? <div className={homeStyles.column}>{sections.netWorth}</div> : null}
-        <div className={homeStyles.column}>
-          {pick('month')}
-          {pick('insights')}
-          {pick('comingUp')}
-          {pick('recent')}
-        </div>
-      </div>
-      {/* Prompts come after your own figures, never before them. */}
-      {prompts}
-      {pick('goals')}
-      {/* Side by side on wide screens, half and half. */}
-      {shown('income') || shown('portfolio') ? (
-        <div className={styles.pair}>
-          {pick('income')}
-          {pick('portfolio')}
-        </div>
-      ) : null}
-      {pick('debts')}
-    </>
+  const spans = gridSpans(visible);
+  // Prompts such as the monthly recap come after the first row of your own figures.
+  const firstRow = spans.get(visible[0] ?? 'netWorth') === 12 ? 1 : 2;
+  const content = (
+    <div className={styles.homeGrid}>
+      {visible.map((key, index) => (
+        <Fragment key={key}>
+          <div className={styles.cell} style={{ '--span': spans.get(key) ?? 12 } as CSSProperties}>
+            {sections[key]}
+          </div>
+          {index === Math.min(firstRow, visible.length) - 1 ? (
+            <div className={styles.cell} style={{ '--span': 12 } as CSSProperties}>
+              {prompts}
+            </div>
+          ) : null}
+        </Fragment>
+      ))}
+    </div>
   );
 
   return (
@@ -151,15 +167,14 @@ export function HomeSections({
           <LayoutGrid aria-hidden="true" size={18} />
         </button>
       </div>
+      {attention}
       {intro}
       {content}
       {arranging ? (
         <Modal onClose={() => setArranging(false)} title="Arrange Home">
           <p className={ui.caption}>
-            Choose what Home shows{phone ? ' and in what order' : ''}. Kept on this device.
-            {phone
-              ? ''
-              : ' On wide screens Home keeps its two columns; the order applies on phones.'}
+            Choose what Home shows and in what order. Kept on this device. On wide screens,
+            neighbours such as net worth and this month sit side by side.
           </p>
           <ol className={styles.arrangeList}>
             {layout.order.map((key, index) => (
