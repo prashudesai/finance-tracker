@@ -1,7 +1,11 @@
 {
-  "version": "1.36.0",
+  "version": "1.37.0",
   "released": "2026-11-10",
   "notes": [
+    "Import a bank statement from Money, as CSV or PDF, including password-locked PDFs, read on your phone and never uploaded",
+    "Every row is read or listed with the reason it couldn't be, and amounts are checked against the statement's running balance",
+    "Anything already recorded is left out, and card bills, loan EMIs, investments, own transfers, cash withdrawals and refunds are left out to begin with, with the reason shown",
+    "Categories follow what you chose for the same payee before; choosing one for a payee sets the rest from them",
     "Portfolio mix, in Planning › Insights: what your investments are made of, against a common guide for your age, with tips to balance it",
     "Tips cover too much or too little in the market, no gold, one investment carrying too much, high-yield bonds, a short emergency fund, steady income near retirement and money locked till retirement",
     "Each tip suggests options to look at, such as listed bonds, government bonds, debt funds, gold ETFs, REITs, Post Office and senior citizens' schemes, with returns, risk, minimums and cautions",
@@ -9,10 +13,6 @@
     "Investments links to your mix with its top tip",
     "Goal planning opens with your plan at a glance: the extra needed a month, goals on track, what's set aside and retirement, then tabs for Goals and Retirement",
     "Goals show as cards with a progress bar and the next step, and each goal's details open full screen with its figures as cards",
-    "Retirement leads with when your money runs out, a timeline of working, retired and any years not covered, ways to close a gap as cards, and one chart at a time",
-    "Your assumptions are grouped into You, Spending, Investing and After you retire, with the key numbers shown when folded",
-    "Set each investment: each shows what it does after you retire, and opens to edit with a plain explanation, how it pays, then the amount",
-    "The bottom tab bar is solid, and content fades out above it instead of showing through",
-    "Payouts that vary, such as a profit share or dividends, can be set up with just how often they come; Home asks for the amount each time, and it's added to income and counted in returns"
+    "Retirement leads with when your money runs out, a timeline of working, retired and any years not covered, ways to close a gap as cards, and one chart at a time"
   ]
 }

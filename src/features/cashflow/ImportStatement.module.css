@@ -1,0 +1,293 @@
+.pick,
+.review {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.drop {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 28px 16px;
+  color: var(--text);
+  text-align: center;
+  background: var(--surface-sunken);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 140ms ease;
+}
+
+.drop:hover,
+.drop:focus-within {
+  border-color: var(--accent);
+}
+
+.drop svg {
+  color: var(--accent);
+}
+
+.drop span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.error {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 12px;
+  color: var(--text);
+  background: var(--danger-soft);
+  border-radius: var(--radius-small);
+}
+
+.error svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--danger);
+}
+
+.lockNote {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px;
+  background: var(--accent-soft);
+  border-radius: var(--radius-small);
+}
+
+.lockNote svg {
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.lockNote p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.checks {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.done {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.doneIcon {
+  color: var(--accent);
+}
+
+/* Review. */
+.summary {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.summaryHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.summaryHead > div {
+  display: grid;
+  min-width: 0;
+}
+
+.summaryHead strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summaryHead svg {
+  color: var(--accent);
+}
+
+.checklist {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.checklist > li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.checklist > li::before {
+  position: absolute;
+  top: 0.45em;
+  left: 2px;
+  width: 8px;
+  height: 8px;
+  background: var(--muted);
+  border-radius: 50%;
+  content: '';
+}
+
+.checklist > li[data-tone='good']::before {
+  background: var(--gain);
+}
+
+.checklist > li[data-tone='watch']::before {
+  background: var(--debt);
+}
+
+.checklist summary {
+  cursor: pointer;
+}
+
+.problems {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.problems li {
+  display: grid;
+  gap: 2px;
+}
+
+.problems span {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.owner {
+  display: grid;
+  gap: 8px;
+}
+
+.note {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.88rem;
+}
+
+.rows {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.row[data-included='false'] {
+  background: var(--surface-sunken);
+}
+
+.row[data-included='false'] .desc,
+.row[data-included='false'] .amount {
+  color: var(--muted);
+}
+
+.tick {
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+.rowMain {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.desc {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.92rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.reason {
+  color: var(--warning-text);
+  font-size: 0.82rem;
+}
+
+.category.category {
+  justify-self: start;
+  width: auto;
+  max-width: 100%;
+  min-height: 34px;
+  margin-top: 2px;
+  padding-block: 4px;
+  font-size: 0.85rem;
+}
+
+.amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Stays in view at the bottom of the sheet. */
+.footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 -4px;
+  padding: 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.footer > span {
+  display: grid;
+}
+
+.footerTotals {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}

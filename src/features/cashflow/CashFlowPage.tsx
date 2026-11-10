@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { ChevronRight, FileUp, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import {
@@ -27,6 +27,7 @@ import { MoneyFlowChart } from './MoneyFlowChart';
 import { moneyFlow } from '../../domain/moneyFlow';
 import { ExpenseForm, IncomeForm } from './EntryForms';
 import { HistoryTable, type Column } from './HistoryTable';
+import { ImportStatement } from './ImportStatement';
 import { MonthlyBalances } from './MonthlyBalances';
 import { MonthReview } from './MonthReview';
 
@@ -102,7 +103,7 @@ export function CashFlowPage() {
   const [month, setMonth] = useState(current);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [adding, setAdding] = useState<'income' | 'expense' | null>(null);
+  const [adding, setAdding] = useState<'income' | 'expense' | 'import' | null>(null);
   const [history, setHistory] = useState<'income' | 'expense'>('income');
   const [reviewOpen, setReviewOpen] = useState(false);
   // A category filter for the month's expenses.
@@ -277,6 +278,16 @@ export function CashFlowPage() {
         unrecorded={unrecorded}
       />
       <Commitments open={quickAdd?.commitments === true} />
+      <button className={styles.importCard} onClick={() => setAdding('import')} type="button">
+        <span aria-hidden="true" className={styles.importIcon}>
+          <FileUp size={18} />
+        </span>
+        <span className={styles.importText}>
+          <strong>Import a bank statement</strong>
+          <span>CSV or PDF, sorted into income and spending for you to check</span>
+        </span>
+        <ChevronRight aria-hidden="true" size={18} />
+      </button>
       {phone ? null : (
         <div className={ui.twoColumn}>
           <section className={ui.card}>
@@ -414,6 +425,11 @@ export function CashFlowPage() {
       {adding === 'expense' ? (
         <Modal fullScreenOnPhone onClose={() => setAdding(null)} title="Add Expense">
           <ExpenseForm onDone={() => setAdding(null)} />
+        </Modal>
+      ) : null}
+      {adding === 'import' ? (
+        <Modal fullScreenOnPhone onClose={() => setAdding(null)} title="Import bank statement" wide>
+          <ImportStatement onDone={() => setAdding(null)} />
         </Modal>
       ) : null}
       {editingIncome ? (

@@ -146,8 +146,15 @@ export default defineConfig({
       workbox: {
         // App files only. Financial records stay in Firestore's own cache.
         globPatterns: ['**/*.{js,css,html,png,webp,woff2}'],
-        // Only needed by link previews, install pop-ups and iPhone launch, never offline.
-        globIgnores: ['og-image.png', 'screenshots/**', 'splash/**'],
+        // Only needed by link previews, install pop-ups and iPhone launch, never offline. The
+        // PDF reader loads only when a statement PDF is chosen, so installs don't carry it.
+        globIgnores: [
+          'og-image.png',
+          'screenshots/**',
+          'splash/**',
+          'assets/pdf-*.js',
+          'assets/pdf.worker*',
+        ],
         runtimeCaching: [],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,

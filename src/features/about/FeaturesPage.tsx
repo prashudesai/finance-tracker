@@ -18,6 +18,7 @@ const GROUPS: { title: string; icon: LucideIcon; items: string[] }[] = [
     icon: LayoutList,
     items: [
       'Income and expenses, with recurring payments',
+      'Import a bank statement, CSV or PDF, read privately on your phone: checked against its running balance, already-recorded entries left out, and categories learned from your choices',
       'Monthly balances and a month-end review',
       'Investments, PMS, PF, PPF, NPS and gratuity',
       'Automatic monthly contributions to your investments',
@@ -45,6 +46,7 @@ const GROUPS: { title: string; icon: LucideIcon; items: string[] }[] = [
       'Goals for education, a house, retirement and more, funded from your investments, with what to add each month to stay on track',
       'A retirement planner: your fund at retirement, how long it lasts as expenses rise, and what to change if it falls short',
       'Growth projections with stress, base and optimistic scenarios',
+      'Portfolio mix: what your investments are made of against a common guide for your age, with tips and options to balance it',
       'Planned changes to see their effect on your future',
       'Income analysis: salary against other income, raises, this year against last, who earns what, and where each ₹100 goes',
       'Date range reports, exported as PDF or CSV',
