@@ -27,7 +27,7 @@ function savedRange(): RangeKey {
 
 /** The chart's height; shorter on a phone, where Home's first screen is precious. */
 const TALL = 74;
-const SHORT = 52;
+const SHORT = 78;
 const PAD = 5;
 
 /**

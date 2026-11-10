@@ -1,7 +1,8 @@
 {
-  "version": "1.42.0",
+  "version": "1.42.1",
   "released": "2026-11-10",
   "notes": [
+    "On phones, net worth and this month are a little roomier, so Home's first screen ends with For you today",
     "A shorter net worth card, with its range beside the title, so For you today shows on Home's first screen",
     "Every page uses the same glow as Home, for a consistent look",
     "Home on wide screens is a balanced grid that follows your Arrange Home order, with related sections side by side",
@@ -12,7 +13,6 @@
     "On phones, slide a Money history row left to edit or delete it",
     "Each category has its own colour in history and recent entries",
     "Drag along the net worth line or across the income bars to read each month",
-    "Pop-ups on phones open part way and snap to full height from the handle, a drag up or scrolling",
-    "Sections rise in as a page opens, and Wealth's category cards grow into their page"
+    "Pop-ups on phones open part way and snap to full height from the handle, a drag up or scrolling"
   ]
 }

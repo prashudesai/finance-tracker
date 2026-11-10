@@ -158,6 +158,10 @@
 
 @media (max-width: 600px) {
   .hero.hero {
-    padding: 16px;
+    padding: 20px 18px;
+  }
+
+  .chart {
+    margin-top: 10px;
   }
 }

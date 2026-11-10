@@ -349,3 +349,16 @@
     display: block;
   }
 }
+
+/* Phones: a slightly larger ring and more room, so the month reads at a glance. */
+@media (max-width: 600px) {
+  .ring.ring {
+    grid-template-columns: 118px minmax(0, 1fr);
+    padding: 22px 18px;
+  }
+
+  .ringChart {
+    width: 118px;
+    height: 118px;
+  }
+}
