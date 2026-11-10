@@ -21,6 +21,7 @@ test.describe('every page', () => {
     '/debts',
     '/analytics',
     '/analytics/income',
+    '/analytics/mix',
     '/analytics/goals',
     '/analytics/budget',
     '/analytics/budget-actual',

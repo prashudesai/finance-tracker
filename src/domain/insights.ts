@@ -27,7 +27,7 @@ import {
   planGoal,
   portfolioInputs,
 } from './goals';
-import { holdingValue, latestValuation } from './holdings';
+import { holdingPosition, holdingValue, latestValuation } from './holdings';
 import {
   incomeByMember,
   incomeBySource,
@@ -37,6 +37,7 @@ import {
   yearOnYear,
 } from './income';
 import { estimateSchedule } from './loan';
+import { reviewMix, type Tip } from './portfolioMix';
 import { amountAt, upcomingCommitments } from './recurring';
 import { summarizeLoans } from './summary';
 
@@ -53,6 +54,8 @@ interface Base {
   tone: InsightTone;
   /** Higher shows first. */
   score: number;
+  /** Shown every day, ahead of the daily draw. */
+  daily?: boolean;
 }
 
 export type Insight = Base &
@@ -197,6 +200,15 @@ export type Insight = Base &
         value: number;
         retireDate: string;
         growth: number;
+      }
+    | {
+        kind: 'mixTip';
+        tip: Tip;
+        /** Shares of everything held, and the guide's share in the market. */
+        equity: number;
+        gold: number;
+        steady: number;
+        guide: number;
       }
     | {
         kind: 'biggest';
@@ -1075,6 +1087,47 @@ function per100(data: TrackerData, today: string): Insight | null {
   };
 }
 
+const MIX_TONES: Record<Tip['tone'], InsightTone> = {
+  act: 'watch',
+  consider: 'neutral',
+  good: 'good',
+};
+const MIX_SCORES: Record<Tip['tone'], number> = { act: 62, consider: 48, good: 22 };
+
+/**
+ * Tips on the portfolio's mix, from Portfolio mix: too much in the market, no gold, one
+ * holding carrying too much and the rest. The emergency fund is left to the bank balance
+ * insight, which says the same from the bank's side.
+ */
+function mixTips(data: TrackerData, today: string): Insight[] {
+  const settings = data.settings[0];
+  const rows = data.holdings.map((holding) => ({
+    holding,
+    position: holdingPosition(holding, data, today),
+  }));
+  const { tips, mix, guide } = reviewMix(rows, data, {
+    today,
+    ...(settings ? { settings } : {}),
+    ...(settings?.retirement?.birthDate ? { birthDate: settings.retirement.birthDate } : {}),
+    ...(settings?.retirement?.retireDate ? { retireDate: settings.retirement.retireDate } : {}),
+  });
+  return tips
+    .filter((tip) => tip.kind !== 'emergency')
+    .map((tip, index) => ({
+      id: `mix-${tip.kind}`,
+      kind: 'mixTip',
+      tone: MIX_TONES[tip.tone],
+      score: MIX_SCORES[tip.tone],
+      tip,
+      // The most pressing tip stays in today's list until it's dealt with; the rest take turns.
+      ...(index === 0 && tip.tone !== 'good' ? { daily: true } : {}),
+      equity: mix.share.equity,
+      gold: mix.share.gold,
+      steady: mix.share.debt + mix.share.cash + mix.share.realEstate,
+      guide: guide.equity,
+    }));
+}
+
 /** Every insight that applies today, most useful first. */
 export function insights(data: TrackerData, today: string): Insight[] {
   const lastMonth = previousMonth(today.slice(0, 7));
@@ -1113,6 +1166,7 @@ export function insights(data: TrackerData, today: string): Insight[] {
     dailyPace(data, today),
     noSpendDays(data, lastMonth),
     leftoverToRetirement(data, today),
+    ...mixTips(data, today),
   ]
     .filter((insight): insight is Insight => insight !== null)
     .sort((a, b) => b.score - a.score);
@@ -1132,12 +1186,14 @@ function dayHash(text: string) {
 }
 
 /**
- * Today's insights: anything that needs acting on first, then a draw from the rest that
- * favours the more useful ones but gives every one its turn. The same all day, on every
- * device, and different tomorrow.
+ * Today's insights: anything that needs acting on, and the most pressing portfolio tip, first,
+ * then a draw from the rest that favours the more useful ones but gives every one its turn.
+ * The same all day, on every device, and different tomorrow.
  */
 export function dailyInsights(all: Insight[], today: string, count = DAILY_INSIGHTS) {
-  const urgent = all.filter((insight) => insight.tone === 'watch' && insight.score >= 60);
+  const urgent = all.filter(
+    (insight) => insight.daily === true || (insight.tone === 'watch' && insight.score >= 60),
+  );
   const first = urgent.slice(0, count);
   const drawn = all
     .filter((insight) => !first.includes(insight))

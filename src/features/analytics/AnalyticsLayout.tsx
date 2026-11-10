@@ -22,6 +22,7 @@ const SECTIONS = [
     label: 'Insights',
     tabs: [
       { to: '/analytics', label: 'Analytics', end: true },
+      { to: '/analytics/mix', label: 'Portfolio mix', end: false },
       { to: '/analytics/income', label: 'Income', end: false },
       { to: '/analytics/budget-actual', label: 'Budget vs actual', end: false },
       { to: '/analytics/reports', label: 'Date range reports', end: false },
@@ -35,6 +36,12 @@ const HEADERS: Record<string, { eyebrow: string; title: string; subtitle: string
     title: 'Analytics',
     subtitle:
       'Explore your portfolio, monthly cash flow, debt progress and recorded activity in one place.',
+  },
+  '/analytics/mix': {
+    eyebrow: 'Insights',
+    title: 'Portfolio mix',
+    subtitle:
+      'What your investments are made of, how that compares with a common guide, and ways to balance it.',
   },
   '/analytics/income': {
     eyebrow: 'Insights',

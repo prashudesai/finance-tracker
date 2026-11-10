@@ -37,6 +37,7 @@ import { Metric } from '../../ui/Stat';
 import { scrollToSection } from '../../ui/scroll';
 import { useIsPhone } from '../../ui/useIsPhone';
 import ui from '../../ui/ui.module.css';
+import { MixNudge } from '../mix/MixNudge';
 import { CategoryDialog } from './HoldingActions';
 import { HoldingForm } from './HoldingForm';
 
@@ -326,6 +327,7 @@ export function InvestmentsPage() {
           />
         )}
       </section>
+      <MixNudge />
       <WealthChips
         onSection={(next) => {
           setSection(next);

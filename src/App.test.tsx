@@ -71,6 +71,7 @@ test.each([
   ['/debts', 'Wealth'],
   ['/analytics', 'Analytics'],
   ['/analytics/income', 'Income'],
+  ['/analytics/mix', 'Portfolio mix'],
   ['/analytics/projection', 'Growth projection'],
   ['/analytics/goals', 'Goal planning'],
   ['/analytics/reports', 'Date range reports'],
@@ -90,6 +91,7 @@ test.each([
   '/debts',
   '/analytics',
   '/analytics/income',
+  '/analytics/mix',
   '/analytics/projection',
   '/analytics/goals',
   '/analytics/reports',
@@ -1826,4 +1828,21 @@ test('the sign-in screen says what the app is, for people arriving from a shared
   expect(screen.getByRole('link', { name: /See what it does/ }).getAttribute('href')).toBe(
     '/features',
   );
+});
+
+test('Portfolio mix shows the mix, tips with options, and an option’s details', async () => {
+  renderApp('/analytics/mix', previewData());
+  await screen.findByRole('heading', { level: 1, name: 'Portfolio mix' });
+  expect((await screen.findAllByText(/in the market$/)).length).toBeGreaterThan(0);
+  expect(screen.getByRole('heading', { name: 'No gold in the mix' })).toBeDefined();
+  const [chip] = screen.getAllByRole('button', { name: /Gold ETFs and gold funds/ });
+  if (!chip) throw new Error('Expected a gold option');
+  fireEvent.click(chip);
+  const dialog = await screen.findByRole('dialog', { name: 'Gold ETFs and gold funds' });
+  expect(within(dialog).getByText(/taxed at 12.5%/)).toBeDefined();
+});
+
+test('Investments links to the tips for the mix', async () => {
+  renderApp('/investments', previewData());
+  expect(await screen.findByRole('link', { name: /tips? for your mix/ })).toBeDefined();
 });

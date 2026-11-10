@@ -510,3 +510,73 @@ describe('ten a day', () => {
     expect(seen.size).toBe(30);
   });
 });
+
+describe('portfolio tips', () => {
+  const holding = (extra: Partial<Holding>): Holding => ({
+    id: id(),
+    kind: 'investment',
+    type: 'Mutual Funds',
+    name: 'Fund',
+    member: 'A',
+    date: '2025-01-01',
+    openingInvested: 100_000,
+    openingValue: 100_000,
+    monthly: 0,
+    autoContribute: false,
+    ...extra,
+  });
+
+  test('a portfolio mostly in the market gets tips, the most pressing shown every day', () => {
+    const all = insights(
+      data({
+        holdings: [
+          holding({ openingValue: 900_000 }),
+          holding({ type: 'Fixed Deposits', name: 'FD', openingValue: 100_000 }),
+        ],
+      }),
+      TODAY,
+    );
+    const tips = all.filter((row) => row.kind === 'mixTip');
+    expect(tips.map((row) => row.kind === 'mixTip' && row.tip.kind)).toContain('equityHigh');
+    expect(tips.map((row) => row.kind === 'mixTip' && row.tip.kind)).toContain('goldNone');
+    const filler = Array.from({ length: 30 }, (_, index): Insight => ({
+      id: `f${index}`,
+      kind: 'quiet',
+      days: 7,
+      lastDate: TODAY,
+      tone: 'neutral',
+      score: 55,
+    }));
+    for (const day of ['2026-11-10', '2026-11-11', '2026-11-12']) {
+      const shown = dailyInsights([...all, ...filler], day);
+      expect(shown.some((row) => row.id === 'mix-equityHigh')).toBe(true);
+    }
+  });
+
+  test('a tip worth a look, not urgent, still shows every day', () => {
+    const all = insights(
+      data({
+        holdings: [
+          holding({ openingValue: 200_000 }),
+          holding({ openingValue: 200_000 }),
+          holding({ openingValue: 200_000 }),
+          holding({ type: 'Fixed Deposits', name: 'FD 1', openingValue: 200_000 }),
+          holding({ type: 'Fixed Deposits', name: 'FD 2', openingValue: 200_000 }),
+        ],
+      }),
+      TODAY,
+    );
+    const filler = Array.from({ length: 30 }, (_, index): Insight => ({
+      id: `f${index}`,
+      kind: 'quiet',
+      days: 7,
+      lastDate: TODAY,
+      tone: 'neutral',
+      score: 55,
+    }));
+    for (let day = 10; day <= 20; day++) {
+      const shown = dailyInsights([...all, ...filler], `2026-11-${day}`);
+      expect(shown.some((row) => row.id === 'mix-goldNone')).toBe(true);
+    }
+  });
+});

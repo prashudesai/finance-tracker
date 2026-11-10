@@ -6,6 +6,7 @@ import {
   Flame,
   Gauge,
   Landmark,
+  Scale,
   Shield,
   Sunset,
   Users,
@@ -25,6 +26,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { Insight } from '../../domain/insights';
+import { tipText } from '../mix/tipText';
 import {
   formatAmount,
   formatDay,
@@ -393,6 +395,23 @@ export function describeInsight(insight: Insight): InsightText {
         ],
         path: '/cash-flow',
       };
+    case 'mixTip': {
+      const text = tipText(insight.tip);
+      const [step] = text.steps;
+      return {
+        icon: Scale,
+        title: text.title,
+        detail: step ? `${text.why} ${step}` : text.why,
+        why: [
+          ['In the market', percent(insight.equity)],
+          ['Common guide', percent(insight.guide)],
+          ['Bonds, deposits and cash', percent(insight.steady)],
+          ['Gold', percent(insight.gold)],
+        ],
+        path: '/analytics/mix',
+        note: 'A general rule of thumb, not advice from a SEBI-registered adviser.',
+      };
+    }
     case 'cushion': {
       const months = insight.months;
       const covers =

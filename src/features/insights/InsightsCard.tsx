@@ -61,6 +61,7 @@ const TAGS: Partial<Record<Insight['kind'], string>> = {
   prepay: 'Loans',
   netWorthChange: 'Net worth',
   allocation: 'Mix',
+  mixTip: 'Portfolio tip',
   commitments: 'Bills',
   weekend: 'Weekends',
   invested: 'Investing',
