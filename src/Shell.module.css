@@ -42,8 +42,8 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter: var(--glass-blur);
+  /* Solid, so scrolled content never shows through behind the profile and buttons. */
+  background: var(--bg);
 }
 
 /* A soft fade under the header, so content slides beneath it rather than meeting a hard edge. */
@@ -53,9 +53,9 @@
   top: 100%;
   right: 0;
   left: 0;
-  height: 18px;
+  height: 16px;
   pointer-events: none;
-  background: linear-gradient(color-mix(in srgb, var(--bg) 55%, transparent), transparent);
+  background: linear-gradient(var(--bg), transparent);
 }
 
 .brand {
@@ -235,18 +235,27 @@
 .search,
 .searchVisible {
   position: fixed;
-  left: 12px;
-  bottom: calc(88px + var(--home-bar));
+  right: 12px;
+  bottom: calc(90px + var(--home-bar));
   z-index: 2;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--accent);
+  width: 36px;
+  height: 36px;
+  color: var(--muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
   border-radius: 50%;
   cursor: pointer;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease;
+}
+
+.search:hover,
+.searchVisible:hover {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .sync,
@@ -293,11 +302,11 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
 }
 
 @media (min-width: 1024px) {
+  /* Above the + in the corner. */
   .search,
   .searchVisible {
-    right: 20px;
-    bottom: 20px;
-    left: auto;
+    right: 28px;
+    bottom: 84px;
   }
 
   .sync,
@@ -315,19 +324,10 @@ body:has(dialog[open], input:focus, textarea:focus, select:focus) .quickAdd {
     margin: 0;
   }
 
-  .searchRight {
-    right: 20px;
-  }
-
   .quickMenu {
     inset: auto 20px 84px auto;
     translate: none;
   }
-}
-
-.searchRight {
-  right: 12px;
-  left: auto;
 }
 
 .quickMenu {

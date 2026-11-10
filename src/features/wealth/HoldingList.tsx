@@ -1,10 +1,17 @@
 import {
   Banknote,
+  BarChart3,
+  Briefcase,
+  Building2,
   ChevronRight,
+  Coins,
+  Gem,
   Landmark,
+  Layers,
   LineChart,
   PiggyBank,
   ShieldCheck,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -18,16 +25,24 @@ import styles from './HoldingList.module.css';
 
 const MONTHS = 6;
 
+/** Each kind of investment has its own icon, by words in its name; anything else a chart. */
+const ICONS: [RegExp, LucideIcon][] = [
+  [/\b(PF|PPF|EPF)\b/i, Landmark],
+  [/NPS|pension/i, ShieldCheck],
+  [/deposit|\bFD\b|\bRD\b/i, PiggyBank],
+  [/bond|debenture|NCD/i, Banknote],
+  [/gold|silver|SGB/i, Gem],
+  [/REIT|InvIT|real estate|property/i, Building2],
+  [/PMS|portfolio management|AIF/i, Briefcase],
+  [/ETF|index/i, BarChart3],
+  [/mutual|fund|SIP/i, Layers],
+  [/cash|savings|reserve|liquid/i, Wallet],
+  [/stock|share|equity/i, LineChart],
+  [/crypto/i, Coins],
+];
+
 export const iconFor = (name: string): LucideIcon =>
-  /PF|PPF|EPF/.test(name)
-    ? Landmark
-    : /NPS/.test(name)
-      ? ShieldCheck
-      : /Deposit|FD/.test(name)
-        ? PiggyBank
-        : /Bond/.test(name)
-          ? Banknote
-          : LineChart;
+  ICONS.find(([pattern]) => pattern.test(name))?.[1] ?? LineChart;
 
 /**
  * Holdings as compact rows: a category's value, its gain, and a line of its value at each of

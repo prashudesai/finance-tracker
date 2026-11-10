@@ -237,27 +237,18 @@
   overflow: visible;
 }
 
-.pathGood,
-.pathBase,
-.pathTough {
-  fill: none;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-
-.pathGood {
-  stroke: var(--scenario-optimistic);
+/* The range from tough to good years as a band, with the expected path through it. */
+.band {
+  fill: color-mix(in srgb, var(--scenario-base) 20%, transparent);
+  stroke: none;
 }
 
 .pathBase {
+  fill: none;
   stroke: var(--scenario-base);
-  stroke-dasharray: 5 4;
-}
-
-.pathTough {
-  stroke: var(--scenario-stress);
-  stroke-dasharray: 2 4;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
 .paths {
@@ -278,22 +269,61 @@
   gap: 6px;
 }
 
-.pathGoodDot,
 .pathBaseDot,
-.pathToughDot {
-  width: 8px;
+.bandDot {
+  width: 10px;
   height: 8px;
-  border-radius: 50%;
-}
-
-.pathGoodDot {
-  background: var(--scenario-optimistic);
+  border-radius: 3px;
 }
 
 .pathBaseDot {
+  height: 3px;
   background: var(--scenario-base);
 }
 
-.pathToughDot {
-  background: var(--scenario-stress);
+.bandDot {
+  background: color-mix(in srgb, var(--scenario-base) 35%, transparent);
+}
+
+/* An empty section's next step, as a card to tap. */
+.setup {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  color: inherit;
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  transition:
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.setup:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.setupIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 12px;
+}
+
+.setupText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.setupText span {
+  color: var(--muted);
+  font-size: 0.88rem;
 }

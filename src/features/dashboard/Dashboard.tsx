@@ -48,7 +48,8 @@ import { GettingStarted } from './GettingStarted';
 import { TrendChart } from './TrendChart';
 
 /** Portfolio rows on the dashboard: more on wide screens, where it sits beside the taller chart. */
-const DASHBOARD_CATEGORIES = { narrow: 5, wide: 8 };
+/** Home shows the largest few; Wealth has them all. */
+const DASHBOARD_CATEGORIES = { narrow: 3, wide: 5 };
 /** The income chart shows the same six months on every screen. */
 const CHART_MONTHS = 6;
 type SortKey = 'size' | 'gain';
@@ -182,7 +183,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
         )}
       </div>
       <TrendChart months={trend} />
-      {phone ? <p className={ui.notice}>Tap a month to see amounts.</p> : null}
+      {phone ? <p className={ui.caption}>Tap a month to see its amounts.</p> : null}
       {!phone && splitIncome > 0 ? (
         <div className={styles.split}>
           <h3 className={ui.label}>
@@ -368,11 +369,11 @@ export function Dashboard({ name = '' }: { name?: string }) {
               ))}
             </div>
           )}
-          <div className={ui.caption}>Tap a category to view its holdings and exact amounts.</div>
-          {categories.length > shown.length ? (
+          {categories.length > 0 ? (
             <Link className={ui.textLinkCenter} to="/investments">
-              View remaining {categories.length - shown.length}{' '}
-              {categories.length - shown.length === 1 ? 'investment' : 'investments'} ›
+              {categories.length > shown.length
+                ? `See all ${categories.length} on Wealth ›`
+                : 'Open Wealth ›'}
             </Link>
           ) : null}
         </section>

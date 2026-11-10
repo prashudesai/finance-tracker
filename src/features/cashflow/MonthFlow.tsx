@@ -112,7 +112,27 @@ export function MonthFlow({
               value={month}
             />
           </label>
-          <span className={styles.swipeHint}>Swipe for other months</span>
+          {/* Swiping the card works too; the arrows show that other months are there. */}
+          <span className={styles.arrows}>
+            <button
+              aria-label={before ? `Previous month, ${formatMonth(before)}` : 'No earlier month'}
+              className={styles.arrow}
+              disabled={!before}
+              onClick={() => before && onMonth(before)}
+              type="button"
+            >
+              <ChevronLeft aria-hidden="true" size={18} />
+            </button>
+            <button
+              aria-label={after ? `Next month, ${formatMonth(after)}` : 'No later month'}
+              className={styles.arrow}
+              disabled={!after}
+              onClick={() => after && onMonth(after)}
+              type="button"
+            >
+              <ChevronRight aria-hidden="true" size={18} />
+            </button>
+          </span>
         </div>
       ) : null}
       {stepper ? (

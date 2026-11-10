@@ -161,9 +161,16 @@ export function PlanOverview() {
             ) : null}
           </Link>
         ) : (
-          <p className={ui.caption}>
-            Plan the financial year's spending, from rent to school fees, and follow how it goes.
-          </p>
+          <Link className={styles.setup} to="/analytics/budget">
+            <span aria-hidden="true" className={styles.setupIcon}>
+              <PiggyBank size={18} />
+            </span>
+            <span className={styles.setupText}>
+              <strong>Set up this year's budget</strong>
+              <span>From rent to school fees, filled in from your last 12 months</span>
+            </span>
+            <ChevronRight aria-hidden="true" size={18} />
+          </Link>
         )}
       </section>
 
@@ -284,9 +291,9 @@ function RetirementRing({
 }
 
 const PATHS = [
-  { key: 'optimistic', label: 'Good', className: 'pathGood' },
-  { key: 'base', label: 'Expected', className: 'pathBase' },
-  { key: 'stress', label: 'Tough', className: 'pathTough' },
+  { key: 'optimistic', label: 'Good' },
+  { key: 'base', label: 'Expected' },
+  { key: 'stress', label: 'Tough' },
 ] as const;
 
 /** Where investments could be, in good years, as expected and in tough ones. */
@@ -306,14 +313,21 @@ function GrowthPreview({
       ...results[path.key].rows.map((row) => row.closing),
     ],
   }));
-  const peak = Math.max(1, ...lines.flatMap((line) => line.values));
-  const points = (values: number[]) =>
-    values
-      .map(
-        (value, index) =>
-          `${(index / Math.max(1, values.length - 1)) * W},${H - 4 - (value / peak) * (H - 8)}`,
-      )
-      .join(' ');
+  const all = lines.flatMap((line) => line.values);
+  const peak = Math.max(1, ...all);
+  // Scaled from just under the lowest value, not zero, so the spread between paths shows.
+  const low = Math.min(...all);
+  const floor = Math.max(0, low - (peak - low) * 0.15);
+  const span = Math.max(1, peak - floor);
+  const xy = (values: number[]) =>
+    values.map(
+      (value, index) =>
+        `${(index / Math.max(1, values.length - 1)) * W},${H - 4 - ((value - floor) / span) * (H - 8)}`,
+    );
+  const [good, base, tough] = lines;
+  const band = good && tough ? [...xy(good.values), ...xy(tough.values).reverse()].join(' ') : '';
+  const last = (key: 'optimistic' | 'base' | 'stress') =>
+    formatAmount(lines.find((line) => line.key === key)?.values.at(-1) ?? 0);
   return (
     <section aria-labelledby="plan-growth" className={styles.section}>
       <div className={styles.head}>
@@ -329,21 +343,20 @@ function GrowthPreview({
           preserveAspectRatio="none"
           viewBox={`0 0 ${W} ${H}`}
         >
-          {lines.map((line) => (
-            <polyline
-              className={styles[line.className]}
-              key={line.key}
-              points={points(line.values)}
-            />
-          ))}
+          {band ? <polygon className={styles.band} points={band} /> : null}
+          {base ? (
+            <polyline className={styles.pathBase} points={xy(base.values).join(' ')} />
+          ) : null}
         </svg>
         <ul className={styles.paths}>
-          {lines.map((line) => (
-            <li key={line.key}>
-              <i className={styles[`${line.className}Dot`]} />
-              {line.label} {formatAmount(line.values.at(-1) ?? 0)}
-            </li>
-          ))}
+          <li>
+            <i className={styles.pathBaseDot} />
+            Expected {last('base')}
+          </li>
+          <li>
+            <i className={styles.bandDot} />
+            Tough to good {last('stress')} – {last('optimistic')}
+          </li>
         </ul>
       </Link>
     </section>

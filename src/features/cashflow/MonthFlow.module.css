@@ -258,7 +258,30 @@
   justify-content: flex-start;
 }
 
-.swipeHint {
-  color: var(--muted);
-  font-size: 0.75rem;
+.arrows {
+  display: flex;
+  gap: 6px;
+}
+
+.arrow {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-sunken) 70%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.arrow:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
 }

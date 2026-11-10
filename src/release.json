@@ -1,18 +1,18 @@
 {
-  "version": "1.37.0",
+  "version": "1.38.0",
   "released": "2026-11-10",
   "notes": [
+    "The top bar is solid, so nothing shows through behind it as you scroll",
+    "Home shows your three largest investments with a link to see all on Wealth",
+    "Money has arrows to move between months, as well as swiping",
+    "Plan offers to set up this year's budget, and shows the growth projection as a range from tough to good years",
+    "Each kind of investment has its own icon, and search is a smaller button on the right",
     "Import a bank statement from Money, as CSV or PDF, including password-locked PDFs, read on your phone and never uploaded",
     "Every row is read or listed with the reason it couldn't be, and amounts are checked against the statement's running balance",
     "Anything already recorded is left out, and card bills, loan EMIs, investments, own transfers, cash withdrawals and refunds are left out to begin with, with the reason shown",
     "Categories follow what you chose for the same payee before; choosing one for a payee sets the rest from them",
     "Portfolio mix, in Planning › Insights: what your investments are made of, against a common guide for your age, with tips to balance it",
     "Tips cover too much or too little in the market, no gold, one investment carrying too much, high-yield bonds, a short emergency fund, steady income near retirement and money locked till retirement",
-    "Each tip suggests options to look at, such as listed bonds, government bonds, debt funds, gold ETFs, REITs, Post Office and senior citizens' schemes, with returns, risk, minimums and cautions",
-    "Portfolio tips appear in For you today on Home, with the most pressing one shown every day",
-    "Investments links to your mix with its top tip",
-    "Goal planning opens with your plan at a glance: the extra needed a month, goals on track, what's set aside and retirement, then tabs for Goals and Retirement",
-    "Goals show as cards with a progress bar and the next step, and each goal's details open full screen with its figures as cards",
-    "Retirement leads with when your money runs out, a timeline of working, retired and any years not covered, ways to close a gap as cards, and one chart at a time"
+    "Each tip suggests options to look at, such as listed bonds, government bonds, debt funds, gold ETFs, REITs, Post Office and senior citizens' schemes, with returns, risk, minimums and cautions"
   ]
 }
