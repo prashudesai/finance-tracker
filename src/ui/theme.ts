@@ -78,6 +78,7 @@ function paintBars(root: HTMLElement) {
 function paint(mode: ThemeMode, palette: ThemeKey) {
   const root = document.documentElement;
   root.dataset.theme = mode;
+  root.dataset.palette = palette;
   applyThemeVariables(root, palette, mode);
   paintBars(root);
   // On first load the stylesheet may not be in yet, so the bars are painted again once it is.

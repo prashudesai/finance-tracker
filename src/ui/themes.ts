@@ -67,7 +67,7 @@ export const THEME_CHOICES = [
   {
     key: 'modern',
     label: 'Modern',
-    swatches: ['#102826', '#183532', '#69d6bb', '#e0a13a'],
+    swatches: ['#0b1f1d', '#183532', '#69d6bb', '#e0a13a'],
   },
   {
     key: 'obsidian-black',

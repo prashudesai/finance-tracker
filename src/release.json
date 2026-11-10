@@ -1,7 +1,10 @@
 {
-  "version": "1.38.0",
+  "version": "1.39.0",
   "released": "2026-11-10",
   "notes": [
+    "A deeper teal background, so cards stand out more",
+    "Each tab has its own glow in the Modern theme: amber on Money, emerald on Wealth, blue on Plan and mint on Home",
+    "The top bar takes a hint of the tab's colour, so it blends with the page beneath it",
     "The top bar is solid, so nothing shows through behind it as you scroll",
     "Home shows your three largest investments with a link to see all on Wealth",
     "Money has arrows to move between months, as well as swiping",
@@ -10,9 +13,6 @@
     "Import a bank statement from Money, as CSV or PDF, including password-locked PDFs, read on your phone and never uploaded",
     "Every row is read or listed with the reason it couldn't be, and amounts are checked against the statement's running balance",
     "Anything already recorded is left out, and card bills, loan EMIs, investments, own transfers, cash withdrawals and refunds are left out to begin with, with the reason shown",
-    "Categories follow what you chose for the same payee before; choosing one for a payee sets the rest from them",
-    "Portfolio mix, in Planning › Insights: what your investments are made of, against a common guide for your age, with tips to balance it",
-    "Tips cover too much or too little in the market, no gold, one investment carrying too much, high-yield bonds, a short emergency fund, steady income near retirement and money locked till retirement",
-    "Each tip suggests options to look at, such as listed bonds, government bonds, debt funds, gold ETFs, REITs, Post Office and senior citizens' schemes, with returns, risk, minimums and cautions"
+    "Categories follow what you chose for the same payee before; choosing one for a payee sets the rest from them"
   ]
 }
