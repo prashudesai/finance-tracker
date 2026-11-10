@@ -717,14 +717,9 @@ test('+ Add under Investment portfolio opens the form with each type as a choice
   const bonds = within(dialog).getByRole('radio', { name: /^Bonds/, hidden: true });
   fireEvent.click(bonds);
   expect(bonds.getAttribute('aria-checked')).toBe('true');
-  // Bonds can pay interest out; market-linked funds can't.
   expect(
-    within(dialog).getByRole('radiogroup', { name: /Interest paid out/, hidden: true }),
+    within(dialog).getByRole('radiogroup', { name: /Pays out to your bank/, hidden: true }),
   ).toBeDefined();
-  fireEvent.click(within(dialog).getByRole('radio', { name: /^Mutual Funds/, hidden: true }));
-  expect(
-    within(dialog).queryByRole('radiogroup', { name: /Interest paid out/, hidden: true }),
-  ).toBeNull();
 });
 
 test('+ New type in the add form saves the type and chooses it', async () => {
@@ -768,6 +763,30 @@ test('a deposit paying interest quarterly saves the payout, suggested from the r
     expect(
       useTracker.getState().data.holdings.find((row) => row.name === 'Payout FD')?.payout,
     ).toEqual({ every: 'quarter', amount: 7500, start: '2026-12-31' }),
+  );
+});
+
+test('a profit share that varies saves no amount, and asks for it when due', async () => {
+  renderApp('/investments');
+  const heading = await screen.findByRole('heading', { name: 'Investment portfolio' });
+  const section = heading.closest('section');
+  if (!section) throw new Error('Portfolio section not found');
+  fireEvent.click(within(section).getByRole('button', { name: 'Add', hidden: true }));
+  const form = await screen.findByRole('dialog', { name: 'Add investment', hidden: true });
+  const field = (label: string) => within(form).getByLabelText(label);
+  fireEvent.change(field('Investment Name'), { target: { value: 'Partnership' } });
+  fireEvent.change(field('Invested Amount (₹)'), { target: { value: '500000' } });
+  fireEvent.change(field('Current Value (₹)'), { target: { value: '500000' } });
+  fireEvent.change(field('Purchase Date'), { target: { value: '2026-01-01' } });
+  fireEvent.click(within(form).getByRole('radio', { name: 'Quarterly', hidden: true }));
+  fireEvent.click(within(form).getByRole('radio', { name: /^Varies/, hidden: true }));
+  expect(within(form).queryByLabelText('Interest each time (₹)')).toBeNull();
+  fireEvent.change(field('First payout on'), { target: { value: '2026-03-31' } });
+  fireEvent.click(within(form).getByRole('button', { name: 'Save investment', hidden: true }));
+  await waitFor(() =>
+    expect(
+      useTracker.getState().data.holdings.find((row) => row.name === 'Partnership')?.payout,
+    ).toEqual({ every: 'quarter', start: '2026-03-31' }),
   );
 });
 

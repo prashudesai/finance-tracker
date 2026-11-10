@@ -178,13 +178,15 @@ export const holdingSchema = z.object({
   /** NPS scheme, such as Active Choice. */
   scheme: z.string().max(60).optional(),
   /**
-   * Interest paid out to the bank rather than added to the value, as with a payout FD or a
-   * bond's coupon: each payout's amount, how often, and the first payout's date.
+   * Interest or profit paid out to the bank rather than added to the value, as with a payout
+   * FD, a bond's coupon or a profit share: how often, the first payout's date, and each
+   * payout's amount when it's fixed.
    */
   payout: z
     .object({
       every: z.enum(PAYOUT_EVERY),
-      amount: positiveMoney,
+      /** Left out when it varies, such as a profit share; each payout's amount is asked for. */
+      amount: positiveMoney.optional(),
       start: date,
     })
     .optional(),

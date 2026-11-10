@@ -32,6 +32,13 @@ const dayOf = (date: string) =>
     ? formatDay(date)
     : `${formatDay(date)} ${date.slice(0, 4)}`;
 
+const OFTEN = {
+  month: 'monthly',
+  quarter: 'quarterly',
+  'half-year': 'half-yearly',
+  year: 'yearly',
+} as const;
+
 const RANGES = [
   { key: '6M', months: 7 },
   { key: '1Y', months: 13 },
@@ -272,14 +279,15 @@ export function CategoryDetail({
       </section>
 
       {paidOut > 0 || due.length > 0 || schedules.length > 0 ? (
-        <section aria-label="Interest received" className={`${ui.card} ${styles.panel}`}>
+        <section aria-label="Payouts received" className={`${ui.card} ${styles.panel}`}>
           <div className={styles.panelHead}>
-            <h3>Interest received</h3>
+            <h3>Payouts received</h3>
             <small className={styles.payoutPlan}>
               {schedules
-                .map(
-                  (row) =>
-                    `${formatMoney(row.payout?.amount ?? 0)} ${EVERY_WORDS[row.payout?.every ?? 'month']}`,
+                .map((row) =>
+                  row.payout?.amount
+                    ? `${formatMoney(row.payout.amount)} ${EVERY_WORDS[row.payout.every]}`
+                    : `Varies · ${OFTEN[row.payout?.every ?? 'month']}`,
                 )
                 .join(' · ')}
             </small>
@@ -304,7 +312,9 @@ export function CategoryDetail({
                       <Landmark size={14} />
                     </span>
                     <span className={styles.activityText}>
-                      <strong>{formatMoney(row.amount)} due</strong>
+                      <strong>
+                        {row.amount > 0 ? `${formatMoney(row.amount)} due` : 'Payout due'}
+                      </strong>
                       <small>
                         {rows.length > 1 ? `${names.get(row.holdingId) ?? ''} · ` : ''}
                         {dayOf(row.date)}

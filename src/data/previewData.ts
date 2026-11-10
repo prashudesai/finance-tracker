@@ -108,7 +108,9 @@ const holdings = (today: string): Holding[] => [
   holding('fd', 'investment', 'Fixed Deposits', 'Bank FD 2027', 0, '2024-07-01', 400_000, 443_000, {
     rate: 7.25,
   }),
-  holding('etf', 'investment', 'Index ETFs', 'Nifty 50 ETF', 1, '2024-01-15', 183_000, 192_000),
+  holding('etf', 'investment', 'Index ETFs', 'Nifty 50 ETF', 1, '2024-01-15', 183_000, 192_000, {
+    payout: { every: 'year', start: '2026-08-01' },
+  }),
   holding(
     'cash',
     'investment',

@@ -101,6 +101,13 @@ describe('interest paid out', () => {
     expect(without.gain).toBe(0);
   });
 
+  test('a payout that varies falls due with no amount, to be entered', () => {
+    const share: Holding = { ...fd, payout: { every: 'year', start: '2026-03-31' } };
+    expect(duePayouts([share], [], '2026-11-10')).toEqual([
+      { id: 'payout_fd_202603', holdingId: 'fd', date: '2026-03-31', amount: 0 },
+    ]);
+  });
+
   test('the suggested payout is the yearly interest split by how often it’s paid', () => {
     expect(suggestedPayout(400_000, 7.5, 'quarter')).toBe(7500);
     expect(suggestedPayout(400_000, 7.5, 'month')).toBe(2500);

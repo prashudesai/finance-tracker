@@ -49,6 +49,7 @@ const formSchema = z.object({
   notes: z.string().max(500, 'Use 500 characters or fewer.'),
   payoutEvery: z.enum(['none', ...PAYOUT_EVERY]),
   payoutAmount: optionalAmount,
+  payoutVaries: z.boolean(),
   payoutStart: z.string(),
 });
 type FormInput = z.input<typeof formSchema>;
@@ -118,6 +119,7 @@ export function HoldingForm({
       notes: initial?.notes ?? '',
       payoutEvery: initial?.payout?.every ?? 'none',
       payoutAmount: initial?.payout?.amount,
+      payoutVaries: Boolean(initial?.payout && initial.payout.amount === undefined),
       payoutStart: initial?.payout?.start ?? nextMonthStart(today),
     },
   });
@@ -125,8 +127,9 @@ export function HoldingForm({
   const type = watch('type');
   const auto = watch('autoContribute');
   const payoutEvery = watch('payoutEvery');
-  // Funds and shares grow in value; deposits, bonds and the like can pay interest out.
-  const paysInterest = kind === 'investment' && growthType(type, settings) !== 'market';
+  // Deposits and bonds pay interest; others a dividend or profit share.
+  const paysInterest = kind === 'investment';
+  const varies = watch('payoutVaries');
   // Interest is paid on what was put in, the principal.
   const watchedValue = watch('openingInvested') || watch('openingValue');
   const watchedRate = watch('rate');
@@ -147,6 +150,7 @@ export function HoldingForm({
     notes,
     payoutEvery: every,
     payoutAmount,
+    payoutVaries,
     payoutStart,
     ...values
   }: FormValues) => {
@@ -156,8 +160,8 @@ export function HoldingForm({
       return;
     }
     const paidOut = paysInterest && every !== 'none';
-    const perPayout = payoutAmount ?? (paidOut ? suggestion : null);
-    if (paidOut && !(perPayout && perPayout > 0)) {
+    const perPayout = payoutVaries ? null : (payoutAmount ?? (paidOut ? suggestion : null));
+    if (paidOut && !payoutVaries && !(perPayout && perPayout > 0)) {
       setError('payoutAmount', { message: 'Enter the interest paid each time.' });
       return;
     }
@@ -180,7 +184,15 @@ export function HoldingForm({
       ...(kind === 'pf' && uan ? { uan } : {}),
       ...(kind === 'nps' && scheme ? { scheme } : {}),
       ...(notes ? { notes } : {}),
-      ...(paidOut && perPayout ? { payout: { every, amount: perPayout, start: payoutStart } } : {}),
+      ...(paidOut
+        ? {
+            payout: {
+              every,
+              start: payoutStart,
+              ...(perPayout ? { amount: perPayout } : {}),
+            },
+          }
+        : {}),
     };
     if (!paidOut) delete value.payout;
     // `initial` must not bring back what was just cleared. A leftover start date kept a PF
@@ -326,7 +338,7 @@ export function HoldingForm({
       {paysInterest ? (
         <section className={styles.step}>
           <Choices
-            label="Interest paid out to your bank"
+            label="Pays out to your bank? Interest, dividends or a profit share"
             onChange={(value) => choose('payoutEvery', value)}
             options={(['none', ...PAYOUT_EVERY] as const).map((key) => ({
               value: key,
@@ -336,25 +348,40 @@ export function HoldingForm({
           />
           {payoutEvery !== 'none' ? (
             <>
+              <Choices
+                label="How much each time?"
+                onChange={(value) =>
+                  setValue('payoutVaries', value === 'varies', { shouldDirty: true })
+                }
+                options={[
+                  { value: 'fixed', label: 'Same amount', hint: 'Interest, coupons' },
+                  { value: 'varies', label: 'Varies', hint: 'Profit share, dividends' },
+                ]}
+                value={varies ? 'varies' : 'fixed'}
+              />
               <div className={styles.pair}>
-                <Field error={errors.payoutAmount?.message} label="Interest each time (₹)">
-                  <input
-                    inputMode="decimal"
-                    placeholder={suggestion ? String(suggestion) : ''}
-                    step="0.01"
-                    type="number"
-                    {...register('payoutAmount', { valueAsNumber: true })}
-                  />
-                </Field>
+                {varies ? null : (
+                  <Field error={errors.payoutAmount?.message} label="Interest each time (₹)">
+                    <input
+                      inputMode="decimal"
+                      placeholder={suggestion ? String(suggestion) : ''}
+                      step="0.01"
+                      type="number"
+                      {...register('payoutAmount', { valueAsNumber: true })}
+                    />
+                  </Field>
+                )}
                 <Field error={errors.payoutStart?.message} label="First payout on">
                   <input type="date" {...register('payoutStart')} />
                 </Field>
               </div>
               <p className={ui.caption}>
-                {suggestion
+                {!varies && suggestion
                   ? `Left blank, it's ₹${suggestion.toLocaleString('en-IN')} from the rate and amount invested. `
                   : ''}
-                Each payout shows on Home to confirm, and is added to your income.
+                {varies
+                  ? 'Each payout shows on Home to enter what you got, and is added to your income.'
+                  : 'Each payout shows on Home to confirm, and is added to your income.'}
               </p>
             </>
           ) : null}

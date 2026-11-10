@@ -425,3 +425,16 @@
   color: var(--warning-text);
   background: var(--surface-sunken);
 }
+
+.payoutEntry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.payoutEntry input {
+  width: 120px;
+  min-height: 38px;
+}

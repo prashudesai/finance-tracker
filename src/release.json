@@ -1,7 +1,9 @@
 {
-  "version": "1.33.0",
+  "version": "1.34.0",
   "released": "2026-11-10",
   "notes": [
+    "Payouts that vary, such as a profit share or dividends, can be set up with just how often they come; Home asks for the amount each time, and it's added to income and counted in returns",
+    "Any investment can now pay out to your bank, and the category page shows Payouts received",
     "Tapping an investment category opens its own page: value and gain first, a growth chart of value against invested (6M, 1Y, 3Y, All), the split by holding, each holding with its actions, and recent activity",
     "Market-linked holdings show absolute return and CAGR beside XIRR",
     "Deposits, bonds and similar can pay interest out monthly, quarterly, half-yearly or yearly; each payout shows on Home to mark as received, is added to income, and counts towards returns",

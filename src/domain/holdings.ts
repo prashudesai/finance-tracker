@@ -311,7 +311,8 @@ export function duePayouts(holdings: Holding[], payouts: Payout[], today: string
       if (date > today) break;
       const id = payoutId(holding.id, date);
       if (date < holding.date || recorded.has(id)) continue;
-      due.push({ id, holdingId: holding.id, date, amount: plan.amount });
+      // A payout that varies is due with no amount yet; it's asked for when received.
+      due.push({ id, holdingId: holding.id, date, amount: plan.amount ?? 0 });
     }
   }
   return due.sort((a, b) => a.date.localeCompare(b.date));

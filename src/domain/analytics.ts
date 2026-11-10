@@ -856,7 +856,7 @@ export function attentionItems(
     const holding = view.holdings.find((row) => row.id === payout.holdingId);
     if (!holding) continue;
     items.push({
-      label: `${holding.name} interest of ₹${Math.round(payout.amount).toLocaleString('en-IN')} due ${Number(payout.date.slice(8))} ${MONTH_NAMES[Number(payout.date.slice(5, 7)) - 1]?.slice(0, 3) ?? ''}`,
+      label: `${holding.name} ${payout.amount > 0 ? `interest of ₹${Math.round(payout.amount).toLocaleString('en-IN')}` : 'payout'} due ${Number(payout.date.slice(8))} ${MONTH_NAMES[Number(payout.date.slice(5, 7)) - 1]?.slice(0, 3) ?? ''}`,
       path: '/investments',
       state: { open: categoryOf(holding) },
       payout,
