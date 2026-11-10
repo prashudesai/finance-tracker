@@ -14,7 +14,7 @@ import { financialYearLabel } from '../../domain/calendar';
 import {
   bookedProfitByYear,
   groupXirr,
-  growthType,
+  returnMeasure,
   monthlyContribution,
 } from '../../domain/holdings';
 import {
@@ -301,12 +301,13 @@ export function InvestmentsPage() {
   );
 
   const primaryFor = (category: CategoryRow) => {
-    const growth = growthType(category.name, settings);
     const holdings = category.rows.map((row) => row.holding);
-    if (growth === 'fixed' || category.name === 'PF' || category.name === 'PPF') {
+    const first = holdings[0];
+    const measure = first ? returnMeasure(first, settings) : 'xirr';
+    if (measure === 'rate') {
       return { label: 'Interest rate', value: rateSummary(category) };
     }
-    if (growth === 'no-return') {
+    if (measure === 'absolute') {
       return { label: 'Absolute return', value: formatPercent(category.absolute, 2) };
     }
     return { label: 'XIRR', value: formatPercent(groupXirr(holdings, data, today), 2) };

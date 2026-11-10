@@ -1,7 +1,8 @@
 {
-  "version": "1.32.2",
-  "released": "2026-11-09",
+  "version": "1.32.3",
+  "released": "2026-11-10",
   "notes": [
+    "Fixed deposits, bonds, PF and PPF show their interest rate, and no-return holdings their absolute return, instead of XIRR, in each holding's details and on Analytics",
     "Home's cards no longer change shape after visiting Plan",
     "Plan's overview shows your retirement planner's result: on course or how much short, with on course against needed",
     "Money: tap the month name on the balance card to pick a month, or swipe the card; the month row and search box are gone",

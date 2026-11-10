@@ -2,7 +2,8 @@ import { ArrowDownToLine, History, Pencil, Plus, RefreshCw, Trash2 } from 'lucid
 import { useState } from 'react';
 import type { CategoryRow, PositionRow } from '../../domain/analytics';
 import type { RecordWrite } from '../../data/repository';
-import { useTracker } from '../../store/tracker';
+import { returnMeasure } from '../../domain/holdings';
+import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
 import { formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
@@ -67,6 +68,8 @@ function HoldingCard({ row }: { row: PositionRow }) {
   const commit = useTracker((state) => state.commit);
   const [action, setAction] = useState<Action | null>(null);
   const { holding, position } = row;
+  const settings = useSettings();
+  const measure = returnMeasure(holding, settings);
   const close = () => setAction(null);
   const hasWithdrawals = data.withdrawals.some((item) => item.holdingId === holding.id);
   const closed = hasWithdrawals && position.current === 0;
@@ -185,7 +188,16 @@ function HoldingCard({ row }: { row: PositionRow }) {
           tone={position.gain < 0 ? ui.loss : ui.gain}
           value={signedMoney(position.gain)}
         />
-        <Metric label="XIRR" value={formatPercent(position.xirr, 2)} />
+        {measure === 'rate' ? (
+          <Metric
+            label="Interest rate"
+            value={holding.rate === undefined ? '—' : `${holding.rate.toFixed(2)}% p.a.`}
+          />
+        ) : measure === 'absolute' ? (
+          <Metric label="Absolute return" value={formatPercent(position.absolute, 2)} />
+        ) : (
+          <Metric label="XIRR" value={formatPercent(position.xirr, 2)} />
+        )}
         {hasWithdrawals ? (
           <Metric
             label="Booked profit"

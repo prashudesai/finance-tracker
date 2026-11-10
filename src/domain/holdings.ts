@@ -26,6 +26,21 @@ export function growthType(type: string, settings?: Pick<TrackerSettings, 'growt
   return BUILT_IN_GROWTH[type] ?? settings?.growthTypes[type] ?? 'market';
 }
 
+/**
+ * How a holding's return is best measured: its interest rate for fixed-rate ones (deposits,
+ * bonds, PF, PPF), plain gain over what was put in when it earns nothing on its own, and XIRR
+ * for market-linked ones, where the timing of contributions matters.
+ */
+export function returnMeasure(
+  holding: Pick<Holding, 'kind' | 'type'>,
+  settings?: Pick<TrackerSettings, 'growthTypes'>,
+): 'rate' | 'absolute' | 'xirr' {
+  if (holding.kind === 'pf' || holding.kind === 'ppf') return 'rate';
+  if (holding.kind !== 'investment') return 'xirr';
+  const growth = growthType(holding.type, settings);
+  return growth === 'fixed' ? 'rate' : growth === 'no-return' ? 'absolute' : 'xirr';
+}
+
 export interface HoldingData {
   contributions: Contribution[];
   valuations: Valuation[];

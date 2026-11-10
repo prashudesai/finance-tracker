@@ -13,8 +13,8 @@ import {
   portfolioCategories,
 } from '../../domain/analytics';
 import { financialYearLabel, financialYearStart } from '../../domain/calendar';
-import { groupXirr } from '../../domain/holdings';
-import { useSpendingView } from '../../store/tracker';
+import { groupXirr, returnMeasure } from '../../domain/holdings';
+import { useSettings, useSpendingView } from '../../store/tracker';
 import { ColumnChart, Donut, LineChart } from '../../ui/charts';
 import {
   formatCompactMoney,
@@ -71,6 +71,7 @@ const monthsLabel = (count: number, noun: string) =>
 
 export function AnalyticsPage() {
   const data = useSpendingView();
+  const settings = useSettings();
   const today = localDate();
   const phone = useIsPhone();
   const [year, setYear] = useState(financialYearStart(today));
@@ -99,10 +100,27 @@ export function AnalyticsPage() {
       invested: sum((row) => row.position.invested),
       current: sum((row) => row.position.current),
       gain: sum((row) => row.position.gain),
-      xirr:
-        group.holdings.length > 1
-          ? groupXirr(group.holdings, data, today)
-          : (members[0]?.position.xirr ?? null),
+      // Each kind measured the way that fits it: interest rate, plain gain or XIRR.
+      ret: (() => {
+        const first = group.holdings[0];
+        const measure = first ? returnMeasure(first, settings) : 'xirr';
+        if (measure === 'rate') {
+          const rates = [...new Set(group.holdings.map((holding) => holding.rate))];
+          return rates.length === 1 && rates[0] !== undefined
+            ? `${rates[0].toFixed(2)}% p.a.`
+            : 'Several rates';
+        }
+        if (measure === 'absolute') {
+          const invested = sum((row) => row.position.invested);
+          return `${formatPercent(invested > 0 ? sum((row) => row.position.gain) / invested : null, 2)} absolute`;
+        }
+        return `${formatPercent(
+          group.holdings.length > 1
+            ? groupXirr(group.holdings, data, today)
+            : (members[0]?.position.xirr ?? null),
+          2,
+        )} XIRR`;
+      })(),
     };
   });
   const returnsRows =
@@ -380,13 +398,13 @@ export function AnalyticsPage() {
             </div>
           ) : null}
           <ViewDetails
-            headers={['Holding', 'Invested', 'Current', 'Gain', 'XIRR']}
+            headers={['Holding', 'Invested', 'Current', 'Gain', 'Return']}
             rows={holdingTotals.map((row) => [
               row.label,
               formatMoney(row.invested),
               formatMoney(row.current),
               formatMoney(row.gain),
-              formatPercent(row.xirr, 2),
+              row.ret,
             ])}
           />
         </section>
