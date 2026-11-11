@@ -420,3 +420,10 @@ details[open] > .summary .preview {
     overflow: visible;
   }
 }
+
+/* Phones: a little room under today's picks, so Home's first screen ends with them. */
+@media (max-width: 600px) {
+  .today {
+    padding-bottom: 36px;
+  }
+}

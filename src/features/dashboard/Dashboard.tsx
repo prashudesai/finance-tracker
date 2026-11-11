@@ -1,4 +1,4 @@
-import { BellRing, ChevronRight, CreditCard, TrendingUp } from 'lucide-react';
+import { ChevronRight, CreditCard, TrendingUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
@@ -351,59 +351,50 @@ export function Dashboard({ name = '' }: { name?: string }) {
     </section>
   );
 
-  const attentionBlock =
+  // What needs attention: a bell with a count beside the greeting, opening this list.
+  const attentionList =
     attention.length > 0 ? (
-      <details className={ui.attention}>
-        <summary>
-          <span className={ui.attentionTitle}>
-            <BellRing aria-hidden="true" size={18} />
-            Needs attention
-            <span className={ui.attentionCount}>{attention.length}</span>
-          </span>
-          <span className={ui.caption}>Review ›</span>
-        </summary>
-        <ul className={ui.list} style={{ marginTop: 10 }}>
-          {attention.map((item) => {
-            const review = (
-              <Link
-                aria-label={`Review: ${item.label}`}
-                className={ui.textLink}
-                state={item.state}
-                to={item.path}
-              >
-                Review ›
-              </Link>
-            );
-            const emi = 'emi' in item ? item.emi : undefined;
-            const payout = 'payout' in item ? item.payout : undefined;
-            return (
-              <li className={ui.row} key={item.label}>
-                <span className={ui.rowMain}>{item.label}</span>
-                {payout ? (
-                  <PayoutActions fallback={review} label={item.label} payout={payout} />
-                ) : emi ? (
-                  <EmiActions
-                    date={emi.date}
-                    fallback={review}
-                    label={item.label}
-                    loanId={emi.loanId}
-                    missed={emi.missed}
-                    onHide={() => hide(emi.loanId, emi.date)}
-                  />
-                ) : (
-                  review
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </details>
+      <ul className={ui.list}>
+        {attention.map((item) => {
+          const review = (
+            <Link
+              aria-label={`Review: ${item.label}`}
+              className={ui.textLink}
+              state={item.state}
+              to={item.path}
+            >
+              Review ›
+            </Link>
+          );
+          const emi = 'emi' in item ? item.emi : undefined;
+          const payout = 'payout' in item ? item.payout : undefined;
+          return (
+            <li className={ui.row} key={item.label}>
+              <span className={ui.rowMain}>{item.label}</span>
+              {payout ? (
+                <PayoutActions fallback={review} label={item.label} payout={payout} />
+              ) : emi ? (
+                <EmiActions
+                  date={emi.date}
+                  fallback={review}
+                  label={item.label}
+                  loanId={emi.loanId}
+                  missed={emi.missed}
+                  onHide={() => hide(emi.loanId, emi.date)}
+                />
+              ) : (
+                review
+              )}
+            </li>
+          );
+        })}
+      </ul>
     ) : null;
 
   return (
     <div className={ui.page}>
       <HomeSections
-        attention={attentionBlock}
+        attention={{ count: attention.length, list: attentionList }}
         greeting={
           <h1 className={homeStyles.greeting}>
             <span>

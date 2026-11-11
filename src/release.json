@@ -1,7 +1,9 @@
 {
-  "version": "1.42.1",
-  "released": "2026-11-10",
+  "version": "1.43.0",
+  "released": "2026-11-11",
   "notes": [
+    "On phones, Home's net worth chart fits the screen, so For you today shows whole on the first screen",
+    "Needs attention is a bell with its count beside the greeting, opening the list",
     "On phones, net worth and this month are a little roomier, so Home's first screen ends with For you today",
     "A shorter net worth card, with its range beside the title, so For you today shows on Home's first screen",
     "Every page uses the same glow as Home, for a consistent look",
@@ -11,8 +13,6 @@
     "Money, Wealth, Plan, Yearly budget, Portfolio mix and Settings use the width of wide screens better",
     "Headline figures count up when shown and roll to their new value after a change",
     "On phones, slide a Money history row left to edit or delete it",
-    "Each category has its own colour in history and recent entries",
-    "Drag along the net worth line or across the income bars to read each month",
-    "Pop-ups on phones open part way and snap to full height from the handle, a drag up or scrolling"
+    "Each category has its own colour in history and recent entries"
   ]
 }

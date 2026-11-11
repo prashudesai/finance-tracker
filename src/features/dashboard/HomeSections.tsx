@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, LayoutGrid } from 'lucide-react';
+import { ArrowDown, ArrowUp, BellRing, LayoutGrid } from 'lucide-react';
 import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
 import { Modal } from '../../ui/Modal';
 import ui from '../../ui/ui.module.css';
@@ -100,8 +100,8 @@ export function HomeSections({
 }: {
   /** The page's heading, with Arrange Home beside it. */
   greeting: ReactNode;
-  /** What needs attention, under the heading. */
-  attention: ReactNode;
+  /** What needs attention: a bell with the count beside the heading opens the list. */
+  attention: { count: number; list: ReactNode };
   /** Shown under the heading before any section, such as quick setup. */
   intro: ReactNode;
   sections: Record<HomeSection, ReactNode>;
@@ -109,6 +109,7 @@ export function HomeSections({
 }) {
   const [layout, setLayout] = useState(savedLayout);
   const [arranging, setArranging] = useState(false);
+  const [alerts, setAlerts] = useState(false);
   const shown = (key: HomeSection) => !layout.hidden.includes(key);
 
   const save = (next: Layout) => {
@@ -157,19 +158,39 @@ export function HomeSections({
     <>
       <div className={styles.greetingRow}>
         {greeting}
-        <button
-          aria-label="Arrange Home"
-          className={ui.iconButton}
-          data-tip="Arrange Home"
-          onClick={() => setArranging(true)}
-          type="button"
-        >
-          <LayoutGrid aria-hidden="true" size={18} />
-        </button>
+        <span className={styles.greetingTools}>
+          {attention.count > 0 ? (
+            <button
+              aria-label={`Needs attention, ${attention.count}`}
+              className={`${ui.iconButton} ${styles.bell}`}
+              data-tip="Needs attention"
+              onClick={() => setAlerts(true)}
+              type="button"
+            >
+              <BellRing aria-hidden="true" size={18} />
+              <span aria-hidden="true" className={styles.bellCount}>
+                {attention.count}
+              </span>
+            </button>
+          ) : null}
+          <button
+            aria-label="Arrange Home"
+            className={ui.iconButton}
+            data-tip="Arrange Home"
+            onClick={() => setArranging(true)}
+            type="button"
+          >
+            <LayoutGrid aria-hidden="true" size={18} />
+          </button>
+        </span>
       </div>
-      {attention}
       {intro}
       {content}
+      {alerts && attention.count > 0 ? (
+        <Modal onClose={() => setAlerts(false)} title="Needs attention">
+          {attention.list}
+        </Modal>
+      ) : null}
       {arranging ? (
         <Modal onClose={() => setArranging(false)} title="Arrange Home">
           <p className={ui.caption}>

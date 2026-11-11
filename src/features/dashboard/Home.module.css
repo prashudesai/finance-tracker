@@ -362,3 +362,16 @@
     height: 118px;
   }
 }
+
+/* Short phone screens: the compact ring, so today's picks still fit on the first screen. */
+@media (max-width: 600px) and (max-height: 820px) {
+  .ring.ring {
+    grid-template-columns: 104px minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .ringChart {
+    width: 104px;
+    height: 104px;
+  }
+}

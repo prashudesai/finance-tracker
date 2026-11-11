@@ -71,6 +71,40 @@
   justify-content: space-between;
 }
 
+.greetingTools {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+/* Needs attention as a bell with its count, in amber so it isn't missed. */
+.bell.bell {
+  position: relative;
+  color: var(--warning-text);
+  border-color: color-mix(in srgb, var(--debt) 55%, var(--border));
+}
+
+.bellCount {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  color: #241600;
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: var(--debt);
+  border-radius: 999px;
+}
+
+/* Prompts that have nothing to show today leave no gap behind. */
+.cell:empty {
+  display: none;
+}
+
 .arrangeList {
   display: grid;
   gap: 6px;

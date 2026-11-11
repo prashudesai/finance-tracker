@@ -25,10 +25,36 @@ function savedRange(): RangeKey {
   }
 }
 
-/** The chart's height; shorter on a phone, where Home's first screen is precious. */
+/** The chart's height. On a phone it shrinks, never grows, to fit Home's first screen. */
 const TALL = 74;
 const SHORT = 78;
+const FIT_MIN = 36;
+const FIT_MAX = 78;
+/** The gap left between today's picks and the tab bar on a phone's first screen. */
+const FIT_GAP = 14;
 const PAD = 5;
+
+/**
+ * On a phone, the chart height that makes Home's first screen end just after today's picks,
+ * above the tab bar, whatever the phone's height and whatever shows above. Null where it
+ * doesn't apply: wide screens, no picks, or picks arranged above net worth.
+ */
+function fittedHeight(chart: Element) {
+  if (window.matchMedia?.('(max-width: 600px)')?.matches !== true) return null;
+  const picks = document.querySelector('[aria-labelledby="for-you"] ul');
+  const nav = document.querySelector('nav[aria-label="Main"]');
+  if (!picks || !nav) return null;
+  const chartBox = chart.getBoundingClientRect();
+  const current = chart.querySelector('svg')?.getBoundingClientRect().height;
+  if (!current) return null;
+  const picksBox = picks.getBoundingClientRect();
+  if (picksBox.top < chartBox.bottom) return null;
+  // In page terms, so it's the same whether or not the page is scrolled.
+  const picksBottom = picksBox.bottom + window.scrollY;
+  const navTop = nav.getBoundingClientRect().top;
+  const next = current + (navTop - FIT_GAP - picksBottom);
+  return Math.round(Math.min(FIT_MAX, Math.max(FIT_MIN, next)));
+}
 
 /**
  * The dashboard's lead: net worth, how it moved over a chosen range, with a smooth line, and
@@ -50,6 +76,29 @@ export function NetWorthHero({ data, today }: { data: TrackerData; today: string
   // The month under a finger or pointer, read out in place of today's figure.
   const [picked, setPicked] = useState<number | null>(null);
   const dragged = useRef(false);
+  // On a phone, the chart's height fitted so the first screen ends with today's picks.
+  const [fitted, setFitted] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fit = () => {
+      const chart = box.current;
+      if (chart) setFitted(fittedHeight(chart));
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    void document.fonts?.ready.then(fit);
+    // Sections load and change height after the first paint, so it's fitted again then.
+    const main = document.querySelector('main');
+    const observer = main ? new ResizeObserver(fit) : null;
+    if (main) observer?.observe(main);
+    // And once more after the figures have counted up and the picks have settled.
+    const later = [300, 1000].map((delay) => window.setTimeout(fit, delay));
+    return () => {
+      later.forEach((timer) => window.clearTimeout(timer));
+      observer?.disconnect();
+      window.removeEventListener('resize', fit);
+    };
+  }, [data]);
 
   useEffect(() => {
     const element = box.current;
@@ -73,7 +122,7 @@ export function NetWorthHero({ data, today }: { data: TrackerData; today: string
   const low = Math.min(...values);
   const span = Math.max(...values) - low || 1;
   const x = (index: number) => PAD + (index / Math.max(1, values.length - 1)) * (width - PAD * 2);
-  const HEIGHT = width < 520 ? SHORT : TALL;
+  const HEIGHT = fitted ?? (width < 520 ? SHORT : TALL);
   const y = (value: number) => HEIGHT - PAD - ((value - low) / span) * (HEIGHT - PAD * 2);
   // A smooth curve through each month, so the line reads as a trend rather than steps.
   const line = values

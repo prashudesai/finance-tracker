@@ -450,6 +450,7 @@ test('a closing balance opens the next month, and completes the review', async (
     monthlyBalances: [{ month: past, startBalance: 1000 }],
   });
   Element.prototype.scrollIntoView = vi.fn();
+  fireEvent.click(await screen.findByRole('button', { name: /^Needs attention, \d+$/ }));
   fireEvent.click(await screen.findByRole('link', { name: /balance review/, hidden: true }));
   const review = await waitFor(() => {
     const found = document.getElementById('month-review') as HTMLDetailsElement;
@@ -793,7 +794,11 @@ test('a profit share that varies saves no amount, and asks for it when due', asy
 });
 
 describe('needs attention', () => {
+  // Needs attention is a bell beside the greeting that opens the list.
+  const openAttention = async () =>
+    fireEvent.click(await screen.findByRole('button', { name: /^Needs attention, \d+$/ }));
   const openReview = async (name: RegExp) => {
+    await openAttention();
     fireEvent.click(await screen.findByRole('link', { name, hidden: true }));
     await screen.findByRole('heading', { level: 1 });
   };
@@ -916,6 +921,7 @@ describe('needs attention', () => {
       }),
     );
     renderApp('/', { ...seen, loans: [emiLoan], expenses: paidBefore });
+    await openAttention();
     fireEvent.click(
       await screen.findByRole('button', {
         name: 'Mark as paid: Home Loan EMI due today',
@@ -930,6 +936,7 @@ describe('needs attention', () => {
     expect(screen.queryByText('Home Loan EMI due today')).toBeNull();
     cleanup();
     renderApp('/', { ...seen, loans: [emiLoan], expenses: paidBefore });
+    await openAttention();
     fireEvent.click(
       await screen.findByRole('button', {
         name: 'Hide this month: Home Loan EMI due today',
@@ -1368,6 +1375,7 @@ describe('a family member asking for access', () => {
   test('the owner is alerted, and the alert opens the approval', async () => {
     setUp('/');
     fireEvent.click(await screen.findByRole('button', { name: 'Later', hidden: true }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Needs attention, \d+$/ }));
     const link = await screen.findByRole('link', {
       name: 'Review: new@example.test wants access',
       hidden: true,
