@@ -439,3 +439,19 @@ option {
 :root.ios {
   --home-bar: max(0px, calc(env(safe-area-inset-bottom) - 28px));
 }
+
+/*
+ * Reduced motion: every transition and animation ends at once, including any added later
+ * without its own rule. Nothing waits on them, so each still reaches its end state.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

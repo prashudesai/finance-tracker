@@ -1,6 +1,7 @@
 import type { TrackerData } from '../data/repository';
 import { addMonths } from './calendar';
 import { estimateSchedule, isLoanFailure, rebuildLoan, type LoanLedger } from './loan';
+import { remembered } from './memo';
 import { loanPayments } from './recurring';
 
 export interface LoanSummary {
@@ -11,20 +12,25 @@ export interface LoanSummary {
   error: string | null;
 }
 
-export function summarizeLoans(data: Pick<TrackerData, 'loans' | 'expenses'>, today: string) {
-  return data.loans.map((loan): LoanSummary => {
-    const { id, type, member } = loan;
-    const result = rebuildLoan(loan, loanPayments(data.expenses, id), { asOf: today });
-    return isLoanFailure(result)
-      ? { id, type, member, ledger: null, error: result.error }
-      : { id, type, member, ledger: result, error: null };
-  });
-}
+/** Every loan rebuilt from its payments. Worked out once for the same records and date. */
+export const summarizeLoans: (
+  data: Pick<TrackerData, 'loans' | 'expenses'>,
+  today: string,
+) => readonly LoanSummary[] = remembered(
+  (data: Pick<TrackerData, 'loans' | 'expenses'>, today: string) =>
+    data.loans.map((loan): LoanSummary => {
+      const { id, type, member } = loan;
+      const result = rebuildLoan(loan, loanPayments(data.expenses, id), { asOf: today });
+      return isLoanFailure(result)
+        ? { id, type, member, ledger: null, error: result.error }
+        : { id, type, member, ledger: result, error: null };
+    }),
+);
 
-export const totalOutstanding = (loans: LoanSummary[]) =>
+export const totalOutstanding = (loans: readonly LoanSummary[]) =>
   loans.reduce((sum, loan) => sum + (loan.ledger?.remaining ?? 0), 0);
 
-export const totalMonthlyEmi = (loans: LoanSummary[]) =>
+export const totalMonthlyEmi = (loans: readonly LoanSummary[]) =>
   loans.reduce(
     (sum, loan) => sum + ((loan.ledger?.remaining ?? 0) > 0 ? (loan.ledger?.emi ?? 0) : 0),
     0,
@@ -43,7 +49,7 @@ export const remainingEmis = ({ remaining, emi, rate }: LoanLedger) =>
  * The month by which every loan is repaid at today's EMIs, or null when nothing is owed
  * or a loan's EMI never clears it.
  */
-export function debtFreeMonth(loans: LoanSummary[], month: string) {
+export function debtFreeMonth(loans: readonly LoanSummary[], month: string) {
   const owing = loans.flatMap(({ ledger }) => (ledger && ledger.remaining > 0 ? [ledger] : []));
   if (owing.length === 0) return null;
   const counts = owing.map(remainingEmis);

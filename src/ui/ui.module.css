@@ -1983,3 +1983,30 @@ a.segmentActive {
   font-size: 0.82rem;
   font-weight: 700;
 }
+
+/*
+ * Touch screens: small controls keep their look but take a finger-sized tap, through an
+ * invisible area around them. Text links grow most; compact buttons a little.
+ */
+@media (pointer: coarse) {
+  .textLink,
+  .textLinkCenter,
+  .textButton,
+  .smallIcon {
+    position: relative;
+  }
+
+  .textLink::after,
+  .textLinkCenter::after,
+  .textButton::after,
+  .smallIcon::after {
+    position: absolute;
+    inset: -12px -6px;
+    content: '';
+  }
+
+  .textButton::after,
+  .smallIcon::after {
+    inset: -7px -4px;
+  }
+}

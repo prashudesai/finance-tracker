@@ -30,6 +30,7 @@ import {
   duePayouts,
 } from './holdings';
 import { isLoanFailure } from './loan';
+import { remembered } from './memo';
 import { summarizeLoans, totalOutstanding } from './summary';
 import { rebuildLoan } from './loan';
 import { emiReminders, missedEmis } from './reminders';
@@ -48,8 +49,11 @@ export interface PositionRow {
   position: HoldingPosition;
 }
 
-export const holdingRows = (data: TrackerData, asOf: string): PositionRow[] =>
-  data.holdings.map((holding) => ({ holding, position: holdingPosition(holding, data, asOf) }));
+/** Every holding with its position. Worked out once for the same records and date. */
+export const holdingRows: (data: TrackerData, asOf: string) => readonly PositionRow[] = remembered(
+  (data: TrackerData, asOf: string): PositionRow[] =>
+    data.holdings.map((holding) => ({ holding, position: holdingPosition(holding, data, asOf) })),
+);
 
 export interface CategoryRow {
   name: string;
@@ -98,7 +102,7 @@ export function holdingGroups(holdings: Holding[]) {
 }
 
 /** Holdings grouped by category, largest first. */
-export function portfolioCategories(rows: PositionRow[]): CategoryRow[] {
+export function portfolioCategories(rows: readonly PositionRow[]): CategoryRow[] {
   const groups = new Map<string, PositionRow[]>();
   for (const row of rows) {
     const name = categoryOf(row.holding);
@@ -381,7 +385,12 @@ function principalRepaid(data: TrackerData, today: string, match: (date: string)
 
 /** The first month with income or spending recorded: when someone started tracking. */
 export function trackingStart(data: Pick<TrackerData, 'income' | 'expenses'>) {
-  return [...data.income, ...data.expenses].map((row) => row.date.slice(0, 7)).sort()[0] ?? null;
+  // The earliest date, found in one pass: dates compare as text.
+  let first: string | null = null;
+  for (const rows of [data.income, data.expenses]) {
+    for (const row of rows) if (first === null || row.date < first) first = row.date;
+  }
+  return first === null ? null : first.slice(0, 7);
 }
 
 /**
@@ -631,7 +640,7 @@ export interface MemberPosition {
   gain: number;
 }
 
-export function memberPositions(rows: PositionRow[]): MemberPosition[] {
+export function memberPositions(rows: readonly PositionRow[]): MemberPosition[] {
   const totals = new Map<string, MemberPosition>();
   for (const { holding, position } of rows) {
     const entry = totals.get(holding.member) ?? {

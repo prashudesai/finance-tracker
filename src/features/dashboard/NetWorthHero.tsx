@@ -61,7 +61,8 @@ function fittedHeight(chart: Element) {
  * what it's made of. The range is remembered on this device.
  */
 export function NetWorthHero({ data, today }: { data: TrackerData; today: string }) {
-  const worth = netWorth(data, today);
+  // Kept between frames: the figure below counts up, redrawing this card many times a second.
+  const worth = useMemo(() => netWorth(data, today), [data, today]);
   const shown = useCountUp(worth.netWorth);
   const [range, setRange] = useState<RangeKey>(savedRange);
   const months = RANGES.find((row) => row.key === range)?.months ?? 7;

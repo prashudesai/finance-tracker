@@ -44,7 +44,7 @@ import { RecapCard } from '../insights/MonthRecap';
 import { InstallCard } from '../install/InstallPrompts';
 import { EmiActions, useHiddenEmis } from './EmiActions';
 import { PayoutActions } from '../investments/PayoutActions';
-import { GettingStarted } from './GettingStarted';
+import { GettingStartedGate } from './GettingStartedGate';
 import { TrendChart } from './TrendChart';
 import { HomeSections } from './HomeSections';
 
@@ -95,21 +95,31 @@ export function Dashboard({ name = '' }: { name?: string }) {
 
   // Spending figures count each closed month's house expense.
   const spending = useSpendingView();
-  const overview = monthlyOverview(spending, month, today);
+  const overview = useMemo(() => monthlyOverview(spending, month, today), [spending, month, today]);
   const trends = useMemo(() => overviewTrends(spending, month, today), [spending, month, today]);
   const loans = summarizeLoans(data, today);
   const outstanding = totalOutstanding(loans);
 
-  const pending = pendingOccurrences(
-    {
-      rules: data.recurringRules,
-      occurrences: data.recurringOccurrences,
-      income: data.income,
-      expenses: data.expenses,
-      loans: data.loans,
-    },
-    today,
+  const pendingCount = useMemo(
+    () =>
+      pendingOccurrences(
+        {
+          rules: data.recurringRules,
+          occurrences: data.recurringOccurrences,
+          income: data.income,
+          expenses: data.expenses,
+          loans: data.loans,
+        },
+        today,
+      ).length,
+    [data, today],
   );
+  const synced = syncedAt ? localDate(syncedAt) : null;
+  const flagged = useMemo(
+    () => attentionItems(data, household, today, pendingCount, synced),
+    [data, household, today, pendingCount, synced],
+  );
+  const reminders = useMemo(() => budgetReminders(household, today), [household, today]);
   const { hide, isHidden } = useHiddenEmis();
   const attention = [
     ...accessRequests.map(({ email }) => ({
@@ -117,14 +127,8 @@ export function Dashboard({ name = '' }: { name?: string }) {
       path: '/settings',
       state: { panel: 'family' as const },
     })),
-    ...attentionItems(
-      data,
-      household,
-      today,
-      pending.length,
-      syncedAt ? localDate(syncedAt) : null,
-    ).filter(({ emi }) => !emi || emi.missed || !isHidden(emi.loanId, emi.date)),
-    ...budgetReminders(household, today).map(({ line, month: due, amount }) => ({
+    ...flagged.filter(({ emi }) => !emi || emi.missed || !isHidden(emi.loanId, emi.date)),
+    ...reminders.map(({ line, month: due, amount }) => ({
       label: `${line.name} due ${due === month ? 'this month' : `in ${formatMonth(due).split(' ')[0]}`}, ${formatMoney(amount)}`,
       path: '/analytics/budget',
       state: { open: line.id },
@@ -410,7 +414,7 @@ export function Dashboard({ name = '' }: { name?: string }) {
             ) : null}
           </h1>
         }
-        intro={<GettingStarted />}
+        intro={<GettingStartedGate />}
         prompts={
           <>
             <RecapCard />

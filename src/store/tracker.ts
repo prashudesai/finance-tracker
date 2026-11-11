@@ -258,7 +258,8 @@ export function selectView(data: TrackerData, profile: string | null): TrackerDa
 export function useView() {
   const data = useTracker((state) => state.data);
   const profile = useTracker((state) => state.profile);
-  return selectView(data, profile);
+  // The same object until the records or the profile change, so work based on it is kept.
+  return useMemo(() => selectView(data, profile), [data, profile]);
 }
 
 /**

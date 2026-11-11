@@ -4,15 +4,28 @@ import { plainError } from './data/errors';
 import type { TrackerRepository } from './data/repository';
 import { rememberMembership } from './data/membershipMemory';
 import type { VaultAccess, VaultGate } from './data/vault';
-import { FeaturesPage } from './features/about/FeaturesPage';
 import { SignIn } from './features/auth/SignIn';
-import { PrivacyPage } from './features/privacy/PrivacyPage';
 import release from './release.json';
 import { installErrorReporting } from './ui/errorSink';
 import { localDate } from './ui/format';
 import { LoadingScreen } from './ui/Skeleton';
-import { VaultScreen, WaitingForApproval } from './features/vault/VaultScreen';
 import { Shell, type Account, type FeedbackKind } from './Shell';
+
+// Shown to few visits, so each loads when it's needed and stays out of the first download.
+const FeaturesPage = lazy(() =>
+  import('./features/about/FeaturesPage').then(({ FeaturesPage: Page }) => ({ default: Page })),
+);
+const PrivacyPage = lazy(() =>
+  import('./features/privacy/PrivacyPage').then(({ PrivacyPage: Page }) => ({ default: Page })),
+);
+const VaultScreen = lazy(() =>
+  import('./features/vault/VaultScreen').then(({ VaultScreen: Page }) => ({ default: Page })),
+);
+const WaitingForApproval = lazy(() =>
+  import('./features/vault/VaultScreen').then(({ WaitingForApproval: Page }) => ({
+    default: Page,
+  })),
+);
 
 type Session =
   | { status: 'loading' }
@@ -160,21 +173,25 @@ function SignedInApp() {
   }
   if (session.status === 'locked') {
     return (
-      <VaultScreen
-        gate={session.gate}
-        onAccess={session.onAccess}
-        onSignOut={session.onSignOut}
-        onStartOver={session.onStartOver}
-      />
+      <Suspense fallback={<LoadingScreen />}>
+        <VaultScreen
+          gate={session.gate}
+          onAccess={session.onAccess}
+          onSignOut={session.onSignOut}
+          onStartOver={session.onStartOver}
+        />
+      </Suspense>
     );
   }
   if (session.status === 'waiting') {
     return (
-      <WaitingForApproval
-        access={session.access}
-        onAccess={session.onAccess}
-        onSignOut={session.onSignOut}
-      />
+      <Suspense fallback={<LoadingScreen />}>
+        <WaitingForApproval
+          access={session.access}
+          onAccess={session.onAccess}
+          onSignOut={session.onSignOut}
+        />
+      </Suspense>
     );
   }
   return <Shell account={session.account} repository={session.repository} />;
@@ -190,8 +207,22 @@ export function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<FeaturesPage />} path="/features" />
-        <Route element={<PrivacyPage />} path="/privacy" />
+        <Route
+          element={
+            <Suspense fallback={<LoadingScreen />}>
+              <FeaturesPage />
+            </Suspense>
+          }
+          path="/features"
+        />
+        <Route
+          element={
+            <Suspense fallback={<LoadingScreen />}>
+              <PrivacyPage />
+            </Suspense>
+          }
+          path="/privacy"
+        />
         <Route
           element={
             PreviewApp ? (

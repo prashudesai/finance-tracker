@@ -73,7 +73,7 @@ const zero = (): Record<AssetClass, number> => ({
 });
 
 export function portfolioMix(
-  rows: PositionRow[],
+  rows: readonly PositionRow[],
   settings?: Pick<TrackerSettings, 'growthTypes'>,
 ): PortfolioMix {
   const value = zero();
@@ -233,7 +233,7 @@ const isDeposit = (holding: Holding) => /deposit|\bfd\b/i.test(`${holding.type} 
  * to hand for an emergency, little steady income near retirement, and most of it locked away.
  */
 export function reviewMix(
-  rows: PositionRow[],
+  rows: readonly PositionRow[],
   data: Pick<TrackerData, 'monthlyBalances' | 'expenses' | 'income'>,
   options: {
     today: string;
@@ -372,7 +372,7 @@ export interface MemberMix {
 
 /** Each person's own mix, largest portfolio first, for families with more than one. */
 export function memberMixes(
-  rows: PositionRow[],
+  rows: readonly PositionRow[],
   settings?: Pick<TrackerSettings, 'growthTypes'>,
 ): MemberMix[] {
   const members = [...new Set(rows.map((row) => row.holding.member))];

@@ -11,7 +11,7 @@ interface Sort<Key> {
 
 /** Sorts rows by a column. Choosing the same column reverses it. */
 export function useSort<Row, Key extends string>(
-  rows: Row[],
+  rows: readonly Row[],
   valueOf: (row: Row, key: Key) => SortValue,
 ) {
   const [sort, setSort] = useState<Sort<Key> | null>(null);

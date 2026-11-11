@@ -285,3 +285,22 @@
   opacity: 0.35;
   cursor: default;
 }
+
+/* Touch screens: the month arrows and "See where it went" take a finger-sized tap. */
+@media (pointer: coarse) {
+  .arrow,
+  .more {
+    position: relative;
+  }
+
+  .arrow::after,
+  .more::after {
+    position: absolute;
+    inset: -5px;
+    content: '';
+  }
+
+  .more::after {
+    inset: -11px -8px;
+  }
+}

@@ -165,3 +165,22 @@
     margin-top: 10px;
   }
 }
+
+/* Touch screens: the range buttons and the own and owe links take a finger-sized tap. */
+@media (pointer: coarse) {
+  .range,
+  .split a {
+    position: relative;
+  }
+
+  .range::after,
+  .split a::after {
+    position: absolute;
+    inset: -7px -2px;
+    content: '';
+  }
+
+  .split a::after {
+    inset: -10px -6px;
+  }
+}
