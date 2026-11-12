@@ -73,3 +73,9 @@
     width: 100%;
   }
 }
+
+/* How a custom type grows, under the type it belongs to. */
+.growth {
+  display: grid;
+  gap: 6px;
+}

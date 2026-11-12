@@ -1,7 +1,10 @@
 {
-  "version": "1.45.0",
+  "version": "1.46.0",
   "released": "2026-11-12",
   "notes": [
+    "Investments can have a maturity date: payouts stop after it, and Home reminds you a month before to record the principal coming back",
+    "A payout can rise each year by a percentage, such as rent going up 5% a year",
+    "Editing a holding can move it between Investments, PF, PPF and NPS, and change how a custom type grows",
     "On desktop, Future and Insights are tabs of their own in the top bar; phones keep Plan",
     "Recent activity shows whose account it is instead of the account number, and how far each value update moved",
     "Scheduled contributions read as Monthly contribution, and desktop tabs are roomier",
@@ -10,9 +13,6 @@
     "On touch screens, small links and buttons are easier to tap",
     "On phones, Home's net worth chart fits the screen, so For you today shows whole on the first screen",
     "Needs attention is a bell with its count beside the greeting, opening the list",
-    "On phones, net worth and this month are a little roomier, so Home's first screen ends with For you today",
-    "A shorter net worth card, with its range beside the title, so For you today shows on Home's first screen",
-    "Every page uses the same glow as Home, for a consistent look",
-    "Home on wide screens is a balanced grid that follows your Arrange Home order, with related sections side by side"
+    "On phones, net worth and this month are a little roomier, so Home's first screen ends with For you today"
   ]
 }

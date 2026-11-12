@@ -188,8 +188,18 @@ export const holdingSchema = z.object({
       /** Left out when it varies, such as a profit share; each payout's amount is asked for. */
       amount: positiveMoney.optional(),
       start: date,
+      /**
+       * How much a fixed payout rises each year from its start, as a percentage, such as a
+       * rent that goes up 5% a year. Left out when it stays the same.
+       */
+      rise: number.gt(0, 'Enter more than zero.').max(50, 'Enter 50 or less.').optional(),
     })
     .optional(),
+  /**
+   * When the principal comes back, as with a deposit, a bond or a lease. Payouts stop after it,
+   * and it's a reminder to record the money received.
+   */
+  maturity: date.optional(),
 });
 export type Holding = z.infer<typeof holdingSchema>;
 

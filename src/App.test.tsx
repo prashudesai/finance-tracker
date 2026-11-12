@@ -799,7 +799,7 @@ test('a profit share that varies saves no amount, and asks for it when due', asy
   fireEvent.change(field('Purchase Date'), { target: { value: '2026-01-01' } });
   fireEvent.click(within(form).getByRole('radio', { name: 'Quarterly', hidden: true }));
   fireEvent.click(within(form).getByRole('radio', { name: /^Varies/, hidden: true }));
-  expect(within(form).queryByLabelText('Interest each time (₹)')).toBeNull();
+  expect(within(form).queryByLabelText('Amount each time (₹)')).toBeNull();
   fireEvent.change(field('First payout on'), { target: { value: '2026-03-31' } });
   fireEvent.click(within(form).getByRole('button', { name: 'Save investment', hidden: true }));
   await waitFor(() =>
@@ -1869,4 +1869,136 @@ test('Portfolio mix shows the mix, tips with options, and an option’s details'
 test('Investments links to the tips for the mix', async () => {
   renderApp('/investments', previewData());
   expect(await screen.findByRole('link', { name: /tips? for your mix/ })).toBeDefined();
+});
+
+test('an investment can move to PPF when edited, keeping its history', async () => {
+  const contribution = {
+    id: 'c1',
+    holdingId: fund.id,
+    date: '2024-02-01',
+    amount: 5_000,
+    automatic: false,
+  };
+  renderApp('/', {
+    holdings: [fund],
+    contributions: [contribution],
+    settings: [{ ...defaultSettings(), onboardingDone: true }],
+  });
+  fireEvent.click(await screen.findByRole('link', { name: /Mutual Funds/ }));
+  fireEvent.click(await screen.findByRole('button', { name: `Edit ${fund.name}`, hidden: true }));
+  const form = await screen.findByRole('dialog', { name: /Edit/, hidden: true });
+  fireEvent.click(within(form).getByRole('radio', { name: 'PPF', hidden: true }));
+  expect(
+    within(form).getByText(/contributions, values and withdrawals move with it/),
+  ).toBeDefined();
+  fireEvent.click(within(form).getByRole('button', { name: /^Save/, hidden: true }));
+  await waitFor(() =>
+    expect(useTracker.getState().data.holdings[0]).toMatchObject({
+      id: fund.id,
+      kind: 'ppf',
+      type: 'PPF',
+    }),
+  );
+  expect(useTracker.getState().data.contributions).toEqual([contribution]);
+});
+
+test('a custom type’s growth can be changed later, for every holding of that type', async () => {
+  const lease: Holding = { ...fund, id: 'lease', type: 'Lease financing', name: 'Office lease' };
+  renderApp('/', {
+    holdings: [lease],
+    settings: [
+      {
+        ...defaultSettings(),
+        onboardingDone: true,
+        investmentTypes: ['Lease financing'],
+        growthTypes: { 'Lease financing': 'no-return' },
+      },
+    ],
+  });
+  fireEvent.click(await screen.findByRole('link', { name: /Lease financing/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Edit Office lease', hidden: true }));
+  const form = await screen.findByRole('dialog', { name: /Edit/, hidden: true });
+  const growth = within(form).getByRole('radiogroup', {
+    name: 'How Lease financing grows',
+    hidden: true,
+  });
+  expect(
+    within(growth)
+      .getByRole('radio', { name: 'No return', hidden: true })
+      .getAttribute('aria-checked'),
+  ).toBe('true');
+  fireEvent.click(within(growth).getByRole('radio', { name: 'Fixed return', hidden: true }));
+  expect(within(form).getByText(/Applies to every Lease financing investment/)).toBeDefined();
+  fireEvent.click(within(form).getByRole('button', { name: /^Save/, hidden: true }));
+  await waitFor(() =>
+    expect(useTracker.getState().data.settings[0]?.growthTypes).toEqual({
+      'Lease financing': 'fixed',
+    }),
+  );
+});
+
+test('built-in types keep their growth, so the choice isn’t offered', async () => {
+  renderApp('/', { holdings: [fund], settings: [{ ...defaultSettings(), onboardingDone: true }] });
+  fireEvent.click(await screen.findByRole('link', { name: /Mutual Funds/ }));
+  fireEvent.click(await screen.findByRole('button', { name: `Edit ${fund.name}`, hidden: true }));
+  const form = await screen.findByRole('dialog', { name: /Edit/, hidden: true });
+  expect(within(form).queryByRole('radiogroup', { name: /grows/, hidden: true })).toBeNull();
+});
+
+test('rent that rises each year and a maturity date save with the investment', async () => {
+  renderApp('/investments');
+  const heading = await screen.findByRole('heading', { name: 'Investment portfolio' });
+  const section = heading.closest('section');
+  if (!section) throw new Error('Portfolio section not found');
+  fireEvent.click(within(section).getByRole('button', { name: 'Add', hidden: true }));
+  const form = await screen.findByRole('dialog', { name: 'Add investment', hidden: true });
+  const field = (label: string) => within(form).getByLabelText(label);
+  fireEvent.change(field('Investment Name'), { target: { value: 'Office lease' } });
+  fireEvent.change(field('Invested Amount (₹)'), { target: { value: '500000' } });
+  fireEvent.change(field('Current Value (₹)'), { target: { value: '500000' } });
+  fireEvent.change(field('Purchase Date'), { target: { value: '2026-01-01' } });
+  fireEvent.click(within(form).getByRole('radio', { name: 'Monthly', hidden: true }));
+  fireEvent.change(field('Amount each time (₹)'), { target: { value: '10000' } });
+  fireEvent.change(field('First payout on'), { target: { value: '2026-02-01' } });
+  fireEvent.change(field('Rises each year (%)'), { target: { value: '5' } });
+  fireEvent.change(field('Matures on (optional)'), { target: { value: '2029-01-01' } });
+  expect(within(form).getByText(/Payouts stop after it/)).toBeDefined();
+  fireEvent.click(within(form).getByRole('button', { name: 'Save investment', hidden: true }));
+  await waitFor(() =>
+    expect(
+      useTracker.getState().data.holdings.find((row) => row.name === 'Office lease'),
+    ).toMatchObject({
+      payout: { every: 'month', amount: 10_000, start: '2026-02-01', rise: 5 },
+      maturity: '2029-01-01',
+    }),
+  );
+});
+
+test('a maturing holding is on Home, and Received takes its principal out', async () => {
+  const today = localDate();
+  const maturing: Holding = {
+    ...fund,
+    id: 'fd',
+    type: 'Fixed Deposits',
+    name: 'Bank FD',
+    openingInvested: 200_000,
+    openingValue: 200_000,
+    maturity: today,
+  };
+  renderApp('/', {
+    holdings: [maturing],
+    settings: [{ ...defaultSettings(), onboardingDone: true }],
+  });
+  fireEvent.click(await screen.findByRole('button', { name: /^Needs attention, \d+$/ }));
+  fireEvent.click(
+    await screen.findByRole('button', { name: /^Principal received, ₹2,00,000: Bank FD matured/ }),
+  );
+  await waitFor(() =>
+    expect(useTracker.getState().data.withdrawals).toEqual([
+      expect.objectContaining({ holdingId: 'fd', date: today, amount: 200_000 }),
+    ]),
+  );
+  expect(useTracker.getState().data.valuations).toEqual([
+    expect.objectContaining({ holdingId: 'fd', date: today, value: 0 }),
+  ]);
 });

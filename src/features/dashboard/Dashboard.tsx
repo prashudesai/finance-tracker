@@ -44,6 +44,7 @@ import { RecapCard } from '../insights/MonthRecap';
 import { InstallCard } from '../install/InstallPrompts';
 import { EmiActions, useHiddenEmis } from './EmiActions';
 import { PayoutActions } from '../investments/PayoutActions';
+import { MaturityActions } from '../investments/MaturityActions';
 import { GettingStartedGate } from './GettingStartedGate';
 import { TrendChart } from './TrendChart';
 import { HomeSections } from './HomeSections';
@@ -372,11 +373,14 @@ export function Dashboard({ name = '' }: { name?: string }) {
           );
           const emi = 'emi' in item ? item.emi : undefined;
           const payout = 'payout' in item ? item.payout : undefined;
+          const maturity = 'maturity' in item ? item.maturity : undefined;
           return (
             <li className={ui.row} key={item.label}>
               <span className={ui.rowMain}>{item.label}</span>
               {payout ? (
                 <PayoutActions fallback={review} label={item.label} payout={payout} />
+              ) : maturity ? (
+                <MaturityActions fallback={review} label={item.label} maturity={maturity} />
               ) : emi ? (
                 <EmiActions
                   date={emi.date}

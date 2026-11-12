@@ -5,7 +5,7 @@ import type { RecordWrite } from '../../data/repository';
 import { returnMeasure, valueHistory } from '../../domain/holdings';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
-import { formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
+import { formatDay, formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { TrendLine } from '../../ui/TrendLine';
 import ui from '../../ui/ui.module.css';
@@ -249,6 +249,14 @@ function HoldingCard({
             <dt>Booked profit</dt>
             <dd className={position.booked < 0 ? ui.loss : ui.gain}>
               {signedMoney(position.booked)}
+            </dd>
+          </div>
+        ) : null}
+        {holding.maturity ? (
+          <div>
+            <dt>{holding.maturity <= today ? 'Matured' : 'Matures'}</dt>
+            <dd>
+              {formatDay(holding.maturity)} {holding.maturity.slice(0, 4)}
             </dd>
           </div>
         ) : null}

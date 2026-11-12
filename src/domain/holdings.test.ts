@@ -3,6 +3,8 @@ import type { Holding } from '../schema/records';
 import {
   duePayouts,
   holdingPosition,
+  maturingHoldings,
+  payoutAmountOn,
   returnMeasure,
   suggestedPayout,
   valueHistory,
@@ -112,5 +114,51 @@ describe('interest paid out', () => {
     expect(suggestedPayout(400_000, 7.5, 'quarter')).toBe(7500);
     expect(suggestedPayout(400_000, 7.5, 'month')).toBe(2500);
     expect(suggestedPayout(400_000, 7.5, 'year')).toBe(30_000);
+  });
+});
+
+describe('rent that rises, and principal that comes back', () => {
+  const lease: Holding = {
+    ...fund,
+    id: 'lease',
+    type: 'Lease financing',
+    date: '2024-01-01',
+    openingInvested: 500_000,
+    openingValue: 500_000,
+    payout: { every: 'month', amount: 10_000, start: '2024-02-01', rise: 5 },
+    maturity: '2026-12-01',
+  };
+
+  test('a payout rises by its yearly rise after each full year from its start', () => {
+    const plan = lease.payout;
+    if (!plan) throw new Error('Expected a payout');
+    expect(payoutAmountOn(plan, '2024-02-01')).toBe(10_000);
+    expect(payoutAmountOn(plan, '2025-01-31')).toBe(10_000);
+    expect(payoutAmountOn(plan, '2025-02-01')).toBe(10_500);
+    expect(payoutAmountOn(plan, '2026-02-01')).toBe(11_025);
+    expect(payoutAmountOn({ ...plan, rise: undefined }, '2026-02-01')).toBe(10_000);
+    expect(payoutAmountOn({ ...plan, amount: undefined }, '2026-02-01')).toBe(0);
+  });
+
+  test('payouts fall due at their risen amount, and stop after maturity', () => {
+    const due = duePayouts([lease], [], '2027-03-10');
+    expect(due.at(0)).toMatchObject({ date: '2024-02-01', amount: 10_000 });
+    expect(due.find((row) => row.date === '2025-02-01')?.amount).toBe(10_500);
+    expect(due.at(-1)).toMatchObject({ date: '2026-12-01', amount: 11_025 });
+  });
+
+  test('a holding shows as maturing from a month before, until its principal is taken out', () => {
+    const data = { contributions: [], valuations: [] };
+    expect(maturingHoldings([lease], data, '2026-10-31')).toEqual([]);
+    expect(maturingHoldings([lease], data, '2026-11-01')).toEqual([
+      { holding: lease, value: 500_000 },
+    ]);
+    expect(maturingHoldings([lease], data, '2027-01-15')).toHaveLength(1);
+    const closed = {
+      ...data,
+      valuations: [{ id: 'v', holdingId: 'lease', date: '2026-12-01', value: 0 }],
+      withdrawals: [{ id: 'w', holdingId: 'lease', date: '2026-12-01', amount: 500_000 }],
+    };
+    expect(maturingHoldings([lease], closed, '2027-01-15')).toEqual([]);
   });
 });

@@ -28,6 +28,7 @@ import {
   latestValuation,
   type HoldingPosition,
   duePayouts,
+  maturingHoldings,
 } from './holdings';
 import { isLoanFailure } from './loan';
 import { remembered } from './memo';
@@ -758,6 +759,8 @@ export interface AttentionItem {
   emi?: { loanId: string; date: string; missed: boolean };
   /** Interest due from a holding, which can be marked as received here. */
   payout?: Payout;
+  /** A holding at or near maturity, whose principal can be marked as received here. */
+  maturity?: { holdingId: string; date: string; value: number };
 }
 
 const MONTH_NAMES = [
@@ -869,6 +872,16 @@ export function attentionItems(
       path: '/investments',
       state: { open: categoryOf(holding) },
       payout,
+    });
+  }
+  for (const { holding, value } of maturingHoldings(view.holdings, view, today)) {
+    const date = holding.maturity ?? today;
+    const day = `${Number(date.slice(8))} ${MONTH_NAMES[Number(date.slice(5, 7)) - 1]?.slice(0, 3) ?? ''}`;
+    items.push({
+      label: `${holding.name} ${date <= today ? 'matured' : 'matures'} ${day}: ₹${Math.round(value).toLocaleString('en-IN')} due back`,
+      path: '/investments',
+      state: { open: categoryOf(holding) },
+      maturity: { holdingId: holding.id, date, value },
     });
   }
   const backup = backupStatus(household, today, syncedOn);

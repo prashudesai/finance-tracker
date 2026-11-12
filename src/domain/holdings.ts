@@ -11,6 +11,7 @@ import {
   type Withdrawal,
 } from '../schema/records';
 import {
+  addDays,
   addMonths,
   financialYearStart,
   lastDayOfMonth,
@@ -29,6 +30,9 @@ const BUILT_IN_GROWTH: Record<string, GrowthType> = {
   Bonds: 'fixed',
   'Fixed Deposits': 'fixed',
 };
+
+/** Whether a type's growth is set by the app, such as Mutual Funds, rather than by the family. */
+export const hasBuiltInGrowth = (type: string) => type in BUILT_IN_GROWTH;
 
 export function growthType(type: string, settings?: Pick<TrackerSettings, 'growthTypes'>) {
   return BUILT_IN_GROWTH[type] ?? settings?.growthTypes[type] ?? 'market';
@@ -261,7 +265,7 @@ export function dueContributions(
     const anchor = Number(holding.autoStart.slice(-2));
     for (let step = 0; step < MAX_SCHEDULED_MONTHS; step++) {
       const date = addMonths(holding.autoStart, step, anchor);
-      if (date > today) break;
+      if (date > today || (holding.maturity && date > holding.maturity)) break;
       const id = `auto_${holding.id}_${date.slice(0, 7).replace('-', '')}`;
       if (date < holding.date || recorded.has(id)) continue;
       due.push({
@@ -298,7 +302,30 @@ export const suggestedPayout = (value: number, rate: number, every: PayoutEvery)
  * Scheduled payouts due by `today` that have no record yet, oldest first. IDs are fixed per
  * holding and payout month, so a payout is never asked for twice.
  */
-export function duePayouts(holdings: Holding[], payouts: Payout[], today: string): Payout[] {
+/** Whole months from one date to a later one: 15 Jan to 14 Feb is none, to 15 Feb is one. */
+function wholeMonths(from: string, to: string) {
+  const months =
+    (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 +
+    (Number(to.slice(5, 7)) - Number(from.slice(5, 7)));
+  return to.slice(8) < from.slice(8) ? months - 1 : months;
+}
+
+/**
+ * What a payout pays on a date: its fixed amount, risen by its yearly rise for each full year
+ * since it started, such as a rent going up 5% a year. Zero for one that varies.
+ */
+export function payoutAmountOn(plan: NonNullable<Holding['payout']>, date: string) {
+  if (!plan.amount) return 0;
+  if (!plan.rise) return plan.amount;
+  const years = Math.max(0, Math.floor(wholeMonths(plan.start, date) / 12));
+  return roundMoney(plan.amount * (1 + plan.rise / 100) ** years);
+}
+
+export function duePayouts(
+  holdings: readonly Holding[],
+  payouts: Payout[],
+  today: string,
+): Payout[] {
   const recorded = new Set(payouts.map((row) => row.id));
   const due: Payout[] = [];
   for (const holding of holdings) {
@@ -308,14 +335,41 @@ export function duePayouts(holdings: Holding[], payouts: Payout[], today: string
     const step = PAYOUT_MONTHS[plan.every];
     for (let index = 0; index * step < MAX_SCHEDULED_MONTHS; index++) {
       const date = addMonths(plan.start, index * step, anchor);
-      if (date > today) break;
+      // Nothing is paid after the principal comes back.
+      if (date > today || (holding.maturity && date > holding.maturity)) break;
       const id = payoutId(holding.id, date);
       if (date < holding.date || recorded.has(id)) continue;
       // A payout that varies is due with no amount yet; it's asked for when received.
-      due.push({ id, holdingId: holding.id, date, amount: plan.amount ?? 0 });
+      due.push({ id, holdingId: holding.id, date, amount: payoutAmountOn(plan, date) });
     }
   }
   return due.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** Days before maturity that the reminder to record the principal starts. */
+export const MATURITY_NOTICE_DAYS = 30;
+
+export interface Maturing {
+  holding: Holding;
+  /** Its value today: the principal to come back, unless updated. */
+  value: number;
+}
+
+/**
+ * Holdings maturing within the notice period, or already past it, that still hold money:
+ * their principal is due back, to be recorded as received.
+ */
+export function maturingHoldings(
+  holdings: readonly Holding[],
+  data: HoldingData,
+  today: string,
+): Maturing[] {
+  const soon = addDays(today, MATURITY_NOTICE_DAYS);
+  return holdings
+    .filter((holding) => holding.maturity && holding.maturity <= soon && holding.date <= today)
+    .map((holding) => ({ holding, value: holdingValue(holding, data, today) }))
+    .filter((row) => row.value > 0.5)
+    .sort((a, b) => (a.holding.maturity ?? '').localeCompare(b.holding.maturity ?? ''));
 }
 
 export const payoutId = (holdingId: string, date: string) =>

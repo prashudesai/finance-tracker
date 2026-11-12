@@ -251,7 +251,7 @@ export function CategoryDetail({
               {schedules
                 .map((row) =>
                   row.payout?.amount
-                    ? `${formatMoney(row.payout.amount)} ${EVERY_WORDS[row.payout.every]}`
+                    ? `${formatMoney(row.payout.amount)} ${EVERY_WORDS[row.payout.every]}${row.payout.rise ? `, rising ${row.payout.rise}% a year` : ''}${row.maturity ? `, until ${dayOf(row.maturity)}` : ''}`
                     : `Varies · ${OFTEN[row.payout?.every ?? 'month']}`,
                 )
                 .join(' · ')}
