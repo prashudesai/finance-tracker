@@ -1,0 +1,117 @@
+/* Upcoming commitments: due now, the next 30 days, then suggestions, each a short list. */
+.group {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.group + .group {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.label {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows > li + li {
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+/* Name and detail on the left, amount on the right, any actions in a row underneath. */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.main strong {
+  overflow: hidden;
+  font-size: 0.98rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.main small[data-missed] {
+  color: var(--warning-text);
+}
+
+.amount {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.amount[data-income] {
+  color: var(--gain);
+}
+
+.actions {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.primary,
+.secondary {
+  min-height: 34px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.primary {
+  color: var(--accent-text);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.secondary {
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--border-strong);
+}
+
+.primary:hover {
+  filter: brightness(1.06);
+}
+
+.secondary:hover {
+  border-color: var(--accent);
+}
+
+.empty {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}

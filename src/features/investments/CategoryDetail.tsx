@@ -15,6 +15,7 @@ import { financialYearStart } from '../../domain/calendar';
 import {
   averageMonthlyPayout,
   duePayouts,
+  groupRate,
   groupXirr,
   receivedPayouts,
   returnMeasure,
@@ -27,7 +28,7 @@ import { formatDay, formatMoney, formatPercent, localDate, signedMoney } from '.
 import ui from '../../ui/ui.module.css';
 import styles from './CategoryDetail.module.css';
 import { PayoutActions } from './PayoutActions';
-import { counted, singular, usePayouts } from './payouts';
+import { counted, rateMetric, singular, usePayouts } from './payouts';
 import { IRREGULAR, type Holding } from '../../schema/records';
 import { ValueChart } from './ValueChart';
 
@@ -114,18 +115,11 @@ export function CategoryDetail({
 
   const measures = new Set(holdings.map((row) => returnMeasure(row, settings)));
   const measure = measures.size === 1 ? [...measures][0] : 'absolute';
-  const rates = [...new Set(holdings.map((row) => row.rate))];
   const returnText =
     measure === 'xirr'
       ? { label: 'XIRR', value: formatPercent(groupXirr(holdings, data, today), 2) }
       : measure === 'rate'
-        ? {
-            label: 'Interest rate',
-            value:
-              rates.length === 1 && rates[0] !== undefined
-                ? `${rates[0].toFixed(2)}% p.a.`
-                : 'Multiple rates',
-          }
+        ? rateMetric(groupRate(category.rows), formatPercent(category.absolute, 2))
         : { label: 'Absolute return', value: formatPercent(category.absolute, 2) };
 
   const canEdit = useTracker((state) => state.canEdit);

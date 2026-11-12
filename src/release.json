@@ -1,7 +1,9 @@
 {
-  "version": "1.47.0",
+  "version": "1.48.0",
   "released": "2026-11-12",
   "notes": [
+    "Interest rate cards show one rate instead of Multiple rates: the average weighted by how much is in each, or the payout yield when no rate is entered",
+    "Upcoming commitments are tidier: Due now first, then the next 30 days, then what looks regular, with amounts lined up on the right",
     "Payouts as they come: for investments with no schedule, such as dairy cattle paying each lactation, record each payout when it arrives",
     "Units that pay on their own, such as 28 cows: set the expected amount per cow and how often, see the monthly average, and record how many paid each time",
     "The card's button says Payout, or Interest for deposits and bonds",
@@ -11,8 +13,6 @@
     "On desktop, Future and Insights are tabs of their own in the top bar; phones keep Plan",
     "Recent activity shows whose account it is instead of the account number, and how far each value update moved",
     "Scheduled contributions read as Monthly contribution, and desktop tabs are roomier",
-    "Faster to open: the first download is smaller, and setup, the lock screen and the Features and Privacy pages load only when needed",
-    "Smoother Home: figures shared between cards are worked out once, and scrolling does less work",
-    "On touch screens, small links and buttons are easier to tap"
+    "Faster to open: the first download is smaller, and setup, the lock screen and the Features and Privacy pages load only when needed"
   ]
 }

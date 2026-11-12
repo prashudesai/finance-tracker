@@ -3,6 +3,7 @@ import type { Holding } from '../schema/records';
 import {
   averageMonthlyPayout,
   duePayouts,
+  groupRate,
   holdingPosition,
   maturingHoldings,
   payoutAmountOn,
@@ -186,5 +187,41 @@ describe('payouts as they come, per unit', () => {
     expect(averageMonthlyPayout({ ...cattle, payout: noCycle })).toBe(0);
     const quarterly = { every: 'quarter' as const, amount: 7_500, start: '2026-03-31' };
     expect(averageMonthlyPayout({ payout: quarterly })).toBe(2_500);
+  });
+});
+
+describe('one rate for a group of fixed-return holdings', () => {
+  const at = (rate: number | undefined, invested: number, payout?: Holding['payout']) => ({
+    holding: { rate, payout, units: undefined },
+    position: { invested },
+  });
+
+  test('different rates average by how much is in each', () => {
+    expect(groupRate([at(7, 100_000), at(9, 300_000)])).toEqual({
+      kind: 'rate',
+      rate: 8.5,
+      same: false,
+    });
+  });
+
+  test('one rate everywhere is that rate', () => {
+    expect(groupRate([at(8, 100_000), at(8, 50_000)])).toEqual({
+      kind: 'rate',
+      rate: 8,
+      same: true,
+    });
+  });
+
+  test('with no rates, payouts give a yield on what was put in', () => {
+    const monthly = { every: 'month' as const, amount: 1_000, start: '2026-01-31' };
+    expect(groupRate([at(undefined, 200_000, monthly), at(undefined, 100_000)])).toEqual({
+      kind: 'yield',
+      rate: 4,
+    });
+  });
+
+  test('with neither, there is no rate to show', () => {
+    expect(groupRate([at(undefined, 100_000)])).toBeNull();
+    expect(groupRate([])).toBeNull();
   });
 });

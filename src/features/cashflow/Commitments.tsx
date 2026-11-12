@@ -25,6 +25,7 @@ import { formatDay, formatMoney, localDate } from '../../ui/format';
 import { Modal } from '../../ui/Modal';
 import { Select } from '../../ui/Select';
 import ui from '../../ui/ui.module.css';
+import styles from './Commitments.module.css';
 
 const COMMITMENT_DAYS = 30;
 
@@ -336,23 +337,83 @@ export function Commitments({ open = false }: { open?: boolean }) {
           {repeating.length > 0 ? ` · ${repeating.length} found` : ''}
         </span>
       </summary>
-      {repeating.length > 0 ? (
-        <>
-          <div className={ui.groupLabel}>Looks regular</div>
-          <ul className={ui.list}>
-            {repeating.map((row) => (
-              <li className={ui.row} key={row.key}>
-                <div className={ui.rowMain}>
-                  <div className={ui.rowTitle}>{row.name}</div>
-                  <div className={ui.rowDetail}>
-                    {formatMoney(row.amount)} around the {ordinal(row.day)} · in {row.months} of the
-                    last {row.of} months
-                  </div>
+      {/* What's due first, then what's coming, then suggestions to set up. */}
+      {pending.length > 0 ? (
+        <section aria-label="Due now" className={styles.group}>
+          <h3 className={styles.label}>Due now</h3>
+          <ul className={styles.rows}>
+            {pending.map(({ ruleId, month: dueMonth, date, amount, missed }) => (
+              <li className={styles.row} key={`${ruleId}-${dueMonth}`}>
+                <div className={styles.main}>
+                  <strong>{ruleName(ruleId)}</strong>
+                  <small data-missed={missed || undefined}>
+                    {missed ? 'Missed' : 'Due'} {formatDay(date)}
+                  </small>
                 </div>
-                <div className={ui.actions}>
+                {amount === undefined ? null : (
+                  <span className={styles.amount}>{formatMoney(amount)}</span>
+                )}
+                <div className={styles.actions}>
+                  <button
+                    className={styles.primary}
+                    onClick={() => run({ ruleId, month: dueMonth })}
+                    type="button"
+                  >
+                    Post
+                  </button>
+                  <button
+                    className={styles.secondary}
+                    onClick={() => run({ ruleId, month: dueMonth, skip: true })}
+                    type="button"
+                  >
+                    Skip
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      <section aria-label="Next 30 days" className={styles.group}>
+        <h3 className={styles.label}>Next 30 days</h3>
+        {upcoming.length === 0 ? (
+          <p className={styles.empty}>Nothing scheduled.</p>
+        ) : (
+          <ul className={styles.rows}>
+            {upcoming.map((row) => (
+              <li className={styles.row} key={`${row.ruleId}-${row.date}`}>
+                <div className={styles.main}>
+                  <strong>{row.name}</strong>
+                  <small>
+                    {formatDay(row.date)}
+                    {row.kind === 'income' ? ' · Income' : ''}
+                  </small>
+                </div>
+                <span className={styles.amount} data-income={row.kind === 'income' || undefined}>
+                  {formatMoney(row.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      {repeating.length > 0 ? (
+        <section aria-label="Looks regular" className={styles.group}>
+          <h3 className={styles.label}>Looks regular</h3>
+          <ul className={styles.rows}>
+            {repeating.map((row) => (
+              <li className={styles.row} key={row.key}>
+                <div className={styles.main}>
+                  <strong>{row.name}</strong>
+                  <small>
+                    Around the {ordinal(row.day)} · {row.months} of the last {row.of} months
+                  </small>
+                </div>
+                <span className={styles.amount}>{formatMoney(row.amount)}</span>
+                <div className={styles.actions}>
                   <button
                     aria-label={`Make ${row.name} recurring`}
-                    className={ui.button}
+                    className={styles.primary}
                     onClick={() => schedule(row)}
                     type="button"
                   >
@@ -360,7 +421,7 @@ export function Commitments({ open = false }: { open?: boolean }) {
                   </button>
                   <button
                     aria-label={`${row.name} is not regular`}
-                    className={ui.quiet}
+                    className={styles.secondary}
                     onClick={() => dismiss(row.key)}
                     type="button"
                   >
@@ -370,60 +431,8 @@ export function Commitments({ open = false }: { open?: boolean }) {
               </li>
             ))}
           </ul>
-        </>
+        </section>
       ) : null}
-      {pending.length === 0 ? (
-        <p className={ui.empty}>Nothing is due.</p>
-      ) : (
-        <ul className={ui.list}>
-          {pending.map(({ ruleId, month: dueMonth, date, amount, missed }) => (
-            <li className={ui.row} key={`${ruleId}-${dueMonth}`}>
-              <div className={ui.rowMain}>
-                <div className={ui.rowTitle}>{ruleName(ruleId)}</div>
-                <div className={ui.rowDetail}>
-                  {missed ? 'Missed' : 'Due'} {formatDay(date)}
-                  {amount === undefined ? '' : ` · ${formatMoney(amount)}`}
-                </div>
-              </div>
-              <div className={ui.actions}>
-                <button
-                  className={ui.button}
-                  onClick={() => run({ ruleId, month: dueMonth })}
-                  type="button"
-                >
-                  Post
-                </button>
-                <button
-                  className={ui.quiet}
-                  onClick={() => run({ ruleId, month: dueMonth, skip: true })}
-                  type="button"
-                >
-                  Skip
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-      <div className={ui.groupLabel}>Next 30 days</div>
-      {upcoming.length === 0 ? (
-        <p className={ui.empty}>No scheduled payments in the next 30 days.</p>
-      ) : (
-        <ul className={ui.list}>
-          {upcoming.map((row) => (
-            <li className={ui.row} key={`${row.ruleId}-${row.date}`}>
-              <div className={ui.rowMain}>
-                <div className={ui.rowTitle}>{row.name}</div>
-                <div className={ui.rowDetail}>
-                  {formatDay(row.date)}
-                  {row.kind === 'income' ? ' · Income' : ''}
-                </div>
-              </div>
-              <span className={ui.amount}>{formatMoney(row.amount)}</span>
-            </li>
-          ))}
-        </ul>
-      )}
       <details className={ui.fold}>
         <summary>Manage recurring items</summary>
         {active.length === 0 ? (

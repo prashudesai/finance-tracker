@@ -1,4 +1,5 @@
 import type { RecordWrite } from '../../data/repository';
+import type { GroupRate } from '../../domain/holdings';
 import type { Holding, Income, Payout } from '../../schema/records';
 import { useTracker } from '../../store/tracker';
 
@@ -74,4 +75,22 @@ export function usePayouts() {
     skip: (payout: Payout) => commit(skippedWrites(payout)),
     remove: (payout: Payout) => commit(removedWrites(payout)),
   };
+}
+
+/**
+ * The rate a group of fixed-return holdings earns, in words: their interest rate, or the
+ * invested-weighted average when they differ, or what their payouts yield; otherwise their
+ * absolute return.
+ */
+export function rateMetric(rate: GroupRate, absolute: string) {
+  if (rate?.kind === 'rate') {
+    return {
+      label: rate.same ? 'Interest rate' : 'Avg interest rate',
+      value: `${rate.rate.toFixed(2)}% p.a.`,
+    };
+  }
+  if (rate?.kind === 'yield') {
+    return { label: 'Payout yield', value: `${rate.rate.toFixed(2)}% p.a.` };
+  }
+  return { label: 'Absolute return', value: absolute };
 }

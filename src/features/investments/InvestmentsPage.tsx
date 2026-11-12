@@ -12,6 +12,7 @@ import { estimateGratuity, totalGratuity } from '../../domain/gratuity';
 import { financialYearLabel } from '../../domain/calendar';
 import {
   bookedProfitByYear,
+  groupRate,
   groupXirr,
   returnMeasure,
   monthlyContribution,
@@ -41,6 +42,7 @@ import styles from './InvestmentsPage.module.css';
 import { MixNudge } from '../mix/MixNudge';
 import { CategoryDialog } from './HoldingActions';
 import { HoldingForm } from './HoldingForm';
+import { rateMetric } from './payouts';
 
 type Section = 'investments' | 'retirement';
 
@@ -197,12 +199,6 @@ const CARD_TITLES: Record<string, string> = {
   PPF: 'PPF Accounts',
 };
 
-const rateSummary = (category: CategoryRow) => {
-  const rates = [...new Set(category.rows.map((row) => row.holding.rate))];
-  if (rates.length !== 1 || rates[0] === undefined) return 'Multiple rates';
-  return `${rates[0].toFixed(2)}% p.a.`;
-};
-
 export function InvestmentsPage() {
   const data = useView();
   const settings = useSettings();
@@ -294,7 +290,7 @@ export function InvestmentsPage() {
     const first = holdings[0];
     const measure = first ? returnMeasure(first, settings) : 'xirr';
     if (measure === 'rate') {
-      return { label: 'Interest rate', value: rateSummary(category) };
+      return rateMetric(groupRate(category.rows), formatPercent(category.absolute, 2));
     }
     if (measure === 'absolute') {
       return { label: 'Absolute return', value: formatPercent(category.absolute, 2) };

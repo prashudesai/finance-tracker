@@ -175,7 +175,8 @@ test('posting a recurring item adds the record', async () => {
     ],
   });
   fireEvent.click(await screen.findByRole('button', { name: 'Post' }));
-  expect(await screen.findByText('Nothing is due.')).toBeDefined();
+  // Once posted, nothing is due, so the Due now list goes.
+  await waitFor(() => expect(screen.queryByRole('region', { name: 'Due now' })).toBeNull());
   const region = screen.getByRole('region', { name: 'Selected month' });
   expect(within(region).getByRole('row', { name: 'Spent ₹32,000' })).toBeDefined();
 });

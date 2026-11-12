@@ -363,6 +363,40 @@ export function averageMonthlyPayout(holding: Pick<Holding, 'payout' | 'units'>)
   return roundMoney(plan.amount / PAYOUT_MONTHS[plan.every]);
 }
 
+export type GroupRate =
+  { kind: 'rate'; rate: number; same: boolean } | { kind: 'yield'; rate: number } | null;
+
+/**
+ * One rate for a group of fixed-return holdings, weighted by how much is invested in each:
+ * their interest rates where entered (`same` when every holding has the one rate), otherwise
+ * what their payouts bring in a year as a share of what's invested. Null when neither is known.
+ */
+export function groupRate(
+  rows: readonly {
+    holding: Pick<Holding, 'rate' | 'payout' | 'units'>;
+    position: { invested: number };
+  }[],
+): GroupRate {
+  const invested = (list: typeof rows) =>
+    list.reduce((sum, row) => sum + Math.max(0, row.position.invested), 0);
+  const rated = rows.filter((row) => row.holding.rate !== undefined);
+  const ratedInvested = invested(rated);
+  if (rated.length > 0 && ratedInvested > 0) {
+    const weighted =
+      rated.reduce(
+        (sum, row) => sum + (row.holding.rate ?? 0) * Math.max(0, row.position.invested),
+        0,
+      ) / ratedInvested;
+    const same =
+      rated.length === rows.length && new Set(rated.map((row) => row.holding.rate)).size === 1;
+    return { kind: 'rate', rate: weighted, same };
+  }
+  const total = invested(rows);
+  const yearly = rows.reduce((sum, row) => sum + averageMonthlyPayout(row.holding) * 12, 0);
+  if (total > 0 && yearly > 0) return { kind: 'yield', rate: (yearly / total) * 100 };
+  return null;
+}
+
 /** Days before maturity that the reminder to record the principal starts. */
 export const MATURITY_NOTICE_DAYS = 30;
 
