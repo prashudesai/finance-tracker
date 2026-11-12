@@ -394,7 +394,7 @@
   border-radius: 50%;
 }
 
-.activityIcon[data-kind='Withdrew'] {
+.activityIcon[data-kind='withdrew'] {
   color: var(--warning-text);
   background: var(--surface-sunken);
 }
@@ -408,6 +408,21 @@
 .activityAmount {
   font-weight: 650;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A value update shows how far it moved: up in green, down in amber, unchanged quietly. */
+.activityAmount[data-tone='up'] {
+  color: var(--gain);
+}
+
+.activityAmount[data-tone='down'] {
+  color: var(--warning-text);
+}
+
+.activityAmount[data-tone='flat'] {
+  color: var(--muted);
+  font-weight: 500;
 }
 
 @media (max-width: 420px) {

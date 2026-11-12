@@ -101,21 +101,37 @@ test.each([
   expect(await screen.findByRole('heading', { level: 1 })).toBeDefined();
 });
 
-test('the navigation has Home, Money, Wealth and Plan, with the + in the middle', async () => {
+test('the navigation has Plan on phones, and Future and Insights on desktop', async () => {
   renderApp('/');
   const nav = await screen.findByRole('navigation', { name: 'Main' });
   const links = within(nav).getAllByRole('link');
-  expect(links.map((link) => link.getAttribute('href'))).toEqual([
-    '/',
-    '/cash-flow',
-    '/investments',
-    '/analytics/overview',
-    '/settings',
+  // Every tab is in the page; the stylesheet shows Plan on phones and the rest on desktop.
+  expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
+    [expect.stringMatching(/Home/), '/'],
+    [expect.stringMatching(/Money/), '/cash-flow'],
+    [expect.stringMatching(/Wealth/), '/investments'],
+    [expect.stringMatching(/Plan/), '/analytics/overview'],
+    [expect.stringMatching(/Future/), '/analytics/overview'],
+    [expect.stringMatching(/Insights/), '/analytics'],
+    [expect.stringMatching(/Settings/), '/settings'],
   ]);
-  expect(links.map((link) => link.textContent)).toEqual(
-    expect.arrayContaining([expect.stringMatching(/Money/), expect.stringMatching(/Wealth/)]),
-  );
   expect(within(nav).getByRole('button', { name: 'Add record' })).toBeDefined();
+});
+
+test('Future or Insights is lit by the page, and Plan on either', async () => {
+  const lit = async (path: string) => {
+    cleanup();
+    renderApp(path);
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
+    return within(nav)
+      .getAllByRole('link')
+      .filter((link) => /active/.test(link.className))
+      .map((link) => /Plan|Future|Insights|Home/.exec(link.textContent ?? '')?.[0]);
+  };
+  expect(await lit('/analytics/goals')).toEqual(['Plan', 'Future']);
+  expect(await lit('/analytics/mix')).toEqual(['Plan', 'Insights']);
+  expect(await lit('/analytics')).toEqual(['Plan', 'Insights']);
+  expect(await lit('/')).toEqual(['Home']);
 });
 
 test('Wealth stays lit on the loans page', async () => {

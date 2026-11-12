@@ -1,10 +1,12 @@
 import {
   ArrowUpDown,
+  ChartPie,
   Home,
   LineChart,
   Moon,
   SlidersHorizontal,
   Sun,
+  Telescope,
   Eye,
   EyeOff,
   Wallet,
@@ -13,6 +15,7 @@ import {
 import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router';
 import { QuickAdd } from './features/dashboard/QuickAdd';
+import { planningSection } from './features/analytics/sections';
 import { Dashboard } from './features/dashboard/Dashboard';
 import type { TrackerRepository } from './data/repository';
 import { useSettings, useTracker } from './store/tracker';
@@ -77,19 +80,59 @@ const SettingsPage = lazy(() =>
   import('./features/settings/SettingsPage').then(({ SettingsPage: Page }) => ({ default: Page })),
 );
 
-/** The main sections. `also` keeps a tab lit on the pages it gathers, such as Wealth's loans. */
-const LINKS: { to: string; label: string; short: string; icon: LucideIcon; also?: string[] }[] = [
+/**
+ * The main sections. `lit` says when a tab shows as current beyond its own page, such as
+ * Wealth on loans. Phones gather Future and Insights under Plan, for room in the bottom bar;
+ * desktop has a tab for each.
+ */
+const LINKS: {
+  to: string;
+  label: string;
+  short: string;
+  icon: LucideIcon;
+  lit?: (pathname: string) => boolean;
+  only?: 'phone' | 'desktop';
+}[] = [
   { to: '/', label: 'Home', short: 'Home', icon: Home },
   { to: '/cash-flow', label: 'Money', short: 'Money', icon: ArrowUpDown },
-  { to: '/investments', label: 'Wealth', short: 'Wealth', icon: Wallet, also: ['/debts'] },
+  {
+    to: '/investments',
+    label: 'Wealth',
+    short: 'Wealth',
+    icon: Wallet,
+    lit: (pathname) => pathname.startsWith('/investments') || pathname.startsWith('/debts'),
+  },
   {
     to: '/analytics/overview',
     label: 'Plan',
     short: 'Plan',
     icon: LineChart,
-    also: ['/analytics'],
+    lit: (pathname) => planningSection(pathname) !== null,
+    only: 'phone',
   },
-  { to: '/settings', label: 'Settings', short: 'Settings', icon: SlidersHorizontal },
+  {
+    to: '/analytics/overview',
+    label: 'Future',
+    short: 'Future',
+    icon: Telescope,
+    lit: (pathname) => planningSection(pathname) === 'future',
+    only: 'desktop',
+  },
+  {
+    to: '/analytics',
+    label: 'Insights',
+    short: 'Insights',
+    icon: ChartPie,
+    lit: (pathname) => planningSection(pathname) === 'insights',
+    only: 'desktop',
+  },
+  {
+    to: '/settings',
+    label: 'Settings',
+    short: 'Settings',
+    icon: SlidersHorizontal,
+    only: 'desktop',
+  },
 ];
 
 export type FeedbackKind = 'feature' | 'problem';
@@ -290,15 +333,20 @@ export function Shell({
         </div>
         <div aria-hidden="true" className={styles.navFade} />
         <nav aria-label="Main" className={styles.nav}>
-          {LINKS.map(({ to, label, short, icon: Icon, also }, index) => (
-            <Fragment key={to}>
+          {LINKS.map(({ to, label, short, icon: Icon, lit, only }, index) => (
+            <Fragment key={`${to}-${label}`}>
               {/* The + sits in the middle of the phone's tab bar, between Money and Wealth. */}
               {index === 2 ? <QuickAdd /> : null}
               <NavLink
                 className={({ isActive }) =>
-                  `${isActive || also?.some((path) => pathname.startsWith(path)) ? styles.active : styles.link} ${to === '/settings' ? styles.desktopOnly : ''}`
+                  [
+                    // A tab with its own rule for being current follows only that rule.
+                    (lit ? lit(pathname) : isActive) ? styles.active : styles.link,
+                    only === 'desktop' ? styles.desktopOnly : '',
+                    only === 'phone' ? styles.mobileOnly : '',
+                  ].join(' ')
                 }
-                end={to === '/'}
+                end={to === '/' || to === '/analytics'}
                 to={to}
                 viewTransition
               >

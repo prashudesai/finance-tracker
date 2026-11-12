@@ -1,0 +1,6 @@
+/* The Future and Insights switch: on phones only, as desktop has them in the top bar. */
+@media (min-width: 1024px) {
+  .switch.switch {
+    display: none;
+  }
+}

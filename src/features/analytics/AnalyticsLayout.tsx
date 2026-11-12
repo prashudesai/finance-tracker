@@ -1,34 +1,8 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { PageHeader } from '../../ui/PageHeader';
 import ui from '../../ui/ui.module.css';
-
-/**
- * Planning in two halves: Insights looks back at what happened, Future plans ahead. Each has
- * its own tabs, so neither row gets too long for a phone.
- */
-const SECTIONS = [
-  {
-    key: 'future',
-    label: 'Future',
-    tabs: [
-      { to: '/analytics/overview', label: 'Overview', end: false },
-      { to: '/analytics/projection', label: 'Growth projection', end: false },
-      { to: '/analytics/goals', label: 'Goal planning', end: false },
-      { to: '/analytics/budget', label: 'Yearly budget', end: false },
-    ],
-  },
-  {
-    key: 'insights',
-    label: 'Insights',
-    tabs: [
-      { to: '/analytics', label: 'Analytics', end: true },
-      { to: '/analytics/mix', label: 'Portfolio mix', end: false },
-      { to: '/analytics/income', label: 'Income', end: false },
-      { to: '/analytics/budget-actual', label: 'Budget vs actual', end: false },
-      { to: '/analytics/reports', label: 'Date range reports', end: false },
-    ],
-  },
-] as const;
+import styles from './AnalyticsLayout.module.css';
+import { SECTIONS } from './sections';
 
 const HEADERS: Record<string, { eyebrow: string; title: string; subtitle: string }> = {
   '/analytics': {
@@ -100,7 +74,8 @@ export function AnalyticsLayout() {
           title={header.title}
         />
       ) : null}
-      <nav aria-label="Planning sections" className={ui.segmented}>
+      {/* On desktop, Future and Insights are tabs of their own in the top bar instead. */}
+      <nav aria-label="Planning sections" className={`${ui.segmented} ${styles.switch}`}>
         {SECTIONS.map((group) => (
           <Link
             aria-current={group.key === section.key ? 'page' : undefined}

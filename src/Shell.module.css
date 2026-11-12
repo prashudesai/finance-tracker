@@ -232,9 +232,17 @@
     display: none !important;
   }
 
+  /* Wide screens: roomier tabs, each at least a set width, so the row doesn't feel cramped. */
+  .nav {
+    gap: 8px;
+  }
+
   .link,
   .active {
-    padding: 9px 12px;
+    justify-content: center;
+    min-width: 116px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
   }
 }
 

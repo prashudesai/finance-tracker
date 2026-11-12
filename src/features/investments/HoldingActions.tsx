@@ -15,6 +15,7 @@ import { HoldingForm } from './HoldingForm';
 import { HoldingHistory } from './HoldingHistory';
 import { receivedWrites } from './payouts';
 import { WithdrawForm } from './WithdrawForm';
+import { isAccountNumber } from '../../domain/activity';
 
 type Action = 'value' | 'contribution' | 'withdraw' | 'history' | 'edit' | 'payout';
 
@@ -174,13 +175,15 @@ function HoldingCard({
     { key: 'edit', label: 'Edit', tip: 'Edit', aria: `Edit ${holding.name}`, Icon: Pencil },
   ] as const;
 
+  const named = !isAccountNumber(holding.name) || !holding.member;
   return (
     <li className={styles.holding} style={{ borderLeftColor: color }}>
       <div className={styles.holdingTop}>
         <div className={styles.holdingName}>
-          <strong>{holding.name}</strong>
+          {/* An account known only by its number is shown by whose it is, with the number below. */}
+          <strong>{named ? holding.name : holding.member}</strong>
           <small>
-            {holding.member}
+            {named ? holding.member : `A/c ${holding.name}`}
             {closed ? ' · Closed' : ''}
             {holding.uan ? ` · UAN ${holding.uan}` : ''}
             {holding.scheme ? ` · ${holding.scheme}` : ''}

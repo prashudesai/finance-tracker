@@ -1,7 +1,10 @@
 {
-  "version": "1.44.0",
-  "released": "2026-11-11",
+  "version": "1.45.0",
+  "released": "2026-11-12",
   "notes": [
+    "On desktop, Future and Insights are tabs of their own in the top bar; phones keep Plan",
+    "Recent activity shows whose account it is instead of the account number, and how far each value update moved",
+    "Scheduled contributions read as Monthly contribution, and desktop tabs are roomier",
     "Faster to open: the first download is smaller, and setup, the lock screen and the Features and Privacy pages load only when needed",
     "Smoother Home: figures shared between cards are worked out once, and scrolling does less work",
     "On touch screens, small links and buttons are easier to tap",
@@ -10,9 +13,6 @@
     "On phones, net worth and this month are a little roomier, so Home's first screen ends with For you today",
     "A shorter net worth card, with its range beside the title, so For you today shows on Home's first screen",
     "Every page uses the same glow as Home, for a consistent look",
-    "Home on wide screens is a balanced grid that follows your Arrange Home order, with related sections side by side",
-    "Home greets you with today's date, shows what needs attention under it, and splits net worth into what you own and owe",
-    "For you today shows as a full grid on wide screens; Coming up is a card with its total, and Recent shows five",
-    "Money, Wealth, Plan, Yearly budget, Portfolio mix and Settings use the width of wide screens better"
+    "Home on wide screens is a balanced grid that follows your Arrange Home order, with related sections side by side"
   ]
 }

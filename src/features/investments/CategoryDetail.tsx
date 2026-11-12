@@ -1,6 +1,16 @@
-import { ArrowDownToLine, Landmark, Plus, RefreshCw, Trash2, TrendingUp } from 'lucide-react';
+import {
+  ArrowDownToLine,
+  CalendarCheck,
+  Landmark,
+  Plus,
+  RefreshCw,
+  Trash2,
+  TrendingUp,
+  type LucideIcon,
+} from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import type { CategoryRow, PositionRow } from '../../domain/analytics';
+import { holdingActivity, holdingDisplayName, type ActivityKind } from '../../domain/activity';
 import { financialYearStart } from '../../domain/calendar';
 import {
   duePayouts,
@@ -47,19 +57,12 @@ const RANGES = [
 ] as const;
 type RangeKey = (typeof RANGES)[number]['key'];
 
-interface Activity {
-  id: string;
-  date: string;
-  holding: string;
-  kind: 'Added' | 'Valued' | 'Withdrew' | 'Interest';
-  amount: number;
-}
-
-const ACTIVITY_ICONS = {
-  Added: Plus,
-  Valued: RefreshCw,
-  Withdrew: ArrowDownToLine,
-  Interest: Landmark,
+const ACTIVITY: Record<ActivityKind, { label: string; icon: LucideIcon }> = {
+  contribution: { label: 'Added', icon: Plus },
+  scheduled: { label: 'Monthly contribution', icon: CalendarCheck },
+  valued: { label: 'Value updated', icon: RefreshCw },
+  withdrew: { label: 'Withdrawn', icon: ArrowDownToLine },
+  interest: { label: 'Interest paid out', icon: Landmark },
 };
 
 /**
@@ -87,8 +90,7 @@ export function CategoryDetail({
   const months = RANGES.find((row) => row.key === range)?.months ?? 13;
   const points = history.slice(-months);
   const rows = [...category.rows].sort((a, b) => b.position.current - a.position.current);
-  const ids = new Set(holdings.map((row) => row.id));
-  const names = new Map(holdings.map((row) => [row.id, row.name]));
+  const names = new Map(holdings.map((row) => [row.id, holdingDisplayName(row, holdings)]));
 
   const measures = new Set(holdings.map((row) => returnMeasure(row, settings)));
   const measure = measures.size === 1 ? [...measures][0] : 'absolute';
@@ -124,44 +126,7 @@ export function CategoryDetail({
   const start = points[0];
   const moved = start ? category.current - start.value : 0;
 
-  const activity: Activity[] = [
-    ...data.contributions
-      .filter((row) => ids.has(row.holdingId) && !row.skipped && row.date <= today)
-      .map((row): Activity => ({
-        id: row.id,
-        date: row.date,
-        holding: names.get(row.holdingId) ?? '',
-        kind: 'Added',
-        amount: row.amount,
-      })),
-    ...data.valuations
-      .filter((row) => ids.has(row.holdingId))
-      .map((row): Activity => ({
-        id: row.id,
-        date: row.date,
-        holding: names.get(row.holdingId) ?? '',
-        kind: 'Valued',
-        amount: row.value,
-      })),
-    ...received.map((row): Activity => ({
-      id: row.id,
-      date: row.date,
-      holding: names.get(row.holdingId) ?? '',
-      kind: 'Interest',
-      amount: row.amount,
-    })),
-    ...data.withdrawals
-      .filter((row) => ids.has(row.holdingId))
-      .map((row): Activity => ({
-        id: row.id,
-        date: row.date,
-        holding: names.get(row.holdingId) ?? '',
-        kind: 'Withdrew',
-        amount: row.amount,
-      })),
-  ]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 6);
+  const activity = holdingActivity(holdings, data, today);
 
   return (
     <div className={styles.page}>
@@ -248,7 +213,7 @@ export function CategoryDetail({
             {rows.map((row, index) => (
               <li key={row.holding.id}>
                 <i style={{ background: chartColor(index) }} />
-                <span>{row.holding.name}</span>
+                <span>{names.get(row.holding.id) ?? row.holding.name}</span>
                 <strong>
                   {formatPercent(
                     category.current > 0 ? row.position.current / category.current : 0,
@@ -364,7 +329,10 @@ export function CategoryDetail({
           <h3>Recent activity</h3>
           <ul className={styles.activity}>
             {activity.map((row) => {
-              const Icon = ACTIVITY_ICONS[row.kind];
+              const { label, icon: Icon } = ACTIVITY[row.kind];
+              const holding = rows.length > 1 ? ` · ${names.get(row.holdingId) ?? ''}` : '';
+              // A value update says how far it moved; the new value goes underneath.
+              const valued = row.kind === 'valued' && row.change !== undefined;
               return (
                 <li key={`${row.kind}-${row.id}`}>
                   <span aria-hidden="true" className={styles.activityIcon} data-kind={row.kind}>
@@ -372,12 +340,32 @@ export function CategoryDetail({
                   </span>
                   <span className={styles.activityText}>
                     <strong>
-                      {row.kind === 'Valued' ? 'Value updated' : row.kind}
-                      {rows.length > 1 ? ` · ${row.holding}` : ''}
+                      {label}
+                      {holding}
                     </strong>
-                    <small>{dayOf(row.date)}</small>
+                    <small>
+                      {dayOf(row.date)}
+                      {valued ? ` · now ${formatMoney(row.amount)}` : ''}
+                    </small>
                   </span>
-                  <span className={styles.activityAmount}>{formatMoney(row.amount)}</span>
+                  <span
+                    className={styles.activityAmount}
+                    data-tone={
+                      valued
+                        ? row.change === 0
+                          ? 'flat'
+                          : (row.change ?? 0) > 0
+                            ? 'up'
+                            : 'down'
+                        : undefined
+                    }
+                  >
+                    {valued
+                      ? row.change === 0
+                        ? 'No change'
+                        : signedMoney(row.change ?? 0)
+                      : formatMoney(row.amount)}
+                  </span>
                 </li>
               );
             })}
