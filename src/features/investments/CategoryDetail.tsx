@@ -13,6 +13,7 @@ import type { CategoryRow, PositionRow } from '../../domain/analytics';
 import { holdingActivity, holdingDisplayName, type ActivityKind } from '../../domain/activity';
 import { financialYearStart } from '../../domain/calendar';
 import {
+  averageMonthlyPayout,
   duePayouts,
   groupXirr,
   receivedPayouts,
@@ -26,7 +27,8 @@ import { formatDay, formatMoney, formatPercent, localDate, signedMoney } from '.
 import ui from '../../ui/ui.module.css';
 import styles from './CategoryDetail.module.css';
 import { PayoutActions } from './PayoutActions';
-import { usePayouts } from './payouts';
+import { counted, singular, usePayouts } from './payouts';
+import { IRREGULAR, type Holding } from '../../schema/records';
 import { ValueChart } from './ValueChart';
 
 const EVERY_WORDS = {
@@ -41,6 +43,24 @@ const dayOf = (date: string) =>
   date.slice(0, 4) === localDate().slice(0, 4)
     ? formatDay(date)
     : `${formatDay(date)} ${date.slice(0, 4)}`;
+
+/** How a holding pays out, in a few words, such as "₹7,500 a quarter, until 1 Mar 2028". */
+function planText(holding: Holding) {
+  const plan = holding.payout;
+  if (!plan) return '';
+  const until = holding.maturity ? `, until ${dayOf(holding.maturity)}` : '';
+  if (plan.every === IRREGULAR) {
+    const unit = holding.units ? ` per ${singular(holding.units.name)}` : '';
+    const each = plan.cycle ? `, about every ${plan.cycle} months` : '';
+    const average = averageMonthlyPayout(holding);
+    return plan.amount
+      ? `About ${formatMoney(plan.amount)}${unit} as they come${each}${average > 0 ? ` · ${formatMoney(average)} a month on average` : ''}${until}`
+      : `As they come${until}`;
+  }
+  return plan.amount
+    ? `${formatMoney(plan.amount)} ${EVERY_WORDS[plan.every]}${plan.rise ? `, rising ${plan.rise}% a year` : ''}${until}`
+    : `Varies · ${OFTEN[plan.every]}${until}`;
+}
 
 const OFTEN = {
   month: 'monthly',
@@ -62,7 +82,7 @@ const ACTIVITY: Record<ActivityKind, { label: string; icon: LucideIcon }> = {
   scheduled: { label: 'Monthly contribution', icon: CalendarCheck },
   valued: { label: 'Value updated', icon: RefreshCw },
   withdrew: { label: 'Withdrawn', icon: ArrowDownToLine },
-  interest: { label: 'Interest paid out', icon: Landmark },
+  interest: { label: 'Paid out', icon: Landmark },
 };
 
 /**
@@ -247,15 +267,7 @@ export function CategoryDetail({
         <section aria-label="Payouts received" className={`${ui.card} ${styles.panel}`}>
           <div className={styles.panelHead}>
             <h3>Payouts received</h3>
-            <small className={styles.payoutPlan}>
-              {schedules
-                .map((row) =>
-                  row.payout?.amount
-                    ? `${formatMoney(row.payout.amount)} ${EVERY_WORDS[row.payout.every]}${row.payout.rise ? `, rising ${row.payout.rise}% a year` : ''}${row.maturity ? `, until ${dayOf(row.maturity)}` : ''}`
-                    : `Varies · ${OFTEN[row.payout?.every ?? 'month']}`,
-                )
-                .join(' · ')}
-            </small>
+            <small className={styles.payoutPlan}>{schedules.map(planText).join(' · ')}</small>
           </div>
           <dl className={styles.heroFacts}>
             <div>
@@ -330,7 +342,10 @@ export function CategoryDetail({
           <ul className={styles.activity}>
             {activity.map((row) => {
               const { label, icon: Icon } = ACTIVITY[row.kind];
-              const holding = rows.length > 1 ? ` · ${names.get(row.holdingId) ?? ''}` : '';
+              const unitName = holdings.find((item) => item.id === row.holdingId)?.units?.name;
+              const holding =
+                (rows.length > 1 ? ` · ${names.get(row.holdingId) ?? ''}` : '') +
+                (row.units && unitName ? ` · ${counted(row.units, unitName)}` : '');
               // A value update says how far it moved; the new value goes underneath.
               const valued = row.kind === 'valued' && row.change !== undefined;
               return (

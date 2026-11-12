@@ -150,6 +150,8 @@ export const PMS_TYPE = 'Stallion PMS';
  */
 export const PAYOUT_EVERY = ['month', 'quarter', 'half-year', 'year'] as const;
 export type PayoutEvery = (typeof PAYOUT_EVERY)[number];
+/** Payouts with no schedule, recorded as they arrive, such as each cow's lactation share. */
+export const IRREGULAR = 'irregular';
 
 export const holdingSchema = z.object({
   id,
@@ -184,7 +186,7 @@ export const holdingSchema = z.object({
    */
   payout: z
     .object({
-      every: z.enum(PAYOUT_EVERY),
+      every: z.enum([...PAYOUT_EVERY, IRREGULAR]),
       /** Left out when it varies, such as a profit share; each payout's amount is asked for. */
       amount: positiveMoney.optional(),
       start: date,
@@ -193,6 +195,21 @@ export const holdingSchema = z.object({
        * rent that goes up 5% a year. Left out when it stays the same.
        */
       rise: number.gt(0, 'Enter more than zero.').max(50, 'Enter 50 or less.').optional(),
+      /**
+       * For payouts that come as they come: roughly how many months each unit takes between
+       * payouts, such as 20 for a cow's lactation, to estimate a monthly average.
+       */
+      cycle: z.number().int().min(1).max(120).optional(),
+    })
+    .optional(),
+  /**
+   * Units that each pay out on their own, such as 28 cows, with what they're called. A payout
+   * as they come is then expected per unit.
+   */
+  units: z
+    .object({
+      count: z.number().int().min(1, 'Enter at least one.').max(100_000),
+      name: z.string().trim().min(1).max(30),
     })
     .optional(),
   /**
@@ -360,6 +377,8 @@ export const payoutSchema = z.object({
   date,
   amount: money,
   incomeId: id.optional(),
+  /** How many of the holding's units this payout was for, such as 2 cows. */
+  units: z.number().int().min(1).max(100_000).optional(),
   /** Not received, kept so the schedule doesn't ask for it again. */
   skipped: z.boolean().optional(),
 });

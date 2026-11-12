@@ -3,13 +3,14 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { addMonths, isValidDate } from '../../domain/calendar';
 import {
+  averageMonthlyPayout,
   growthType,
   hasBuiltInGrowth,
   suggestedPayout,
   type GrowthType,
 } from '../../domain/holdings';
 import { NPS_SCHEMES, optionLists } from '../../domain/options';
-import { PAYOUT_EVERY, TRACKER_SETTINGS_ID, type Holding } from '../../schema/records';
+import { IRREGULAR, PAYOUT_EVERY, TRACKER_SETTINGS_ID, type Holding } from '../../schema/records';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
 import { localDate } from '../../ui/format';
@@ -18,6 +19,7 @@ import { Choices } from '../../ui/Choices';
 import { useDefaultMember } from '../../ui/MemberField';
 import { AddValueDialog } from '../../ui/Select';
 import { iconFor } from '../wealth/HoldingList';
+import { singular } from './payouts';
 import styles from './HoldingForm.module.css';
 import ui from '../../ui/ui.module.css';
 
@@ -52,7 +54,7 @@ const formSchema = z.object({
   uan: z.string().max(40),
   scheme: z.string().max(60),
   notes: z.string().max(500, 'Use 500 characters or fewer.'),
-  payoutEvery: z.enum(['none', ...PAYOUT_EVERY]),
+  payoutEvery: z.enum(['none', ...PAYOUT_EVERY, IRREGULAR]),
   payoutAmount: optionalAmount,
   payoutVaries: z.boolean(),
   payoutStart: z.string(),
@@ -65,12 +67,32 @@ const formSchema = z.object({
       .optional(),
   ),
   maturity: z.string().refine((value) => value === '' || isValidDate(value), 'Enter a valid date.'),
+  unitCount: z.preprocess(
+    (value) => (value === '' || Number.isNaN(value) ? undefined : value),
+    z
+      .number({ error: 'Enter a number.' })
+      .int('Enter a whole number.')
+      .min(1, 'Enter at least one, or leave it blank.')
+      .max(100_000)
+      .optional(),
+  ),
+  unitName: z.string().trim().max(30),
+  payoutCycle: z.preprocess(
+    (value) => (value === '' || Number.isNaN(value) ? undefined : value),
+    z
+      .number({ error: 'Enter a number.' })
+      .int('Enter whole months.')
+      .min(1, 'Enter at least one month.')
+      .max(120, 'Enter 120 months or fewer.')
+      .optional(),
+  ),
 });
 type FormInput = z.input<typeof formSchema>;
 type FormValues = z.output<typeof formSchema>;
 
 const PAYOUT_LABELS = {
   none: 'No, it stays invested',
+  irregular: 'As they come',
   month: 'Monthly',
   quarter: 'Quarterly',
   'half-year': 'Half-yearly',
@@ -149,6 +171,9 @@ export function HoldingForm({
       payoutStart: initial?.payout?.start ?? nextMonthStart(today),
       payoutRise: initial?.payout?.rise,
       maturity: initial?.maturity ?? '',
+      unitCount: initial?.units?.count,
+      unitName: initial?.units?.name ?? '',
+      payoutCycle: initial?.payout?.cycle,
     },
   });
   const { errors } = formState;
@@ -162,12 +187,31 @@ export function HoldingForm({
   const watchedValue = watch('openingInvested') || watch('openingValue');
   const watchedRate = watch('rate');
   const suggestion =
-    payoutEvery !== 'none' && Number(watchedRate) > 0 && Number(watchedValue) > 0
+    payoutEvery !== 'none' &&
+    payoutEvery !== 'irregular' &&
+    Number(watchedRate) > 0 &&
+    Number(watchedValue) > 0
       ? suggestedPayout(Number(watchedValue), Number(watchedRate), payoutEvery)
       : null;
   // A custom type's growth can be changed here; built-in types keep theirs.
   const customType = kind === 'investment' && Boolean(type) && !hasBuiltInGrowth(type);
   const growth = (customType ? growthChoice : null) ?? growthType(type, settings);
+  // As they come: what the units are called, and what they pay a month on average.
+  const unitLabel = watch('payoutEvery') === IRREGULAR ? singular(watch('unitName') ?? '') : '';
+  const expectedMonthly =
+    payoutEvery === IRREGULAR
+      ? averageMonthlyPayout({
+          payout: {
+            every: IRREGULAR,
+            start: today,
+            ...(Number(watch('payoutAmount')) > 0 ? { amount: Number(watch('payoutAmount')) } : {}),
+            ...(Number(watch('payoutCycle')) > 0 ? { cycle: Number(watch('payoutCycle')) } : {}),
+          },
+          ...(Number(watch('unitCount')) > 0
+            ? { units: { count: Number(watch('unitCount')), name: 'units' } }
+            : {}),
+        })
+      : 0;
   const showsRate =
     kind === 'pf' || kind === 'ppf' || (kind === 'investment' && growth === 'fixed');
 
@@ -183,6 +227,9 @@ export function HoldingForm({
     payoutStart,
     payoutRise,
     maturity,
+    unitCount,
+    unitName,
+    payoutCycle,
     ...values
   }: FormValues) => {
     const account = kind === 'pf' ? uan : name;
@@ -191,12 +238,22 @@ export function HoldingForm({
       return;
     }
     const paidOut = paysInterest && every !== 'none';
-    const perPayout = payoutVaries ? null : (payoutAmount ?? (paidOut ? suggestion : null));
-    if (paidOut && !payoutVaries && !(perPayout && perPayout > 0)) {
+    // As they come, there's no schedule: an expected amount is optional, and never required.
+    const asTheyCome = every === IRREGULAR;
+    const perPayout = asTheyCome
+      ? (payoutAmount ?? null)
+      : payoutVaries
+        ? null
+        : (payoutAmount ?? (paidOut ? suggestion : null));
+    if (paidOut && !asTheyCome && !payoutVaries && !(perPayout && perPayout > 0)) {
       setError('payoutAmount', { message: 'Enter the amount paid each time.' });
       return;
     }
-    if (paidOut && !isValidDate(payoutStart)) {
+    if (paidOut && asTheyCome && unitCount && !unitName) {
+      setError('unitName', { message: 'Say what they are, such as cows.' });
+      return;
+    }
+    if (paidOut && !asTheyCome && !isValidDate(payoutStart)) {
       setError('payoutStart', { message: 'Enter a valid date.' });
       return;
     }
@@ -222,18 +279,30 @@ export function HoldingForm({
       ...(kind === 'nps' && scheme ? { scheme } : {}),
       ...(notes ? { notes } : {}),
       ...(kind === 'investment' && maturity ? { maturity } : {}),
+      ...(paidOut && asTheyCome && unitCount && unitName
+        ? { units: { count: unitCount, name: unitName } }
+        : {}),
       ...(paidOut
         ? {
-            payout: {
-              every,
-              start: payoutStart,
-              ...(perPayout ? { amount: perPayout } : {}),
-              ...(perPayout && payoutRise ? { rise: payoutRise } : {}),
-            },
+            payout: asTheyCome
+              ? {
+                  every,
+                  // No schedule; it starts with the holding.
+                  start: values.date,
+                  ...(perPayout ? { amount: perPayout } : {}),
+                  ...(payoutCycle ? { cycle: payoutCycle } : {}),
+                }
+              : {
+                  every,
+                  start: payoutStart,
+                  ...(perPayout ? { amount: perPayout } : {}),
+                  ...(perPayout && payoutRise ? { rise: payoutRise } : {}),
+                },
           }
         : {}),
     };
     if (!paidOut) delete value.payout;
+    if (!(paidOut && asTheyCome && unitCount && unitName)) delete value.units;
     // `initial` must not bring back what was just cleared. A leftover start date kept a PF
     // account's pension share posting each month after its schedule was turned off.
     if (!values.autoContribute) delete value.autoStart;
@@ -456,13 +525,58 @@ export function HoldingForm({
           <Choices
             label="Pays out to your bank? Interest, dividends or a profit share"
             onChange={(value) => choose('payoutEvery', value)}
-            options={(['none', ...PAYOUT_EVERY] as const).map((key) => ({
+            options={(['none', ...PAYOUT_EVERY, IRREGULAR] as const).map((key) => ({
               value: key,
               label: PAYOUT_LABELS[key],
             }))}
             value={payoutEvery}
           />
-          {payoutEvery !== 'none' ? (
+          {payoutEvery === IRREGULAR ? (
+            <>
+              <div className={styles.pair}>
+                <Field error={errors.unitCount?.message} label="How many pay out? (optional)">
+                  <input
+                    inputMode="numeric"
+                    placeholder="Such as 28"
+                    step="1"
+                    type="number"
+                    {...register('unitCount', { valueAsNumber: true })}
+                  />
+                </Field>
+                <Field error={errors.unitName?.message} label="Called">
+                  <input placeholder="Such as cows" {...register('unitName')} />
+                </Field>
+                <Field
+                  error={errors.payoutAmount?.message}
+                  label={`Expected each time${unitLabel ? ` per ${unitLabel}` : ''} (₹)`}
+                >
+                  <input
+                    inputMode="decimal"
+                    placeholder="Optional"
+                    step="0.01"
+                    type="number"
+                    {...register('payoutAmount', { valueAsNumber: true })}
+                  />
+                </Field>
+                <Field error={errors.payoutCycle?.message} label="Each pays every (months)">
+                  <input
+                    inputMode="numeric"
+                    placeholder="Optional, such as 20"
+                    step="1"
+                    type="number"
+                    {...register('payoutCycle', { valueAsNumber: true })}
+                  />
+                </Field>
+              </div>
+              <p className={ui.caption}>
+                No schedule: record each payout from the holding's card when it arrives, saying how
+                many paid. It's added to your income and counted in returns.
+                {expectedMonthly > 0
+                  ? ` That's about ₹${Math.round(expectedMonthly).toLocaleString('en-IN')} a month on average.`
+                  : ''}
+              </p>
+            </>
+          ) : payoutEvery !== 'none' ? (
             <>
               <Choices
                 label="How much each time?"

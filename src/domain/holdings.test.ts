@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { Holding } from '../schema/records';
 import {
+  averageMonthlyPayout,
   duePayouts,
   holdingPosition,
   maturingHoldings,
@@ -160,5 +161,30 @@ describe('rent that rises, and principal that comes back', () => {
       withdrawals: [{ id: 'w', holdingId: 'lease', date: '2026-12-01', amount: 500_000 }],
     };
     expect(maturingHoldings([lease], closed, '2027-01-15')).toEqual([]);
+  });
+});
+
+describe('payouts as they come, per unit', () => {
+  const cattle: Holding = {
+    ...fund,
+    id: 'cattle',
+    type: 'Dairy cattle',
+    openingInvested: 2_800_000,
+    openingValue: 2_800_000,
+    units: { count: 28, name: 'cows' },
+    payout: { every: 'irregular', amount: 40_000, start: '2026-08-15', cycle: 20 },
+  };
+
+  test('nothing falls due on a schedule; each is recorded when it comes', () => {
+    expect(duePayouts([cattle], [], '2029-01-01')).toEqual([]);
+  });
+
+  test('a month on average is every unit paying once each cycle', () => {
+    expect(averageMonthlyPayout(cattle)).toBe(56_000);
+    expect(averageMonthlyPayout({ ...cattle, units: undefined })).toBe(2_000);
+    const noCycle = { every: 'irregular' as const, amount: 40_000, start: '2026-08-15' };
+    expect(averageMonthlyPayout({ ...cattle, payout: noCycle })).toBe(0);
+    const quarterly = { every: 'quarter' as const, amount: 7_500, start: '2026-03-31' };
+    expect(averageMonthlyPayout({ payout: quarterly })).toBe(2_500);
   });
 });

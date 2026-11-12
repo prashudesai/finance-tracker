@@ -2,7 +2,7 @@ import { ArrowDownToLine, History, Landmark, Pencil, Plus, RefreshCw, Trash2 } f
 import { useState } from 'react';
 import type { CategoryRow, PositionRow } from '../../domain/analytics';
 import type { RecordWrite } from '../../data/repository';
-import { returnMeasure, valueHistory } from '../../domain/holdings';
+import { averageMonthlyPayout, returnMeasure, valueHistory } from '../../domain/holdings';
 import { useSettings, useTracker } from '../../store/tracker';
 import { Field } from '../../ui/Field';
 import { formatDay, formatMoney, formatPercent, localDate, signedMoney } from '../../ui/format';
@@ -13,11 +13,100 @@ import { CategoryDetail } from './CategoryDetail';
 import styles from './CategoryDetail.module.css';
 import { HoldingForm } from './HoldingForm';
 import { HoldingHistory } from './HoldingHistory';
-import { receivedWrites } from './payouts';
+import { counted, receivedWrites, singular } from './payouts';
+import { IRREGULAR, type Holding } from '../../schema/records';
 import { WithdrawForm } from './WithdrawForm';
 import { isAccountNumber } from '../../domain/activity';
 
 type Action = 'value' | 'contribution' | 'withdraw' | 'history' | 'edit' | 'payout';
+
+/**
+ * Records a payout as it arrives. For a holding of units, such as cows, it asks how many paid
+ * and suggests the amount from what each is expected to bring, which can be changed.
+ */
+function PayoutForm({
+  label,
+  expected,
+  units,
+  onSave,
+}: {
+  label: string;
+  /** What one payout brings, or one unit's when there are units. */
+  expected?: number | undefined;
+  units?: Holding['units'];
+  onSave: (date: string, amount: number, units?: number) => void;
+}) {
+  const [date, setDate] = useState(localDate());
+  const [count, setCount] = useState('1');
+  const [amount, setAmount] = useState(expected === undefined ? '' : String(expected));
+  const [typed, setTyped] = useState(false);
+  const how = Number(count);
+  const countValid = !units || (Number.isInteger(how) && how >= 1 && how <= units.count);
+  const value = Number(amount);
+  const valid = amount !== '' && Number.isFinite(value) && value > 0 && date !== '' && countValid;
+  return (
+    <form
+      className={ui.form}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (valid) onSave(date, value, units ? how : undefined);
+      }}
+    >
+      <Field label="Date">
+        <input
+          max={localDate()}
+          onChange={(event) => setDate(event.target.value)}
+          type="date"
+          value={date}
+        />
+      </Field>
+      {units ? (
+        <Field
+          error={countValid ? undefined : `Enter 1 to ${units.count}.`}
+          label={`How many ${units.name} paid?`}
+        >
+          <input
+            inputMode="numeric"
+            max={units.count}
+            min={1}
+            onChange={(event) => {
+              setCount(event.target.value);
+              // The amount follows the count until it's typed over.
+              const next = Number(event.target.value);
+              if (!typed && expected && Number.isInteger(next) && next > 0) {
+                setAmount(String(Math.round(next * expected)));
+              }
+            }}
+            step={1}
+            type="number"
+            value={count}
+          />
+        </Field>
+      ) : null}
+      <Field label={label}>
+        <input
+          inputMode="decimal"
+          onChange={(event) => {
+            setAmount(event.target.value);
+            setTyped(true);
+          }}
+          type="number"
+          value={amount}
+        />
+      </Field>
+      {units && expected ? (
+        <p className={ui.caption}>
+          Suggested at {formatMoney(expected)} per {singular(units.name)}; change it to what came.
+        </p>
+      ) : null}
+      <div className={ui.formActions}>
+        <button className={ui.button} disabled={!valid} type="submit">
+          Save
+        </button>
+      </div>
+    </form>
+  );
+}
 
 function AmountForm({
   label,
@@ -84,6 +173,9 @@ function HoldingCard({
   const { holding, position } = row;
   const settings = useSettings();
   const measure = returnMeasure(holding, settings);
+  // Deposits and bonds pay interest; anything else, such as a profit share, a payout.
+  const payoutWord =
+    measure === 'rate' && holding.payout?.every !== IRREGULAR ? 'Interest' : 'Payout';
   const close = () => setAction(null);
   const hasWithdrawals = data.withdrawals.some((item) => item.holdingId === holding.id);
   const closed = hasWithdrawals && position.current === 0;
@@ -158,9 +250,9 @@ function HoldingCard({
       ? ([
           {
             key: 'payout',
-            label: 'Interest',
-            tip: 'Record interest paid out',
-            aria: `Record interest paid out by ${holding.name}`,
+            label: payoutWord,
+            tip: `Record ${payoutWord.toLowerCase()} paid out`,
+            aria: `Record ${payoutWord.toLowerCase()} paid out by ${holding.name}`,
             Icon: Landmark,
           },
         ] as const)
@@ -184,6 +276,7 @@ function HoldingCard({
           <strong>{named ? holding.name : holding.member}</strong>
           <small>
             {named ? holding.member : `A/c ${holding.name}`}
+            {holding.units ? ` · ${counted(holding.units.count, holding.units.name)}` : ''}
             {closed ? ' · Closed' : ''}
             {holding.uan ? ` · UAN ${holding.uan}` : ''}
             {holding.scheme ? ` · ${holding.scheme}` : ''}
@@ -240,7 +333,7 @@ function HoldingCard({
         ) : null}
         {position.paidOut > 0 ? (
           <div>
-            <dt>Interest received</dt>
+            <dt>{payoutWord} received</dt>
             <dd className={ui.gain}>{formatMoney(position.paidOut)}</dd>
           </div>
         ) : null}
@@ -250,6 +343,12 @@ function HoldingCard({
             <dd className={position.booked < 0 ? ui.loss : ui.gain}>
               {signedMoney(position.booked)}
             </dd>
+          </div>
+        ) : null}
+        {holding.payout?.every === IRREGULAR && averageMonthlyPayout(holding) > 0 ? (
+          <div>
+            <dt>Expected a month</dt>
+            <dd>{formatMoney(averageMonthlyPayout(holding))}</dd>
           </div>
         ) : null}
         {holding.maturity ? (
@@ -333,23 +432,29 @@ function HoldingCard({
         </Modal>
       ) : null}
       {action === 'payout' ? (
-        <Modal onClose={close} title={`Interest from ${holding.name}`}>
-          <AmountForm
-            button="Save interest"
-            initial={holding.payout?.amount}
-            label="Interest received (₹)"
-            onSave={(date, amount) => {
+        <Modal onClose={close} title={`${payoutWord} from ${holding.name}`}>
+          <PayoutForm
+            expected={holding.payout?.amount}
+            label={`${payoutWord} received (₹)`}
+            onSave={(date, amount, units) => {
               if (amount > 0) {
                 commit(
                   receivedWrites(
                     holding,
-                    { id: crypto.randomUUID(), holdingId: holding.id, date, amount },
+                    {
+                      id: crypto.randomUUID(),
+                      holdingId: holding.id,
+                      date,
+                      amount,
+                      ...(units ? { units } : {}),
+                    },
                     amount,
                   ),
                 );
               }
               close();
             }}
+            units={holding.units}
           />
           <p className={ui.caption}>It's also added to your income in Money.</p>
         </Modal>

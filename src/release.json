@@ -1,7 +1,10 @@
 {
-  "version": "1.46.0",
+  "version": "1.47.0",
   "released": "2026-11-12",
   "notes": [
+    "Payouts as they come: for investments with no schedule, such as dairy cattle paying each lactation, record each payout when it arrives",
+    "Units that pay on their own, such as 28 cows: set the expected amount per cow and how often, see the monthly average, and record how many paid each time",
+    "The card's button says Payout, or Interest for deposits and bonds",
     "Investments can have a maturity date: payouts stop after it, and Home reminds you a month before to record the principal coming back",
     "A payout can rise each year by a percentage, such as rent going up 5% a year",
     "Editing a holding can move it between Investments, PF, PPF and NPS, and change how a custom type grows",
@@ -10,9 +13,6 @@
     "Scheduled contributions read as Monthly contribution, and desktop tabs are roomier",
     "Faster to open: the first download is smaller, and setup, the lock screen and the Features and Privacy pages load only when needed",
     "Smoother Home: figures shared between cards are worked out once, and scrolling does less work",
-    "On touch screens, small links and buttons are easier to tap",
-    "On phones, Home's net worth chart fits the screen, so For you today shows whole on the first screen",
-    "Needs attention is a bell with its count beside the greeting, opening the list",
-    "On phones, net worth and this month are a little roomier, so Home's first screen ends with For you today"
+    "On touch screens, small links and buttons are easier to tap"
   ]
 }

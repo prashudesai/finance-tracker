@@ -1,4 +1,5 @@
 import {
+  IRREGULAR,
   PMS_TYPE,
   type Contribution,
   type EpsUpdate,
@@ -330,7 +331,8 @@ export function duePayouts(
   const due: Payout[] = [];
   for (const holding of holdings) {
     const plan = holding.payout;
-    if (!plan) continue;
+    // Payouts as they come have no schedule; each is recorded when it arrives.
+    if (!plan || plan.every === IRREGULAR) continue;
     const anchor = Number(plan.start.slice(-2));
     const step = PAYOUT_MONTHS[plan.every];
     for (let index = 0; index * step < MAX_SCHEDULED_MONTHS; index++) {
@@ -344,6 +346,21 @@ export function duePayouts(
     }
   }
   return due.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * What a holding pays out a month on average: a scheduled payout spread over its months, or
+ * for payouts as they come, the expected amount for every unit once each cycle, such as 28
+ * cows paying ₹40,000 each about every 20 months. Zero when there's no amount to go on.
+ */
+export function averageMonthlyPayout(holding: Pick<Holding, 'payout' | 'units'>) {
+  const plan = holding.payout;
+  if (!plan?.amount) return 0;
+  if (plan.every === IRREGULAR) {
+    if (!plan.cycle) return 0;
+    return roundMoney((plan.amount * (holding.units?.count ?? 1)) / plan.cycle);
+  }
+  return roundMoney(plan.amount / PAYOUT_MONTHS[plan.every]);
 }
 
 /** Days before maturity that the reminder to record the principal starts. */

@@ -2002,3 +2002,61 @@ test('a maturing holding is on Home, and Received takes its principal out', asyn
     expect.objectContaining({ holdingId: 'fd', date: today, value: 0 }),
   ]);
 });
+
+test('cattle paying as they come: added per cow, and a payout recorded for two cows', async () => {
+  renderApp('/investments', {
+    settings: [
+      {
+        ...defaultSettings(),
+        onboardingDone: true,
+        investmentTypes: ['Dairy cattle'],
+        growthTypes: { 'Dairy cattle': 'no-return' },
+      },
+    ],
+  });
+  const heading = await screen.findByRole('heading', { name: 'Investment portfolio' });
+  const section = heading.closest('section');
+  if (!section) throw new Error('Portfolio section not found');
+  fireEvent.click(within(section).getByRole('button', { name: 'Add', hidden: true }));
+  const form = await screen.findByRole('dialog', { name: 'Add investment', hidden: true });
+  const field = (label: string) => within(form).getByLabelText(label);
+  fireEvent.click(within(form).getByRole('radio', { name: /^Dairy cattle/, hidden: true }));
+  fireEvent.change(field('Investment Name'), { target: { value: 'Herd' } });
+  fireEvent.change(field('Invested Amount (₹)'), { target: { value: '2800000' } });
+  fireEvent.change(field('Current Value (₹)'), { target: { value: '2800000' } });
+  fireEvent.change(field('Purchase Date'), { target: { value: '2026-01-01' } });
+  fireEvent.click(within(form).getByRole('radio', { name: 'As they come', hidden: true }));
+  fireEvent.change(field('How many pay out? (optional)'), { target: { value: '28' } });
+  fireEvent.change(field('Called'), { target: { value: 'cows' } });
+  fireEvent.change(field('Expected each time per cow (₹)'), { target: { value: '40000' } });
+  fireEvent.change(field('Each pays every (months)'), { target: { value: '20' } });
+  expect(within(form).getByText(/about ₹56,000 a month on average/)).toBeDefined();
+  fireEvent.click(within(form).getByRole('button', { name: 'Save investment', hidden: true }));
+  await waitFor(() =>
+    expect(useTracker.getState().data.holdings.find((row) => row.name === 'Herd')).toMatchObject({
+      units: { count: 28, name: 'cows' },
+      payout: { every: 'irregular', amount: 40_000, cycle: 20 },
+    }),
+  );
+
+  const opens = await screen.findAllByRole('button', { name: /Dairy cattle/, hidden: true });
+  const open = opens.at(-1);
+  if (!open) throw new Error('No Dairy cattle button');
+  fireEvent.click(open);
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Record payout paid out by Herd', hidden: true }),
+  );
+  const payout = await screen.findByRole('dialog', { name: 'Payout from Herd', hidden: true });
+  fireEvent.change(within(payout).getByLabelText('How many cows paid?'), {
+    target: { value: '2' },
+  });
+  expect((within(payout).getByLabelText('Payout received (₹)') as HTMLInputElement).value).toBe(
+    '80000',
+  );
+  fireEvent.click(within(payout).getByRole('button', { name: 'Save', hidden: true }));
+  await waitFor(() =>
+    expect(useTracker.getState().data.payouts).toEqual([
+      expect.objectContaining({ amount: 80_000, units: 2 }),
+    ]),
+  );
+});

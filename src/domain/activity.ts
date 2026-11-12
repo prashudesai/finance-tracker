@@ -37,6 +37,8 @@ export interface ActivityRow {
   amount: number;
   /** For a value update: how far it moved from the value just before it. */
   change?: number;
+  /** For a payout: how many of the holding's units it was for, such as 2 cows. */
+  units?: number;
 }
 
 /**
@@ -89,6 +91,7 @@ export function holdingActivity(
           date: row.date,
           holdingId: row.holdingId,
           amount: row.amount,
+          ...(row.units ? { units: row.units } : {}),
         })),
     ),
     ...(data.withdrawals ?? [])

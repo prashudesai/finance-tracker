@@ -3,7 +3,7 @@ import type { Holding, TrackerSettings } from '../schema/records';
 import type { PositionRow } from './analytics';
 import { roundMoney, toDayNumber } from './calendar';
 import { emergencyTarget, monthlyAverages } from './goals';
-import { growthType, PAYOUT_MONTHS } from './holdings';
+import { averageMonthlyPayout, growthType } from './holdings';
 
 /**
  * What a portfolio is made of, and general rules of thumb about that mix. Rules of thumb only:
@@ -58,7 +58,7 @@ export interface PortfolioMix {
   value: Record<AssetClass, number>;
   /** PF, PPF and NPS, which can't be drawn on freely before retirement. */
   locked: number;
-  /** Fixed payouts a year, as interest or a coupon, spread over twelve months. */
+  /** Payouts a month on average: scheduled ones, and expected ones as they come. */
   monthlyPayouts: number;
   /** Bonds, deposits and cash outside PF, PPF and NPS: what could be moved. */
   freeSteady: number;
@@ -92,9 +92,7 @@ export function portfolioMix(
       }
     }
     if (holding.kind !== 'investment') locked += current;
-    if (holding.payout?.amount) {
-      payouts += (holding.payout.amount * 12) / PAYOUT_MONTHS[holding.payout.every];
-    }
+    payouts += averageMonthlyPayout(holding);
   }
   const total = ASSET_CLASSES.reduce((sum, key) => sum + value[key], 0);
   const share = zero();
@@ -112,7 +110,7 @@ export function portfolioMix(
       number
     >,
     locked: roundMoney(locked),
-    monthlyPayouts: roundMoney(payouts / 12),
+    monthlyPayouts: roundMoney(payouts),
     freeSteady: roundMoney(free),
   };
 }
