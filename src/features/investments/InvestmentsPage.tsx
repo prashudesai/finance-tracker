@@ -4,8 +4,9 @@ import { useLocation, useNavigate } from 'react-router';
 import {
   holdingLabel,
   holdingRows,
+  lastChecked,
   portfolioCategories,
-  valuationAge,
+  VALUE_FRESH_DAYS,
   type CategoryRow,
 } from '../../domain/analytics';
 import { estimateGratuity, totalGratuity } from '../../domain/gratuity';
@@ -43,6 +44,8 @@ import { MixNudge } from '../mix/MixNudge';
 import { CategoryDialog } from './HoldingActions';
 import { HoldingForm } from './HoldingForm';
 import { rateMetric } from './payouts';
+import { RetirementMonthCard } from './RetirementMonthCard';
+import { ValueCheck } from './ValueCheck';
 
 type Section = 'investments' | 'retirement';
 
@@ -239,37 +242,27 @@ export function InvestmentsPage() {
   const showRetirement = !phone || section === 'retirement';
 
   const rows = holdingRows(data, today);
-  const isUnconfirmed = ({ holding }: (typeof rows)[number]) =>
-    valuationAge(holding.id, data, today) === 'Unverified';
-  const unconfirmed = rows.filter(isUnconfirmed);
-  const confirmed = rows.filter((row) => !isUnconfirmed(row));
-  const confirmValue = ({ holding, position }: (typeof rows)[number]) => {
-    const id = crypto.randomUUID();
-    commit([
-      {
-        type: 'set',
-        collection: 'valuations',
-        id,
-        value: { id, holdingId: holding.id, date: today, value: position.current },
-      },
-    ]);
-  };
-  const freshnessRow = (row: (typeof rows)[number], action: string) => (
-    <li className={ui.row} key={row.holding.id}>
-      <div className={ui.rowMain}>
-        <div className={ui.rowTitle}>{holdingLabel(row.holding)}</div>
-        <div className={ui.rowDetail}>{valuationAge(row.holding.id, data, today)}</div>
-      </div>
-      <span className={ui.amount}>{formatMoney(row.position.current)}</span>
-      <button
-        aria-label={`${action} value of ${row.holding.name}`}
-        className={ui.quiet}
-        onClick={() => confirmValue(row)}
-        type="button"
-      >
-        {action}
-      </button>
-    </li>
+  // Never checked, or not lately, first; the rest oldest check first.
+  const checks = rows
+    .map((row) => {
+      const checked = lastChecked(row.holding.id, data, today);
+      return { row, days: checked?.days ?? null, date: checked?.date };
+    })
+    .sort((a, b) => (b.days ?? Infinity) - (a.days ?? Infinity));
+  const isDue = ({ days }: (typeof checks)[number]) => days === null || days >= VALUE_FRESH_DAYS;
+  const due = checks.filter(isDue);
+  const fresh = checks.filter((check) => !isDue(check));
+  const allHoldings = rows.map((row) => row.holding);
+  const checkRow = (check: (typeof checks)[number], isDueRow: boolean) => (
+    <ValueCheck
+      date={check.date}
+      days={check.days}
+      due={isDueRow}
+      key={check.row.holding.id}
+      label={holdingLabel(check.row.holding, allHoldings)}
+      row={check.row}
+      today={today}
+    />
   );
   const categories = portfolioCategories(rows);
   const current = rows.reduce((sum, row) => sum + row.position.current, 0);
@@ -408,6 +401,8 @@ export function InvestmentsPage() {
 
       {showInvestments ? <LoansSummary data={data} today={today} /> : null}
 
+      {showRetirement ? <RetirementMonthCard data={data} today={today} /> : null}
+
       {showRetirement ? (
         <section className={ui.card} id="retirement-accounts">
           <div className={ui.cardHeader}>
@@ -510,17 +505,20 @@ export function InvestmentsPage() {
         >
           <summary>Record freshness</summary>
           <p className={ui.caption}>
-            Confirming records today's value against your statement. It doesn't change the balance.
+            Check each value against its statement once a month. Confirm keeps the value as it is;
+            Change records the statement's value. Neither adds or removes money.
           </p>
-          {unconfirmed.length > 0 ? (
-            <ul className={ui.list}>{unconfirmed.map((row) => freshnessRow(row, 'Confirm'))}</ul>
+          {due.length > 0 ? (
+            <ul className={ui.list}>{due.map((check) => checkRow(check, true))}</ul>
           ) : (
-            <p className={ui.empty}>All values are confirmed.</p>
+            <p className={ui.empty}>Every value was checked in the last {VALUE_FRESH_DAYS} days.</p>
           )}
-          {confirmed.length > 0 ? (
+          {fresh.length > 0 ? (
             <details className={ui.fold}>
-              <summary>Confirmed values · {confirmed.length}</summary>
-              <ul className={ui.list}>{confirmed.map((row) => freshnessRow(row, 'Update'))}</ul>
+              <summary>
+                Checked in the last {VALUE_FRESH_DAYS} days · {fresh.length}
+              </summary>
+              <ul className={ui.list}>{fresh.map((check) => checkRow(check, false))}</ul>
             </details>
           ) : null}
         </details>

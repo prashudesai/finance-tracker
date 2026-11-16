@@ -44,7 +44,8 @@ export interface ActivityRow {
 /**
  * The latest activity across some holdings, newest first: contributions (scheduled ones told
  * apart), value updates with how far each moved the value, withdrawals and interest paid
- * out. Nothing after `today` is included, so scheduled contributions still to come don't show.
+ * out. Nothing after `today` is included, so scheduled contributions still to come don't show,
+ * and value checks that changed nothing are left out.
  */
 export function holdingActivity(
   holdings: readonly Holding[],
@@ -104,5 +105,9 @@ export function holdingActivity(
         amount: row.amount,
       })),
   ];
-  return rows.sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
+  // A check that left the value where it was isn't news.
+  return rows
+    .filter((row) => !(row.kind === 'valued' && row.change === 0))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, limit);
 }

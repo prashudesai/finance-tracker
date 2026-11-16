@@ -55,10 +55,9 @@ describe('recent activity', () => {
     ],
   };
 
-  test('value updates say how far they moved, and an unchanged one moves by nothing', () => {
+  test('value updates say how far they moved, and one that changed nothing is left out', () => {
     const rows = holdingActivity([account], data, '2026-11-12');
     expect(rows.map((row) => [row.id, row.kind, row.change])).toEqual([
-      ['v2', 'valued', 0],
       ['v1', 'valued', 1_360_847 - (1_200_000 + 20_167 + 5_000)],
       ['c1', 'scheduled', undefined],
       ['c2', 'contribution', undefined],
@@ -69,6 +68,9 @@ describe('recent activity', () => {
     expect(holdingActivity([account], data, '2026-11-12').some((row) => row.id === 'c3')).toBe(
       false,
     );
-    expect(holdingActivity([account], data, '2026-11-12', 2)).toHaveLength(2);
+    expect(holdingActivity([account], data, '2026-11-12', 2).map((row) => row.id)).toEqual([
+      'v1',
+      'c1',
+    ]);
   });
 });

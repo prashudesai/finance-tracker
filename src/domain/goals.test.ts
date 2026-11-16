@@ -413,8 +413,10 @@ describe('PF, PPF and NPS shown by kind', () => {
   const ppf = holding('ppf', 50_000, { kind: 'ppf', type: 'PPF', name: 'PPF Account' });
   const fund = holding('fund', 3_00_000);
 
-  test('a single account names its kind before an account number', () => {
-    expect(holdingLabel(pf1)).toBe('PF · 100281757735');
+  test('an account number shows as its kind and whose it is', () => {
+    expect(holdingLabel(pf1)).toBe('PF · A');
+    expect(holdingLabel(pf1, [pf1, pf2])).toBe('PF · A ••7735');
+    expect(holdingLabel({ ...pf1, member: '' })).toBe('PF · A/c ••7735');
     expect(holdingLabel(ppf)).toBe('PPF Account');
     expect(holdingLabel(fund)).toBe('fund');
   });

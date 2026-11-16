@@ -8,7 +8,7 @@ import { App } from './App';
 import { SignIn } from './features/auth/SignIn';
 import { Shell, type Account } from './Shell';
 import { useTracker } from './store/tracker';
-import { formatMonth, localDate } from './ui/format';
+import { formatMoney, formatMonth, localDate } from './ui/format';
 import { isMonthEnd } from './domain/analytics';
 import { searchRecords } from './domain/search';
 import { previousMonth } from './domain/calendar';
@@ -854,9 +854,33 @@ describe('needs attention', () => {
     renderApp('/investments', { holdings: [fund] });
     const confirm = await screen.findByRole('button', { name: /^Confirm value of/, hidden: true });
     fireEvent.click(confirm);
-    expect(await screen.findByText('All values are confirmed.')).toBeDefined();
+    expect(await screen.findByText('Every value was checked in the last 30 days.')).toBeDefined();
     expect(screen.queryByRole('button', { name: /^Confirm value of/, hidden: true })).toBeNull();
-    expect(screen.getByRole('button', { name: /^Update value of/, hidden: true })).toBeDefined();
+    expect(screen.getByText('Checked today')).toBeDefined();
+  });
+
+  test('retirement shows what went in this month, by type', async () => {
+    const month = localDate().slice(0, 7);
+    const ppf: Holding = { ...fund, id: 'ppf', kind: 'ppf', type: 'PPF', name: 'PPF Account' };
+    renderApp('/investments', {
+      holdings: [fund, ppf],
+      contributions: [
+        { id: 'c', holdingId: 'ppf', date: `${month}-01`, amount: 12_500, automatic: false },
+        { id: 'f', holdingId: 'h', date: `${month}-01`, amount: 99_000, automatic: false },
+      ],
+    });
+    const tile = await screen.findByRole('region', { name: 'Put in this month', hidden: true });
+    expect(within(tile).getAllByText(formatMoney(12_500)).length).toBeGreaterThan(0);
+    expect(within(tile).queryByText(formatMoney(99_000))).toBeNull();
+  });
+
+  test('changing a value records the statement’s figure', async () => {
+    renderApp('/investments', { holdings: [fund] });
+    fireEvent.click(await screen.findByRole('button', { name: /^Change value of/, hidden: true }));
+    fireEvent.change(screen.getByLabelText(/^Value today:/), { target: { value: '123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save', hidden: true }));
+    expect(await screen.findByText('Checked today')).toBeDefined();
+    expect(screen.getAllByText(formatMoney(123_456)).length).toBeGreaterThan(0);
   });
 
   test('marking a month reviewed moves on to the next month', async () => {

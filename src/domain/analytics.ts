@@ -1,4 +1,5 @@
 import type { TrackerData } from '../data/repository';
+import { holdingDisplayName } from './activity';
 import {
   defaultSettings,
   EMI_CATEGORY,
@@ -80,10 +81,11 @@ export const categoryOf = (holding: Holding) => CATEGORY_NAMES[holding.kind] ?? 
  * A holding's name with its kind in front, for lists of single accounts: PF, PPF and NPS
  * accounts are often named by an account number alone, such as "PF · 100281757735".
  */
-export function holdingLabel(holding: Holding) {
+export function holdingLabel(holding: Holding, all: readonly Holding[] = [holding]) {
+  const name = holdingDisplayName(holding, all);
   const category = CATEGORY_NAMES[holding.kind];
-  if (!category || holding.name.toLowerCase().includes(category.toLowerCase())) return holding.name;
-  return `${category} · ${holding.name}`;
+  if (!category || name.toLowerCase().includes(category.toLowerCase())) return name;
+  return `${category} · ${name}`;
 }
 
 /**
@@ -706,12 +708,18 @@ export function monthReviewStatus(data: TrackerData, month: string) {
 export const unverifiedHoldings = (data: TrackerData) =>
   data.holdings.filter((holding) => !latestValuation(holding.id, data.valuations));
 
-export function valuationAge(holdingId: string, data: TrackerData, today: string) {
+/** A value checked against a statement this recently doesn't need checking again yet. */
+export const VALUE_FRESH_DAYS = 30;
+
+/** When a holding's value was last checked and how many days ago, or null if never. */
+export function lastChecked(
+  holdingId: string,
+  data: Pick<TrackerData, 'valuations'>,
+  today: string,
+) {
   const valuation = latestValuation(holdingId, data.valuations);
-  if (!valuation) return 'Unverified';
-  const days = toDayNumber(today) - toDayNumber(valuation.date);
-  if (days < 0) return 'Invalid future date';
-  return `${valuation.date} · ${days} days ago`;
+  if (!valuation) return null;
+  return { date: valuation.date, days: toDayNumber(today) - toDayNumber(valuation.date) };
 }
 
 /** Scheduled contributions this month that no one has checked against a statement. */

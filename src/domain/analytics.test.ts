@@ -3,6 +3,7 @@ import { emptyTrackerData, type TrackerData } from '../data/repository';
 import { holdingPosition } from './holdings';
 import { defaultSettings, type Holding } from '../schema/records';
 import {
+  lastChecked,
   attentionItems,
   backupStatus,
   balanceHistory,
@@ -27,7 +28,6 @@ import {
   portfolioCategories,
   uncheckedContributions,
   unverifiedHoldings,
-  valuationAge,
 } from './analytics';
 import { clearWrites, createBackup, parseBackup, restoreWrites } from './backup';
 import { realValue } from './projection';
@@ -218,8 +218,8 @@ describe('reviews', () => {
       valuations: [{ id: 'v', holdingId: 'h', date: '2026-01-01', value: 150_000 }],
     });
     expect(unverifiedHoldings(confirmed)).toEqual([]);
-    expect(valuationAge('h', confirmed, '2026-01-31')).toBe('2026-01-01 · 30 days ago');
-    expect(valuationAge('h', data(), '2026-01-31')).toBe('Unverified');
+    expect(lastChecked('h', confirmed, '2026-01-31')).toEqual({ date: '2026-01-01', days: 30 });
+    expect(lastChecked('h', data(), '2026-01-31')).toBeNull();
   });
 
   test('statement checks only count unconfirmed automatic entries', () => {

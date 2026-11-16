@@ -1,7 +1,11 @@
 {
-  "version": "1.48.0",
-  "released": "2026-11-12",
+  "version": "1.49.0",
+  "released": "2026-11-16",
   "notes": [
+    "Retirement shows what went into PF, PPF and NPS each month: by type and person, the employer's PF share, anything still due, and the financial year so far",
+    "Record freshness puts values not checked for 30 days first; Confirm keeps a value, Change records the statement's figure, and checked ones fold away",
+    "PF, PPF and NPS accounts named by number show whose they are, such as PF · Prashanth",
+    "Recent activity leaves out value updates that changed nothing",
     "Interest rate cards show one rate instead of Multiple rates: the average weighted by how much is in each, or the payout yield when no rate is entered",
     "Upcoming commitments are tidier: Due now first, then the next 30 days, then what looks regular, with amounts lined up on the right",
     "Payouts as they come: for investments with no schedule, such as dairy cattle paying each lactation, record each payout when it arrives",
@@ -9,10 +13,6 @@
     "The card's button says Payout, or Interest for deposits and bonds",
     "Investments can have a maturity date: payouts stop after it, and Home reminds you a month before to record the principal coming back",
     "A payout can rise each year by a percentage, such as rent going up 5% a year",
-    "Editing a holding can move it between Investments, PF, PPF and NPS, and change how a custom type grows",
-    "On desktop, Future and Insights are tabs of their own in the top bar; phones keep Plan",
-    "Recent activity shows whose account it is instead of the account number, and how far each value update moved",
-    "Scheduled contributions read as Monthly contribution, and desktop tabs are roomier",
-    "Faster to open: the first download is smaller, and setup, the lock screen and the Features and Privacy pages load only when needed"
+    "Editing a holding can move it between Investments, PF, PPF and NPS, and change how a custom type grows"
   ]
 }
